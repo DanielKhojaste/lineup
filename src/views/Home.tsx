@@ -1,12 +1,15 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import Toolbar from "../components/Toolbar";
+import Canvas from "../components/Canvas";
+// import { Link } from "react-router-dom";
 
 function Home() {
 	const [isLoading, setIsLoading] = useState<boolean>(true);
 
 	return (
 		<main className="home view">
-			<h2>Home</h2>
+			<Toolbar />
+			<Canvas />
 		</main>
 	);
 }
