@@ -45,11 +45,15 @@ button {
 }
 
 /* Canvas: */
+.canvas {
+	/* position: relative; */
+}
 
 /* --- Components / Draggables ---- */
 /* Player: */
 .node {
 	cursor: grab;
+	position: absolute;
 }
 
 .node:active {
