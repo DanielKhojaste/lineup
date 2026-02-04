@@ -35,6 +35,11 @@ button {
 }
 
 /* ------------ Views ------------- */
+.home {
+	display: flex;
+	flex-direction: column;
+	height: 100vh;
+}
 
 /* ---------- Components ---------- */
 /* Toolbar: */
@@ -42,11 +47,17 @@ button {
 	display: flex;
 	background-color: #72deae73;
 	padding: 0.4rem 1rem;
+	height: 60px;
+	flex-shrink: 0;
 }
 
 /* Canvas: */
 .canvas {
+	flex: 1;
 	position: relative;
+	overflow: hidden;
+	height: 500px;
+	border: 1px dashed #7814ff;
 }
 
 /* --- Components / Draggables ---- */

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { DndContext, DragEndEvent } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, DragOverlay } from "@dnd-kit/core";
+import { restrictToParentElement } from "@dnd-kit/modifiers";
 import Node from "./nodes/Node";
 
 type NodeType = {
@@ -28,13 +29,17 @@ function Canvas() {
 	}
 
 	return (
-		<div>
-			<DndContext onDragEnd={handleDragEnd}>
-				<div className="canvas">
-					{nodes.map((node) => (
-						<Node id={node.id} x={node.x} y={node.y} key={node.id} />
-					))}
-				</div>
+		<div className="canvas">
+			<DndContext
+				onDragEnd={handleDragEnd}
+				modifiers={[restrictToParentElement]}
+				autoScroll={false}
+			>
+				{nodes.map((node) => (
+					<Node id={node.id} x={node.x} y={node.y} key={node.id} />
+				))}
+
+				<DragOverlay />
 			</DndContext>
 		</div>
 	);
