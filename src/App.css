@@ -46,7 +46,7 @@ button {
 
 /* Canvas: */
 .canvas {
-	/* position: relative; */
+	position: relative;
 }
 
 /* --- Components / Draggables ---- */
