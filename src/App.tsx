@@ -4,9 +4,9 @@ import ViewManager from "./router/ViewManager";
 
 function App() {
 	return (
-		<main className="dev">
+		<div className="dev">
 			<ViewManager />
-		</main>
+		</div>
 	);
 }
 
