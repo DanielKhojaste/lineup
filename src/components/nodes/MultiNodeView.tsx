@@ -15,8 +15,6 @@ function MultiNodeView({ node }: { node: Node }) {
 		left: node.x,
 		top: node.y,
 		transform: CSS.Translate.toString(transform),
-		// Dev:
-		backgroundColor: isDragging ? "#FDB20B" : "#7814FF",
 	};
 
 	const draggableProps = {
@@ -28,20 +26,20 @@ function MultiNodeView({ node }: { node: Node }) {
 
 	function displayNode() {
 		if (node instanceof Player) {
-			return <PlayerMarker player={node} />;
+			// draggableProps.className = "node player";
+
+			return <PlayerMarker player={node} draggableProps={draggableProps} />;
 		}
 		if (node instanceof Cone) {
-			return <ConeMarker cone={node} />;
+			// draggableProps.className = "node cone";
+
+			return <ConeMarker cone={node} draggableProps={draggableProps} />;
 		} else {
 			return <></>;
 		}
 	}
 
-	return (
-		<div className="node" {...draggableProps}>
-			{displayNode()}
-		</div>
-	);
+	return <>{displayNode()}</>;
 }
 
 export default MultiNodeView;
