@@ -7,8 +7,9 @@ import { Cone } from "../models/Cone";
 import MultiNodeView from "./nodes/MultiNodeView";
 
 function Canvas() {
+	// TODO: Move node creation to NodeFactory.ts
 	const [nodes, setNodes] = useState<Node[]>([
-		new Player("node101", 0, 0, 1),
+		new Player("node101", 0, 0, 14, "Bonmati"),
 		new Cone("node102", 100, 100),
 	]);
 
@@ -36,6 +37,7 @@ function Canvas() {
 				{nodes.map((node) => (
 					<MultiNodeView node={node} key={node.id} />
 				))}
+
 				<DragOverlay className="drag-overlay" />
 			</DndContext>
 		</div>

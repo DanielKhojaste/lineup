@@ -10,8 +10,8 @@ function PlayerMarker({
 	return (
 		<div className="node player" {...draggableProps}>
 			<div className="player__sprite"></div>
-			<h2>Player</h2>
-			<span>#7</span>
+			<h2>{player.name}</h2>
+			<span>#{player.jerseyNumber}</span>
 		</div>
 	);
 }
