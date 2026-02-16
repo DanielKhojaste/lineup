@@ -6,7 +6,7 @@ export class Player extends Node {
 		id: string,
 		x: number,
 		y: number,
-		public jerseyNumber: number,
+		public jerseyNumber?: number,
 		public name?: string,
 		public position?: string,
 	) {
