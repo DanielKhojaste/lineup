@@ -26,13 +26,9 @@ function MultiNodeView({ node }: { node: Node }) {
 
 	function displayNode() {
 		if (node instanceof Player) {
-			// draggableProps.className = "node player";
-
 			return <PlayerMarker player={node} draggableProps={draggableProps} />;
 		}
 		if (node instanceof Cone) {
-			// draggableProps.className = "node cone";
-
 			return <ConeMarker cone={node} draggableProps={draggableProps} />;
 		} else {
 			return <></>;

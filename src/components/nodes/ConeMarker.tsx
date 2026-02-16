@@ -1,5 +1,5 @@
 import { Cone } from "../../models/Cone";
-import ConeIcon from "../../assets/Nodes/Cones/Flat 1.1 - InkScape - Stroke 2px.svg?react";
+import ConeIcon from "../../assets/Nodes/Cone.svg?react";
 
 function ConeMarker({
 	cone,
@@ -10,7 +10,13 @@ function ConeMarker({
 }) {
 	return (
 		<div className="node cone" {...draggableProps}>
-			<ConeIcon className="cone-icon" />
+			<ConeIcon
+				className="cone-icon"
+				fill="#7814ff"
+				strokeWidth={0}
+				stroke="#000"
+			/>
+			{/* <span>svgviewer-output (8)</span> */}
 		</div>
 	);
 }
