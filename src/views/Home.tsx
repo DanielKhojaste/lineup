@@ -21,7 +21,7 @@ function Home() {
 
 	return (
 		<main className="home view">
-			<Toolbar />
+			<Toolbar nodes={nodes} setNodes={setNodes} />
 			<Canvas nodes={nodes} setNodes={setNodes} />
 		</main>
 	);
