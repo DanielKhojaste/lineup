@@ -6,8 +6,6 @@ An interactive tactical board for coaches to design drills, formations, and play
 >
 > Lineup is under active development. Features, UI, and data formats may change frequently.
 
----
-
 ## Overview
 
 Lineup is a tactical board application designed to help visualize positions, formations, and scenarios using draggable markers on a board.
@@ -19,16 +17,12 @@ The goal is to provide a flexible, offline-capable tool that can be adapted to d
 - Scenario visualization
 - Animate player movements
 
----
-
 ## Current Features
 
 - Draggable player nodes
 - Basic node positioning
 
 > ⚠️ Visual styling is minimal at this stage and will improve over time.
-
----
 
 ## Planned Features
 
@@ -39,15 +33,11 @@ The goal is to provide a flexible, offline-capable tool that can be adapted to d
 - Measurement and alignment tools
 - Improved UI and theming
 
----
-
 ## Tech Stack
 
 - Tauri
 - React
 - TypeScript
-
----
 
 ## Development
 
