@@ -2,14 +2,16 @@ import { Player } from "../../models/Player";
 
 function PlayerMarker({
 	player,
-	draggableProps,
+	containerProps,
+	dragHandleProps,
 }: {
 	player: Player;
-	draggableProps: object;
+	containerProps: object;
+	dragHandleProps: object;
 }) {
 	return (
-		<div className="node player" {...draggableProps}>
-			<div className="player__sprite">
+		<div className="node player" {...containerProps}>
+			<div className="player__sprite" {...dragHandleProps}>
 				<span className="player__number">
 					{player.jerseyNumber ? player.jerseyNumber : null}
 				</span>
