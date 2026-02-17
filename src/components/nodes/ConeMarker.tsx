@@ -9,7 +9,7 @@ function ConeMarker({
 	draggableProps: object;
 }) {
 	return (
-		<div className="node cone" {...draggableProps}>
+		<div className="node cone drag-handle" {...draggableProps}>
 			<ConeIcon
 				className="cone-icon"
 				fill="#7814ff"

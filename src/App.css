@@ -50,6 +50,10 @@ Retrieved 2026-02-17, License - CC BY-SA 4.0
                                   supported by Chrome, Edge, Opera and Firefox */
 }
 
+.drag-handle {
+	cursor: grab;
+}
+
 /* ------------ Views ------------- */
 .home {
 	display: flex;
@@ -86,7 +90,6 @@ Retrieved 2026-02-17, License - CC BY-SA 4.0
 /* ------ Components / Nodes ------ */
 /* PENDING: Add a node hover effect */
 .node {
-	cursor: grab;
 	position: absolute;
 	transition: background-color ease-in-out 0.3s;
 }
