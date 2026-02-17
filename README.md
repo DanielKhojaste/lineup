@@ -1,6 +1,6 @@
 # Lineup
 
-An interactive tactical board for coaches to design drills, formations, and plays across for multiple sports.
+An interactive tactical board for coaches to design drills, formations, and plays for multiple sports.
 
 > ⚠️ **Status: Alpha**
 >
