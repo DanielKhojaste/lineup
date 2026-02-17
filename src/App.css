@@ -48,6 +48,17 @@ button {
 	flex-shrink: 0;
 }
 
+.node-palette {
+	display: flex;
+	gap: 0.4rem;
+}
+
+.node-palette__item {
+	text-decoration: none;
+	list-style: none;
+	cursor: pointer;
+}
+
 .canvas {
 	flex: 1;
 	position: relative;
@@ -77,6 +88,9 @@ button {
 }
 
 .player__sprite {
+	display: flex;
+	justify-content: center;
+	align-items: center;
 	margin: 0 auto;
 
 	width: var(--player-dim);
@@ -88,6 +102,11 @@ button {
 		inset 0 1px 2px rgba(255, 255, 255, 0.4),
 		inset 0 -1px 2px rgba(0, 0, 0, 0.25),
 		0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.player__number {
+	color: white;
+	font-weight: 700;
 }
 
 .cone {
