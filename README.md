@@ -1,6 +1,6 @@
 # Lineup
 
-A multi-purpose tactical board application.
+An interactive tactical board for coaches to design drills, formations, and plays across for multiple sports.
 
 > ⚠️ **Status: Alpha**
 >
