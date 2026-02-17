@@ -4,12 +4,18 @@ import Canvas from "../components/Canvas";
 import { Node } from "../models/Node";
 import { Player } from "../models/Player";
 import { Cone } from "../models/Cone";
+import { NodeFactory } from "../models/NodeFactory";
+import { NodeType } from "../models/NodeType";
 
 function Home() {
-	// TODO: Use NodeFactory to create nodes
 	const [nodes, setNodes] = useState<Node[]>([
-		new Player("node101", 0, 0, 14, "Bonmati"),
-		new Cone("node102", 100, 100),
+		NodeFactory.create(NodeType.Player, {
+			x: 0,
+			y: 0,
+			jerseyNumber: 14,
+			name: "Bonmati",
+		}),
+		NodeFactory.create(NodeType.Cone, { x: 100, y: 100 }),
 	]);
 	const [isLoading, setIsLoading] = useState<boolean>(true);
 

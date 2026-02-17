@@ -5,7 +5,6 @@ import { Cone } from "./Cone";
 
 type NodeCreationOptions = {
 	[NodeType.Player]: {
-		id: string;
 		x: number;
 		y: number;
 		jerseyNumber?: number;
@@ -14,7 +13,6 @@ type NodeCreationOptions = {
 	};
 
 	[NodeType.Cone]: {
-		id: string;
 		x: number;
 		y: number;
 		coneType?: string;
