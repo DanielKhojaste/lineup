@@ -10,7 +10,7 @@ function PlayerMarker({
 	dragHandleProps: object;
 }) {
 	return (
-		<div className="node player" {...containerProps}>
+		<div className="node player noselect" {...containerProps}>
 			<div className="player__sprite" {...dragHandleProps}>
 				<span className="player__number">
 					{player.jerseyNumber ? player.jerseyNumber : null}
