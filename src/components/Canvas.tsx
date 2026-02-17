@@ -6,13 +6,12 @@ import { Player } from "../models/Player";
 import { Cone } from "../models/Cone";
 import MultiNodeView from "./nodes/MultiNodeView";
 
-function Canvas() {
-	// TODO: Move node creation to NodeFactory.ts
-	const [nodes, setNodes] = useState<Node[]>([
-		new Player("node101", 0, 0, 14, "Bonmati"),
-		new Cone("node102", 100, 100),
-	]);
+type CanvasProps = {
+	nodes: Node[];
+	setNodes: React.Dispatch<React.SetStateAction<Node[]>>;
+};
 
+function Canvas({ nodes, setNodes }: CanvasProps) {
 	function handleDragEnd(event: DragEndEvent) {
 		const { active, delta } = event;
 
