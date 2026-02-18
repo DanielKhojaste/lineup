@@ -10,7 +10,7 @@ type CanvasProps = {
 
 function Canvas({ nodes }: CanvasProps) {
 	return (
-		<div className="canvas">
+		<div id="canvas">
 			{nodes.map((node) => (
 				<MultiNodeView node={node} key={node.id} />
 			))}
