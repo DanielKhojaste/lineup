@@ -22,17 +22,25 @@ function Home() {
 	const [isLoading, setIsLoading] = useState<boolean>(true);
 
 	function handleDragEnd(event: DragEndEvent) {
-		const { active, delta } = event;
+		const { active, delta, over } = event;
+		const data = active.data.current;
 
-		setNodes((prev) => {
-			const next = [...prev];
+		if (data?.from === "toolbar") {
+			// Create node
+		}
 
-			const node = next.find((n) => n.id === active.id);
-			if (!node) return prev;
+		if (data?.from === "canvas-node") {
+			// Move existing node
+			setNodes((prev) => {
+				const next = [...prev];
 
-			node.moveBy(delta.x, delta.y);
-			return next;
-		});
+				const node = next.find((n) => n.id === active.id);
+				if (!node) return prev;
+
+				node.moveBy(delta.x, delta.y);
+				return next;
+			});
+		}
 	}
 
 	return (
