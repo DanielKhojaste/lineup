@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { DndContext, DragEndEvent, DragOverlay } from "@dnd-kit/core";
+import { restrictToParentElement } from "@dnd-kit/modifiers";
 import Toolbar from "../components/Toolbar";
 import Canvas from "../components/Canvas";
 import { Node } from "../models/Node";
@@ -19,11 +21,31 @@ function Home() {
 	]);
 	const [isLoading, setIsLoading] = useState<boolean>(true);
 
+	function handleDragEnd(event: DragEndEvent) {
+		const { active, delta } = event;
+
+		setNodes((prev) => {
+			const next = [...prev];
+
+			const node = next.find((n) => n.id === active.id);
+			if (!node) return prev;
+
+			node.moveBy(delta.x, delta.y);
+			return next;
+		});
+	}
+
 	return (
-		<main className="home view">
-			<Toolbar nodes={nodes} setNodes={setNodes} />
-			<Canvas nodes={nodes} setNodes={setNodes} />
-		</main>
+		<DndContext
+			onDragEnd={handleDragEnd}
+			modifiers={[restrictToParentElement]}
+			autoScroll={false}
+		>
+			<main className="home view">
+				<Toolbar nodes={nodes} setNodes={setNodes} />
+				<Canvas nodes={nodes} />
+			</main>
+		</DndContext>
 	);
 }
 

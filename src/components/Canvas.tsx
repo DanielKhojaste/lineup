@@ -6,37 +6,16 @@ import MultiNodeView from "./nodes/MultiNodeView";
 
 type CanvasProps = {
 	nodes: Node[];
-	setNodes: React.Dispatch<React.SetStateAction<Node[]>>;
 };
 
-function Canvas({ nodes, setNodes }: CanvasProps) {
-	function handleDragEnd(event: DragEndEvent) {
-		const { active, delta } = event;
-
-		setNodes((prev) => {
-			const next = [...prev];
-
-			const node = next.find((n) => n.id === active.id);
-			if (!node) return prev;
-
-			node.moveBy(delta.x, delta.y);
-			return next;
-		});
-	}
-
+function Canvas({ nodes }: CanvasProps) {
 	return (
 		<div className="canvas">
-			<DndContext
-				onDragEnd={handleDragEnd}
-				modifiers={[restrictToParentElement]}
-				autoScroll={false}
-			>
-				{nodes.map((node) => (
-					<MultiNodeView node={node} key={node.id} />
-				))}
+			{nodes.map((node) => (
+				<MultiNodeView node={node} key={node.id} />
+			))}
 
-				<DragOverlay className="drag-overlay" />
-			</DndContext>
+			<DragOverlay className="drag-overlay" />
 		</div>
 	);
 }
