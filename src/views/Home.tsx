@@ -50,7 +50,7 @@ function Home() {
 			autoScroll={false}
 		>
 			<main className="home view">
-				<Toolbar nodes={nodes} setNodes={setNodes} />
+				<Toolbar />
 				<Canvas nodes={nodes} />
 			</main>
 		</DndContext>
