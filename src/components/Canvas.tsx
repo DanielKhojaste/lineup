@@ -14,8 +14,6 @@ function Canvas({ nodes }: CanvasProps) {
 			{nodes.map((node) => (
 				<MultiNodeView node={node} key={node.id} />
 			))}
-
-			<DragOverlay className="drag-overlay" />
 		</div>
 	);
 }

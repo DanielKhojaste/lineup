@@ -44,16 +44,18 @@ function Home() {
 	}
 
 	return (
-		<DndContext
-			onDragEnd={handleDragEnd}
-			modifiers={[restrictToParentElement]}
-			autoScroll={false}
-		>
-			<main className="home view">
+		<main className="home view">
+			<DndContext
+				onDragEnd={handleDragEnd}
+				modifiers={[restrictToParentElement]}
+				autoScroll={false}
+			>
 				<Toolbar />
 				<Canvas nodes={nodes} />
-			</main>
-		</DndContext>
+
+				<DragOverlay className="drag-overlay" />
+			</DndContext>
+		</main>
 	);
 }
 
