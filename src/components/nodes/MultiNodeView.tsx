@@ -22,6 +22,7 @@ function MultiNodeView({ node }: { node: Node }) {
 			id: node.id,
 			data: {
 				from: "canvas-node",
+				nodeType: node.getType(),
 			},
 		});
 
