@@ -1,4 +1,3 @@
-// src/App.tsx
 import "./App.css";
 import ViewManager from "./router/ViewManager";
 

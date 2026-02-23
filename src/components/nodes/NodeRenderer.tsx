@@ -22,6 +22,7 @@ function NodeRenderer({
 	containerProps,
 	dragHandleProps,
 }: NodeRendererProps) {
+	// PENDING: Add error catching in case the node type is not in the render map.
 	const Marker = renderMap[node.getType()];
 
 	return (
