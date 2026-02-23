@@ -16,7 +16,7 @@ import ConeMarker from "./ConeMarker";
  * type. For example, the PlayerMarker can only be dragged by its sprite.
  */
 
-function MultiNodeView({ node }: { node: Node }) {
+function DraggableNode({ node }: { node: Node }) {
 	const { attributes, listeners, setNodeRef, transform } = useDraggable({
 		id: node.id,
 		data: {
@@ -68,4 +68,4 @@ function MultiNodeView({ node }: { node: Node }) {
 	return <>{displayNode()}</>;
 }
 
-export default MultiNodeView;
+export default DraggableNode;
