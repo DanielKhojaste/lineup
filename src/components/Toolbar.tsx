@@ -1,5 +1,5 @@
 import { NodeType } from "../models/NodeType";
-import ToolbarItem from "./nodes/ToolbarItem";
+import ToolbarItem from "./ToolbarItem";
 
 function Toolbar() {
 	return (
