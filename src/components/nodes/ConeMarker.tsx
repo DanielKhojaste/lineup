@@ -3,13 +3,19 @@ import ConeIcon from "../../assets/Nodes/Cone.svg?react";
 
 function ConeMarker({
 	cone,
-	draggableProps,
+	containerProps,
+	dragHandleProps,
 }: {
 	cone: Cone;
-	draggableProps: object;
+	containerProps: object;
+	dragHandleProps: object;
 }) {
 	return (
-		<div className="node cone drag-handle" {...draggableProps}>
+		<div
+			className="node cone drag-handle"
+			{...containerProps}
+			{...dragHandleProps}
+		>
 			<ConeIcon
 				className="cone-icon"
 				fill="#7814ff"

@@ -57,7 +57,8 @@ function DraggableNode({ node }: { node: Node }) {
 			return (
 				<ConeMarker
 					cone={node}
-					draggableProps={{ ...containerProps, ...dragHandleProps }}
+					containerProps={containerProps}
+					dragHandleProps={dragHandleProps}
 				/>
 			);
 		} else {
