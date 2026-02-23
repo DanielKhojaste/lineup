@@ -1,11 +1,11 @@
 import { Player } from "../../models/Player";
 
 function PlayerMarker({
-	player,
+	node,
 	containerProps,
 	dragHandleProps,
 }: {
-	player: Player;
+	node: Player;
 	containerProps: object;
 	dragHandleProps: object;
 }) {
@@ -13,10 +13,10 @@ function PlayerMarker({
 		<div className="node player noselect" {...containerProps}>
 			<div className="player__sprite drag-handle" {...dragHandleProps}>
 				<span className="player__number">
-					{player.jerseyNumber ? player.jerseyNumber : null}
+					{node.jerseyNumber ? node.jerseyNumber : null}
 				</span>
 			</div>
-			<h3>{player.name}</h3>
+			<h3>{node.name}</h3>
 		</div>
 	);
 }

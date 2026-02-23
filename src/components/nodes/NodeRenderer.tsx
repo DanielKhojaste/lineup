@@ -6,6 +6,11 @@ import PlayerMarker from "./PlayerMarker";
 /**
  * This component renders the appropriate marker component for a given Node model.
  **/
+const renderMap = {
+	[NodeType.Player]: PlayerMarker,
+	[NodeType.Cone]: ConeMarker,
+};
+
 type NodeRendererProps = {
 	node: Node;
 	containerProps: object;
@@ -17,28 +22,15 @@ function NodeRenderer({
 	containerProps,
 	dragHandleProps,
 }: NodeRendererProps) {
-	const type = node.getType();
+	const Marker = renderMap[node.getType()];
 
-	if (type === NodeType.Player) {
-		return (
-			<PlayerMarker
-				player={node}
-				containerProps={containerProps}
-				dragHandleProps={dragHandleProps}
-			/>
-		);
-	}
-	if (type === NodeType.Cone) {
-		return (
-			<ConeMarker
-				cone={node}
-				containerProps={containerProps}
-				dragHandleProps={dragHandleProps}
-			/>
-		);
-	}
-
-	return <></>;
+	return (
+		<Marker
+			node={node}
+			containerProps={containerProps}
+			dragHandleProps={dragHandleProps}
+		/>
+	);
 }
 
 export default NodeRenderer;

@@ -2,11 +2,11 @@ import { Cone } from "../../models/Cone";
 import ConeIcon from "../../assets/Nodes/Cone.svg?react";
 
 function ConeMarker({
-	cone,
+	node,
 	containerProps,
 	dragHandleProps,
 }: {
-	cone: Cone;
+	node: Cone;
 	containerProps: object;
 	dragHandleProps: object;
 }) {
