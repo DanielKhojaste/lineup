@@ -17,14 +17,13 @@ import ConeMarker from "./ConeMarker";
  */
 
 function MultiNodeView({ node }: { node: Node }) {
-	const { attributes, listeners, setNodeRef, transform, isDragging } =
-		useDraggable({
-			id: node.id,
-			data: {
-				from: "canvas-node",
-				nodeType: node.getType(),
-			},
-		});
+	const { attributes, listeners, setNodeRef, transform } = useDraggable({
+		id: node.id,
+		data: {
+			from: "canvas-node",
+			nodeType: node.getType(),
+		},
+	});
 
 	const style = {
 		left: node.x,
