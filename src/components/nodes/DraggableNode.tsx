@@ -1,14 +1,10 @@
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { Node } from "../../models/Node";
-import { NodeType } from "../../models/NodeType";
-import PlayerMarker from "./PlayerMarker";
-import { Player } from "../../models/Player";
-import { Cone } from "../../models/Cone";
-import ConeMarker from "./ConeMarker";
+import NodeRenderer from "./NodeRenderer";
 
 /**
- * Renders the appropriate marker component for a given Node model.
+ * This component uses NodeRenderer to display the correct node marker and handles its drag and drop behavior.
  *
  * Drag behavior is handled here using dnd-kit and injected into the marker
  * components as props. The draggable container (target element) and the drag
@@ -43,30 +39,13 @@ function DraggableNode({ node }: { node: Node }) {
 		...attributes,
 	};
 
-	function displayNode() {
-		if (node instanceof Player) {
-			return (
-				<PlayerMarker
-					player={node}
-					containerProps={containerProps}
-					dragHandleProps={dragHandleProps}
-				/>
-			);
-		}
-		if (node instanceof Cone) {
-			return (
-				<ConeMarker
-					cone={node}
-					containerProps={containerProps}
-					dragHandleProps={dragHandleProps}
-				/>
-			);
-		} else {
-			return <></>;
-		}
-	}
-
-	return <>{displayNode()}</>;
+	return (
+		<NodeRenderer
+			node={node}
+			containerProps={containerProps}
+			dragHandleProps={dragHandleProps}
+		/>
+	);
 }
 
 export default DraggableNode;
