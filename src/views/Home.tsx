@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
 	DndContext,
 	DragEndEvent,
@@ -13,6 +13,7 @@ import { NodeFactory } from "../models/NodeFactory";
 import { NodeType } from "../models/NodeType";
 
 function Home() {
+	const canvasRef = useRef<HTMLDivElement | null>(null);
 	const [nodes, setNodes] = useState<Node[]>([
 		NodeFactory.create(NodeType.Player, {
 			x: 0,
@@ -72,7 +73,7 @@ function Home() {
 				autoScroll={false}
 			>
 				<Toolbar />
-				<Canvas nodes={nodes} />
+				<Canvas ref={canvasRef} nodes={nodes} />
 
 				<DragOverlay className="drag-overlay">
 					{activeNodeType ? <h3>{activeNodeType}</h3> : null}
