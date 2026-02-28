@@ -1,3 +1,4 @@
+import { useDroppable } from "@dnd-kit/core";
 import { Node } from "../models/Node";
 import DraggableNode from "./nodes/DraggableNode";
 
@@ -6,8 +7,12 @@ type CanvasProps = {
 };
 
 function Canvas({ nodes }: CanvasProps) {
+	const { setNodeRef } = useDroppable({
+		id: "canvas",
+	});
+
 	return (
-		<div id="canvas">
+		<div id="canvas" ref={setNodeRef}>
 			{nodes.map((node) => (
 				<DraggableNode node={node} key={node.id} />
 			))}
