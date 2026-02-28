@@ -22,7 +22,6 @@ function ConeMarker({
 				strokeWidth={0}
 				stroke="#000"
 			/>
-			{/* <span>svgviewer-output (8)</span> */}
 		</div>
 	);
 }
