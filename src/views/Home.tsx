@@ -2,10 +2,10 @@ import { useRef, useState } from "react";
 import {
 	DndContext,
 	DragEndEvent,
+	DragMoveEvent,
 	DragOverlay,
 	DragStartEvent,
 } from "@dnd-kit/core";
-import { restrictToParentElement } from "@dnd-kit/modifiers";
 import Toolbar from "../components/Toolbar";
 import Canvas from "../components/Canvas";
 import { Node } from "../models/Node";
@@ -25,6 +25,7 @@ function Home() {
 	]);
 	const [activeNodeType, setActiveNodeType] = useState(null);
 	const [isLoading, setIsLoading] = useState<boolean>(true);
+	const [pointerPosition, setPointerPosition] = useState({ x: 0, y: 0 });
 
 	function handleDragStart(event: DragStartEvent) {
 		const { active } = event;
@@ -40,14 +41,29 @@ function Home() {
 		}
 	}
 
+	function handleDragMove(event: DragMoveEvent) {
+		// TODO: Restrict the canvas nodes to the canvas area
+	}
+
 	function handleDragEnd(event: DragEndEvent) {
 		setActiveNodeType(null);
 
 		const { active, delta, over } = event;
 		const data = active.data.current;
 
-		if (data?.from === "toolbar") {
-			// Create node
+		if (data?.from === "toolbar" && over?.id === "canvas") {
+			// Drag a new node from the toolbar onto the canvas
+			const canvasRect = canvasRef.current?.getBoundingClientRect();
+			if (!canvasRect) return;
+
+			const translated = active.rect.current.translated;
+			if (!translated) return;
+
+			const x = translated.left - canvasRect.left;
+			const y = translated.top - canvasRect.top;
+
+			const newNode = NodeFactory.create(data.nodeType, { x, y });
+			setNodes((prev) => [...prev, newNode]);
 		}
 
 		if (data?.from === "canvas-node") {
@@ -68,8 +84,8 @@ function Home() {
 		<main className="home view">
 			<DndContext
 				onDragStart={handleDragStart}
+				onDragMove={handleDragMove}
 				onDragEnd={handleDragEnd}
-				modifiers={[restrictToParentElement]}
 				autoScroll={false}
 			>
 				<Toolbar />
