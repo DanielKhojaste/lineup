@@ -10,11 +10,29 @@ This project adheres to semantic versioning (0.x during early development).
 
 ---
 
+## [0.2.1] - 2026-02-28
+
+### Added
+
+- Drag-and-drop node creation from the toolbar
+- Visual preview when dragging toolbar items
+- Dynamic node placement based on drop position on the canvas
+
+### Changed
+
+- Improved drag-and-drop behavior and responsiveness
+
+### Removed
+
+- Click-to-create node creation with fixed placement
+
+---
+
 ## [0.2.0] - 2026-02-17
 
 ### Added
 
-- Toolbar support for creating nodes directly on the canvas
+- Toolbar-driven node creation with predefined canvas placement
 - NodeFactory for standardized node creation
 
 ### Changed
@@ -36,8 +54,3 @@ This project adheres to semantic versioning (0.x during early development).
 
 - Initial player and cone nodes
 - Basic node positioning logic
-
-### Notes
-
-- Visual styling is minimal and subject to change
-- Project is in early development (alpha)
