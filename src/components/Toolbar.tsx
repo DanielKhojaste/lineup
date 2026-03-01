@@ -1,5 +1,5 @@
 import { NodeType } from "../models/NodeType";
-import ToolbarItem from "./ToolbarItem";
+import ToolbarItem from "./toolbar/ToolbarItem";
 
 const nodeTypes = [NodeType.Player, NodeType.Cone];
 
