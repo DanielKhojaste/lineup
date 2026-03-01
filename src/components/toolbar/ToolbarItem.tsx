@@ -1,5 +1,6 @@
 import { useDraggable } from "@dnd-kit/core";
 import { NodeType } from "../../models/NodeType";
+import NodePreview from "./NodePreview";
 
 function ToolbarItem({ type }: { type: NodeType }) {
 	const { attributes, listeners, setNodeRef, transform } = useDraggable({
@@ -17,7 +18,7 @@ function ToolbarItem({ type }: { type: NodeType }) {
 			{...attributes}
 			className="toolbar__item"
 		>
-			{type}
+			<NodePreview type={type} />
 		</div>
 	);
 }

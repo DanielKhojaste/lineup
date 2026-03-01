@@ -11,6 +11,7 @@ import Canvas from "../components/Canvas";
 import { Node } from "../models/Node";
 import { NodeFactory } from "../models/NodeFactory";
 import { NodeType } from "../models/NodeType";
+import NodePreview from "../components/toolbar/NodePreview";
 
 function Home() {
 	const canvasRef = useRef<HTMLDivElement | null>(null);
@@ -92,7 +93,7 @@ function Home() {
 				<Canvas ref={canvasRef} nodes={nodes} />
 
 				<DragOverlay className="drag-overlay">
-					{activeNodeType ? <h3>{activeNodeType}</h3> : null}
+					{activeNodeType ? <NodePreview type={activeNodeType} /> : null}
 				</DragOverlay>
 			</DndContext>
 		</main>

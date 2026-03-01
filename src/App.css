@@ -89,7 +89,7 @@ Retrieved 2026-02-17, License - CC BY-SA 4.0
 
 /* ------ Components / Nodes ------ */
 /* PENDING: Add a node hover effect */
-.node {
+#canvas .node {
 	position: absolute;
 	transition: background-color ease-in-out 0.3s;
 }
