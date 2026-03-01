@@ -1,8 +1,5 @@
 import { Node } from "../../models/Node";
-import { NodeType } from "../../models/NodeType";
-import ConeMarker from "./ConeMarker";
 import { NODE_REGISTRY } from "./nodeRegistry";
-import PlayerMarker from "./PlayerMarker";
 
 type NodeRendererProps = {
 	node: Node;
