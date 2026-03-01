@@ -1,15 +1,8 @@
 import { Node } from "../../models/Node";
 import { NodeType } from "../../models/NodeType";
 import ConeMarker from "./ConeMarker";
+import { NODE_REGISTRY } from "./nodeRegistry";
 import PlayerMarker from "./PlayerMarker";
-
-/**
- * This component renders the appropriate marker component for a given Node model.
- **/
-const renderMap = {
-	[NodeType.Player]: PlayerMarker,
-	[NodeType.Cone]: ConeMarker,
-};
 
 type NodeRendererProps = {
 	node: Node;
@@ -17,17 +10,20 @@ type NodeRendererProps = {
 	dragHandleProps: object;
 };
 
+/**
+ * This component renders the appropriate marker component for a given Node model.
+ **/
 function NodeRenderer({
 	node,
 	containerProps,
 	dragHandleProps,
 }: NodeRendererProps) {
-	// PENDING: Add error catching in case the node type is not in the render map.
-	const Marker = renderMap[node.getType()];
+	const nodeDefintion = NODE_REGISTRY[node.getType()];
+	const Marker = nodeDefintion.Marker;
 
 	return (
 		<Marker
-			node={node}
+			{...nodeDefintion.getNodeProps(node)}
 			containerProps={containerProps}
 			dragHandleProps={dragHandleProps}
 		/>
