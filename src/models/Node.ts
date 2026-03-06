@@ -13,4 +13,9 @@ export abstract class Node {
 		this.x += dx;
 		this.y += dy;
 	}
+
+	public moveTo(x: number, y: number) {
+		this.x = x;
+		this.y = y;
+	}
 }
