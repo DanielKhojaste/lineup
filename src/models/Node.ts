@@ -1,4 +1,15 @@
+import { clamp } from "../utils/helpers";
 import { NodeType } from "./NodeType";
+
+type PositionType = {
+	x: number;
+	y: number;
+};
+
+type BoundsType = {
+	width: number;
+	height: number;
+};
 
 export abstract class Node {
 	constructor(
@@ -8,14 +19,17 @@ export abstract class Node {
 	) {}
 
 	abstract getType(): NodeType;
+	public getPosition() {
+		return { x: this.x, y: this.y };
+	}
 
 	public moveBy(dx: number, dy: number) {
 		this.x += dx;
 		this.y += dy;
 	}
 
-	public moveTo(x: number, y: number) {
-		this.x = x;
-		this.y = y;
+	public moveTo(position: PositionType, bounds: BoundsType) {
+		this.x = clamp(position.x, 0, bounds.width);
+		this.y = clamp(position.y, 0, bounds.height);
 	}
 }
