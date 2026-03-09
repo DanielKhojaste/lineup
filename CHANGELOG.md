@@ -10,6 +10,20 @@ This project adheres to semantic versioning (0.x during early development).
 
 ---
 
+## [0.2.2] - 2026-03-09
+
+### Added
+
+- Static node previews for toolbar items and drag overlays
+
+### Changed
+
+- Improved internal node architecture using a centralized node registry
+- Refactored node rendering to use shared preview components
+- Early boundary handling for canvas nodes (incomplete)
+
+---
+
 ## [0.2.1] - 2026-02-28
 
 ### Added
