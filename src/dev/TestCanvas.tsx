@@ -1,11 +1,11 @@
 import { DragDropProvider } from "@dnd-kit/react";
-import TestDraggable from "./TestDraggable";
+import TestPlayer from "./TestPlayer";
 
 function TestCanvas() {
 	return (
-		<section>
+		<section id="canvas" className="dev-border">
 			<DragDropProvider>
-				<TestDraggable name="Cool" />
+				<TestPlayer name="Aitana" jerseyNumber={14} />
 			</DragDropProvider>
 		</section>
 	);
