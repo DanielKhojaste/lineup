@@ -141,6 +141,6 @@ Retrieved 2026-02-17, License - CC BY-SA 4.0
 }
 
 /* ------------- Dev -------------- */
-.dev #canvas {
+.dev-border {
 	border: 1px dashed #7814ff;
 }

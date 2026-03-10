@@ -18,6 +18,7 @@ function Canvas(
 	return (
 		<div
 			id="canvas"
+			className="dev-border"
 			ref={(node) => {
 				// Pass the ref to DND Kit
 				setNodeRef(node);
