@@ -16,7 +16,7 @@ function TestPlayer({ name, jerseyNumber }: TestPlayerProps) {
 
 	return (
 		<div ref={ref} className="node player noselect">
-			<div className="player__sprite drag-handle">
+			<div ref={handleRef} className="player__sprite drag-handle">
 				<span className="player__number">{jerseyNumber}</span>
 			</div>
 			<h3>{name}</h3>
