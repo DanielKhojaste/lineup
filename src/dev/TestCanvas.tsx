@@ -7,9 +7,7 @@ function TestCanvas() {
 
 	return (
 		<section ref={canvasRef} id="canvas" className="dev-border">
-			<DragDropProvider>
-				<TestPlayer canvasRef={canvasRef} name="Aitana" jerseyNumber={14} />
-			</DragDropProvider>
+			<TestPlayer canvasRef={canvasRef} name="Aitana" jerseyNumber={14} />
 		</section>
 	);
 }
