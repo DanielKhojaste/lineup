@@ -1,7 +1,9 @@
+import TestCanvas from "./TestCanvas";
+
 function TestHome() {
 	return (
 		<main className="testHome view">
-			<h1>Test Home</h1>
+			<TestCanvas />
 		</main>
 	);
 }
