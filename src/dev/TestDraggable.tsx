@@ -1,7 +1,7 @@
 import { useDraggable } from "@dnd-kit/react";
 import { CSS } from "@dnd-kit/utilities";
 
-function TestDraggable({ node }: { node: Node }) {
+function TestDraggable({ name }: { name: string }) {
 	const { ref, handleRef } = useDraggable({
 		id: "tempId",
 		data: {
@@ -12,7 +12,7 @@ function TestDraggable({ node }: { node: Node }) {
 
 	return (
 		<div ref={ref}>
-			<span>Node</span>
+			<span>{name}</span>
 		</div>
 	);
 }
