@@ -1,7 +1,7 @@
 import { useDraggable } from "@dnd-kit/react";
 import { CSS } from "@dnd-kit/utilities";
 
-function DraggableNode({ node }: { node: Node }) {
+function TestDraggable({ node }: { node: Node }) {
 	const { ref, handleRef } = useDraggable({
 		id: "tempId",
 		data: {
@@ -17,4 +17,4 @@ function DraggableNode({ node }: { node: Node }) {
 	);
 }
 
-export default DraggableNode;
+export default TestDraggable;
