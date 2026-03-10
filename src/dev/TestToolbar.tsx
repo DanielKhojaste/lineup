@@ -6,7 +6,7 @@ function TestToolbar() {
 	return (
 		<div className="toolbar">
 			{nodeTypes.map((type) => (
-				<h3>{type}</h3>
+				<h3 key={type}>{type}</h3>
 			))}
 		</div>
 	);
