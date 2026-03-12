@@ -1,8 +1,13 @@
-import { DragDropProvider, useDroppable } from "@dnd-kit/react";
-import TestPlayer from "./TestPlayer";
 import { useRef } from "react";
+import { useDroppable } from "@dnd-kit/react";
+import TestDraggable from "./TestDraggable";
+import { Node } from "../models/Node";
 
-function TestCanvas() {
+type CanvasProps = {
+	nodes: Node[];
+};
+
+function TestCanvas({ nodes }: CanvasProps) {
 	const canvasRef = useRef<HTMLElement | null>(null);
 	const { ref: droppableRef } = useDroppable({
 		id: "test-canvas",
@@ -15,7 +20,9 @@ function TestCanvas() {
 
 	return (
 		<section ref={combinedRef} id="canvas" className="dev-border">
-			<TestPlayer canvasRef={canvasRef} name="Aitana" jerseyNumber={14} />
+			{nodes.map((node) => (
+				<TestDraggable node={node} key={node.id} />
+			))}
 		</section>
 	);
 }
