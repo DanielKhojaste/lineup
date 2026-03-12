@@ -11,11 +11,15 @@ function TestDraggable({ node }: { node: Node }) {
 		},
 	});
 
+	const style = {
+		position: "absolute" as const,
+		left: node.x,
+		top: node.y,
+	};
+
 	return (
-		<div>
-			<span ref={ref} className="noselect">
-				{node.getType()}
-			</span>
+		<div ref={ref} style={style}>
+			<span className="noselect">{node.getType()}</span>
 		</div>
 	);
 }
