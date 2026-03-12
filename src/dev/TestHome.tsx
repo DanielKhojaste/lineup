@@ -6,6 +6,21 @@ import { NodeFactory } from "../models/NodeFactory";
 import { Node } from "../models/Node";
 import { NodeType } from "../models/NodeType";
 
+/**
+ * The drag handler types are inferred from DragDropProvider instead of
+ * importing event types directly. The drag event types featured in the docs are
+ * incompatible in this context. The DragDropProvider already enforces the
+ * correct type before usage. Contributors can safely update this if the
+ * provider changes types.
+ */
+type DragStartHandler = NonNullable<
+	React.ComponentProps<typeof DragDropProvider>["onDragStart"]
+>;
+
+type DragEndHandler = NonNullable<
+	React.ComponentProps<typeof DragDropProvider>["onDragEnd"]
+>;
+
 function TestHome() {
 	const [nodes, setNodes] = useState<Node[]>([
 		NodeFactory.create(NodeType.Player, {
@@ -17,33 +32,22 @@ function TestHome() {
 		NodeFactory.create(NodeType.Cone, { x: 100, y: 100 }),
 	]);
 
-	/**
-	 * Using `any` for `event` to keep code simple and readable.
-	 * TypeScript would otherwise require explicit types here.
-	 * The DragDropProvider already enforces the correct type at usage.
-	 * The DragStartEvent type is incompatible in this context.
-	 * Contributors can safely update this if the provider changes types.
-	 */
-	function handleDragStart(event: any) {
+	const handleDragStart: DragStartHandler = (event) => {
 		console.log("---- handleDragStart ----");
-		console.log(event);
-		console.log(event.operation);
-	}
+	};
 
-	// function handleDragEnd({ operation }: { operation: any }) {
-	function handleDragEnd(event: any) {
-		console.log("---- handleDragEnd ----");
-		const { source, transform, target } = event.operation;
+	const handleDragEnd: DragEndHandler = ({ operation }) => {
+		const { source, transform, target } = operation;
 
 		setNodes((prev) =>
 			prev.map((node) => {
-				if (node.id !== source.id) return node;
+				if (node.id !== source?.id) return node;
 
 				node.moveBy(transform.x, transform.y);
 				return node;
 			}),
 		);
-	}
+	};
 
 	return (
 		<main className="testHome view">
