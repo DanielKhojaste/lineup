@@ -1,9 +1,10 @@
 import { useDraggable } from "@dnd-kit/react";
-import { CSS } from "@dnd-kit/utilities";
+import NodeRenderer from "../components/nodes/NodeRenderer";
+import { Node } from "../models/Node";
 
-function TestDraggable({ name }: { name: string }) {
+function TestDraggable({ node }: { node: Node }) {
 	const { ref, handleRef } = useDraggable({
-		id: "tempId",
+		id: `${node.id}`,
 		data: {
 			from: "canvas-node",
 			type: "test-node",
@@ -11,8 +12,10 @@ function TestDraggable({ name }: { name: string }) {
 	});
 
 	return (
-		<div ref={ref}>
-			<span>{name}</span>
+		<div>
+			<span ref={ref} className="noselect">
+				{node.getType()}
+			</span>
 		</div>
 	);
 }
