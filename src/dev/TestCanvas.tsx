@@ -21,7 +21,7 @@ function TestCanvas({ nodes }: CanvasProps) {
 	return (
 		<section ref={combinedRef} id="canvas" className="dev-border">
 			{nodes.map((node) => (
-				<TestDraggable node={node} key={node.id} />
+				<TestDraggable key={node.id} node={node} canvasRef={canvasRef} />
 			))}
 		</section>
 	);

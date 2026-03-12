@@ -1,14 +1,26 @@
 import { useDraggable } from "@dnd-kit/react";
+import { RestrictToElement } from "@dnd-kit/dom/modifiers";
 import NodeRenderer from "../components/nodes/NodeRenderer";
 import { Node } from "../models/Node";
+import { RefObject } from "react";
 
-function TestDraggable({ node }: { node: Node }) {
+type DraggableProps = {
+	node: Node;
+	canvasRef: RefObject<HTMLElement | null>;
+};
+
+function TestDraggable({ node, canvasRef }: DraggableProps) {
 	const { ref, handleRef } = useDraggable({
 		id: `${node.id}`,
 		data: {
 			from: "canvas-node",
 			type: "test-node",
 		},
+		modifiers: [
+			RestrictToElement.configure({
+				element: () => canvasRef.current,
+			}),
+		],
 	});
 
 	const style = {
