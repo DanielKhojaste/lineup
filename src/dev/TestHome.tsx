@@ -30,10 +30,19 @@ function TestHome() {
 		console.log(event.operation);
 	}
 
+	// function handleDragEnd({ operation }: { operation: any }) {
 	function handleDragEnd(event: any) {
 		console.log("---- handleDragEnd ----");
-		console.log(event);
-		const { transform } = event.operation;
+		const { source, transform, target } = event.operation;
+
+		setNodes((prev) =>
+			prev.map((node) => {
+				if (node.id !== source.id) return node;
+
+				node.moveBy(transform.x, transform.y);
+				return node;
+			}),
+		);
 	}
 
 	return (
