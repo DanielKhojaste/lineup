@@ -37,16 +37,28 @@ function TestHome() {
 	};
 
 	const handleDragEnd: DragEndHandler = ({ operation }) => {
+		console.log(operation);
 		const { source, transform, target } = operation;
 
-		setNodes((prev) =>
-			prev.map((node) => {
-				if (node.id !== source?.id) return node;
+		// Create new node on the canvas
+		if (source?.data.from == "test-toolbar" && target?.id === "test-canvas") {
+			console.log("Create new node on the canvas");
+			// pass
+		}
 
-				node.moveBy(transform.x, transform.y);
-				return node;
-			}),
-		);
+		// Move existing canvas node
+		if (source?.data.from === "canvas-node" && target?.id === "test-canvas") {
+			console.log("Move existing canvas node");
+
+			setNodes((prev) =>
+				prev.map((node) => {
+					if (node.id !== source?.id) return node;
+
+					node.moveBy(transform.x, transform.y);
+					return node;
+				}),
+			);
+		}
 	};
 
 	return (
