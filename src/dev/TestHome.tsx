@@ -50,7 +50,7 @@ function TestHome() {
 	};
 
 	return (
-		<main className="testHome view">
+		<main className="home view">
 			<DragDropProvider onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
 				<TestToolbar />
 				<TestCanvas nodes={nodes} />
