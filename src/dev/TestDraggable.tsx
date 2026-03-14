@@ -14,7 +14,7 @@ function TestDraggable({ node, canvasRef }: DraggableProps) {
 		id: `${node.id}`,
 		data: {
 			from: "canvas-node",
-			type: "test-node",
+			type: node.getType(),
 		},
 		modifiers: [
 			RestrictToElement.configure({
