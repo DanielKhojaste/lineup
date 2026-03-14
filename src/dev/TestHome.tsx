@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { DragDropProvider } from "@dnd-kit/react";
+import { DragDropProvider, DragOverlay } from "@dnd-kit/react";
 import TestCanvas from "./TestCanvas";
 import TestToolbar from "./TestToolbar";
 import { NodeFactory } from "../models/NodeFactory";
@@ -22,6 +22,8 @@ type DragEndHandler = NonNullable<
 >;
 
 function TestHome() {
+	const [activeNodeOrigin, setActiveNodeOrigin] = useState<string | null>(null);
+	const [activeNodeType, setActiveNodeType] = useState<NodeType | null>(null);
 	const [nodes, setNodes] = useState<Node[]>([
 		NodeFactory.create(NodeType.Player, {
 			x: 0,
@@ -32,8 +34,13 @@ function TestHome() {
 		NodeFactory.create(NodeType.Cone, { x: 100, y: 100 }),
 	]);
 
-	const handleDragStart: DragStartHandler = (event) => {
+	const handleDragStart: DragStartHandler = ({ operation }) => {
 		console.log("---- handleDragStart ----");
+		console.log(operation);
+		const data = operation.source?.data;
+
+		setActiveNodeType(data?.type);
+		setActiveNodeOrigin(data?.from);
 	};
 
 	const handleDragEnd: DragEndHandler = ({ operation }) => {
@@ -61,11 +68,24 @@ function TestHome() {
 		}
 	};
 
+	function handleDragOverlay() {
+		// The drag overlay should only be displayed when a node is being dragged from the toolbar
+		if (activeNodeOrigin == "test-toolbar") {
+			return false;
+		}
+
+		return true;
+	}
+
 	return (
 		<main className="home view">
 			<DragDropProvider onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
 				<TestToolbar />
 				<TestCanvas nodes={nodes} />
+
+				<DragOverlay disabled={handleDragOverlay}>
+					<span>Overlaaay!</span>
+				</DragOverlay>
 			</DragDropProvider>
 		</main>
 	);
