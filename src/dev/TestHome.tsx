@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { DragDropProvider, DragOverlay } from "@dnd-kit/react";
 import TestCanvas from "./TestCanvas";
 import TestToolbar from "./TestToolbar";
@@ -22,6 +22,8 @@ type DragEndHandler = NonNullable<
 >;
 
 function TestHome() {
+	const canvasRef = useRef<HTMLElement | null>(null);
+
 	const [activeNodeOrigin, setActiveNodeOrigin] = useState<string | null>(null);
 	const [activeNodeType, setActiveNodeType] = useState<NodeType | null>(null);
 	const [nodes, setNodes] = useState<Node[]>([
@@ -35,8 +37,6 @@ function TestHome() {
 	]);
 
 	const handleDragStart: DragStartHandler = ({ operation }) => {
-		console.log("---- handleDragStart ----");
-		console.log(operation);
 		const data = operation.source?.data;
 
 		setActiveNodeType(data?.type);
@@ -44,19 +44,34 @@ function TestHome() {
 	};
 
 	const handleDragEnd: DragEndHandler = ({ operation }) => {
-		console.log(operation);
 		const { source, transform, target } = operation;
+		setActiveNodeOrigin(null);
+		setActiveNodeType(null);
 
 		// Create new node on the canvas
-		if (source?.data.from == "test-toolbar" && target?.id === "test-canvas") {
-			console.log("Create new node on the canvas");
-			// pass
+		if (source?.data.from === "test-toolbar" && target?.id === "test-canvas") {
+			const canvasRect = canvasRef.current?.getBoundingClientRect();
+
+			/**
+			 * `shape.current` is typed as a generic `Shape` in dnd-kit, which does not
+			 * expose DOMRect properties like `left` and `top`. At runtime it is produced
+			 * from `getBoundingClientRect()`, so casting to `DOMRect` is safe and removes
+			 * the TypeScript error.
+			 */
+			const shape = operation.shape?.current as DOMRect | undefined;
+
+			if (!shape || !canvasRect) return;
+
+			const x = shape.left - canvasRect.left;
+			const y = shape.top - canvasRect.top;
+
+			const newNode = NodeFactory.create(activeNodeType as NodeType, { x, y });
+
+			setNodes((prev) => [...prev, newNode]);
 		}
 
 		// Move existing canvas node
 		if (source?.data.from === "canvas-node" && target?.id === "test-canvas") {
-			console.log("Move existing canvas node");
-
 			setNodes((prev) =>
 				prev.map((node) => {
 					if (node.id !== source?.id) return node;
@@ -81,10 +96,10 @@ function TestHome() {
 		<main className="home view">
 			<DragDropProvider onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
 				<TestToolbar />
-				<TestCanvas nodes={nodes} />
+				<TestCanvas canvasRef={canvasRef} nodes={nodes} />
 
 				<DragOverlay disabled={handleDragOverlay}>
-					<span>Overlaaay!</span>
+					<span>{activeNodeType}</span>
 				</DragOverlay>
 			</DragDropProvider>
 		</main>
