@@ -5,14 +5,21 @@ import { CSSProperties, RefCallback } from "react";
 type TestRendererProps = {
 	node: Node;
 	draggableRef: RefCallback<HTMLDivElement>;
-	style: CSSProperties;
+	isPreview?: boolean;
+	style?: CSSProperties;
 };
 
 /**
  * This component renders the appropriate marker component for a given Node model.
  **/
-function TestRenderer({ node, draggableRef, style }: TestRendererProps) {
+function TestRenderer({
+	node,
+	draggableRef,
+	isPreview = false,
+	style,
+}: TestRendererProps) {
 	const nodeDefintion = NODE_REGISTRY[node.getType()];
+	// TODO: The markers should be modified to take a ref as well as a CSS style object.
 	const Marker = nodeDefintion.Marker;
 
 	return (
