@@ -1,10 +1,10 @@
 import { Node } from "../models/Node";
 import { NODE_REGISTRY } from "../components/nodes/nodeRegistry";
-import { RefObject, CSSProperties } from "react";
+import { CSSProperties, RefCallback } from "react";
 
 type TestRendererProps = {
 	node: Node;
-	draggableRef: RefObject<HTMLDivElement | null>;
+	draggableRef: RefCallback<HTMLDivElement>;
 	style: CSSProperties;
 };
 
@@ -16,7 +16,7 @@ function TestRenderer({ node, draggableRef, style }: TestRendererProps) {
 	const Marker = nodeDefintion.Marker;
 
 	return (
-		<div ref={draggableRef} style={style}>
+		<div ref={draggableRef} style={style} className="node noselect">
 			{node.getType()}
 		</div>
 	);

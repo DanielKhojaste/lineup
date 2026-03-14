@@ -1,8 +1,8 @@
 import { useDraggable } from "@dnd-kit/react";
 import { RestrictToElement } from "@dnd-kit/dom/modifiers";
-import NodeRenderer from "../components/nodes/NodeRenderer";
 import { Node } from "../models/Node";
 import { RefObject } from "react";
+import TestRenderer from "./TestRenderer";
 
 type DraggableProps = {
 	node: Node;
@@ -29,11 +29,7 @@ function TestDraggable({ node, canvasRef }: DraggableProps) {
 		top: node.y,
 	};
 
-	return (
-		<div ref={ref} style={style}>
-			<span className="noselect">{node.getType()}</span>
-		</div>
-	);
+	return <TestRenderer node={node} draggableRef={ref} style={style} />;
 }
 
 export default TestDraggable;
