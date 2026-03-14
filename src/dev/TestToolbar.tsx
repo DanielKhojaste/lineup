@@ -1,12 +1,13 @@
 import { NodeType } from "../models/NodeType";
+import TestToolbarItem from "./TestToolbarItem";
 
-const nodeTypes = [NodeType.Player, NodeType.Cone];
+const nodeTypes = Object.values(NodeType);
 
 function TestToolbar() {
 	return (
 		<div className="toolbar">
 			{nodeTypes.map((type) => (
-				<h3 key={type}>{type}</h3>
+				<TestToolbarItem key={`toolbar-${type}`} type={type} />
 			))}
 		</div>
 	);
