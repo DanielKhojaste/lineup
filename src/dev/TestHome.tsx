@@ -99,7 +99,7 @@ function TestHome() {
 				<TestCanvas canvasRef={canvasRef} nodes={nodes} />
 
 				<DragOverlay disabled={handleDragOverlay} dropAnimation={null}>
-					<span>{activeNodeType}</span>
+					<span className="drag-overlay">{activeNodeType}</span>
 				</DragOverlay>
 			</DragDropProvider>
 		</main>
