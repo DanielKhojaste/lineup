@@ -98,7 +98,7 @@ function TestHome() {
 				<TestToolbar />
 				<TestCanvas canvasRef={canvasRef} nodes={nodes} />
 
-				<DragOverlay disabled={handleDragOverlay}>
+				<DragOverlay disabled={handleDragOverlay} dropAnimation={null}>
 					<span>{activeNodeType}</span>
 				</DragOverlay>
 			</DragDropProvider>
