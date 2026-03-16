@@ -1,10 +1,12 @@
 import { Node } from "../../models/Node";
 import { NODE_REGISTRY } from "./nodeRegistry";
+import { CSSProperties, RefCallback } from "react";
 
 type NodeRendererProps = {
 	node: Node;
-	containerProps: object;
-	dragHandleProps: object;
+	draggableRef: RefCallback<HTMLDivElement>;
+	isPreview?: boolean;
+	style?: CSSProperties;
 };
 
 /**
@@ -12,18 +14,17 @@ type NodeRendererProps = {
  **/
 function NodeRenderer({
 	node,
-	containerProps,
-	dragHandleProps,
+	draggableRef,
+	isPreview = false,
+	style,
 }: NodeRendererProps) {
-	const nodeDefintion = NODE_REGISTRY[node.getType()];
-	const Marker = nodeDefintion.Marker;
+	const nodeDefinition = NODE_REGISTRY[node.getType()];
+	const Marker = nodeDefinition.Marker;
 
 	return (
-		<Marker
-			{...nodeDefintion.getNodeProps(node)}
-			containerProps={containerProps}
-			dragHandleProps={dragHandleProps}
-		/>
+		<div ref={draggableRef} style={style} className="node noselect">
+			{node.getType()}
+		</div>
 	);
 }
 

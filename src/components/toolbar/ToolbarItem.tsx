@@ -1,26 +1,16 @@
-import { useDraggable } from "@dnd-kit/core";
+import { useDraggable } from "@dnd-kit/react";
 import { NodeType } from "../../models/NodeType";
-import NodePreview from "./NodePreview";
 
 function ToolbarItem({ type }: { type: NodeType }) {
-	const { attributes, listeners, setNodeRef, transform } = useDraggable({
+	const { ref } = useDraggable({
 		id: `toolbar-${type}`,
 		data: {
 			from: "toolbar",
-			nodeType: type,
+			type,
 		},
 	});
 
-	return (
-		<div
-			ref={setNodeRef}
-			{...listeners}
-			{...attributes}
-			className="toolbar__item"
-		>
-			<NodePreview type={type} />
-		</div>
-	);
+	return <h3 ref={ref}>{type}</h3>;
 }
 
 export default ToolbarItem;

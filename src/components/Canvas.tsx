@@ -1,41 +1,30 @@
-import { forwardRef } from "react";
-import { useDroppable } from "@dnd-kit/core";
-import { Node } from "../models/Node";
+import { RefObject } from "react";
+import { useDroppable } from "@dnd-kit/react";
 import DraggableNode from "./nodes/DraggableNode";
+import { Node } from "../models/Node";
 
 type CanvasProps = {
 	nodes: Node[];
+	canvasRef: RefObject<HTMLElement | null>;
 };
 
-function Canvas(
-	{ nodes }: CanvasProps,
-	externalRef: React.ForwardedRef<HTMLDivElement>,
-) {
-	const { setNodeRef } = useDroppable({
+function Canvas({ nodes, canvasRef }: CanvasProps) {
+	const { ref: droppableRef } = useDroppable({
 		id: "canvas",
 	});
 
-	return (
-		<div
-			id="canvas"
-			className="dev-border"
-			ref={(node) => {
-				// Pass the ref to DND Kit
-				setNodeRef(node);
+	function combinedRef(element: HTMLElement | null) {
+		canvasRef.current = element;
+		droppableRef(element);
+	}
 
-				// Pass the ref to Home
-				if (typeof externalRef === "function") {
-					externalRef(node);
-				} else if (externalRef) {
-					externalRef.current = node;
-				}
-			}}
-		>
+	return (
+		<section ref={combinedRef} id="canvas" className="dev-border">
 			{nodes.map((node) => (
-				<DraggableNode node={node} key={node.id} />
+				<DraggableNode key={node.id} node={node} canvasRef={canvasRef} />
 			))}
-		</div>
+		</section>
 	);
 }
 
-export default forwardRef(Canvas);
+export default Canvas;

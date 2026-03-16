@@ -1,51 +1,35 @@
-import { useDraggable } from "@dnd-kit/core";
-import { CSS } from "@dnd-kit/utilities";
+import { useDraggable } from "@dnd-kit/react";
+import { RestrictToElement } from "@dnd-kit/dom/modifiers";
 import { Node } from "../../models/Node";
+import { RefObject } from "react";
 import NodeRenderer from "./NodeRenderer";
 
-/**
- * This component uses NodeRenderer to display the correct node marker and handles its drag and drop behavior.
- *
- * Drag behavior is handled here using dnd-kit and injected into the marker
- * components as props. The draggable container (target element) and the drag
- * handle (drag activator) may be different elements depending on the node
- * type. For example, the PlayerMarker can only be dragged by its sprite.
- */
+type DraggableNodeProps = {
+	node: Node;
+	canvasRef: RefObject<HTMLElement | null>;
+};
 
-function DraggableNode({ node }: { node: Node }) {
-	const { attributes, listeners, setNodeRef, transform } = useDraggable({
-		id: node.id,
+function DraggableNode({ node, canvasRef }: DraggableNodeProps) {
+	const { ref, handleRef } = useDraggable({
+		id: `${node.id}`,
 		data: {
 			from: "canvas-node",
-			nodeType: node.getType(),
+			type: node.getType(),
 		},
+		modifiers: [
+			RestrictToElement.configure({
+				element: () => canvasRef.current,
+			}),
+		],
 	});
 
 	const style = {
+		position: "absolute" as const,
 		left: node.x,
 		top: node.y,
-		transform: CSS.Translate.toString(transform),
 	};
 
-	// Draggable container (e.g., PlayerMarker container)
-	const containerProps = {
-		ref: setNodeRef,
-		style: style,
-	};
-
-	// Drag handle (e.g., PlayerMarker sprite)
-	const dragHandleProps = {
-		...listeners,
-		...attributes,
-	};
-
-	return (
-		<NodeRenderer
-			node={node}
-			containerProps={containerProps}
-			dragHandleProps={dragHandleProps}
-		/>
-	);
+	return <NodeRenderer node={node} draggableRef={ref} style={style} />;
 }
 
 export default DraggableNode;

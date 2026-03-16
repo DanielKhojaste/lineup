@@ -7,10 +7,9 @@ const Home = lazy(() => import("../views/Home"));
 const NotFound = lazy(() => import("../views/NotFound"));
 
 export const routes: RouteObject[] = [
-	// DEV: Change default path to Home
 	{
 		path: "/",
-		element: <TestHome />,
+		element: <Home />,
 	},
 	{
 		path: "/home",

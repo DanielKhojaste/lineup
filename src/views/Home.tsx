@@ -1,22 +1,31 @@
 import { useRef, useState } from "react";
-import {
-	DndContext,
-	DragEndEvent,
-	DragMoveEvent,
-	DragOverlay,
-	DragStartEvent,
-} from "@dnd-kit/core";
-import Toolbar from "../components/Toolbar";
+import { DragDropProvider, DragOverlay } from "@dnd-kit/react";
 import Canvas from "../components/Canvas";
-import { Node } from "../models/Node";
+import Toolbar from "../components/Toolbar";
 import { NodeFactory } from "../models/NodeFactory";
+import { Node } from "../models/Node";
 import { NodeType } from "../models/NodeType";
-import NodePreview from "../components/toolbar/NodePreview";
+
+/**
+ * The drag handler types are inferred from DragDropProvider instead of
+ * importing event types directly. The drag event types featured in the docs are
+ * incompatible in this context. The DragDropProvider already enforces the
+ * correct type before usage. Contributors can safely update this if the
+ * provider changes types.
+ */
+type DragStartHandler = NonNullable<
+	React.ComponentProps<typeof DragDropProvider>["onDragStart"]
+>;
+
+type DragEndHandler = NonNullable<
+	React.ComponentProps<typeof DragDropProvider>["onDragEnd"]
+>;
 
 function Home() {
-	const canvasRef = useRef<HTMLDivElement | null>(null);
-	const dragStartPosition = useRef<{ x: number; y: number } | null>(null);
+	const canvasRef = useRef<HTMLElement | null>(null);
 
+	const [activeNodeOrigin, setActiveNodeOrigin] = useState<string | null>(null);
+	const [activeNodeType, setActiveNodeType] = useState<NodeType | null>(null);
 	const [nodes, setNodes] = useState<Node[]>([
 		NodeFactory.create(NodeType.Player, {
 			x: 0,
@@ -27,98 +36,73 @@ function Home() {
 		NodeFactory.create(NodeType.Cone, { x: 100, y: 100 }),
 	]);
 
-	const [activeNodeType, setActiveNodeType] = useState<NodeType | null>(null);
-	const [isLoading, setIsLoading] = useState<boolean>(true);
-	const [pointerPosition, setPointerPosition] = useState({ x: 0, y: 0 });
+	const handleDragStart: DragStartHandler = ({ operation }) => {
+		const data = operation.source?.data;
 
-	function handleDragStart(event: DragStartEvent) {
-		const { active } = event;
-		const data = active.data.current;
+		setActiveNodeType(data?.type);
+		setActiveNodeOrigin(data?.from);
+	};
 
-		if (data?.from === "toolbar") {
-			setActiveNodeType(data.nodeType);
-		}
+	const handleDragEnd: DragEndHandler = ({ operation }) => {
+		const { source, transform, target } = operation;
 
-		if (data?.from === "canvas-node") {
-			const node = nodes.find((n) => n.id === active.id);
-			if (node) {
-				dragStartPosition.current = { x: node.x, y: node.y };
-			}
-		}
-	}
-
-	function handleDragMove(event: DragMoveEvent) {
-		const { active, delta } = event;
-		const data = active.data.current;
-
-		if (data?.from !== "canvas-node") return;
-
-		const canvasRect = canvasRef.current?.getBoundingClientRect();
-		if (!canvasRect || !dragStartPosition.current) return;
-
-		const start = dragStartPosition.current;
-
-		const nextX = start.x + delta.x;
-		const nextY = start.y + delta.y;
-
-		setNodes((prev) => {
-			const next = [...prev];
-			const node = next.find((n) => n.id === active.id);
-			if (!node) return prev;
-
-			// TODO: The clamp function only works for the top and left side of the canvas at the time. Must be fixed by updating to the new DND engine.
-			node.moveTo(
-				{
-					x: nextX,
-					y: nextY,
-				},
-				{
-					width: canvasRect.width,
-					height: canvasRect.height,
-				},
-			);
-
-			return next;
-		});
-	}
-
-	function handleDragEnd(event: DragEndEvent) {
+		setActiveNodeOrigin(null);
 		setActiveNodeType(null);
-		dragStartPosition.current = null;
 
-		const { active, over } = event;
-		const data = active.data.current;
-		const canvasRect = canvasRef.current?.getBoundingClientRect();
-		if (!canvasRect) return;
+		// Create new node on the canvas
+		if (source?.data.from === "toolbar" && target?.id === "canvas") {
+			const canvasRect = canvasRef.current?.getBoundingClientRect();
 
-		if (data?.from === "toolbar" && over?.id === "canvas") {
-			const translated = active.rect.current.translated;
-			if (!translated) return;
+			/**
+			 * `shape.current` is typed as a generic `Shape` in dnd-kit, which does not
+			 * expose DOMRect properties like `left` and `top`. At runtime it is produced
+			 * from `getBoundingClientRect()`, so casting to `DOMRect` is safe and removes
+			 * the TypeScript error.
+			 */
+			const shape = operation.shape?.current as DOMRect | undefined;
 
-			const x = translated.left - canvasRect.left;
-			const y = translated.top - canvasRect.top;
+			if (!shape || !canvasRect) return;
 
-			const newNode = NodeFactory.create(data.nodeType, { x, y });
+			const x = shape.left - canvasRect.left;
+			const y = shape.top - canvasRect.top;
+
+			const newNode = NodeFactory.create(activeNodeType as NodeType, { x, y });
 
 			setNodes((prev) => [...prev, newNode]);
 		}
+
+		// Move existing canvas node
+		if (source?.data.from === "canvas-node" && target?.id === "canvas") {
+			setNodes((prev) =>
+				prev.map((node) => {
+					if (node.id !== source?.id) return node;
+
+					node.moveBy(transform.x, transform.y);
+					return node;
+				}),
+			);
+		}
+	};
+
+	function handleDragOverlay() {
+		// The drag overlay should only be displayed when a node is being dragged from the toolbar
+		if (activeNodeOrigin === "toolbar") {
+			return false;
+		}
+
+		return true;
 	}
 
 	return (
 		<main className="home view">
-			<DndContext
-				onDragStart={handleDragStart}
-				onDragMove={handleDragMove}
-				onDragEnd={handleDragEnd}
-				autoScroll={false}
-			>
+			<DragDropProvider onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
 				<Toolbar />
-				<Canvas ref={canvasRef} nodes={nodes} />
+				<Canvas canvasRef={canvasRef} nodes={nodes} />
 
-				<DragOverlay className="drag-overlay">
-					{activeNodeType ? <NodePreview type={activeNodeType} /> : null}
+				<DragOverlay disabled={handleDragOverlay} dropAnimation={null}>
+					<span className="drag-overlay">{activeNodeType}</span>
 				</DragOverlay>
-			</DndContext>
+			</DragDropProvider>
 		</main>
 	);
 }

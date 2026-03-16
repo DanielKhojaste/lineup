@@ -50,6 +50,7 @@ function TestHome() {
 
 		// Create new node on the canvas
 		if (source?.data.from === "test-toolbar" && target?.id === "test-canvas") {
+			// TODO: Clamp the initial node position. The nodes can be created 1px below the toolbar which makes it hard to move.
 			const canvasRect = canvasRef.current?.getBoundingClientRect();
 
 			/**
