@@ -29,7 +29,14 @@ function DraggableNode({ node, canvasRef }: DraggableNodeProps) {
 		top: node.y,
 	};
 
-	return <NodeRenderer node={node} draggableRef={ref} style={style} />;
+	return (
+		<NodeRenderer
+			node={node}
+			draggableRef={ref}
+			dragHandleRef={handleRef}
+			style={style}
+		/>
+	);
 }
 
 export default DraggableNode;
