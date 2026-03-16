@@ -1,8 +1,10 @@
 import { useDraggable } from "@dnd-kit/react";
 import { NodeType } from "../../models/NodeType";
+import NodeRenderer from "../nodes/NodeRenderer";
+import { NodeFactory } from "../../models/NodeFactory";
 
 function ToolbarItem({ type }: { type: NodeType }) {
-	const { ref } = useDraggable({
+	const { ref, handleRef } = useDraggable({
 		id: `toolbar-${type}`,
 		data: {
 			from: "toolbar",
@@ -10,7 +12,11 @@ function ToolbarItem({ type }: { type: NodeType }) {
 		},
 	});
 
-	return <h3 ref={ref}>{type}</h3>;
+	const previewNode = NodeFactory.create(type, { x: 0, y: 0 });
+
+	return (
+		<NodeRenderer node={previewNode} containerRef={ref} handleRef={handleRef} />
+	);
 }
 
 export default ToolbarItem;

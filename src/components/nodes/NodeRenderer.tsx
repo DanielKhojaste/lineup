@@ -6,7 +6,6 @@ type NodeRendererProps = {
 	node: Node;
 	containerRef: RefCallback<HTMLDivElement>;
 	handleRef: RefCallback<HTMLDivElement>;
-	isPreview?: boolean;
 	style?: CSSProperties;
 };
 
@@ -17,7 +16,6 @@ function NodeRenderer({
 	node,
 	containerRef,
 	handleRef,
-	isPreview = false,
 	style = {},
 }: NodeRendererProps) {
 	const nodeDefinition = NODE_REGISTRY[node.getType()];
