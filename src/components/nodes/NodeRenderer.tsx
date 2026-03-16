@@ -18,15 +18,18 @@ function NodeRenderer({
 	containerRef,
 	handleRef,
 	isPreview = false,
-	style,
+	style = {},
 }: NodeRendererProps) {
 	const nodeDefinition = NODE_REGISTRY[node.getType()];
 	const Marker = nodeDefinition.Marker;
 
 	return (
-		<div ref={containerRef} style={style} className="node noselect">
-			{node.getType()}
-		</div>
+		<Marker
+			{...nodeDefinition.getNodeProps(node)}
+			containerRef={containerRef}
+			handleRef={handleRef}
+			style={style}
+		/>
 	);
 }
 
