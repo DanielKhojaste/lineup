@@ -4,8 +4,8 @@ import { CSSProperties, RefCallback } from "react";
 
 type NodeRendererProps = {
 	node: Node;
-	draggableRef: RefCallback<HTMLDivElement>;
-	dragHandleRef: RefCallback<HTMLDivElement>;
+	containerRef: RefCallback<HTMLDivElement>;
+	handleRef: RefCallback<HTMLDivElement>;
 	isPreview?: boolean;
 	style?: CSSProperties;
 };
@@ -15,8 +15,8 @@ type NodeRendererProps = {
  **/
 function NodeRenderer({
 	node,
-	draggableRef,
-	dragHandleRef,
+	containerRef,
+	handleRef,
 	isPreview = false,
 	style,
 }: NodeRendererProps) {
@@ -24,7 +24,7 @@ function NodeRenderer({
 	const Marker = nodeDefinition.Marker;
 
 	return (
-		<div ref={draggableRef} style={style} className="node noselect">
+		<div ref={containerRef} style={style} className="node noselect">
 			{node.getType()}
 		</div>
 	);

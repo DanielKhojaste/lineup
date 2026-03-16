@@ -32,8 +32,8 @@ function DraggableNode({ node, canvasRef }: DraggableNodeProps) {
 	return (
 		<NodeRenderer
 			node={node}
-			draggableRef={ref}
-			dragHandleRef={handleRef}
+			containerRef={ref}
+			handleRef={handleRef}
 			style={style}
 		/>
 	);
