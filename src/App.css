@@ -137,10 +137,22 @@ Retrieved 2026-02-17, License - CC BY-SA 4.0
 .player__name {
 	/* TODO: Automatically choose the color based on the canvas background image */
 	color: white;
+
+	/* DEV: A text outline might work better than a text shadow. */
 	text-shadow:
 		0 1px 2px rgba(0, 0, 0, 0.9),
 		0 0 4px rgba(0, 0, 0, 0.8),
 		0 0 8px rgba(0, 0, 0, 0.6);
+
+	/* Outline: */
+	/* 
+	text-shadow:
+		-1px -1px 0 #000,
+		1px -1px 0 #000,
+		-1px 1px 0 #000,
+		1px 1px 0 #000,
+		0px 0px 4px rgba(0, 0, 0, 0.8);
+	*/
 }
 
 .cone {
