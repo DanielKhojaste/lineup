@@ -24,7 +24,7 @@ function PlayerMarker({
 					{jerseyNumber ? jerseyNumber : null}
 				</span>
 			</div>
-			<h3>{name}</h3>
+			<span className="player__name">{name}</span>
 		</div>
 	);
 }
