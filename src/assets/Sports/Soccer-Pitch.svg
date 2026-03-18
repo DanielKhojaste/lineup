@@ -1,6 +1,6 @@
 <svg width="1440" height="960" viewBox="0 0 1440 960" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g clip-path="url(#clip0_1_214)">
-<path d="M1.14479e-05 0L0 960L1440 960L1440 1.71718e-05L1.14479e-05 0Z" fill="url(#paint0_linear_1_214)"/>
+<g clip-path="url(#clip0_1_195)">
+<path d="M1.14479e-05 0L0 960L1440 960L1440 1.71718e-05L1.14479e-05 0Z" fill="url(#paint0_linear_1_195)"/>
 <path d="M38.9189 921.081L38.919 38.9189L1401.08 38.9189L1401.08 921.081L38.9189 921.081Z" stroke="white" stroke-width="5"/>
 <path d="M720 921.081L720 38.9189" stroke="white" stroke-width="5"/>
 <path d="M838.702 480C838.702 414.442 785.557 361.297 720 361.297C654.442 361.297 601.297 414.442 601.297 480C601.297 545.558 654.442 598.703 720 598.703C785.557 598.703 838.702 545.558 838.702 480Z" stroke="white" stroke-width="5"/>
@@ -16,14 +16,12 @@
 <path d="M64.8649 921.081C64.8649 914.2 62.1313 907.6 57.2655 902.735C52.3997 897.869 45.8002 895.135 38.9189 895.135M38.919 64.8648C45.8002 64.8648 52.3997 62.1313 57.2655 57.2655C62.1313 52.3997 64.8649 45.8002 64.8649 38.9189M1375.14 38.9189C1375.14 45.8002 1377.87 52.3997 1382.73 57.2655C1387.6 62.1313 1394.2 64.8649 1401.08 64.8649M1401.08 895.135C1394.2 895.135 1387.6 897.869 1382.73 902.735C1377.87 907.6 1375.14 914.2 1375.14 921.081" stroke="white" stroke-width="5"/>
 </g>
 <defs>
-<linearGradient id="paint0_linear_1_214" x1="5.72394e-06" y1="480" x2="1440" y2="480" gradientUnits="userSpaceOnUse">
-<stop stop-color="#163416"/>
-<stop offset="0.149038" stop-color="#1A551A"/>
+<linearGradient id="paint0_linear_1_195" x1="5.72394e-06" y1="480" x2="1440" y2="480" gradientUnits="userSpaceOnUse">
+<stop stop-color="#1A551A"/>
 <stop offset="0.5" stop-color="#3C8C3C"/>
-<stop offset="0.85" stop-color="#1A551A"/>
-<stop offset="1" stop-color="#163416"/>
+<stop offset="1" stop-color="#1A551A"/>
 </linearGradient>
-<clipPath id="clip0_1_214">
+<clipPath id="clip0_1_195">
 <rect width="960" height="1440" fill="white" transform="translate(0 960) rotate(-90)"/>
 </clipPath>
 </defs>
