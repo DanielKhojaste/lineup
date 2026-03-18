@@ -10,6 +10,20 @@ This project adheres to semantic versioning (0.x during early development).
 
 ---
 
+## [0.2.3] - 2026-03-17
+
+### Added
+
+- Soccer pitch background image
+
+### Changed
+
+- Migrated drag-and-drop engine from `@dnd-kit/core` to `@dnd-kit/react`
+- Internal improvements to node dragging, canvas handling, and toolbar previews
+- Improved player name visibility
+
+---
+
 ## [0.2.2] - 2026-03-09
 
 ### Added
