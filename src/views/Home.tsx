@@ -5,6 +5,7 @@ import Toolbar from "../components/Toolbar";
 import { NodeFactory } from "../models/NodeFactory";
 import { Node } from "../models/Node";
 import { NodeType } from "../models/NodeType";
+import NodePreview from "../components/toolbar/NodePreview";
 
 /**
  * The drag handler types are inferred from DragDropProvider instead of
@@ -100,7 +101,8 @@ function Home() {
 				<Canvas canvasRef={canvasRef} nodes={nodes} />
 
 				<DragOverlay disabled={handleDragOverlay} dropAnimation={null}>
-					<span className="drag-overlay">{activeNodeType}</span>
+					{/* <span className="drag-overlay">{activeNodeType}</span> */}
+					<NodePreview type={activeNodeType as NodeType} />
 				</DragOverlay>
 			</DragDropProvider>
 		</main>
