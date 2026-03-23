@@ -5,13 +5,19 @@ type ConeMarkerProps = {
 	containerRef?: RefCallback<HTMLDivElement>;
 	handleRef?: RefCallback<HTMLDivElement>;
 	style?: CSSProperties;
+	className?: string;
 };
 
-function ConeMarker({ containerRef, handleRef, style }: ConeMarkerProps) {
+function ConeMarker({
+	containerRef,
+	handleRef,
+	style,
+	className,
+}: ConeMarkerProps) {
 	return (
 		<div ref={containerRef} style={style} className="node cone drag-handle">
 			<ConeIcon
-				className="cone-icon"
+				className={`cone-icon ${className}`}
 				fill="#7814ff"
 				strokeWidth={0}
 				stroke="#000"

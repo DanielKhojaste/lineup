@@ -7,6 +7,7 @@ type PlayerMarkerProps = {
 	containerRef?: RefCallback<HTMLDivElement>;
 	handleRef?: RefCallback<HTMLDivElement>;
 	style?: CSSProperties;
+	className?: string;
 };
 
 function PlayerMarker({
@@ -16,9 +17,14 @@ function PlayerMarker({
 	containerRef,
 	handleRef,
 	style,
+	className,
 }: PlayerMarkerProps) {
 	return (
-		<div ref={containerRef} style={style} className="node player noselect">
+		<div
+			ref={containerRef}
+			style={style}
+			className={`node player noselect ${className}`}
+		>
 			<div ref={handleRef} className="player__sprite drag-handle">
 				<span className="player__number">
 					{jerseyNumber ? jerseyNumber : null}
