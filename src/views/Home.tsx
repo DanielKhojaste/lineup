@@ -101,8 +101,10 @@ function Home() {
 				<Canvas canvasRef={canvasRef} nodes={nodes} />
 
 				<DragOverlay disabled={handleDragOverlay} dropAnimation={null}>
-					{/* <span className="drag-overlay">{activeNodeType}</span> */}
-					<NodePreview type={activeNodeType as NodeType} />
+					<NodePreview
+						className="drag-overlay"
+						type={activeNodeType as NodeType}
+					/>
 				</DragOverlay>
 			</DragDropProvider>
 		</main>
