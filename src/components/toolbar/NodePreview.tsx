@@ -1,14 +1,23 @@
+import { RefCallback } from "react";
 import { NodeType } from "../../models/NodeType";
 import { NODE_REGISTRY } from "../nodes/nodeRegistry";
 
+type NodePreviewProps = {
+	type: NodeType;
+	containerRef?: RefCallback<HTMLDivElement>;
+	handleRef?: RefCallback<HTMLDivElement>;
+};
+
 /**
- * This component renders the appropriate marker component for a given Node model.
+ * This component renders a node marker without requiring a node instance. Used for the drag overlay preview as well as the toolbar items.
  **/
-function NodePreview({ type }: { type: NodeType }) {
+function NodePreview({ type, containerRef, handleRef }: NodePreviewProps) {
 	const nodeDefintion = NODE_REGISTRY[type];
 	const Marker = nodeDefintion.Marker;
 
-	return <Marker containerProps={{}} dragHandleProps={{}} />;
+	return (
+		<Marker containerRef={containerRef} handleRef={handleRef} style={{}} />
+	);
 }
 
 export default NodePreview;
