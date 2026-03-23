@@ -2,9 +2,9 @@ import { CSSProperties, RefCallback } from "react";
 import ConeIcon from "../../assets/Nodes/Cone.svg?react";
 
 type ConeMarkerProps = {
-	containerRef: RefCallback<HTMLDivElement>;
-	handleRef: RefCallback<HTMLDivElement>;
-	style: CSSProperties;
+	containerRef?: RefCallback<HTMLDivElement>;
+	handleRef?: RefCallback<HTMLDivElement>;
+	style?: CSSProperties;
 };
 
 function ConeMarker({ containerRef, handleRef, style }: ConeMarkerProps) {

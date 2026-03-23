@@ -4,9 +4,9 @@ type PlayerMarkerProps = {
 	jerseyNumber?: number;
 	name?: string;
 	position?: string;
-	containerRef: RefCallback<HTMLDivElement>;
-	handleRef: RefCallback<HTMLDivElement>;
-	style: CSSProperties;
+	containerRef?: RefCallback<HTMLDivElement>;
+	handleRef?: RefCallback<HTMLDivElement>;
+	style?: CSSProperties;
 };
 
 function PlayerMarker({
