@@ -1,14 +1,10 @@
-import { CSSProperties, RefCallback } from "react";
+import { BaseMarkerProps } from "./marker.types";
 
-type PlayerMarkerProps = {
+export interface PlayerMarkerProps extends BaseMarkerProps {
 	jerseyNumber?: number;
 	name?: string;
 	position?: string;
-	containerRef?: RefCallback<HTMLDivElement>;
-	handleRef?: RefCallback<HTMLDivElement>;
-	style?: CSSProperties;
-	className?: string;
-};
+}
 
 function PlayerMarker({
 	jerseyNumber,
