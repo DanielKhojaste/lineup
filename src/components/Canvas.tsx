@@ -19,10 +19,14 @@ function Canvas({ nodes, canvasRef }: CanvasProps) {
 	}
 
 	return (
-		<section ref={combinedRef} id="canvas" className="dev-border">
-			{nodes.map((node) => (
-				<DraggableNode key={node.id} node={node} canvasRef={canvasRef} />
-			))}
+		<section id="canvas" className="dev-border">
+			<div ref={combinedRef} className="pitch-wrapper">
+				<div className="node-layer">
+					{nodes.map((node) => (
+						<DraggableNode key={node.id} node={node} canvasRef={canvasRef} />
+					))}
+				</div>
+			</div>
 		</section>
 	);
 }

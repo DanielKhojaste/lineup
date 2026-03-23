@@ -79,16 +79,28 @@ Retrieved 2026-02-17, License - CC BY-SA 4.0
 	list-style: none;
 	cursor: pointer;
 }
+/* Wiki Pitch 2.2.3 */
 
 #canvas {
 	flex: 1;
-	position: relative;
+	display: flex;
+	justify-content: center;
+	align-items: center;
 	overflow: hidden;
-	/* Wiki Pitch 2.2.3 */
+	min-height: 0;
+}
+
+.pitch-wrapper {
+	position: relative;
+	aspect-ratio: 1440 / 960;
+	height: min(100%, calc(100vw * (960 / 1440)));
 	background-image: url(./assets/Sports/Soccer-Pitch.svg);
 	background-repeat: no-repeat;
-	background-position: left top;
-	background-size: contain;
+	background-position: center;
+	background-size: 100% 100%;
+}
+
+.node-layer {
 }
 
 /* ------ Components / Nodes ------ */
@@ -145,7 +157,7 @@ Retrieved 2026-02-17, License - CC BY-SA 4.0
 		0 0 8px rgba(0, 0, 0, 0.6);
 
 	/* Outline: */
-	/* 
+	/*
 	text-shadow:
 		-1px -1px 0 #000,
 		1px -1px 0 #000,
@@ -168,5 +180,9 @@ Retrieved 2026-02-17, License - CC BY-SA 4.0
 
 /* ------------- Dev -------------- */
 .dev-border {
-	border: 1px dashed #7814ff;
+	/* border: 1px dashed #7814ff; */
+}
+
+.dev .pitch-wrapper {
+	border: 3px dashed red;
 }
