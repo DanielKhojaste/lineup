@@ -1,7 +1,7 @@
-import { NodeType } from "./NodeType";
-import { Node } from "./Node";
-import { Player } from "./Player";
 import { Cone } from "./Cone";
+import { Node } from "./Node";
+import { NodeType } from "./NodeType";
+import { Player } from "./Player";
 
 type NodeCreationOptions = {
 	[NodeType.Player]: {

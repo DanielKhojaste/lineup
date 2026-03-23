@@ -1,7 +1,7 @@
-import { RefObject } from "react";
 import { useDroppable } from "@dnd-kit/react";
-import DraggableNode from "./nodes/DraggableNode";
+import { RefObject } from "react";
 import { Node } from "../models/Node";
+import DraggableNode from "./nodes/DraggableNode";
 
 type CanvasProps = {
 	nodes: Node[];

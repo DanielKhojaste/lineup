@@ -1,11 +1,11 @@
-import { useRef, useState } from "react";
 import { DragDropProvider, DragOverlay } from "@dnd-kit/react";
+import { useRef, useState } from "react";
 import Canvas from "../components/Canvas";
 import Toolbar from "../components/Toolbar";
-import { NodeFactory } from "../models/NodeFactory";
-import { Node } from "../models/Node";
-import { NodeType } from "../models/NodeType";
 import NodePreview from "../components/toolbar/NodePreview";
+import { Node } from "../models/Node";
+import { NodeFactory } from "../models/NodeFactory";
+import { NodeType } from "../models/NodeType";
 
 /**
  * The drag handler types are inferred from DragDropProvider instead of

@@ -1,7 +1,7 @@
-import { useDraggable } from "@dnd-kit/react";
 import { RestrictToElement } from "@dnd-kit/dom/modifiers";
-import { Node } from "../../models/Node";
+import { useDraggable } from "@dnd-kit/react";
 import { RefObject } from "react";
+import { Node } from "../../models/Node";
 import NodeRenderer from "./NodeRenderer";
 
 type DraggableNodeProps = {

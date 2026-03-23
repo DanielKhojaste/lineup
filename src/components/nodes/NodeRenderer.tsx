@@ -1,6 +1,6 @@
+import { CSSProperties, RefCallback } from "react";
 import { Node } from "../../models/Node";
 import { NODE_REGISTRY } from "./nodeRegistry";
-import { CSSProperties, RefCallback } from "react";
 
 type NodeRendererProps = {
 	node: Node;

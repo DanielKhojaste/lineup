@@ -1,4 +1,4 @@
-import { RefCallback, CSSProperties } from "react";
+import { CSSProperties, RefCallback } from "react";
 
 export interface BaseMarkerProps {
 	containerRef?: RefCallback<HTMLDivElement>;

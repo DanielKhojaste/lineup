@@ -1,8 +1,7 @@
-// src/router/ViewManager.tsx
 import { Suspense } from "react";
 import { BrowserRouter, useRoutes } from "react-router-dom";
-import { routes } from "./routes";
 import Loader from "../components/Loader";
+import { routes } from "./routes";
 
 function RoutesRenderer() {
 	return useRoutes(routes);

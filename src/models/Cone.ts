@@ -1,5 +1,5 @@
-import { NodeType } from "./NodeType";
 import { Node } from "./Node";
+import { NodeType } from "./NodeType";
 
 export class Cone extends Node {
 	constructor(id: string, x: number, y: number, coneType?: string) {
