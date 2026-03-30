@@ -1,6 +1,7 @@
 import { useDroppable } from "@dnd-kit/react";
 import { RefObject } from "react";
 import { Node } from "../models/Node";
+import { mergeRefs } from "../utils/helpers";
 import DraggableNode from "./nodes/DraggableNode";
 
 type CanvasProps = {
@@ -13,10 +14,7 @@ function Canvas({ nodes, canvasRef }: CanvasProps) {
 		id: "canvas",
 	});
 
-	function combinedRef(element: HTMLElement | null) {
-		canvasRef.current = element;
-		droppableRef(element);
-	}
+	const combinedRef = mergeRefs(canvasRef, droppableRef);
 
 	return (
 		<section id="canvas" className="dev-border">

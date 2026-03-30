@@ -7,14 +7,14 @@ export function clamp(number: number, min: number, max: number): number {
 }
 
 export function mergeRefs<T>(...refs: Array<React.Ref<T> | undefined>) {
-	return (value: T) => {
+	return (value: T | null) => {
 		for (const ref of refs) {
 			if (!ref) continue;
 
 			if (typeof ref === "function") {
 				ref(value);
 			} else {
-				(ref as React.MutableRefObject<T>).current = value;
+				(ref as React.MutableRefObject<T | null>).current = value;
 			}
 		}
 	};
