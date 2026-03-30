@@ -30,12 +30,19 @@ function DraggableNode({ node, canvasRef, onEditNode }: DraggableNodeProps) {
 		top: `${node.y * 100}%`,
 	};
 
+	function tempDoubleClick(node: Node) {
+		console.log(`Double Click: ${node.id}`);
+	}
+
 	return (
 		<NodeRenderer
 			node={node}
 			containerRef={ref}
 			handleRef={handleRef}
 			style={style}
+			onDoubleClick={() => {
+				tempDoubleClick(node);
+			}}
 		/>
 	);
 }

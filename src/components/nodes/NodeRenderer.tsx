@@ -7,6 +7,7 @@ type NodeRendererProps = {
 	containerRef: RefCallback<HTMLDivElement>;
 	handleRef: RefCallback<HTMLDivElement>;
 	style?: CSSProperties;
+	onDoubleClick?: () => void;
 };
 
 /**
@@ -17,6 +18,7 @@ function NodeRenderer({
 	containerRef,
 	handleRef,
 	style = {},
+	onDoubleClick,
 }: NodeRendererProps) {
 	const nodeDefinition = NODE_REGISTRY[node.getType()];
 	const Marker = nodeDefinition.Marker;
@@ -27,6 +29,7 @@ function NodeRenderer({
 			containerRef={containerRef}
 			handleRef={handleRef}
 			style={style}
+			onDoubleClick={onDoubleClick}
 		/>
 	);
 }

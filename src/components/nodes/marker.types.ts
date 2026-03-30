@@ -5,4 +5,5 @@ export interface BaseMarkerProps {
 	handleRef?: RefCallback<HTMLDivElement>;
 	style?: CSSProperties;
 	className?: string;
+	onDoubleClick?: () => void;
 }

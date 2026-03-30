@@ -14,6 +14,7 @@ function PlayerMarker({
 	handleRef,
 	style,
 	className,
+	onDoubleClick,
 }: PlayerMarkerProps) {
 	return (
 		<div
