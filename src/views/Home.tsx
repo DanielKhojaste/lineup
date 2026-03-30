@@ -27,6 +27,7 @@ function Home() {
 
 	const [activeNodeOrigin, setActiveNodeOrigin] = useState<string | null>(null);
 	const [activeNodeType, setActiveNodeType] = useState<NodeType | null>(null);
+	const [editingNode, setEditingNode] = useState<Node | null>(null);
 	const [nodes, setNodes] = useState<Node[]>([
 		NodeFactory.create(NodeType.Player, {
 			x: 0,
@@ -103,7 +104,11 @@ function Home() {
 		<main className="home view">
 			<DragDropProvider onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
 				<Toolbar />
-				<Canvas canvasRef={canvasRef} nodes={nodes} />
+				<Canvas
+					canvasRef={canvasRef}
+					nodes={nodes}
+					onEditNode={setEditingNode}
+				/>
 
 				<DragOverlay disabled={handleDragOverlay} dropAnimation={null}>
 					<NodePreview

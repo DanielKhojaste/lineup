@@ -7,9 +7,10 @@ import NodeRenderer from "./NodeRenderer";
 type DraggableNodeProps = {
 	node: Node;
 	canvasRef: RefObject<HTMLElement | null>;
+	onEditNode: (node: Node) => void;
 };
 
-function DraggableNode({ node, canvasRef }: DraggableNodeProps) {
+function DraggableNode({ node, canvasRef, onEditNode }: DraggableNodeProps) {
 	const { ref, handleRef } = useDraggable({
 		id: `${node.id}`,
 		data: {
@@ -22,11 +23,6 @@ function DraggableNode({ node, canvasRef }: DraggableNodeProps) {
 			}),
 		],
 	});
-
-	const canvasSize = {
-		width: canvasRef.current?.getBoundingClientRect().width,
-		height: canvasRef.current?.getBoundingClientRect().height,
-	};
 
 	const style = {
 		position: "absolute" as const,

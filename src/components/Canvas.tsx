@@ -7,9 +7,10 @@ import DraggableNode from "./nodes/DraggableNode";
 type CanvasProps = {
 	nodes: Node[];
 	canvasRef: RefObject<HTMLElement | null>;
+	onEditNode: (node: Node) => void;
 };
 
-function Canvas({ nodes, canvasRef }: CanvasProps) {
+function Canvas({ nodes, canvasRef, onEditNode }: CanvasProps) {
 	const { ref: droppableRef } = useDroppable({
 		id: "canvas",
 	});
@@ -21,7 +22,12 @@ function Canvas({ nodes, canvasRef }: CanvasProps) {
 			<div ref={combinedRef} className="pitch-wrapper">
 				<div className="node-layer">
 					{nodes.map((node) => (
-						<DraggableNode key={node.id} node={node} canvasRef={canvasRef} />
+						<DraggableNode
+							key={node.id}
+							node={node}
+							canvasRef={canvasRef}
+							onEditNode={onEditNode}
+						/>
 					))}
 				</div>
 			</div>
