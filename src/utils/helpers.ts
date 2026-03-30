@@ -5,3 +5,17 @@
 export function clamp(number: number, min: number, max: number): number {
 	return Math.max(min, Math.min(number, max));
 }
+
+export function mergeRefs<T>(...refs: Array<React.Ref<T> | undefined>) {
+	return (value: T) => {
+		for (const ref of refs) {
+			if (!ref) continue;
+
+			if (typeof ref === "function") {
+				ref(value);
+			} else {
+				(ref as React.MutableRefObject<T>).current = value;
+			}
+		}
+	};
+}
