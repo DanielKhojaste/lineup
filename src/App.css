@@ -186,3 +186,11 @@ Retrieved 2026-02-17, License - CC BY-SA 4.0
 .dev .pitch-wrapper {
 	border: 3px dashed red;
 }
+
+.dev .node {
+	border: 1px solid #fdb20b;
+}
+
+.dev .drag-handle {
+	border: 2px dashed white;
+}
