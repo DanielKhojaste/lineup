@@ -23,10 +23,15 @@ function DraggableNode({ node, canvasRef }: DraggableNodeProps) {
 		],
 	});
 
+	const canvasSize = {
+		width: canvasRef.current?.getBoundingClientRect().width,
+		height: canvasRef.current?.getBoundingClientRect().height,
+	};
+
 	const style = {
 		position: "absolute" as const,
-		left: node.x,
-		top: node.y,
+		left: `${node.x * 100}%`,
+		top: `${node.y * 100}%`,
 	};
 
 	return (

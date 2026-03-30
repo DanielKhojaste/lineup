@@ -34,7 +34,7 @@ function Home() {
 			jerseyNumber: 14,
 			name: "Bonmati",
 		}),
-		NodeFactory.create(NodeType.Cone, { x: 100, y: 100 }),
+		NodeFactory.create(NodeType.Cone, { x: 0.1, y: 0.1 }),
 	]);
 
 	const handleDragStart: DragStartHandler = ({ operation }) => {
@@ -50,22 +50,24 @@ function Home() {
 		setActiveNodeOrigin(null);
 		setActiveNodeType(null);
 
+		const canvasRect = canvasRef.current?.getBoundingClientRect();
+		if (!canvasRect) return;
+
 		// Create new node on the canvas
 		if (source?.data.from === "toolbar" && target?.id === "canvas") {
-			const canvasRect = canvasRef.current?.getBoundingClientRect();
-
 			/**
-			 * `shape.current` is typed as a generic `Shape` in dnd-kit, which does not
-			 * expose DOMRect properties like `left` and `top`. At runtime it is produced
-			 * from `getBoundingClientRect()`, so casting to `DOMRect` is safe and removes
-			 * the TypeScript error.
+			 * `shape.current` is typed as a generic `Shape` in dnd-kit, which does
+			 * not expose DOMRect properties like `left` and `top`. At runtime it is
+			 * produced from `getBoundingClientRect()`, so casting to `DOMRect` is
+			 * safe and removes the TypeScript error.
 			 */
 			const shape = operation.shape?.current as DOMRect | undefined;
 
 			if (!shape || !canvasRect) return;
 
-			const x = shape.left - canvasRect.left;
-			const y = shape.top - canvasRect.top;
+			// Normalize node coordinates based on canvas dimensions
+			const x = (shape.left - canvasRect.left) / canvasRect.width;
+			const y = (shape.top - canvasRect.top) / canvasRect.height;
 
 			const newNode = NodeFactory.create(activeNodeType as NodeType, { x, y });
 
@@ -78,7 +80,10 @@ function Home() {
 				prev.map((node) => {
 					if (node.id !== source?.id) return node;
 
-					node.moveBy(transform.x, transform.y);
+					const dx = transform.x / canvasRect.width;
+					const dy = transform.y / canvasRect.height;
+
+					node.moveBy(dx, dy);
 					return node;
 				}),
 			);
