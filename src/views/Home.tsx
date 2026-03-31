@@ -45,7 +45,7 @@ function Home() {
 	const [activeNodeOrigin, setActiveNodeOrigin] = useState<string | null>(null);
 	const [activeNodeType, setActiveNodeType] = useState<NodeType | null>(null);
 	const [editingNode, setEditingNode] = useState<Node | null>(null);
-	const [nodes, setNodes] = useState<Node[]>([
+	const [nodes, setNodes] = useState<Node[]>(() => [
 		NodeFactory.create(NodeType.Player, {
 			x: 0,
 			y: 0,
