@@ -1,6 +1,8 @@
-import { DragDropProvider, DragOverlay } from "@dnd-kit/react";
+import { PointerActivationConstraints } from "@dnd-kit/dom";
+import { DragDropProvider, DragOverlay, PointerSensor } from "@dnd-kit/react";
 import { useRef, useState } from "react";
 import Canvas from "../components/Canvas";
+import { DoubleClickSensor } from "../components/sensors/DoubleClickSensor";
 import Toolbar from "../components/Toolbar";
 import NodePreview from "../components/toolbar/NodePreview";
 import { Node } from "../models/Node";
@@ -23,8 +25,23 @@ type DragEndHandler = NonNullable<
 >;
 
 function Home() {
+	// Refs:
 	const canvasRef = useRef<HTMLElement | null>(null);
 
+	// Sensors:
+	const doubleClickSensor = DoubleClickSensor.configure({
+		onDoubleClick: (source) => {
+			console.log("Node double clicked:", source.id);
+		},
+	});
+
+	const pointerSensor = PointerSensor.configure({
+		activationConstraints: [
+			new PointerActivationConstraints.Distance({ value: 5 }),
+		],
+	});
+
+	// States:
 	const [activeNodeOrigin, setActiveNodeOrigin] = useState<string | null>(null);
 	const [activeNodeType, setActiveNodeType] = useState<NodeType | null>(null);
 	const [editingNode, setEditingNode] = useState<Node | null>(null);
@@ -102,7 +119,11 @@ function Home() {
 
 	return (
 		<main className="home view">
-			<DragDropProvider onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+			<DragDropProvider
+				onDragStart={handleDragStart}
+				onDragEnd={handleDragEnd}
+				sensors={[pointerSensor, doubleClickSensor]}
+			>
 				<Toolbar />
 				<Canvas
 					canvasRef={canvasRef}
