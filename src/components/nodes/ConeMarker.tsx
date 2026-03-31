@@ -6,7 +6,6 @@ function ConeMarker({
 	handleRef,
 	style,
 	className,
-	onDoubleClick,
 }: BaseMarkerProps) {
 	return (
 		<div ref={containerRef} style={style} className="node cone drag-handle">
