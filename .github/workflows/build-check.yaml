@@ -2,7 +2,16 @@ name: Build Check
 
 on:
   pull_request:
-    branches: [dev]
+    branches: [main, dev]
+  push:
+    branches: [main, dev]
+  # Allow manual workflow triggering
+  workflow_dispatch:
+
+# Prevents multiple builds from running at once for the same PR/branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -17,6 +26,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: "npm"
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
