@@ -12,7 +12,7 @@ export const BOARD_HEIGHT = PITCH_WIDTH + RUN_OFF * 2;
 
 /** Marker sizes in board units. */
 export const PLAYER_RADIUS = 18;
-export const BALL_RADIUS = 7;
+export const BALL_RADIUS = 9;
 export const CONE_SIZE = 20;
 
 export function toBoardUnits(x: number, y: number) {

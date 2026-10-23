@@ -163,6 +163,36 @@ function offsetNodes(
 	);
 }
 
+/**
+ * After players change team, give any whose shirt number is already taken in
+ * their new team the next free number. Mutates `nodes` (a fresh array).
+ */
+function renumberClashes(nodes: BoardNode[], changedIds: Set<string>) {
+	for (let i = 0; i < nodes.length; i++) {
+		const node = nodes[i];
+		if (
+			node.kind !== "player" ||
+			!changedIds.has(node.id) ||
+			node.number === undefined
+		)
+			continue;
+		const clash = nodes.some(
+			(other) =>
+				other !== node &&
+				other.kind === "player" &&
+				other.team === node.team &&
+				other.number === node.number,
+		);
+		if (clash) {
+			const others = nodes.filter((n) => n !== node);
+			nodes[i] = {
+				...node,
+				number: nextShirtNumber(others, node.team, node.keeper),
+			};
+		}
+	}
+}
+
 function createForTool(
 	tool: PlaceTool,
 	x: number,
@@ -280,7 +310,9 @@ export function editorReducer(
 				}
 				return n;
 			});
-			return changed ? commit(state, withNodes(board, nodes)) : state;
+			if (!changed) return state;
+			if (action.patch.team !== undefined) renumberClashes(nodes, targets);
+			return commit(state, withNodes(board, nodes));
 		}
 
 		case "deleteNodes": {

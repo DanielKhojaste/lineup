@@ -318,3 +318,30 @@ describe("board documents", () => {
 		expect(JSON.parse(JSON.stringify(state.board))).toEqual(state.board);
 	});
 });
+
+describe("changing team", () => {
+	it("renumbers players whose number is taken in the new team", () => {
+		const home7 = createPlayer(0.5, 0.5, "home", { number: 7 });
+		const away7 = createPlayer(0.6, 0.5, "away", { number: 7 });
+		const away8 = createPlayer(0.7, 0.5, "away", { number: 8 });
+		const state = run(createEditorState(boardWith(home7, away7, away8)), {
+			type: "updateNodes",
+			ids: [home7.id],
+			patch: { team: "away" },
+		});
+		const moved = state.board.nodes[0] as PlayerNode;
+		expect(moved.team).toBe("away");
+		expect(moved.number).toBe(2);
+		expect((state.board.nodes[1] as PlayerNode).number).toBe(7);
+	});
+
+	it("keeps the number when it is free in the new team", () => {
+		const home7 = createPlayer(0.5, 0.5, "home", { number: 7 });
+		const state = run(createEditorState(boardWith(home7)), {
+			type: "updateNodes",
+			ids: [home7.id],
+			patch: { team: "away" },
+		});
+		expect((state.board.nodes[0] as PlayerNode).number).toBe(7);
+	});
+});
