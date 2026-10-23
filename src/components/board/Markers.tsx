@@ -5,7 +5,15 @@ import {
 	PLAYER_RADIUS,
 	toBoardUnits,
 } from "../../model/pitch";
-import { Board, BoardNode, ConeNode, PlayerNode } from "../../model/types";
+import {
+	Board,
+	BoardNode,
+	ConeNode,
+	GoalNode,
+	MannequinNode,
+	PlayerNode,
+	PoleNode,
+} from "../../model/types";
 import { readableOn } from "../../theme/color";
 import { truncate } from "../../utils/text";
 
@@ -108,6 +116,115 @@ function BallMarker({ selected }: MarkerProps<BoardNode>) {
 	);
 }
 
+export const GOAL_SIZES = {
+	full: { width: 73.2, depth: 20 },
+	mini: { width: 36, depth: 12 },
+};
+
+function GoalMarker({ node, selected }: MarkerProps<GoalNode>) {
+	const { width: w, depth: d } = GOAL_SIZES[node.size];
+	const half = w / 2;
+	const netLines = [];
+	for (let y = -half + 8; y < half; y += 8) netLines.push(`M${-d} ${y}H0`);
+	for (let x = -d + d / 3; x < 0; x += d / 3)
+		netLines.push(`M${x} ${-half}V${half}`);
+
+	return (
+		<g transform={`rotate(${node.rotation})`}>
+			<rect
+				className="marker__hover marker__hover--box"
+				x={-d - 6}
+				y={-half - 6}
+				width={d + 12}
+				height={w + 12}
+				rx={4}
+			/>
+			{selected && (
+				<rect
+					className="marker__selection"
+					x={-d - 7}
+					y={-half - 7}
+					width={d + 14}
+					height={w + 14}
+					rx={5}
+				/>
+			)}
+			<rect
+				x={-d}
+				y={-half}
+				width={d}
+				height={w}
+				fill="#FFFFFF"
+				fillOpacity={0.14}
+			/>
+			<path
+				d={netLines.join("")}
+				stroke="#FFFFFF"
+				strokeOpacity={0.35}
+				strokeWidth={1}
+			/>
+			<path
+				d={`M0 ${-half}H${-d}V${half}H0`}
+				fill="none"
+				stroke="#FFFFFF"
+				strokeWidth={3}
+				strokeLinejoin="round"
+			/>
+			<line
+				x1={0}
+				y1={-half}
+				x2={0}
+				y2={half}
+				stroke="#FFFFFF"
+				strokeWidth={4}
+				strokeLinecap="round"
+			/>
+		</g>
+	);
+}
+
+function MannequinMarker({ node, selected }: MarkerProps<MannequinNode>) {
+	return (
+		<>
+			<SelectionRing r={17} selected={selected} />
+			<g transform={`rotate(${node.rotation})`}>
+				<ellipse
+					rx={7}
+					ry={15}
+					fill={node.color}
+					stroke="#15181B"
+					strokeWidth={1.8}
+				/>
+				<circle
+					cx={1.5}
+					r={6}
+					fill={node.color}
+					stroke="#15181B"
+					strokeWidth={1.8}
+				/>
+				<path d="M9 -3.5L14 0L9 3.5Z" fill="#15181B" />
+			</g>
+		</>
+	);
+}
+
+function PoleMarker({ node, selected }: MarkerProps<PoleNode>) {
+	return (
+		<>
+			<SelectionRing r={10} selected={selected} />
+			<circle
+				r={9}
+				fill="#FFFFFF"
+				fillOpacity={0.22}
+				stroke="#FFFFFF"
+				strokeOpacity={0.6}
+				strokeWidth={1.5}
+			/>
+			<circle r={4.5} fill={node.color} stroke="#15181B" strokeWidth={1.5} />
+		</>
+	);
+}
+
 function describe(node: BoardNode, board: Board): string {
 	switch (node.kind) {
 		case "player": {
@@ -122,6 +239,12 @@ function describe(node: BoardNode, board: Board): string {
 			return "Cone";
 		case "ball":
 			return "Ball";
+		case "goal":
+			return node.size === "mini" ? "Mini goal" : "Goal";
+		case "mannequin":
+			return "Mannequin";
+		case "pole":
+			return "Pole";
 	}
 }
 
@@ -137,7 +260,7 @@ function NodeMarker({ node, selected, board }: NodeMarkerProps) {
 		<g
 			className={`marker marker--${node.kind}${selected ? " is-selected" : ""}`}
 			transform={`translate(${x} ${y})`}
-			data-node-id={node.id}
+			data-item-id={node.id}
 			role="img"
 			aria-label={describe(node, board)}
 		>
@@ -149,6 +272,15 @@ function NodeMarker({ node, selected, board }: NodeMarkerProps) {
 			)}
 			{node.kind === "ball" && (
 				<BallMarker node={node} selected={selected} board={board} />
+			)}
+			{node.kind === "goal" && (
+				<GoalMarker node={node} selected={selected} board={board} />
+			)}
+			{node.kind === "mannequin" && (
+				<MannequinMarker node={node} selected={selected} board={board} />
+			)}
+			{node.kind === "pole" && (
+				<PoleMarker node={node} selected={selected} board={board} />
 			)}
 		</g>
 	);

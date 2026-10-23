@@ -11,25 +11,43 @@ const TOOL_KEYS: Record<string, Tool> = {
 	k: "keeper",
 	c: "cone",
 	b: "ball",
+	g: "goal",
+	m: "mannequin",
+	o: "pole",
+	r: "run",
+	p: "pass",
+	d: "dribble",
+	l: "line",
+	z: "zone",
+	f: "pen",
+	t: "text",
+	e: "eraser",
 };
 
 /** Nudge distance in normalised board units (roughly half a metre). */
 const NUDGE = 0.005;
 
 export const SHORTCUTS: { keys: string; action: string }[] = [
-	{ keys: "V", action: "Select tool" },
+	{ keys: "V", action: "Select" },
 	{ keys: "1 / 2 / 3", action: "Home / away / neutral player" },
-	{ keys: "K, C, B", action: "Goalkeeper, cone, ball" },
+	{ keys: "K", action: "Goalkeeper" },
+	{ keys: "C, B", action: "Cone, ball" },
+	{ keys: "G, M, O", action: "Goal, mannequin, pole" },
+	{ keys: "R, P, D", action: "Run, pass, dribble arrow" },
+	{ keys: "L, Z", action: "Line, zone" },
+	{ keys: "F, T, E", action: "Pen, text, eraser" },
+	{ keys: "Shift (while drawing)", action: "Snap angle / square zone" },
 	{ keys: "Esc", action: "Back to Select, or clear the selection" },
 	{ keys: "Ctrl+A", action: "Select everything" },
 	{ keys: "Shift+click, drag a box", action: "Select several" },
 	{ keys: "Arrow keys", action: "Nudge (hold Shift for more)" },
+	{ keys: "Shift+R", action: "Rotate goal or mannequin" },
 	{ keys: "Ctrl+D", action: "Duplicate" },
 	{ keys: "Delete", action: "Delete" },
 	{ keys: "] / [", action: "Bring to front / send to back" },
 	{ keys: "Ctrl+Z", action: "Undo" },
 	{ keys: "Ctrl+Y, Ctrl+Shift+Z", action: "Redo" },
-	{ keys: "Double-click a player", action: "Edit number and name" },
+	{ keys: "Double-click", action: "Edit a player or a text" },
 ];
 
 function isTyping(target: EventTarget | null): boolean {
@@ -73,7 +91,7 @@ export function useShortcuts(enabled: boolean) {
 			}
 			if (mod && key === "d") {
 				handled();
-				if (ids.length) dispatch({ type: "duplicateNodes", ids });
+				if (ids.length) dispatch({ type: "duplicateItems", ids });
 				return;
 			}
 			if (mod || e.altKey) return;
@@ -81,7 +99,7 @@ export function useShortcuts(enabled: boolean) {
 			if (key === "delete" || key === "backspace") {
 				if (ids.length) {
 					handled();
-					dispatch({ type: "deleteNodes", ids });
+					dispatch({ type: "deleteItems", ids });
 				}
 				return;
 			}
@@ -94,7 +112,7 @@ export function useShortcuts(enabled: boolean) {
 			if (key === "]" || key === "[") {
 				if (ids.length)
 					dispatch({
-						type: "reorderNodes",
+						type: "reorderItems",
 						ids,
 						to: key === "]" ? "front" : "back",
 					});
@@ -110,7 +128,14 @@ export function useShortcuts(enabled: boolean) {
 				const dy =
 					(key === "arrowup" ? -step : key === "arrowdown" ? step : 0) *
 					(BOARD_WIDTH / BOARD_HEIGHT);
-				dispatch({ type: "moveNodes", ids, dx, dy });
+				dispatch({ type: "moveItems", ids, dx, dy });
+				return;
+			}
+			if (key === "r" && e.shiftKey) {
+				if (ids.length) {
+					handled();
+					dispatch({ type: "rotateNodes", ids, by: 90 });
+				}
 				return;
 			}
 			const tool = TOOL_KEYS[key];

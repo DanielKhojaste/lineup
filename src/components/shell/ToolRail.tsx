@@ -1,4 +1,6 @@
 import { PointerEvent as ReactPointerEvent, useRef, useState } from "react";
+import { MANNEQUIN_COLOR, POLE_COLOR } from "../../model/board";
+import { Board } from "../../model/types";
 import { useEditor } from "../../state/EditorContext";
 import { PlaceTool, Tool } from "../../state/editor";
 import { clientToBoard, isOnBoard } from "../board/coords";
@@ -9,9 +11,7 @@ interface ToolDef {
 	label: string;
 	shortcut: string;
 	icon: IconName;
-	color?: (
-		teams: ReturnType<typeof useEditor>["state"]["board"]["teams"],
-	) => string;
+	color?: (teams: Board["teams"]) => string;
 }
 
 export const SELECT_TOOLS: ToolDef[] = [
@@ -55,8 +55,40 @@ export const PLACE_TOOLS: ToolDef[] = [
 		color: () => "#FF8A00",
 	},
 	{ tool: "ball", label: "Ball", shortcut: "B", icon: "ball" },
+	{ tool: "goal", label: "Goal", shortcut: "G", icon: "goal" },
+	{
+		tool: "mannequin",
+		label: "Mannequin",
+		shortcut: "M",
+		icon: "mannequin",
+		color: () => MANNEQUIN_COLOR,
+	},
+	{
+		tool: "pole",
+		label: "Pole",
+		shortcut: "O",
+		icon: "pole",
+		color: () => POLE_COLOR,
+	},
 ];
 
+export const DRAW_TOOLS: ToolDef[] = [
+	{ tool: "run", label: "Run arrow", shortcut: "R", icon: "run" },
+	{ tool: "pass", label: "Pass arrow", shortcut: "P", icon: "pass" },
+	{ tool: "dribble", label: "Dribble arrow", shortcut: "D", icon: "dribble" },
+	{ tool: "line", label: "Line", shortcut: "L", icon: "line" },
+	{ tool: "zone", label: "Zone", shortcut: "Z", icon: "zone" },
+	{ tool: "pen", label: "Pen", shortcut: "F", icon: "pen" },
+	{ tool: "text", label: "Text", shortcut: "T", icon: "text" },
+	{
+		tool: "eraser",
+		label: "Eraser (removes drawings)",
+		shortcut: "E",
+		icon: "eraser",
+	},
+];
+
+const PLACEABLE = new Set(PLACE_TOOLS.map((t) => t.tool));
 const DRAG_THRESHOLD = 5;
 
 export default function ToolRail() {
@@ -80,7 +112,7 @@ export default function ToolRail() {
 		e: ReactPointerEvent<HTMLButtonElement>,
 		def: ToolDef,
 	) => {
-		if (e.button !== 0 || def.tool === "select") return;
+		if (e.button !== 0 || !PLACEABLE.has(def.tool)) return;
 		press.current = {
 			tool: def.tool as PlaceTool,
 			x: e.clientX,
@@ -157,6 +189,8 @@ export default function ToolRail() {
 			<div className="rail__grid">{SELECT_TOOLS.map(renderTool)}</div>
 			<span className="rail__label">Place</span>
 			<div className="rail__grid">{PLACE_TOOLS.map(renderTool)}</div>
+			<span className="rail__label">Draw</span>
+			<div className="rail__grid">{DRAW_TOOLS.map(renderTool)}</div>
 			{ghost && (
 				<div
 					className="rail__ghost"

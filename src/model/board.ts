@@ -1,9 +1,12 @@
 import {
-	Board,
 	BallNode,
+	Board,
 	BoardNode,
 	ConeNode,
+	GoalNode,
+	MannequinNode,
 	PlayerNode,
+	PoleNode,
 	SCHEMA_VERSION,
 	TeamId,
 } from "./types";
@@ -48,6 +51,7 @@ export function createBoard(title = "Untitled board"): Board {
 		teams: structuredClone(DEFAULT_TEAMS),
 		display: { showLabels: true },
 		nodes: [],
+		drawings: [],
 	};
 }
 
@@ -70,6 +74,33 @@ export function createCone(
 
 export function createBall(x: number, y: number): BallNode {
 	return { id: newId(), kind: "ball", x, y };
+}
+
+export function createGoal(
+	x: number,
+	y: number,
+	size: GoalNode["size"] = "full",
+): GoalNode {
+	// Goals placed on the left half face right (into the pitch), and vice versa.
+	return { id: newId(), kind: "goal", x, y, size, rotation: x < 0.5 ? 0 : 180 };
+}
+
+export const MANNEQUIN_COLOR = "#F5D90A";
+export const POLE_COLOR = "#FF5C8A";
+
+export function createMannequin(x: number, y: number): MannequinNode {
+	return {
+		id: newId(),
+		kind: "mannequin",
+		x,
+		y,
+		color: MANNEQUIN_COLOR,
+		rotation: x < 0.5 ? 0 : 180,
+	};
+}
+
+export function createPole(x: number, y: number): PoleNode {
+	return { id: newId(), kind: "pole", x, y, color: POLE_COLOR };
 }
 
 /**
