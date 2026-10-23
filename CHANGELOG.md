@@ -8,9 +8,20 @@ This project adheres to semantic versioning (0.x during early development).
 
 ## [Unreleased]
 
+---
+
+## [0.2.4] - 2026-10-23
+
 ### Changed
 
 - Relicensed from MIT to the GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later). Releases up to and including v0.2.3 remain available under the MIT License.
+- Synced the app version across `package.json`, `tauri.conf.json` and `Cargo.toml`
+- Updated the README with the project vision and roadmap
+
+### Removed
+
+- Dev outline around the pitch
+- Boilerplate `greet` Tauri command
 
 ---
 

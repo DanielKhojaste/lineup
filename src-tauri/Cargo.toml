@@ -1,8 +1,8 @@
 [package]
 name = "lineup"
-version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
+version = "0.2.4"
+description = "A tactical board for coaches to design drills, plays and training plans"
+authors = ["Aref \"Daniel\" Khojaste"]
 license = "AGPL-3.0-or-later"
 edition = "2021"
 
