@@ -7,6 +7,10 @@ import {
 } from "../../model/pitch";
 import { Board, BoardNode, ConeNode, PlayerNode } from "../../model/types";
 import { readableOn } from "../../theme/color";
+import { truncate } from "../../utils/text";
+
+/** Longest caption (position · name) drawn under a player before it is cut short. */
+export const CAPTION_MAX = 22;
 
 interface MarkerProps<T extends BoardNode> {
 	node: T;
@@ -32,7 +36,10 @@ function PlayerMarker({ node, selected, board }: MarkerProps<PlayerNode>) {
 	const fill = playerFill(node, board.teams);
 	const ink = readableOn(fill, "#FFFFFF", "#15181B");
 	const outline = ink === "#FFFFFF" ? "#FFFFFF" : "#15181B";
-	const caption = [node.label, node.name].filter(Boolean).join(" · ");
+	const caption = truncate(
+		[node.label, node.name].filter(Boolean).join(" · "),
+		CAPTION_MAX,
+	);
 	const numberText = node.number !== undefined ? String(node.number) : "";
 
 	return (
