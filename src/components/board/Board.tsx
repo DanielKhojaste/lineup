@@ -25,6 +25,7 @@ import { useEditor } from "../../state/EditorContext";
 import { PlaceTool, selectedDrawings } from "../../state/editor";
 import { clientToBoard, isOnBoard } from "./coords";
 import DrawingShape, { HandleId, SelectionOverlay } from "./Drawings";
+import FloatingActions from "./FloatingActions";
 import {
 	controlFromMidpoint,
 	lineMidpoint,
@@ -619,6 +620,9 @@ export default function Board() {
 					onDone={finishTextEdit}
 				/>
 			)}
+			<FloatingActions
+				hidden={!!editingText || !!state.gestureBase || tool === "eraser"}
+			/>
 			{board.nodes.length === 0 && board.drawings.length === 0 && (
 				<p className="board__hint">
 					Pick a tool on the left and click the pitch, or drag it on.
