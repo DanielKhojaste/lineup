@@ -8,6 +8,10 @@ This project adheres to semantic versioning (0.x during early development).
 
 ## [Unreleased]
 
+---
+
+## [0.3.0] - 2026-10-23
+
 ### Added
 
 - New editor layout: tool rail, SVG pitch, and a side panel with Inspector and Notes tabs
@@ -31,6 +35,10 @@ This project adheres to semantic versioning (0.x during early development).
 ### Removed
 
 - `@dnd-kit` and `vite-plugin-svgr` dependencies
+
+### Fixed
+
+- Long player names no longer widen the side panel and shrink the board; they are cut short with an ellipsis
 
 ---
 
