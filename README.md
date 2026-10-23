@@ -8,30 +8,31 @@ An interactive tactical board for coaches to design drills, formations, and play
 
 ## Overview
 
-Lineup is a tactical board application designed to help visualize positions, formations, and scenarios using draggable markers on a board.
+Lineup is a local-first desktop app for coaches. It brings four things together:
 
-The goal is to provide a flexible, offline-capable tool that can be adapted to different use cases such as:
+- **Library**: every drill and play you've saved, organised in folders
+- **Editor**: draw players, equipment, arrows and zones on the pitch, write notes for the drill, and animate it step by step
+- **Present / whiteboard**: show a drill or play full screen and draw over it live
+- **Planner**: plan sessions and a season, and keep a log of the drills you ran with your team
 
-- Sports tactics
-- Strategy planning
-- Scenario visualization
-- Animate player movements
+Everything is stored as files on your computer. Windows comes first, then macOS and Linux, then tablets.
 
 ## Current Features
 
-- Draggable player nodes
-- Basic node positioning
+- Drag players and cones from the toolbar onto a soccer pitch
+- Move markers around the pitch
 
-> ⚠️ Visual styling is minimal at this stage and will improve over time.
+## Roadmap
 
-## Planned Features
-
-- Support for multiple sports
-- Custom marker visuals and sprites
-- Save/load board states
-- Animate player movement
-- Measurement and alignment tools
-- Improved UI and theming
+| Version | Milestone |
+| --- | --- |
+| v0.3.0 | Board foundations: select, edit, delete, undo/redo, new editor layout, themes |
+| v0.4.0 | Drawing tools: arrows, lines, zones, pen, text, equipment |
+| v0.5.0 | Drills: library, save/load, notes |
+| v0.6.0 | Animation: steps and playback |
+| v0.7.0 | Plays: present mode and export |
+| v0.8.0 | Planner and session log |
+| v1.0.0 | Stable desktop release (Windows, macOS, Linux) |
 
 ## Tech Stack
 
