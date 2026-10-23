@@ -2,11 +2,7 @@ import "./App.css";
 import ViewManager from "./router/ViewManager";
 
 function App() {
-	return (
-		<div className="dev">
-			<ViewManager />
-		</div>
-	);
+	return <ViewManager />;
 }
 
 export default App;

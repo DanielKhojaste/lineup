@@ -18,7 +18,7 @@ function Canvas({ nodes, canvasRef, onEditNode }: CanvasProps) {
 	const combinedRef = mergeRefs(canvasRef, droppableRef);
 
 	return (
-		<section id="canvas" className="dev-border">
+		<section id="canvas">
 			<div ref={combinedRef} className="pitch-wrapper">
 				<div className="node-layer">
 					{nodes.map((node) => (
