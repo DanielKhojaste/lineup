@@ -19,8 +19,13 @@ Everything is stored as files on your computer. Windows comes first, then macOS 
 
 ## Current Features
 
-- Drag players and cones from the toolbar onto a soccer pitch
-- Move markers around the pitch
+- Place home, away and neutral players, goalkeepers, cones and a ball by clicking or dragging them onto the pitch
+- Select with a click, Shift-click or a drag box; move, nudge, duplicate, reorder and delete
+- Edit shirt numbers, positions, names, teams and kit colours
+- Drill notes: details, description, coaching points and tags
+- Undo and redo for every change
+- Dark and light themes, five presets, and your own primary and secondary colours
+- Keyboard shortcuts (see Settings)
 
 ## Roadmap
 
@@ -52,6 +57,12 @@ Everything is stored as files on your computer. Windows comes first, then macOS 
 ```bash
 npm install
 npm run tauri dev
+```
+
+### Tests
+
+```bash
+npm test
 ```
 
 ## License
