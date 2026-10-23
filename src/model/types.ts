@@ -146,6 +146,8 @@ export interface DrillNotes {
 export interface BoardMeta {
 	title: string;
 	tags: string[];
+	/** Library folder name; empty when the board isn't in a folder. */
+	folder: string;
 	createdAt: string;
 	updatedAt: string;
 }
