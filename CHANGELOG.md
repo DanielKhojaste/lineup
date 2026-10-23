@@ -8,6 +8,30 @@ This project adheres to semantic versioning (0.x during early development).
 
 ## [Unreleased]
 
+### Added
+
+- New editor layout: tool rail, SVG pitch, and a side panel with Inspector and Notes tabs
+- Place home, away and neutral players, goalkeepers, cones and a ball by clicking the pitch or dragging from the tool rail
+- Select markers with a click, Shift-click or a drag box; move, nudge with the arrow keys, duplicate, reorder and delete them
+- Inspector for shirt numbers, positions, names, teams and goalkeepers, plus team names and kit colours
+- Drill notes: category, age group, duration, players, area, equipment, description, coaching points and tags
+- Undo and redo for every change; a drag or a text edit counts as one step
+- Themes: five presets, dark and light modes, and custom primary and secondary colours
+- Keyboard shortcuts, listed in Settings
+- The board in progress is kept as a local draft until saving to files arrives
+- Unit tests (Vitest) for the board model, undo/redo and themes, run in CI
+
+### Changed
+
+- Boards are now plain, serialisable data with UUIDs, ready to be saved as files
+- Markers are positioned by their centre, so they no longer drift when the window is resized
+- Fonts are bundled with the app instead of loaded from Google Fonts, so it works offline
+- The window opens at 1280 × 800
+
+### Removed
+
+- `@dnd-kit` and `vite-plugin-svgr` dependencies
+
 ---
 
 ## [0.2.4] - 2026-10-23

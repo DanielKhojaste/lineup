@@ -1,11 +1,10 @@
-function NotFound() {
+import { Link } from "react-router-dom";
+
+export default function NotFound() {
 	return (
-		<main className="notFound view">
-			<h2>NotFound</h2>
+		<main className="not-found">
+			<h1>Page not found</h1>
+			<Link to="/">Back to the board</Link>
 		</main>
 	);
 }
-
-// ----------------------------------------------------
-
-export default NotFound;

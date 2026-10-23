@@ -13,10 +13,11 @@
 		"windows": [
 			{
 				"title": "Lineup",
-				"width": 844,
-				"height": 601,
-				"minWidth": 800,
-				"minHeight": 600
+				"width": 1280,
+				"height": 800,
+				"minWidth": 960,
+				"minHeight": 600,
+				"center": true
 			}
 		],
 		"security": {
