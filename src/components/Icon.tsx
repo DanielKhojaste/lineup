@@ -30,6 +30,14 @@ export const ICONS = {
 	text: "M5 6h14M12 6v13M9 19h6",
 	eraser: "M8 20h12M4 15l9-9 6 6-7 7H8z",
 	rotate: "M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7",
+	more: "M3.8 12a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0-2.4 0zM10.8 12a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0-2.4 0zM17.8 12a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0-2.4 0z",
+	search: "M5 11a6 6 0 1 0 12 0a6 6 0 1 0-12 0M20 20l-4.5-4.5",
+	grid: "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z",
+	folder:
+		"M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z",
+	inbox: "M4 13l2-8h12l2 8M4 13v6h16v-6M4 13h5l1 2h4l1-2h5",
+	chevronLeft: "M15 5l-7 7 7 7",
+	download: "M12 4v11M7 10l5 5 5-5M5 20h14",
 	close: "M6 6l12 12M18 6L6 18",
 	check: "M5 12l5 5L20 7",
 };

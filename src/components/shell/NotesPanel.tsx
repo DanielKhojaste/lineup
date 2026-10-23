@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { DrillNotes } from "../../model/types";
 import { useEditor } from "../../state/EditorContext";
+import { allFolders, useLibrary } from "../../state/LibraryContext";
 import { Icon } from "../Icon";
 import { BoardInput, BoardTextarea, Section } from "../ui/fields";
 
@@ -16,6 +17,38 @@ const DETAIL_FIELDS: {
 	{ key: "area", label: "Area", placeholder: "30 × 20 m" },
 	{ key: "equipment", label: "Equipment", placeholder: "Cones, balls" },
 ];
+
+function FolderField() {
+	const { state, dispatch } = useEditor();
+	const library = useLibrary();
+	const folder = state.board.meta.folder;
+	const folders = allFolders(library.folders, library.boards);
+	const options =
+		folder && !folders.includes(folder) ? [...folders, folder] : folders;
+
+	return (
+		<div className="field">
+			<label className="field__label" htmlFor="board-folder">
+				Folder
+			</label>
+			<select
+				id="board-folder"
+				className="field__input"
+				value={folder}
+				onChange={(e) =>
+					dispatch({ type: "updateMeta", patch: { folder: e.target.value } })
+				}
+			>
+				<option value="">No folder</option>
+				{options.map((f) => (
+					<option key={f} value={f}>
+						{f}
+					</option>
+				))}
+			</select>
+		</div>
+	);
+}
 
 function Tags() {
 	const { state, dispatch } = useEditor();
@@ -128,6 +161,7 @@ export default function NotesPanel() {
 	return (
 		<div className="panel-body">
 			<Section title="Details">
+				<FolderField />
 				<div className="field-grid">
 					{DETAIL_FIELDS.map((f) => (
 						<BoardInput
