@@ -231,8 +231,7 @@ export default function Board() {
 			</svg>
 			{board.nodes.length === 0 && (
 				<p className="board__hint">
-					Pick a player or piece of equipment in the tool rail, then click the
-					pitch. You can also drag it straight on.
+					Pick a tool on the left and click the pitch, or drag it on.
 				</p>
 			)}
 		</section>
