@@ -22,8 +22,15 @@ This project adheres to semantic versioning (0.x during early development).
 - Any player can be recoloured from the inspector (home, away and neutral colours, or a custom one), and switched back to its team colour
 - Keyboard shortcuts for every new tool
 
+- Library home screen: every saved board with a preview, search across titles, tags and notes, sorting, and folders (create, rename, delete, move boards between them)
+- Boards save automatically as you work (Ctrl+S saves straight away), as `.lineup` files in `Documents\Lineup`
+- Duplicate, delete (with confirmation), import and export `.lineup` files, and export a board as a PNG image
+- Folder picker in the Notes tab
+- The board from earlier versions' local draft is moved into the library on first launch
+
 ### Changed
 
+- The app opens on the library; boards open in the editor, with a "Library" button to go back
 - Settings: the theme is picked from a dropdown, and custom colours are tucked into a collapsible "Customise colours" section
 - Select all, duplicate, reorder, nudge and delete now work on drawings as well as markers
 - Selected tabs and options no longer switch to a bold font

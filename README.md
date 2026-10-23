@@ -24,6 +24,8 @@ Everything is stored as files on your computer. Windows comes first, then macOS 
 - Select with a click, Shift-click or a drag box; move, nudge, duplicate, reorder and delete
 - Edit shirt numbers, positions, names, teams and kit colours
 - Drill notes: details, description, coaching points and tags
+- A library of saved boards with folders and search; boards save automatically to `Documents\Lineup`
+- Import and export `.lineup` files; export boards as PNG images
 - Undo and redo for every change
 - Dark and light themes, five presets, and your own primary and secondary colours
 - Keyboard shortcuts (see Settings)
