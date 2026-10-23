@@ -52,3 +52,13 @@ The goal is to provide a flexible, offline-capable tool that can be adapted to d
 npm install
 npm run tauri dev
 ```
+
+## License
+
+Copyright (C) 2025-2026 Aref "Daniel" Khojaste
+
+Lineup is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. See [LICENSE](LICENSE) for the full text.
+
+Lineup is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Releases up to and including v0.2.3 were published under the MIT License, and copies of those releases remain available under its terms.
