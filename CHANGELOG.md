@@ -10,16 +10,26 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Added
 
-- Library home screen: every saved board with a preview, search across titles, tags and notes, sorting, and folders (create, rename, delete, move boards between them)
-- Boards save automatically as you work (Ctrl+S saves straight away), as `.lineup` files in `Documents\Lineup`
-- Duplicate, delete (with confirmation), import and export `.lineup` files, and export a board as a PNG image
+- Library home screen: every saved board as a card with a live preview, its folder, duration and when it was last edited
+- Search across titles, tags, folders, categories, descriptions and coaching points, and sort by last edited or by name
+- Folders: create, rename and delete them (deleting a folder keeps its boards), move boards between them, and a "Not in a folder" view
+- Board menu in the library: open, duplicate, move to folder, export, and delete with a confirmation
+- Autosave: boards are saved as `.lineup` files in `Documents\Lineup` shortly after every change, and straight away when you go back to the library or close the window; Ctrl+S saves immediately
+- Save status next to the board title: Saved, Saving… or Couldn't save, with a Retry button
+- Import `.lineup` files, several at once; a board that's already in the library comes in as a copy, so nothing is overwritten
+- Export a board as a `.lineup` file or as a PNG image at twice the board's size, from the library or the editor
 - Folder picker in the Notes tab
-- The board from earlier versions' local draft is moved into the library on first launch
+- The library's location on disk is shown at the bottom of the sidebar
+- Tauri `fs` and `dialog` plugins, limited to the library folder and to files picked in a save or open dialog
+- `.lineup` file format: versioned JSON (`schemaVersion: 1`); broken items are dropped and missing fields filled in when a file is opened, and files from a newer version of Lineup are refused with a clear message
+- Files are written to a temporary file and then swapped in, so a crash can't leave a half-written board
+- If a Linux machine has no Documents folder, the library falls back to the app's data folder
+- In the browser (`npm run dev`), the library is kept in local storage
 
 ### Changed
 
 - The app opens on the library; boards open in the editor, with a "Library" button to go back
-- The selected folder in the library sidebar is no longer bold
+- The board kept as a local draft by v0.3.0 and v0.4.0 is moved into the library on first launch
 
 ---
 
@@ -28,11 +38,11 @@ This project adheres to semantic versioning (0.x during early development).
 ### Added
 
 - Draw tools: run (solid), pass (dashed) and dribble (wavy) arrows, plain lines, zones (rectangle or ellipse), freehand pen and highlighter, text, and an eraser for drawings
-- Lines can be bent by dragging the diamond in the middle, and their ends can be moved; Shift snaps lines to 15° steps
+- Lines can be bent by dragging the diamond in the middle and straightened again, and their ends can be moved; Shift snaps lines to 15° steps
 - Zones can be resized from their corners; Shift draws a square
 - Arrows started on a player are anchored to that player
 - Text is typed straight onto the board; double-click a text to edit it
-- Equipment: goals (full size or mini), mannequins and poles, with rotation (Shift+R)
+- Equipment: goals (full size or mini, facing into the pitch), mannequins and poles, with rotation (Shift+R)
 - Inspector controls for drawings: colour (with a custom picker), arrow type, arrowheads, width, zone shape and border, highlighter, text size and background
 - Tool options: while a draw tool is active, the inspector sets the style of the next drawing, and restyling a drawing updates it too
 - A delete button (bin icon) appears under whatever is selected
@@ -42,13 +52,13 @@ This project adheres to semantic versioning (0.x during early development).
 ### Changed
 
 - Settings: the theme is picked from a dropdown, and custom colours are tucked into a collapsible "Customise colours" section
-- Select all, duplicate, reorder, nudge and delete now work on drawings as well as markers
+- Select all, duplicate, reorder, nudge and delete now work on drawings as well as markers, and the object list includes drawings
 - Selected tabs and options no longer switch to a bold font
 - Shirt numbers start at 1 for every team (they used to start at 2, leaving 1 for the keeper tool)
 
 ### Removed
 
-- The separate goalkeeper tool and goalkeeper colours: keepers use their team's colour (tick "Goalkeeper" on any player, and recolour it by hand if you want)
+- The goalkeeper tool (and its `K` shortcut) and the goalkeeper kit colours: tick "Goalkeeper" on any player instead; it keeps its team's colour unless you recolour it
 
 ---
 
