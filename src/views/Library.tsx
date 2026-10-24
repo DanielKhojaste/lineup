@@ -56,6 +56,8 @@ function BoardCard({
 	const details = [
 		board.meta.folder,
 		board.notes.duration,
+		board.steps.length > 0 &&
+			`${board.steps.length} step${board.steps.length > 1 ? "s" : ""}`,
 		`Edited ${relativeTime(board.meta.updatedAt)}`,
 	].filter(Boolean);
 	return (

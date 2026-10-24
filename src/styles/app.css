@@ -292,7 +292,9 @@ h3 {
 	min-width: 0;
 	position: relative;
 	display: flex;
-	padding: 18px;
+	flex-direction: column;
+	gap: 10px;
+	padding: 18px 18px 12px;
 	background: var(--board-bg);
 }
 
@@ -336,7 +338,7 @@ h3 {
 .board__hint {
 	position: absolute;
 	left: 50%;
-	bottom: 34px;
+	bottom: 84px;
 	transform: translateX(-50%);
 	max-width: min(460px, 80%);
 	padding: 8px 14px;
@@ -1638,4 +1640,163 @@ button.save-status--error:hover {
 .angle-input {
 	width: 64px;
 	margin-left: 4px;
+}
+
+/* ------------------------------- Animation -------------------------------- */
+
+.animation-bar {
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 44px;
+	padding: 6px 8px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--surface);
+}
+
+.animation-bar__play {
+	width: 32px;
+	height: 32px;
+	flex-shrink: 0;
+	display: grid;
+	place-items: center;
+	border-radius: 50%;
+	background: var(--accent);
+	color: var(--on-accent);
+}
+
+.animation-bar__play svg path {
+	fill: currentColor;
+}
+
+.animation-bar__play:disabled {
+	background: var(--hover);
+	color: var(--text-muted);
+	cursor: not-allowed;
+}
+
+.animation-bar__steps {
+	list-style: none;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	min-width: 0;
+	overflow-x: auto;
+	scrollbar-width: thin;
+}
+
+.step-chip {
+	position: relative;
+	overflow: hidden;
+	min-width: 30px;
+	height: 28px;
+	padding: 0 9px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	border-radius: var(--radius-small);
+	border: 1px solid var(--border);
+	color: var(--text-muted);
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+.step-chip:hover {
+	color: var(--text);
+	background: var(--hover);
+}
+
+.step-chip.is-active {
+	color: var(--text);
+	border-color: var(--accent);
+	background: var(--accent-soft);
+}
+
+.step-chip__progress {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: 2px;
+	background: var(--accent);
+	transform-origin: left;
+}
+
+.step-chip--add {
+	border-style: dashed;
+}
+
+.animation-bar__spacer {
+	flex: 1;
+}
+
+.animation-bar__field {
+	flex-shrink: 0;
+}
+
+.field__input--small {
+	width: auto;
+	padding: 4px 6px;
+	font-size: 12px;
+}
+
+/* Routes: the path a marker runs in the current step. */
+
+.route {
+	fill: none;
+	stroke: #ffffff;
+	stroke-width: 2.5;
+	stroke-dasharray: 2 6;
+	stroke-linecap: round;
+	opacity: 0.85;
+	pointer-events: none;
+}
+
+.route--selected {
+	stroke: var(--accent);
+	opacity: 1;
+}
+
+.route__head {
+	fill: #ffffff;
+	opacity: 0.85;
+	pointer-events: none;
+}
+
+.route--selected + .route__head {
+	fill: var(--accent);
+	opacity: 1;
+}
+
+.ghost {
+	opacity: 0.3;
+	pointer-events: none;
+}
+
+.handle--via {
+	cursor: move;
+}
+
+.board--route .board__svg {
+	cursor: crosshair;
+}
+
+.board--playing .board__svg {
+	cursor: default;
+}
+
+.button--small {
+	height: 30px;
+	padding: 0 10px;
+	font-size: 12px;
+}
+
+.button-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
 }

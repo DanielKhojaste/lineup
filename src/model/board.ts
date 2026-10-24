@@ -63,6 +63,7 @@ export function createBoard(title = "Untitled board"): Board {
 		display: { showLabels: true },
 		nodes: [],
 		drawings: [],
+		steps: [],
 	};
 }
 

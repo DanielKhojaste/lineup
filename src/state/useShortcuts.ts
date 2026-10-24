@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { ROTATE_STEP } from "../model/board";
 import { BOARD_HEIGHT, BOARD_WIDTH } from "../model/pitch";
 import { useEditor } from "./EditorContext";
+import { usePlayback } from "./PlaybackContext";
 import { Tool } from "./editor";
 
 const TOOL_KEYS: Record<string, Tool> = {
@@ -22,6 +23,7 @@ const TOOL_KEYS: Record<string, Tool> = {
 	f: "pen",
 	t: "text",
 	e: "eraser",
+	w: "route",
 };
 
 /** Nudge distance in normalised board units (roughly half a metre). */
@@ -36,6 +38,9 @@ export const SHORTCUTS: { keys: string; action: string }[] = [
 	{ keys: "L, Z", action: "Line, zone" },
 	{ keys: "F, T, E", action: "Pen, text, eraser" },
 	{ keys: "Shift (while drawing)", action: "Snap angle / square zone" },
+	{ keys: "W", action: "Route: click where a marker runs" },
+	{ keys: "Space", action: "Play / pause the animation" },
+	{ keys: ", / .", action: "Previous / next step" },
 	{ keys: "Esc", action: "Back to Select, or clear the selection" },
 	{ keys: "Ctrl+A", action: "Select everything" },
 	{ keys: "Shift+click, drag a box", action: "Select several" },
@@ -65,6 +70,7 @@ function isTyping(target: EventTarget | null): boolean {
 /** Global editor keyboard shortcuts. Ignored while typing in a field or a dialog is open. */
 export function useShortcuts(enabled: boolean) {
 	const { state, dispatch } = useEditor();
+	const playback = usePlayback();
 
 	useEffect(() => {
 		if (!enabled) return;
@@ -111,6 +117,23 @@ export function useShortcuts(enabled: boolean) {
 			}
 			if (mod || e.altKey) return;
 
+			if (key === " ") {
+				if (state.board.steps.length) {
+					handled();
+					playback.toggle();
+				}
+				return;
+			}
+			if (key === "," || key === ".") {
+				handled();
+				if (playback.time !== null) playback.stop();
+				dispatch({
+					type: "setStep",
+					step: state.step + (key === "," ? -1 : 1),
+				});
+				return;
+			}
+
 			if (key === "delete" || key === "backspace") {
 				if (ids.length) {
 					handled();
@@ -155,5 +178,13 @@ export function useShortcuts(enabled: boolean) {
 
 		window.addEventListener("keydown", onKeyDown);
 		return () => window.removeEventListener("keydown", onKeyDown);
-	}, [enabled, state.selection, state.tool, dispatch]);
+	}, [
+		enabled,
+		state.selection,
+		state.tool,
+		state.step,
+		state.board.steps.length,
+		dispatch,
+		playback,
+	]);
 }
