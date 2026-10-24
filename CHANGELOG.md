@@ -8,6 +8,10 @@ This project adheres to semantic versioning (0.x during early development).
 
 ## [Unreleased]
 
+---
+
+## [0.6.0] - 2026-10-23
+
 ### Added
 
 - Animation: build a play in steps. Each step moves some markers on from where the previous one left them, and the starting position stays as it was
