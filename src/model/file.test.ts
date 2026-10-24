@@ -27,6 +27,20 @@ describe("board files", () => {
 		);
 	});
 
+	it("keeps a player's own colour and drops old keeper colours", () => {
+		const board = {
+			...createBoard(),
+			teams: {
+				...createBoard().teams,
+				home: { name: "Reds", color: "#ED1B24", keeperColor: "#22C55E" },
+			},
+			nodes: [{ ...createPlayer(0.5, 0.5, "home"), color: "#F5C518" }],
+		};
+		const parsed = parseBoard(JSON.stringify(board));
+		expect(parsed.teams.home).toEqual({ name: "Reds", color: "#ED1B24" });
+		expect(parsed.nodes[0]).toMatchObject({ color: "#F5C518" });
+	});
+
 	it("rejects files that aren't boards", () => {
 		expect(() => parseBoard("not json")).toThrow(BoardFileError);
 		expect(() => parseBoard('{"hello": 1}')).toThrow(BoardFileError);

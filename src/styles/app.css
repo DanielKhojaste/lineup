@@ -1314,7 +1314,6 @@ button.save-status--error:hover {
 .nav-item.is-active {
 	background: var(--accent-soft);
 	box-shadow: inset 2px 0 0 var(--accent);
-	font-weight: 600;
 }
 
 .nav-item__label {

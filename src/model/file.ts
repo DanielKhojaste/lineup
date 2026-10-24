@@ -1,5 +1,12 @@
 import { createBoard, newId } from "./board";
-import { Board, BoardNode, Drawing, Point, SCHEMA_VERSION } from "./types";
+import {
+	Board,
+	BoardNode,
+	Drawing,
+	Point,
+	SCHEMA_VERSION,
+	TeamStyle,
+} from "./types";
 
 /** Saved boards are JSON files with this extension. */
 export const FILE_EXTENSION = "lineup";
@@ -50,6 +57,7 @@ function cleanNode(raw: unknown): BoardNode | null {
 				number: isNum(raw.number) ? raw.number : undefined,
 				label: isStr(raw.label) ? raw.label : undefined,
 				name: isStr(raw.name) ? raw.name : undefined,
+				color: isStr(raw.color) ? raw.color : undefined,
 			} as BoardNode;
 		case "cone":
 		case "pole":
@@ -137,6 +145,15 @@ function cleanDrawing(raw: unknown): Drawing | null {
 	}
 }
 
+/** Keeps a team's name and colour; anything else (like old keeper colours) is dropped. */
+function cleanTeam(raw: unknown, fallback: TeamStyle): TeamStyle {
+	const team = isObject(raw) ? raw : {};
+	return {
+		name: isStr(team.name) ? team.name : fallback.name,
+		color: isStr(team.color) ? team.color : fallback.color,
+	};
+}
+
 /**
  * Read a board from file contents. Unknown or broken items are dropped rather
  * than failing the whole file, and missing fields get defaults, so files from
@@ -192,18 +209,9 @@ export function parseBoard(text: string): Board {
 				: [],
 		},
 		teams: {
-			home: {
-				...fresh.teams.home,
-				...(isObject(teams.home) ? teams.home : {}),
-			},
-			away: {
-				...fresh.teams.away,
-				...(isObject(teams.away) ? teams.away : {}),
-			},
-			neutral: {
-				...fresh.teams.neutral,
-				...(isObject(teams.neutral) ? teams.neutral : {}),
-			},
+			home: cleanTeam(teams.home, fresh.teams.home),
+			away: cleanTeam(teams.away, fresh.teams.away),
+			neutral: cleanTeam(teams.neutral, fresh.teams.neutral),
 		},
 		display: { ...fresh.display, showLabels: display.showLabels !== false },
 		nodes: raw.nodes.map(cleanNode).filter((n): n is BoardNode => n !== null),
