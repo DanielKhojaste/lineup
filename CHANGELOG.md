@@ -8,6 +8,10 @@ This project adheres to semantic versioning (0.x during early development).
 
 ## [Unreleased]
 
+---
+
+## [0.4.0] - 2026-10-23
+
 ### Added
 
 - Draw tools: run (solid), pass (dashed) and dribble (wavy) arrows, plain lines, zones (rectangle or ellipse), freehand pen and highlighter, text, and an eraser for drawings
