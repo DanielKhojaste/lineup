@@ -354,6 +354,61 @@ function EquipmentFields({ nodes }: { nodes: BoardNode[] }) {
 	);
 }
 
+/** How the selected markers move in the step being edited. */
+function StepFields({ nodes }: { nodes: BoardNode[] }) {
+	const { state, dispatch } = useEditor();
+	const step = state.board.steps[state.step - 1];
+	if (!step) return null;
+	const moving = nodes.filter((n) => step.moves[n.id]);
+	const curved = moving.filter((n) => step.moves[n.id].via?.length);
+
+	return (
+		<Section title={`Step ${state.step}`}>
+			<p className="muted">
+				{moving.length === 0
+					? nodes.length === 1
+						? "Stays put in this step. Drag it, or use the Route tool (W), to make it move."
+						: "None of these move in this step."
+					: nodes.length === 1
+					  ? curved.length
+							? `Runs through ${step.moves[nodes[0].id].via!.length} waypoint${
+									step.moves[nodes[0].id].via!.length > 1 ? "s" : ""
+							  } in this step. Drag a waypoint to reshape the run, or double-click it to remove it.`
+							: "Moves in a straight line in this step. Use the Route tool (W) to add waypoints."
+					  : `${moving.length} of ${nodes.length} move in this step.`}
+			</p>
+			{moving.length > 0 && (
+				<div className="button-row">
+					{curved.length > 0 && (
+						<button
+							type="button"
+							className="button button--small"
+							onClick={() => {
+								for (const n of curved) {
+									const { via: _drop, ...move } = step.moves[n.id];
+									dispatch({ type: "setMove", id: n.id, move });
+								}
+							}}
+						>
+							Straight run
+						</button>
+					)}
+					<button
+						type="button"
+						className="button button--small"
+						onClick={() => {
+							for (const n of moving)
+								dispatch({ type: "setMove", id: n.id, move: null });
+						}}
+					>
+						Stay put this step
+					</button>
+				</div>
+			)}
+		</Section>
+	);
+}
+
 function BoardSettings() {
 	const { state, dispatch } = useEditor();
 	const { teams, display } = state.board;
@@ -436,6 +491,20 @@ export default function Inspector() {
 	].includes(state.tool);
 
 	if (count === 0) {
+		if (state.tool === "route") {
+			return (
+				<div className="panel-body">
+					<Section title="Route">
+						<p className="muted">
+							Click a marker, then click the points it runs through in this
+							step. The last click is where it ends up. On the starting
+							position, the first step is used (and added if there are none).
+						</p>
+					</Section>
+					<ObjectList />
+				</div>
+			);
+		}
 		if (drawTool) {
 			return (
 				<div className="panel-body">
@@ -481,6 +550,7 @@ export default function Inspector() {
 					ids={[...nodes, ...drawings].map((item) => item.id)}
 				/>
 			</Section>
+			{state.step > 0 && nodes.length > 0 && <StepFields nodes={nodes} />}
 			<ObjectList />
 		</div>
 	);

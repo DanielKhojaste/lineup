@@ -40,6 +40,9 @@ export const ICONS = {
 	download: "M12 4v11M7 10l5 5 5-5M5 20h14",
 	close: "M6 6l12 12M18 6L6 18",
 	check: "M5 12l5 5L20 7",
+	play: "M8 5.5v13l10-6.5z",
+	pause: "M8 5v14M16 5v14",
+	route: "M5 19a2 2 0 1 0 0.01 0M8 17c3-1 2-6 6-7s4-3 4-5M15 5h3v3",
 };
 
 export type IconName = keyof typeof ICONS;

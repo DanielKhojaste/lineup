@@ -10,6 +10,7 @@ import { Board as BoardDoc } from "../model/types";
 import { EditorProvider, useEditor } from "../state/EditorContext";
 import { useLibrary } from "../state/LibraryContext";
 import { useAutosave } from "../state/useAutosave";
+import { PlaybackProvider } from "../state/PlaybackContext";
 import { useShortcuts } from "../state/useShortcuts";
 
 function EditorLayout() {
@@ -80,7 +81,9 @@ export default function Editor() {
 
 	return (
 		<EditorProvider key={loaded.id} board={loaded}>
-			<EditorLayout />
+			<PlaybackProvider>
+				<EditorLayout />
+			</PlaybackProvider>
 		</EditorProvider>
 	);
 }

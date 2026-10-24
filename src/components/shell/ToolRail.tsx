@@ -18,6 +18,15 @@ export const SELECT_TOOLS: ToolDef[] = [
 	{ tool: "select", label: "Select", shortcut: "V", icon: "select" },
 ];
 
+export const ANIMATE_TOOLS: ToolDef[] = [
+	{
+		tool: "route",
+		label: "Route (click where a marker runs)",
+		shortcut: "W",
+		icon: "route",
+	},
+];
+
 export const PLACE_TOOLS: ToolDef[] = [
 	{
 		tool: "home",
@@ -184,6 +193,8 @@ export default function ToolRail() {
 			<div className="rail__grid">{PLACE_TOOLS.map(renderTool)}</div>
 			<span className="rail__label">Draw</span>
 			<div className="rail__grid">{DRAW_TOOLS.map(renderTool)}</div>
+			<span className="rail__label">Animate</span>
+			<div className="rail__grid">{ANIMATE_TOOLS.map(renderTool)}</div>
 			{ghost && (
 				<div
 					className="rail__ghost"

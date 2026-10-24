@@ -10,11 +10,18 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Added
 
+- Animation: build a play in steps. Each step moves some markers on from where the previous one left them, and the starting position stays as it was
+- Step bar under the board: play and pause (Space), jump to the start or any step (, and . step back and forward), add a step after the current one, delete a step, set how long each step takes and the playback speed
+- Move markers on a step by dragging them (or with the arrow keys), or use the new Route tool (W): click a marker, then the points it runs through, and it follows a smooth curve through them
+- While editing a step, each moving marker shows its run as a dotted path, with a faded marker where it set off; drag the waypoints to reshape a run, or double-click one to remove it
+- Inspector section for the step: see whether the selected markers move, and make a run straight again or keep a marker where it is for that step
+- Library cards show how many steps an animated board has
 - Striped kits: give a team (in board settings) or a single player (in the inspector) a second colour for vertical stripes, like Barcelona's
 - Goals and mannequins can face any angle: drag the round handle in front of them (Shift snaps to 15°), type an angle, or use the turn buttons
 
 ### Changed
 
+- Board files are now version 2, which adds the animation steps; boards saved by earlier versions open as before, with no steps
 - The sidebar lists players separately from other objects, grouped by team in sections you can fold away; click a team's name to select all its players (Shift-click adds them to the selection)
 - Players in the sidebar show their kit, number, name and position, sorted by shirt number with keepers first
 - Shift+R turns a goal or mannequin 15° clockwise and Alt+Shift+R 15° anticlockwise (it used to turn 90°); the inspector buttons turn by 15° too

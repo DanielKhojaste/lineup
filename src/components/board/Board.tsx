@@ -1,9 +1,17 @@
 import {
 	PointerEvent as ReactPointerEvent,
 	useEffect,
+	useMemo,
 	useRef,
 	useState,
 } from "react";
+import {
+	nodesAtStep,
+	nodesDuringStep,
+	routeOf,
+	sampleRoute,
+	stepAtTime,
+} from "../../model/animation";
 import { clamp01, ROTATE_STEP } from "../../model/board";
 import {
 	createLine,
@@ -25,6 +33,8 @@ import {
 	ZoneDrawing,
 } from "../../model/types";
 import { useEditor } from "../../state/EditorContext";
+import { usePlayback } from "../../state/PlaybackContext";
+import AnimationBar from "./AnimationBar";
 import { PlaceTool, selectedDrawings } from "../../state/editor";
 import { clientToBoard, isOnBoard } from "./coords";
 import DrawingShape, { HandleId, SelectionOverlay } from "./Drawings";
@@ -65,6 +75,7 @@ type Interaction = { pointerId: number; startClient: Pos } & (
 	| { kind: "pen"; id: string; points: Point[] }
 	| { kind: "handle"; id: string; handle: HandleId; original: Drawing }
 	| { kind: "rotate"; id: string; center: Pos }
+	| { kind: "via"; id: string; index: number }
 	| { kind: "erase"; erased: Set<string> }
 );
 
@@ -145,6 +156,51 @@ function RotateHandle({ node }: { node: GoalNode | MannequinNode }) {
 	);
 }
 
+/** Cut a polyline short by `distance` units, so an arrowhead stops at a marker's edge. */
+function trimEnd(points: Pos[], distance: number): Pos[] {
+	const out = [...points];
+	let left = distance;
+	while (out.length > 1) {
+		const a = out[out.length - 2];
+		const b = out[out.length - 1];
+		const len = Math.hypot(b.x - a.x, b.y - a.y);
+		if (len > left) {
+			const k = (len - left) / len;
+			out[out.length - 1] = {
+				x: a.x + (b.x - a.x) * k,
+				y: a.y + (b.y - a.y) * k,
+			};
+			return out;
+		}
+		left -= len;
+		out.pop();
+	}
+	return out;
+}
+
+/** The dotted run a marker makes in a step, ending in an arrowhead. */
+function RoutePath({ route, selected }: { route: Point[]; selected: boolean }) {
+	const points = trimEnd(sampleRoute(route), 22);
+	if (points.length < 2) return null;
+	const d = points
+		.map((p, i) => `${i ? "L" : "M"}${p.x.toFixed(1)} ${p.y.toFixed(1)}`)
+		.join("");
+	const end = points[points.length - 1];
+	const before = points[Math.max(0, points.length - 4)];
+	const angle =
+		(Math.atan2(end.y - before.y, end.x - before.x) * 180) / Math.PI;
+	return (
+		<>
+			<path className={`route${selected ? " route--selected" : ""}`} d={d} />
+			<path
+				className="route__head"
+				d="M0 0L-11 -6L-11 6Z"
+				transform={`translate(${end.x} ${end.y}) rotate(${angle})`}
+			/>
+		</>
+	);
+}
+
 const OPPOSITE_CORNER: Record<string, (z: ZoneDrawing) => Point> = {
 	nw: (z) => [z.x + z.w, z.y + z.h],
 	ne: (z) => [z.x, z.y + z.h],
@@ -160,6 +216,33 @@ export default function Board() {
 	const [editingText, setEditingText] = useState<string | null>(null);
 	const selected = new Set(selection);
 	const drawingIds = new Set(board.drawings.map((d) => d.id));
+	const playback = usePlayback();
+	const inPlayback = playback.time !== null;
+	const step = state.step;
+
+	// Markers where they stand: on the step being edited, or mid-run while playing.
+	const shownNodes = useMemo(() => {
+		if (playback.time !== null && board.steps.length > 0) {
+			const at = stepAtTime(board, playback.time);
+			return nodesDuringStep(board, at.step, at.t);
+		}
+		return nodesAtStep(board, step);
+	}, [board, step, playback.time]);
+	const nodeById = new Map(shownNodes.map((n) => [n.id, n]));
+
+	// The marker whose route is being clicked out with the route tool.
+	const routeSession = useRef<{ id: string; step: number } | null>(null);
+	useEffect(() => {
+		const session = routeSession.current;
+		if (
+			session &&
+			(tool !== "route" ||
+				session.step !== step ||
+				selection.length !== 1 ||
+				selection[0] !== session.id)
+		)
+			routeSession.current = null;
+	}, [tool, step, selection]);
 
 	// Escape cancels whatever the pointer is doing and puts things back.
 	useEffect(() => {
@@ -212,6 +295,11 @@ export default function Board() {
 
 	const onPointerDown = (e: ReactPointerEvent<SVGSVGElement>) => {
 		if (e.button !== 0 || interaction.current) return;
+		// Clicking the board while an animation plays goes back to editing.
+		if (inPlayback) {
+			playback.stop();
+			return;
+		}
 		const point = toBoard(e);
 		if (!point) return;
 
@@ -224,11 +312,26 @@ export default function Board() {
 		const pointerId = e.pointerId;
 		const capture = () => e.currentTarget.setPointerCapture(pointerId);
 
+		// Dragging a waypoint of a route.
+		const viaEl = target.closest<SVGElement>("[data-via-index]");
+		if (viaEl) {
+			capture();
+			dispatch({ type: "beginGesture" });
+			interaction.current = {
+				kind: "via",
+				pointerId,
+				startClient,
+				id: viaEl.dataset.viaNode!,
+				index: Number(viaEl.dataset.viaIndex),
+			};
+			return;
+		}
+
 		// Turning a goal or mannequin by its handle.
 		const rotateEl = target.closest<SVGElement>("[data-rotate-handle]");
 		if (rotateEl) {
 			const id = rotateEl.dataset.rotateHandle!;
-			const node = board.nodes.find((n) => n.id === id);
+			const node = nodeById.get(id);
 			if (node) {
 				capture();
 				dispatch({ type: "beginGesture" });
@@ -279,7 +382,7 @@ export default function Board() {
 
 		if (isLineTool(tool)) {
 			// Starting on a marker anchors the line to its centre.
-			const node = hitId ? board.nodes.find((n) => n.id === hitId) : undefined;
+			const node = hitId ? nodeById.get(hitId) : undefined;
 			const from: Point = node ? [node.x, node.y] : clampPoint(point);
 			const drawing = createLine(tool, from, from, toolStyles.line);
 			capture();
@@ -341,6 +444,46 @@ export default function Board() {
 			dispatch({ type: "beginGesture" });
 			dispatch({ type: "addDrawing", drawing });
 			setEditingText(drawing.id);
+			return;
+		}
+
+		if (tool === "route") {
+			// Click a marker to pick it, then click the points it runs through.
+			// The last click is where it ends up; earlier ones become waypoints.
+			const hitNode = hitId ? nodeById.get(hitId) : undefined;
+			if (hitNode && !(selection.length === 1 && selection[0] === hitNode.id)) {
+				dispatch({ type: "select", ids: [hitNode.id] });
+				return;
+			}
+			if (selection.length !== 1 || !nodeById.has(selection[0])) return;
+			const id = selection[0];
+			let target = step;
+			if (target === 0) {
+				// Routes belong to a step: use the first one, adding it if needed.
+				dispatch(
+					board.steps.length === 0
+						? { type: "addStep" }
+						: { type: "setStep", step: 1 },
+				);
+				target = 1;
+			}
+			const p = clampPoint(point);
+			const existing = board.steps[target - 1]?.moves[id];
+			const session = routeSession.current;
+			const continuing =
+				session && session.id === id && session.step === target && existing;
+			dispatch({
+				type: "setMove",
+				id,
+				move: continuing
+					? {
+							x: p[0],
+							y: p[1],
+							via: [...(existing.via ?? []), [existing.x, existing.y]],
+					  }
+					: { x: p[0], y: p[1] },
+			});
+			routeSession.current = { id, step: target };
 			return;
 		}
 
@@ -484,6 +627,14 @@ export default function Board() {
 			case "erase":
 				erase(e.clientX, e.clientY, current.erased);
 				return;
+			case "via": {
+				const move = board.steps[step - 1]?.moves[current.id];
+				if (!move?.via) return;
+				const via = [...move.via];
+				via[current.index] = clampPoint(point);
+				dispatch({ type: "setMove", id: current.id, move: { ...move, via } });
+				return;
+			}
 			case "rotate": {
 				const p = toBoardUnits(point.x, point.y);
 				let angle =
@@ -548,6 +699,7 @@ export default function Board() {
 			case "handle":
 			case "erase":
 			case "rotate":
+			case "via":
 				dispatch({ type: end });
 				return;
 			case "marquee": {
@@ -572,7 +724,7 @@ export default function Board() {
 					...board.drawings
 						.filter((d) => drawingPoints(d).every(inside))
 						.map((d) => d.id),
-					...board.nodes.filter((n) => inside([n.x, n.y])).map((n) => n.id),
+					...shownNodes.filter((n) => inside([n.x, n.y])).map((n) => n.id),
 				];
 				dispatch({
 					type: "select",
@@ -585,6 +737,23 @@ export default function Board() {
 	};
 
 	const onDoubleClick = (e: React.MouseEvent<SVGSVGElement>) => {
+		// Double-clicking a waypoint removes it.
+		const viaEl = document
+			.elementFromPoint(e.clientX, e.clientY)
+			?.closest<SVGElement>("[data-via-index]");
+		if (viaEl) {
+			const id = viaEl.dataset.viaNode!;
+			const move = board.steps[step - 1]?.moves[id];
+			if (move?.via) {
+				const index = Number(viaEl.dataset.viaIndex);
+				dispatch({
+					type: "setMove",
+					id,
+					move: { ...move, via: move.via.filter((_, i) => i !== index) },
+				});
+			}
+			return;
+		}
 		if (tool !== "select") return;
 		// Pointer capture retargets the click to the <svg>, so look up what is under the pointer.
 		const id = itemAt(e.clientX, e.clientY);
@@ -625,14 +794,30 @@ export default function Board() {
 				| TextDrawing
 				| undefined)
 		: undefined;
-	const mode =
-		tool === "select"
-			? "select"
-			: tool === "eraser"
-			  ? "erase"
-			  : PLACE_TOOLS.has(tool)
-			    ? "place"
-			    : "draw";
+	const mode = inPlayback
+		? "playing"
+		: tool === "select"
+		  ? "select"
+		  : tool === "eraser"
+		    ? "erase"
+		    : tool === "route"
+		      ? "route"
+		      : PLACE_TOOLS.has(tool)
+		        ? "place"
+		        : "draw";
+
+	// Routes of the step being edited, with the markers' starting spots faded.
+	const currentStep = !inPlayback && step > 0 ? board.steps[step - 1] : null;
+	const routes = currentStep
+		? Object.keys(currentStep.moves)
+				.map((id) => ({ id, route: routeOf(board, step, id) }))
+				.filter((r): r is { id: string; route: Point[] } => r.route !== null)
+		: [];
+	const viaFor =
+		currentStep && selection.length === 1
+			? currentStep.moves[selection[0]]?.via ?? []
+			: [];
+	const showView = { ...board, nodes: shownNodes };
 
 	return (
 		<section className={`board board--${mode}`} aria-label="Board">
@@ -641,7 +826,11 @@ export default function Board() {
 				className="board__svg"
 				viewBox={`0 0 ${BOARD_WIDTH} ${BOARD_HEIGHT}`}
 				role="application"
-				aria-label={`Pitch with ${board.nodes.length} markers and ${board.drawings.length} drawings`}
+				aria-label={`Pitch with ${board.nodes.length} markers and ${
+					board.drawings.length
+				} drawings${
+					board.steps.length ? `, animated in ${board.steps.length} steps` : ""
+				}`}
 				onPointerDown={onPointerDown}
 				onPointerMove={onPointerMove}
 				onPointerUp={(e) => finish(e, false)}
@@ -654,13 +843,32 @@ export default function Board() {
 						<DrawingShape key={d.id} drawing={d} />
 					))}
 				</g>
+				{routes.length > 0 && (
+					<g className="board__routes">
+						{routes.map(({ id, route }) => {
+							const original = board.nodes.find((n) => n.id === id)!;
+							return (
+								<g key={id} className="ghost" aria-hidden="true">
+									<NodeMarker
+										node={{ ...original, x: route[0][0], y: route[0][1] }}
+										selected={false}
+										board={board}
+									/>
+								</g>
+							);
+						})}
+						{routes.map(({ id, route }) => (
+							<RoutePath key={id} route={route} selected={selected.has(id)} />
+						))}
+					</g>
+				)}
 				<g className="board__nodes">
-					{board.nodes.map((node) => (
+					{shownNodes.map((node) => (
 						<NodeMarker
 							key={node.id}
 							node={node}
-							selected={selected.has(node.id)}
-							board={board}
+							selected={!inPlayback && selected.has(node.id)}
+							board={showView}
 						/>
 					))}
 				</g>
@@ -677,11 +885,28 @@ export default function Board() {
 					<SelectionOverlay drawings={selectedDrawings(state)} />
 				)}
 				{tool === "select" &&
+					!inPlayback &&
 					selection.length === 1 &&
 					(() => {
-						const node = board.nodes.find((n) => n.id === selection[0]);
+						const node = nodeById.get(selection[0]);
 						return isRotatable(node) ? <RotateHandle node={node} /> : null;
 					})()}
+				{viaFor.map(([x, y], index) => {
+					const u = toBoardUnits(x, y);
+					return (
+						<circle
+							key={index}
+							className="handle handle--via"
+							data-via-node={selection[0]}
+							data-via-index={index}
+							cx={u.x}
+							cy={u.y}
+							r={6}
+						>
+							<title>Drag to reshape the run. Double-click to remove.</title>
+						</circle>
+					);
+				})}
 				{marqueeRect && <rect className="board__marquee" {...marqueeRect} />}
 			</svg>
 			{editingDrawing && (
@@ -697,13 +922,28 @@ export default function Board() {
 					onDone={finishTextEdit}
 				/>
 			)}
+			<AnimationBar />
 			<FloatingActions
-				hidden={!!editingText || !!state.gestureBase || tool === "eraser"}
+				hidden={
+					!!editingText ||
+					!!state.gestureBase ||
+					tool === "eraser" ||
+					inPlayback
+				}
 			/>
-			{board.nodes.length === 0 && board.drawings.length === 0 && (
+			{tool === "route" && !inPlayback ? (
 				<p className="board__hint">
-					Pick a tool on the left and click the pitch, or drag it on.
+					{selection.length === 1
+						? "Click the points it runs through. The last click is where it ends up."
+						: "Click a marker, then click where it runs."}
 				</p>
+			) : (
+				board.nodes.length === 0 &&
+				board.drawings.length === 0 && (
+					<p className="board__hint">
+						Pick a tool on the left and click the pitch, or drag it on.
+					</p>
+				)
 			)}
 		</section>
 	);
