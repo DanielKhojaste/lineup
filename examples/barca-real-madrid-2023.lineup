@@ -32,8 +32,8 @@
 	"teams": {
 		"home": {
 			"name": "Barça",
-			"color": "#004D98",
-			"stripes": "#A50044"
+			"color": "#A50044",
+			"stripes": "#004D98"
 		},
 		"away": {
 			"name": "Real Madrid",
