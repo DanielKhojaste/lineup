@@ -146,6 +146,22 @@ function PlayerFields({ players }: { players: PlayerNode[] }) {
 				/>
 				Goalkeeper
 			</label>
+			<Swatches
+				label="Colour"
+				value={common(players, (p) => p.color ?? teams[p.team].color)}
+				colors={[...new Set(TEAMS.map((t) => teams[t].color))]}
+				custom
+				onChange={(color) => update({ color })}
+			/>
+			{players.some((p) => p.color) && (
+				<button
+					type="button"
+					className="link-button"
+					onClick={() => update({ color: undefined })}
+				>
+					Use team colour
+				</button>
+			)}
 		</>
 	);
 }
@@ -259,15 +275,6 @@ function BoardSettings() {
 								dispatch({ type: "updateTeam", team, patch: { color } })
 							}
 						/>
-						{team !== "neutral" && (
-							<ColorField
-								label="GK"
-								value={teams[team].keeperColor}
-								onValue={(keeperColor) =>
-									dispatch({ type: "updateTeam", team, patch: { keeperColor } })
-								}
-							/>
-						)}
 					</div>
 				))}
 			</Section>
@@ -354,7 +361,6 @@ export default function Inspector() {
 		"home",
 		"away",
 		"neutral",
-		"keeper",
 		"cone",
 		"ball",
 		"goal",

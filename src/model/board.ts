@@ -25,9 +25,9 @@ export const CONE_COLORS = [
 ] as const;
 
 export const DEFAULT_TEAMS: Board["teams"] = {
-	home: { name: "Home", color: "#ED1B24", keeperColor: "#F5C518" },
-	away: { name: "Away", color: "#F2F4F5", keeperColor: "#22C55E" },
-	neutral: { name: "Neutral", color: "#2F80ED", keeperColor: "#2F80ED" },
+	home: { name: "Home", color: "#ED1B24" },
+	away: { name: "Away", color: "#F2F4F5" },
+	neutral: { name: "Neutral", color: "#2F80ED" },
 };
 
 export function createBoard(title = "Untitled board"): Board {
@@ -104,14 +104,9 @@ export function createPole(x: number, y: number): PoleNode {
 }
 
 /**
- * The lowest shirt number not yet used by players of the given team.
- * Keepers start counting at 1, outfield players at 2 (1 is the keeper's).
+ * The lowest shirt number (from 1) not yet used by players of the given team.
  */
-export function nextShirtNumber(
-	nodes: BoardNode[],
-	team: TeamId,
-	keeper = false,
-): number {
+export function nextShirtNumber(nodes: BoardNode[], team: TeamId): number {
 	const used = new Set(
 		nodes
 			.filter((n): n is PlayerNode => n.kind === "player" && n.team === team)
@@ -119,7 +114,7 @@ export function nextShirtNumber(
 			.filter((n): n is number => typeof n === "number"),
 	);
 
-	let candidate = keeper ? 1 : 2;
+	let candidate = 1;
 	while (used.has(candidate)) candidate++;
 	return candidate;
 }

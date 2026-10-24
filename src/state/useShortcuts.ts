@@ -8,7 +8,6 @@ const TOOL_KEYS: Record<string, Tool> = {
 	"1": "home",
 	"2": "away",
 	"3": "neutral",
-	k: "keeper",
 	c: "cone",
 	b: "ball",
 	g: "goal",
@@ -30,7 +29,6 @@ const NUDGE = 0.005;
 export const SHORTCUTS: { keys: string; action: string }[] = [
 	{ keys: "V", action: "Select" },
 	{ keys: "1 / 2 / 3", action: "Home / away / neutral player" },
-	{ keys: "K", action: "Goalkeeper" },
 	{ keys: "C, B", action: "Cone, ball" },
 	{ keys: "G, M, O", action: "Goal, mannequin, pole" },
 	{ keys: "R, P, D", action: "Run, pass, dribble arrow" },

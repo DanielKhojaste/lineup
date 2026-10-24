@@ -18,13 +18,20 @@ This project adheres to semantic versioning (0.x during early development).
 - Equipment: goals (full size or mini), mannequins and poles, with rotation (Shift+R)
 - Inspector controls for drawings: colour (with a custom picker), arrow type, arrowheads, width, zone shape and border, highlighter, text size and background
 - Tool options: while a draw tool is active, the inspector sets the style of the next drawing, and restyling a drawing updates it too
-- A Delete button appears under whatever is selected
+- A delete button (bin icon) appears under whatever is selected
+- Any player can be recoloured from the inspector (home, away and neutral colours, or a custom one), and switched back to its team colour
 - Keyboard shortcuts for every new tool
 
 ### Changed
 
 - Settings: the theme is picked from a dropdown, and custom colours are tucked into a collapsible "Customise colours" section
 - Select all, duplicate, reorder, nudge and delete now work on drawings as well as markers
+- Selected tabs and options no longer switch to a bold font
+- Shirt numbers start at 1 for every team (they used to start at 2, leaving 1 for the keeper tool)
+
+### Removed
+
+- The separate goalkeeper tool and goalkeeper colours: keepers use their team's colour (tick "Goalkeeper" on any player, and recolour it by hand if you want)
 
 ---
 

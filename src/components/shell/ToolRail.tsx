@@ -41,13 +41,6 @@ export const PLACE_TOOLS: ToolDef[] = [
 		color: (t) => t.neutral.color,
 	},
 	{
-		tool: "keeper",
-		label: "Goalkeeper",
-		shortcut: "K",
-		icon: "keeper",
-		color: (t) => t.home.keeperColor,
-	},
-	{
 		tool: "cone",
 		label: "Cone",
 		shortcut: "C",

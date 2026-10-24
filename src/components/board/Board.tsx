@@ -45,7 +45,6 @@ const PLACE_TOOLS = new Set<string>([
 	"home",
 	"away",
 	"neutral",
-	"keeper",
 	"cone",
 	"ball",
 	"goal",

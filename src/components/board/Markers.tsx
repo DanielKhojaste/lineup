@@ -28,7 +28,7 @@ interface MarkerProps<T extends BoardNode> {
 
 export function playerFill(node: PlayerNode, teams: Board["teams"]): string {
 	const team = teams[node.team];
-	return node.keeper ? team.keeperColor : team.color;
+	return node.color ?? team.color;
 }
 
 function SelectionRing({ r, selected }: { r: number; selected: boolean }) {

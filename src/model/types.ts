@@ -11,7 +11,6 @@ export type TeamId = "home" | "away" | "neutral";
 export interface TeamStyle {
 	name: string;
 	color: string;
-	keeperColor: string;
 }
 
 interface NodeBase {
@@ -30,6 +29,8 @@ export interface PlayerNode extends NodeBase {
 	/** Short position label shown under the marker, e.g. "RW". */
 	label?: string;
 	name?: string;
+	/** Overrides the team colour for this one marker. */
+	color?: string;
 }
 
 export interface ConeNode extends NodeBase {

@@ -40,7 +40,6 @@ export type PlaceTool =
 	| "home"
 	| "away"
 	| "neutral"
-	| "keeper"
 	| "cone"
 	| "ball"
 	| "goal"
@@ -161,11 +160,14 @@ function applyNodePatch(node: BoardNode, patch: NodePatch): BoardNode {
 			if (has(patch, key)) set({ [key]: patch[key] } as Partial<PlayerNode>);
 		}
 	}
+	// Players may drop their own colour (back to the team's); equipment always has one.
+	if (node.kind === "player" && has(patch, "color"))
+		set({ color: patch.color });
 	if (
 		(node.kind === "cone" ||
 			node.kind === "mannequin" ||
 			node.kind === "pole") &&
-		has(patch, "color")
+		patch.color !== undefined
 	) {
 		set({ color: patch.color });
 	}
@@ -288,7 +290,7 @@ function renumberClashes(nodes: BoardNode[], changedIds: Set<string>) {
 			const others = nodes.filter((n) => n !== node);
 			nodes[i] = {
 				...node,
-				number: nextShirtNumber(others, node.team, node.keeper),
+				number: nextShirtNumber(others, node.team),
 			};
 		}
 	}
@@ -306,11 +308,6 @@ function createForTool(
 		case "neutral":
 			return createPlayer(x, y, tool, {
 				number: tool === "neutral" ? undefined : nextShirtNumber(nodes, tool),
-			});
-		case "keeper":
-			return createPlayer(x, y, "home", {
-				keeper: true,
-				number: nextShirtNumber(nodes, "home", true),
 			});
 		case "cone":
 			return createCone(x, y);
@@ -535,7 +532,7 @@ export function editorReducer(
 			const newNodes = shifted.nodes.map((copy) => {
 				const numbered =
 					copy.kind === "player" && copy.number !== undefined
-						? { ...copy, number: nextShirtNumber(all, copy.team, copy.keeper) }
+						? { ...copy, number: nextShirtNumber(all, copy.team) }
 						: copy;
 				all.push(numbered);
 				return numbered;

@@ -36,20 +36,41 @@ describe("placing nodes", () => {
 		state = run(state, { type: "place", tool: "home", x: 0.6, y: 0.5 });
 
 		const players = state.board.nodes as PlayerNode[];
-		expect(players.map((p) => p.number)).toEqual([2, 3]);
+		expect(players.map((p) => p.number)).toEqual([1, 2]);
 		expect(state.selection).toEqual([players[1].id]);
 		expect(state.past).toHaveLength(2);
 	});
 
-	it("numbers keepers from 1 and leaves neutral players unnumbered", () => {
-		const state = run(
-			createEditorState(boardWith()),
-			{ type: "place", tool: "keeper", x: 0.1, y: 0.5 },
-			{ type: "place", tool: "neutral", x: 0.5, y: 0.5 },
-		);
-		const [keeper, neutral] = state.board.nodes as PlayerNode[];
-		expect(keeper).toMatchObject({ keeper: true, number: 1, team: "home" });
-		expect(neutral.number).toBeUndefined();
+	it("leaves neutral players unnumbered", () => {
+		const state = run(createEditorState(boardWith()), {
+			type: "place",
+			tool: "neutral",
+			x: 0.5,
+			y: 0.5,
+		});
+		expect((state.board.nodes[0] as PlayerNode).number).toBeUndefined();
+	});
+
+	it("gives a player its own colour and can switch back to the team colour", () => {
+		let state = run(createEditorState(boardWith()), {
+			type: "place",
+			tool: "home",
+			x: 0.5,
+			y: 0.5,
+		});
+		const ids = state.selection;
+		state = run(state, {
+			type: "updateNodes",
+			ids,
+			patch: { color: "#F5C518" },
+		});
+		expect(state.board.nodes[0]).toMatchObject({ color: "#F5C518" });
+		state = run(state, {
+			type: "updateNodes",
+			ids,
+			patch: { color: undefined },
+		});
+		expect((state.board.nodes[0] as PlayerNode).color).toBeUndefined();
 	});
 
 	it("clamps placement to the board", () => {
@@ -64,13 +85,13 @@ describe("placing nodes", () => {
 });
 
 describe("nextShirtNumber", () => {
-	it("fills gaps", () => {
+	it("starts at 1 and fills gaps", () => {
 		const nodes = [
-			createPlayer(0, 0, "home", { number: 2 }),
-			createPlayer(0, 0, "home", { number: 4 }),
+			createPlayer(0, 0, "home", { number: 1 }),
+			createPlayer(0, 0, "home", { number: 3 }),
 		];
-		expect(nextShirtNumber(nodes, "home")).toBe(3);
-		expect(nextShirtNumber(nodes, "away")).toBe(2);
+		expect(nextShirtNumber(nodes, "home")).toBe(2);
+		expect(nextShirtNumber(nodes, "away")).toBe(1);
 	});
 });
 
@@ -213,12 +234,12 @@ describe("editing nodes", () => {
 		const state = run(createEditorState(boardWith(player, cone)), {
 			type: "updateNodes",
 			ids: [player.id, cone.id],
-			patch: { team: "away", color: "#000000" },
+			patch: { team: "away", number: 9, color: "#000000" },
 		});
-		expect(state.board.nodes[0]).toMatchObject({ team: "away" });
-		expect(state.board.nodes[0]).not.toHaveProperty("color");
+		expect(state.board.nodes[0]).toMatchObject({ team: "away", number: 9 });
 		expect(state.board.nodes[1]).toMatchObject({ color: "#000000" });
 		expect(state.board.nodes[1]).not.toHaveProperty("team");
+		expect(state.board.nodes[1]).not.toHaveProperty("number");
 	});
 
 	it("can clear a shirt number", () => {
@@ -264,7 +285,7 @@ describe("editing nodes", () => {
 		const copy = state.board.nodes[1] as PlayerNode;
 
 		expect(copy.id).not.toBe(player.id);
-		expect(copy).toMatchObject({ label: "RW", team: "home", number: 2 });
+		expect(copy).toMatchObject({ label: "RW", team: "home", number: 1 });
 		expect(copy.x).toBeGreaterThan(player.x);
 		expect(state.selection).toEqual([copy.id]);
 	});
@@ -338,7 +359,7 @@ describe("changing team", () => {
 		});
 		const moved = state.board.nodes[0] as PlayerNode;
 		expect(moved.team).toBe("away");
-		expect(moved.number).toBe(2);
+		expect(moved.number).toBe(1);
 		expect((state.board.nodes[1] as PlayerNode).number).toBe(7);
 	});
 
