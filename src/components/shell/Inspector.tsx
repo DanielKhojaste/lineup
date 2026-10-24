@@ -367,14 +367,14 @@ function StepFields({ nodes }: { nodes: BoardNode[] }) {
 			<p className="muted">
 				{moving.length === 0
 					? nodes.length === 1
-						? "Stays put in this step. Drag it, or use the Route tool (W), to make it move."
+						? "Doesn't move in this step. Drag it, or use the Route tool (W), to give it a run."
 						: "None of these move in this step."
 					: nodes.length === 1
 					  ? curved.length
 							? `Runs through ${step.moves[nodes[0].id].via!.length} waypoint${
 									step.moves[nodes[0].id].via!.length > 1 ? "s" : ""
 							  } in this step. Drag a waypoint to reshape the run, or double-click it to remove it.`
-							: "Moves in a straight line in this step. Use the Route tool (W) to add waypoints."
+							: "Runs in a straight line in this step. Use the Route tool (W) to add waypoints."
 					  : `${moving.length} of ${nodes.length} move in this step.`}
 			</p>
 			{moving.length > 0 && (
@@ -383,6 +383,7 @@ function StepFields({ nodes }: { nodes: BoardNode[] }) {
 						<button
 							type="button"
 							className="button button--small"
+							title="Remove the waypoints so the marker runs in a straight line"
 							onClick={() => {
 								for (const n of curved) {
 									const { via: _drop, ...move } = step.moves[n.id];
@@ -390,18 +391,19 @@ function StepFields({ nodes }: { nodes: BoardNode[] }) {
 								}
 							}}
 						>
-							Straight run
+							Straighten run
 						</button>
 					)}
 					<button
 						type="button"
 						className="button button--small"
+						title="Take this run out of the step: the marker stays where the previous step left it"
 						onClick={() => {
 							for (const n of moving)
 								dispatch({ type: "setMove", id: n.id, move: null });
 						}}
 					>
-						Stay put this step
+						Remove run
 					</button>
 				</div>
 			)}
