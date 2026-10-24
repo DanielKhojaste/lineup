@@ -1,20 +1,12 @@
 import { lazy } from "react";
 import { RouteObject } from "react-router-dom";
 
-const Home = lazy(() => import("../views/Home"));
+const Library = lazy(() => import("../views/Library"));
+const Editor = lazy(() => import("../views/Editor"));
 const NotFound = lazy(() => import("../views/NotFound"));
 
 export const routes: RouteObject[] = [
-	{
-		path: "/",
-		element: <Home />,
-	},
-	{
-		path: "/home",
-		element: <Home />,
-	},
-	{
-		path: "*",
-		element: <NotFound />,
-	},
+	{ path: "/", element: <Library /> },
+	{ path: "/board/:id", element: <Editor /> },
+	{ path: "*", element: <NotFound /> },
 ];

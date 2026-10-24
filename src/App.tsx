@@ -1,11 +1,14 @@
-import "./App.css";
 import ViewManager from "./router/ViewManager";
+import { LibraryProvider } from "./state/LibraryContext";
+import { ThemeProvider } from "./theme/ThemeProvider";
 
 function App() {
 	return (
-		<div className="dev">
-			<ViewManager />
-		</div>
+		<ThemeProvider>
+			<LibraryProvider>
+				<ViewManager />
+			</LibraryProvider>
+		</ThemeProvider>
 	);
 }
 

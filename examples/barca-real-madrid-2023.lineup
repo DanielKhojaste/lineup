@@ -1,0 +1,302 @@
+{
+	"schemaVersion": 2,
+	"id": "5dfc8f17-cdfd-4db1-87c0-0aa4b2032eb3",
+	"meta": {
+		"title": "Barça 5–0 Real Madrid · Liga F 2023",
+		"tags": [
+			"Liga F",
+			"Clásico",
+			"4-3-3"
+		],
+		"folder": "Matches",
+		"createdAt": "2026-10-24T01:19:01.118Z",
+		"updatedAt": "2026-10-24T01:19:01.118Z"
+	},
+	"notes": {
+		"category": "Match line-up",
+		"ageGroup": "",
+		"duration": "90 min",
+		"players": "11 v 11",
+		"area": "Full pitch",
+		"equipment": "",
+		"description": "Liga F, matchday 9. Sunday 19 November 2023, Estadi Olímpic Lluís Companys. Barça (Jonatan Giráldez) in a 4-3-3, Real Madrid (Alberto Toril) in a 4-2-3-1. Goals: Aitana 18', Graham Hansen 43', Mariona 46', Pina 90+1', Vicky López 90+3'.",
+		"coachingPoints": [
+			"Line-ups from both clubs' match reports and LaLiga's match page",
+			"Exact spots within each line are approximate"
+		]
+	},
+	"pitch": {
+		"sport": "soccer",
+		"variant": "full"
+	},
+	"teams": {
+		"home": {
+			"name": "Barça",
+			"color": "#004D98",
+			"stripes": "#A50044"
+		},
+		"away": {
+			"name": "Real Madrid",
+			"color": "#F4F5F7"
+		},
+		"neutral": {
+			"name": "Neutral",
+			"color": "#2F80ED"
+		}
+	},
+	"display": {
+		"showLabels": true
+	},
+	"nodes": [
+		{
+			"id": "5b1a8544-054c-4a15-8027-29c25f72151e",
+			"kind": "player",
+			"x": 0.075,
+			"y": 0.5,
+			"team": "home",
+			"keeper": true,
+			"number": 13,
+			"label": "GK",
+			"name": "Cata Coll"
+		},
+		{
+			"id": "0d0da2bf-aa09-4123-8a97-94f4c0c15f4a",
+			"kind": "player",
+			"x": 0.215,
+			"y": 0.84,
+			"team": "home",
+			"keeper": false,
+			"number": 15,
+			"label": "RB",
+			"name": "Bronze"
+		},
+		{
+			"id": "0632a557-0703-4a2e-ada3-f17a73b31d48",
+			"kind": "player",
+			"x": 0.18,
+			"y": 0.63,
+			"team": "home",
+			"keeper": false,
+			"number": 23,
+			"label": "CB",
+			"name": "Engen"
+		},
+		{
+			"id": "52a1323c-ce3f-46f7-917a-275afc808c07",
+			"kind": "player",
+			"x": 0.18,
+			"y": 0.37,
+			"team": "home",
+			"keeper": false,
+			"number": 4,
+			"label": "CB",
+			"name": "Mapi León"
+		},
+		{
+			"id": "97a1200a-7b99-42d1-a68a-32d57c37bf14",
+			"kind": "player",
+			"x": 0.215,
+			"y": 0.16,
+			"team": "home",
+			"keeper": false,
+			"number": 22,
+			"label": "LB",
+			"name": "Ona Batlle"
+		},
+		{
+			"id": "2fd45330-ae15-45ba-950d-b0293947d17a",
+			"kind": "player",
+			"x": 0.285,
+			"y": 0.5,
+			"team": "home",
+			"keeper": false,
+			"number": 21,
+			"label": "DM",
+			"name": "Walsh"
+		},
+		{
+			"id": "08836564-21a5-49bd-b0a7-37de5ab87ee9",
+			"kind": "player",
+			"x": 0.355,
+			"y": 0.67,
+			"team": "home",
+			"keeper": false,
+			"number": 14,
+			"label": "CM",
+			"name": "Aitana"
+		},
+		{
+			"id": "3a46ca00-e68e-4a79-ba37-6845ba2814af",
+			"kind": "player",
+			"x": 0.355,
+			"y": 0.33,
+			"team": "home",
+			"keeper": false,
+			"number": 12,
+			"label": "CM",
+			"name": "Patri"
+		},
+		{
+			"id": "b8cd113a-8cab-415f-a7c3-9c18ea21966f",
+			"kind": "player",
+			"x": 0.44,
+			"y": 0.84,
+			"team": "home",
+			"keeper": false,
+			"number": 10,
+			"label": "RW",
+			"name": "Graham Hansen"
+		},
+		{
+			"id": "46210cf2-158c-4784-a41c-0835aa8e79be",
+			"kind": "player",
+			"x": 0.455,
+			"y": 0.5,
+			"team": "home",
+			"keeper": false,
+			"number": 7,
+			"label": "ST",
+			"name": "Salma"
+		},
+		{
+			"id": "5263a9d1-e1e7-4186-bf14-7a9791060b4c",
+			"kind": "player",
+			"x": 0.44,
+			"y": 0.16,
+			"team": "home",
+			"keeper": false,
+			"number": 9,
+			"label": "LW",
+			"name": "Mariona"
+		},
+		{
+			"id": "c15a2fcb-ad39-4f60-a57b-69f0fa94eda8",
+			"kind": "player",
+			"x": 0.925,
+			"y": 0.5,
+			"team": "away",
+			"keeper": true,
+			"number": 1,
+			"label": "GK",
+			"name": "Misa"
+		},
+		{
+			"id": "4d1d89de-8df1-4c60-a578-228fee9bb7af",
+			"kind": "player",
+			"x": 0.785,
+			"y": 0.16,
+			"team": "away",
+			"keeper": false,
+			"number": 11,
+			"label": "RB",
+			"name": "Oihane"
+		},
+		{
+			"id": "2979747d-2f6e-4846-a2a9-0c081a339f4a",
+			"kind": "player",
+			"x": 0.82,
+			"y": 0.37,
+			"team": "away",
+			"keeper": false,
+			"number": 14,
+			"label": "CB",
+			"name": "Kathellen"
+		},
+		{
+			"id": "1b0433a9-b857-4bc2-a7db-82497dd1bb92",
+			"kind": "player",
+			"x": 0.82,
+			"y": 0.63,
+			"team": "away",
+			"keeper": false,
+			"number": 5,
+			"label": "CB",
+			"name": "Ivana Andrés"
+		},
+		{
+			"id": "dc0ca77d-87ce-4ec9-9111-d52c9d638bde",
+			"kind": "player",
+			"x": 0.785,
+			"y": 0.84,
+			"team": "away",
+			"keeper": false,
+			"number": 7,
+			"label": "LB",
+			"name": "Olga Carmona"
+		},
+		{
+			"id": "d09ce8e1-734d-4781-a1de-8271ae69698d",
+			"kind": "player",
+			"x": 0.715,
+			"y": 0.4,
+			"team": "away",
+			"keeper": false,
+			"number": 3,
+			"label": "DM",
+			"name": "Abelleira"
+		},
+		{
+			"id": "593f00ba-512d-4f3d-a6bf-0ad045361294",
+			"kind": "player",
+			"x": 0.715,
+			"y": 0.6,
+			"team": "away",
+			"keeper": false,
+			"number": 6,
+			"label": "DM",
+			"name": "Toletti"
+		},
+		{
+			"id": "78515b18-f2cf-4874-a237-94587564a4b8",
+			"kind": "player",
+			"x": 0.625,
+			"y": 0.18,
+			"team": "away",
+			"keeper": false,
+			"number": 22,
+			"label": "RW",
+			"name": "Athenea"
+		},
+		{
+			"id": "79d8bf27-9d86-4c53-bbf9-427c0cfcb72f",
+			"kind": "player",
+			"x": 0.635,
+			"y": 0.5,
+			"team": "away",
+			"keeper": false,
+			"number": 15,
+			"label": "AM",
+			"name": "Raso"
+		},
+		{
+			"id": "a48cedd3-a4cc-4104-87b3-9016f77ac315",
+			"kind": "player",
+			"x": 0.625,
+			"y": 0.82,
+			"team": "away",
+			"keeper": false,
+			"number": 18,
+			"label": "LW",
+			"name": "Linda Caicedo"
+		},
+		{
+			"id": "14ae093e-c609-4254-b76a-50f23b677c5d",
+			"kind": "player",
+			"x": 0.555,
+			"y": 0.5,
+			"team": "away",
+			"keeper": false,
+			"number": 9,
+			"label": "ST",
+			"name": "Bruun"
+		},
+		{
+			"id": "03f8e72c-f997-4310-8e23-f098a0a47016",
+			"kind": "ball",
+			"x": 0.5,
+			"y": 0.5
+		}
+	],
+	"drawings": [],
+	"steps": []
+}

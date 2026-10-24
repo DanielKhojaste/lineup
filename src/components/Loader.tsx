@@ -1,9 +1,7 @@
-function Loader() {
+export default function Loader() {
 	return (
-		<div>
-			<h1>Loader</h1>
+		<div className="loader" role="status">
+			Loading…
 		</div>
 	);
 }
-
-export default Loader;

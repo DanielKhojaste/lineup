@@ -1,0 +1,202 @@
+{
+	"schemaVersion": 2,
+	"id": "7b3bc318-1cf2-4441-a24a-2fa41de7aad5",
+	"meta": {
+		"title": "Third-man run on the right",
+		"tags": [
+			"Build-up",
+			"Third man"
+		],
+		"folder": "Plays",
+		"createdAt": "2026-10-21T23:31:01.121Z",
+		"updatedAt": "2026-10-21T23:31:01.121Z"
+	},
+	"notes": {
+		"category": "Attacking pattern",
+		"ageGroup": "",
+		"duration": "15 min",
+		"players": "4 v 2",
+		"area": "",
+		"equipment": "",
+		"description": "The 6 plays into the 8, who sets it back first time; the full-back runs behind as the winger drags her marker inside.",
+		"coachingPoints": [
+			"Set pass on the half-turn",
+			"Full-back starts the run as the ball travels",
+			"Winger's inside run creates the space"
+		]
+	},
+	"pitch": {
+		"sport": "soccer",
+		"variant": "full"
+	},
+	"teams": {
+		"home": {
+			"name": "Home",
+			"color": "#ED1B24"
+		},
+		"away": {
+			"name": "Away",
+			"color": "#F2F4F5"
+		},
+		"neutral": {
+			"name": "Neutral",
+			"color": "#2F80ED"
+		}
+	},
+	"display": {
+		"showLabels": true
+	},
+	"nodes": [
+		{
+			"id": "e6c7dd3f-303d-448d-aa6b-b723fcf6223d",
+			"kind": "player",
+			"x": 0.36,
+			"y": 0.55,
+			"team": "home",
+			"keeper": false,
+			"number": 6,
+			"label": "DM",
+			"name": ""
+		},
+		{
+			"id": "f704d317-4e99-4a41-b734-ee27964370c6",
+			"kind": "player",
+			"x": 0.47,
+			"y": 0.62,
+			"team": "home",
+			"keeper": false,
+			"number": 8,
+			"label": "CM",
+			"name": ""
+		},
+		{
+			"id": "aa1897f4-5707-460b-85ed-e8d281005903",
+			"kind": "player",
+			"x": 0.33,
+			"y": 0.85,
+			"team": "home",
+			"keeper": false,
+			"number": 2,
+			"label": "RB",
+			"name": ""
+		},
+		{
+			"id": "49a702c1-54f8-46b0-9f40-9e6f13ce4261",
+			"kind": "player",
+			"x": 0.55,
+			"y": 0.86,
+			"team": "home",
+			"keeper": false,
+			"number": 7,
+			"label": "RW",
+			"name": ""
+		},
+		{
+			"id": "2b899c1b-05cc-42b8-9cdf-42e0a8d58ac7",
+			"kind": "player",
+			"x": 0.6,
+			"y": 0.8,
+			"team": "away",
+			"keeper": false,
+			"number": 3,
+			"label": "LB",
+			"name": ""
+		},
+		{
+			"id": "16776f0a-48d7-4df7-96cd-f73112ad5d27",
+			"kind": "player",
+			"x": 0.53,
+			"y": 0.55,
+			"team": "away",
+			"keeper": false,
+			"number": 10,
+			"label": "CM",
+			"name": ""
+		},
+		{
+			"id": "8efbe6ae-f5f4-4581-af1c-88cb126a332e",
+			"kind": "ball",
+			"x": 0.375,
+			"y": 0.55
+		}
+	],
+	"drawings": [],
+	"steps": [
+		{
+			"id": "0d323391-064b-48ac-856b-e6be6fe52a1c",
+			"duration": 1,
+			"moves": {
+				"8efbe6ae-f5f4-4581-af1c-88cb126a332e": {
+					"x": 0.46,
+					"y": 0.62
+				},
+				"16776f0a-48d7-4df7-96cd-f73112ad5d27": {
+					"x": 0.5,
+					"y": 0.565
+				}
+			}
+		},
+		{
+			"id": "7a8be91a-99e5-4cb2-aca5-05ea75fec664",
+			"duration": 1,
+			"moves": {
+				"8efbe6ae-f5f4-4581-af1c-88cb126a332e": {
+					"x": 0.395,
+					"y": 0.57
+				},
+				"e6c7dd3f-303d-448d-aa6b-b723fcf6223d": {
+					"x": 0.38,
+					"y": 0.56
+				},
+				"49a702c1-54f8-46b0-9f40-9e6f13ce4261": {
+					"x": 0.6,
+					"y": 0.64,
+					"via": [
+						[
+							0.6,
+							0.77
+						]
+					]
+				},
+				"2b899c1b-05cc-42b8-9cdf-42e0a8d58ac7": {
+					"x": 0.65,
+					"y": 0.7
+				}
+			}
+		},
+		{
+			"id": "cf683e46-8462-4770-8831-1d982247947e",
+			"duration": 1.5,
+			"moves": {
+				"8efbe6ae-f5f4-4581-af1c-88cb126a332e": {
+					"x": 0.665,
+					"y": 0.9,
+					"via": [
+						[
+							0.53,
+							0.82
+						]
+					]
+				},
+				"aa1897f4-5707-460b-85ed-e8d281005903": {
+					"x": 0.69,
+					"y": 0.88,
+					"via": [
+						[
+							0.45,
+							0.92
+						],
+						[
+							0.58,
+							0.93
+						]
+					]
+				},
+				"f704d317-4e99-4a41-b734-ee27964370c6": {
+					"x": 0.56,
+					"y": 0.56
+				}
+			}
+		}
+	]
+}
