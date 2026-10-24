@@ -57,7 +57,8 @@
 			"keeper": true,
 			"number": 13,
 			"label": "GK",
-			"name": "Cata Coll"
+			"name": "Cata Coll",
+			"color": "#1E8A5A"
 		},
 		{
 			"id": "0d0da2bf-aa09-4123-8a97-94f4c0c15f4a",
@@ -178,7 +179,8 @@
 			"keeper": true,
 			"number": 1,
 			"label": "GK",
-			"name": "Misa"
+			"name": "Misa",
+			"color": "#1A1A1A"
 		},
 		{
 			"id": "4d1d89de-8df1-4c60-a578-228fee9bb7af",

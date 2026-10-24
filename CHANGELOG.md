@@ -12,7 +12,7 @@ This project adheres to semantic versioning (0.x during early development).
 
 - Clicking a team's name in the sidebar when all its players are selected now deselects them
 - The step section's buttons are now "Straighten run" and "Remove run" (it was "Stay put this step"), with clearer descriptions
-- The Barça example board and screenshots show the kit as garnet with blue stripes
+- The Barça example board and screenshots show the kit as garnet with blue stripes, with the keepers in their 2023/24 goalkeeper colours (Cata Coll in green, Misa in black)
 
 ---
 
