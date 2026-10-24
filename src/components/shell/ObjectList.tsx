@@ -57,14 +57,28 @@ function TeamGroup({ team, players }: { team: TeamId; players: PlayerNode[] }) {
 				<button
 					type="button"
 					className="team-group__name"
-					title={`Select all ${style.name} players (Shift-click to add)`}
-					onClick={(e) =>
+					aria-pressed={allSelected}
+					title={
+						allSelected
+							? `Deselect the ${style.name} players`
+							: `Select all ${style.name} players (Shift-click to add)`
+					}
+					onClick={(e) => {
+						if (allSelected) {
+							// Clicking a selected team again deselects its players.
+							const team = new Set(ids);
+							dispatch({
+								type: "select",
+								ids: state.selection.filter((id) => !team.has(id)),
+							});
+							return;
+						}
 						dispatch({
 							type: "select",
 							ids,
 							mode: e.shiftKey || e.ctrlKey || e.metaKey ? "add" : "replace",
-						})
-					}
+						});
+					}}
 				>
 					<span
 						className="kit-dot"
