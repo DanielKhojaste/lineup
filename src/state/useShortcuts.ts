@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { ROTATE_STEP } from "../model/board";
 import { BOARD_HEIGHT, BOARD_WIDTH } from "../model/pitch";
 import { useEditor } from "./EditorContext";
 import { Tool } from "./editor";
@@ -39,7 +40,10 @@ export const SHORTCUTS: { keys: string; action: string }[] = [
 	{ keys: "Ctrl+A", action: "Select everything" },
 	{ keys: "Shift+click, drag a box", action: "Select several" },
 	{ keys: "Arrow keys", action: "Nudge (hold Shift for more)" },
-	{ keys: "Shift+R", action: "Rotate goal or mannequin" },
+	{
+		keys: "Shift+R, Alt+Shift+R",
+		action: "Turn a goal or mannequin 15° right / left",
+	},
 	{ keys: "Ctrl+D", action: "Duplicate" },
 	{ keys: "Delete", action: "Delete" },
 	{ keys: "] / [", action: "Bring to front / send to back" },
@@ -92,6 +96,19 @@ export function useShortcuts(enabled: boolean) {
 				if (ids.length) dispatch({ type: "duplicateItems", ids });
 				return;
 			}
+			// Shift+R turns clockwise, Alt+Shift+R anticlockwise. Matched on the key's
+			// position because Alt changes the character on some keyboards.
+			if (e.code === "KeyR" && e.shiftKey && !mod) {
+				if (ids.length) {
+					handled();
+					dispatch({
+						type: "rotateNodes",
+						ids,
+						by: e.altKey ? -ROTATE_STEP : ROTATE_STEP,
+					});
+				}
+				return;
+			}
 			if (mod || e.altKey) return;
 
 			if (key === "delete" || key === "backspace") {
@@ -127,13 +144,6 @@ export function useShortcuts(enabled: boolean) {
 					(key === "arrowup" ? -step : key === "arrowdown" ? step : 0) *
 					(BOARD_WIDTH / BOARD_HEIGHT);
 				dispatch({ type: "moveItems", ids, dx, dy });
-				return;
-			}
-			if (key === "r" && e.shiftKey) {
-				if (ids.length) {
-					handled();
-					dispatch({ type: "rotateNodes", ids, by: 90 });
-				}
 				return;
 			}
 			const tool = TOOL_KEYS[key];

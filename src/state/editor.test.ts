@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	createBoard,
 	createCone,
+	createGoal,
 	createPlayer,
 	nextShirtNumber,
 } from "../model/board";
@@ -49,6 +50,49 @@ describe("placing nodes", () => {
 			y: 0.5,
 		});
 		expect((state.board.nodes[0] as PlayerNode).number).toBeUndefined();
+	});
+
+	it("gives a player a striped kit, and drops the stripes with the colour", () => {
+		let state = run(createEditorState(boardWith()), {
+			type: "place",
+			tool: "home",
+			x: 0.5,
+			y: 0.5,
+		});
+		const ids = state.selection;
+		state = run(state, {
+			type: "updateNodes",
+			ids,
+			patch: { color: "#004D98", stripes: "#A50044" },
+		});
+		expect(state.board.nodes[0]).toMatchObject({
+			color: "#004D98",
+			stripes: "#A50044",
+		});
+		state = run(state, {
+			type: "updateNodes",
+			ids,
+			patch: { color: undefined },
+		});
+		const player = state.board.nodes[0] as PlayerNode;
+		expect(player.color).toBeUndefined();
+		expect(player.stripes).toBeUndefined();
+	});
+
+	it("turns goals by any angle and keeps it between 0 and 359", () => {
+		const goal = createGoal(0.2, 0.5);
+		let state = run(createEditorState(boardWith(goal)), {
+			type: "rotateNodes",
+			ids: [goal.id],
+			by: -15,
+		});
+		expect(state.board.nodes[0]).toMatchObject({ rotation: 345 });
+		state = run(state, {
+			type: "updateNodes",
+			ids: [goal.id],
+			patch: { rotation: 402.4 },
+		});
+		expect(state.board.nodes[0]).toMatchObject({ rotation: 42 });
 	});
 
 	it("gives a player its own colour and can switch back to the team colour", () => {

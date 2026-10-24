@@ -76,6 +76,8 @@ export interface NodePatch {
 	label?: string;
 	name?: string;
 	color?: string;
+	/** Stripe colour of a player's own kit (undefined for a solid kit). */
+	stripes?: string;
 	size?: "full" | "mini";
 	rotation?: number;
 }
@@ -160,9 +162,13 @@ function applyNodePatch(node: BoardNode, patch: NodePatch): BoardNode {
 			if (has(patch, key)) set({ [key]: patch[key] } as Partial<PlayerNode>);
 		}
 	}
-	// Players may drop their own colour (back to the team's); equipment always has one.
-	if (node.kind === "player" && has(patch, "color"))
-		set({ color: patch.color });
+	// Players may drop their own kit (back to the team's); equipment always has a colour.
+	if (node.kind === "player") {
+		if (has(patch, "color")) set({ color: patch.color });
+		if (has(patch, "stripes")) set({ stripes: patch.stripes });
+		if (has(patch, "color") && patch.color === undefined)
+			set({ stripes: undefined });
+	}
 	if (
 		(node.kind === "cone" ||
 			node.kind === "mannequin" ||

@@ -41,6 +41,27 @@ describe("board files", () => {
 		expect(parsed.nodes[0]).toMatchObject({ color: "#F5C518" });
 	});
 
+	it("keeps striped kits for teams and players", () => {
+		const board = createBoard();
+		board.teams.home = { name: "Barça", color: "#004D98", stripes: "#A50044" };
+		board.nodes = [
+			{
+				...createPlayer(0.5, 0.5, "away"),
+				color: "#FFFFFF",
+				stripes: "#15181B",
+			},
+			// Stripes without a colour of the player's own mean nothing, so they go.
+			{ ...createPlayer(0.4, 0.5, "home"), stripes: "#FF0000" },
+		];
+		const parsed = parseBoard(JSON.stringify(board));
+		expect(parsed.teams.home).toEqual(board.teams.home);
+		expect(parsed.nodes[0]).toMatchObject({
+			color: "#FFFFFF",
+			stripes: "#15181B",
+		});
+		expect((parsed.nodes[1] as { stripes?: string }).stripes).toBeUndefined();
+	});
+
 	it("rejects files that aren't boards", () => {
 		expect(() => parseBoard("not json")).toThrow(BoardFileError);
 		expect(() => parseBoard('{"hello": 1}')).toThrow(BoardFileError);

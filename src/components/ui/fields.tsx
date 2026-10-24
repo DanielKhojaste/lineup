@@ -141,6 +141,64 @@ export function ColorField({ label, value, onValue }: ColorFieldProps) {
 	);
 }
 
+interface StripeFieldProps {
+	value: string | undefined;
+	/** Suggested stripe colour when stripes are first added. */
+	suggestion: string;
+	onValue: (value: string | undefined) => void;
+}
+
+/** Optional second kit colour: a "+" until stripes are added, then a picker with a remove button. */
+export function StripeField({ value, suggestion, onValue }: StripeFieldProps) {
+	const id = useId();
+	const gesture = useGestureHandlers();
+	if (value === undefined) {
+		return (
+			<div className="field field--color">
+				<button
+					id={id}
+					type="button"
+					className="field__swatch field__swatch--add"
+					aria-label="Add stripes"
+					title="Add stripes"
+					onClick={() => onValue(suggestion)}
+				>
+					+
+				</button>
+				<label htmlFor={id} className="field__label">
+					Stripes
+				</label>
+			</div>
+		);
+	}
+	return (
+		<div className="field field--color">
+			<span className="stripe-field">
+				<input
+					id={id}
+					type="color"
+					className="field__swatch"
+					value={value}
+					onChange={(e) => onValue(e.target.value.toUpperCase())}
+					{...gesture}
+				/>
+				<button
+					type="button"
+					className="stripe-field__remove"
+					aria-label="Remove stripes"
+					title="Remove stripes"
+					onClick={() => onValue(undefined)}
+				>
+					×
+				</button>
+			</span>
+			<label htmlFor={id} className="field__label">
+				Stripes
+			</label>
+		</div>
+	);
+}
+
 export function Section({
 	title,
 	children,

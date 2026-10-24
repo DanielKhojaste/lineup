@@ -8,6 +8,18 @@ This project adheres to semantic versioning (0.x during early development).
 
 ## [Unreleased]
 
+### Added
+
+- Striped kits: give a team (in board settings) or a single player (in the inspector) a second colour for vertical stripes, like Barcelona's
+- Goals and mannequins can face any angle: drag the round handle in front of them (Shift snaps to 15°), type an angle, or use the turn buttons
+
+### Changed
+
+- The sidebar lists players separately from other objects, grouped by team in sections you can fold away; click a team's name to select all its players (Shift-click adds them to the selection)
+- Players in the sidebar show their kit, number, name and position, sorted by shirt number with keepers first
+- Shift+R turns a goal or mannequin 15° clockwise and Alt+Shift+R 15° anticlockwise (it used to turn 90°); the inspector buttons turn by 15° too
+- "Use team colour" is now "Use team kit", and resets a player's stripes as well as their colour
+
 ---
 
 ## [0.5.0] - 2026-10-23
