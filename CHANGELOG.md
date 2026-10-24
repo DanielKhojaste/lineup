@@ -16,11 +16,13 @@ This project adheres to semantic versioning (0.x during early development).
 - While editing a step, each moving marker shows its run as a dotted path, with a faded marker where it set off; drag the waypoints to reshape a run, or double-click one to remove it
 - Inspector section for the step: see whether the selected markers move, and make a run straight again or keep a marker where it is for that step
 - Library cards show how many steps an animated board has
+- Example boards in `examples/`: Barça 5–0 Real Madrid (Liga F, 19 November 2023) with both starting XIs, a rondo drill and an animated third-man run
 - Striped kits: give a team (in board settings) or a single player (in the inspector) a second colour for vertical stripes, like Barcelona's
 - Goals and mannequins can face any angle: drag the round handle in front of them (Shift snaps to 15°), type an angle, or use the turn buttons
 
 ### Changed
 
+- The README describes the current features, with screenshots and an animated example
 - Board files are now version 2, which adds the animation steps; boards saved by earlier versions open as before, with no steps
 - The sidebar lists players separately from other objects, grouped by team in sections you can fold away; click a team's name to select all its players (Shift-click adds them to the selection)
 - Players in the sidebar show their kit, number, name and position, sorted by shirt number with keepers first

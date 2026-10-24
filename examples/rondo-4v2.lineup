@@ -1,0 +1,239 @@
+{
+	"schemaVersion": 2,
+	"id": "0c56117c-86bf-4584-a38a-d685a7437ed0",
+	"meta": {
+		"title": "Rondo 4v2 + transition",
+		"tags": [
+			"Rondo",
+			"Possession",
+			"Warm-up"
+		],
+		"folder": "Drills",
+		"createdAt": "2026-10-22T23:31:01.120Z",
+		"updatedAt": "2026-10-22T23:31:01.120Z"
+	},
+	"notes": {
+		"category": "Possession",
+		"ageGroup": "U14+",
+		"duration": "12 min",
+		"players": "6",
+		"area": "25 × 25 m",
+		"equipment": "4 cones, bibs, balls",
+		"description": "Four keep the ball from two in the box. When the two win it, they play out through the gate and the passer who lost it defends.",
+		"coachingPoints": [
+			"Open body shape before the ball arrives",
+			"Two touches maximum",
+			"Pass away from pressure, through the middle when it's on"
+		]
+	},
+	"pitch": {
+		"sport": "soccer",
+		"variant": "full"
+	},
+	"teams": {
+		"home": {
+			"name": "Home",
+			"color": "#ED1B24"
+		},
+		"away": {
+			"name": "Away",
+			"color": "#F2F4F5"
+		},
+		"neutral": {
+			"name": "Neutral",
+			"color": "#2F80ED"
+		}
+	},
+	"display": {
+		"showLabels": true
+	},
+	"nodes": [
+		{
+			"id": "b9e107a8-d247-40a5-a2d8-00f539f712dd",
+			"kind": "cone",
+			"x": 0.245,
+			"y": 0.32999999999999996,
+			"color": "#FF8A00"
+		},
+		{
+			"id": "983b8ef5-3e25-42e6-aec1-ee53d4186376",
+			"kind": "cone",
+			"x": 0.475,
+			"y": 0.32999999999999996,
+			"color": "#FF8A00"
+		},
+		{
+			"id": "9a54b1b8-af07-41b7-8188-9a19903d69a7",
+			"kind": "cone",
+			"x": 0.245,
+			"y": 0.67,
+			"color": "#FF8A00"
+		},
+		{
+			"id": "1fba863e-0917-46a5-affc-042a72bbd6b0",
+			"kind": "cone",
+			"x": 0.475,
+			"y": 0.67,
+			"color": "#FF8A00"
+		},
+		{
+			"id": "ba834d5e-0316-4639-996c-74ef12d83158",
+			"kind": "player",
+			"x": 0.36,
+			"y": 0.32999999999999996,
+			"team": "home",
+			"keeper": false,
+			"number": 6,
+			"label": "",
+			"name": ""
+		},
+		{
+			"id": "48ad8251-813a-4d0a-9d65-3324b291a2de",
+			"kind": "player",
+			"x": 0.475,
+			"y": 0.5,
+			"team": "home",
+			"keeper": false,
+			"number": 8,
+			"label": "",
+			"name": ""
+		},
+		{
+			"id": "3a40a70c-bc0c-4ad5-a7ed-daaeeb6e0f4a",
+			"kind": "player",
+			"x": 0.36,
+			"y": 0.67,
+			"team": "home",
+			"keeper": false,
+			"number": 10,
+			"label": "",
+			"name": ""
+		},
+		{
+			"id": "b7ff1bef-d61b-4eca-bfd0-b9f1e68823bc",
+			"kind": "player",
+			"x": 0.245,
+			"y": 0.5,
+			"team": "home",
+			"keeper": false,
+			"number": 4,
+			"label": "",
+			"name": ""
+		},
+		{
+			"id": "d3ddf74c-a972-47ce-8d70-5f84ab4e4789",
+			"kind": "player",
+			"x": 0.32999999999999996,
+			"y": 0.46,
+			"team": "away",
+			"keeper": false,
+			"number": 9
+		},
+		{
+			"id": "12ad9ed1-5cfb-4fd0-9590-d8754e84b2a5",
+			"kind": "player",
+			"x": 0.39999999999999997,
+			"y": 0.56,
+			"team": "away",
+			"keeper": false,
+			"number": 11
+		},
+		{
+			"id": "7ef01dd2-1737-4266-9539-edb2e91294cd",
+			"kind": "ball",
+			"x": 0.263,
+			"y": 0.5
+		},
+		{
+			"id": "2a0360fe-10a0-4a60-ae51-ca08ab2ce17a",
+			"kind": "goal",
+			"x": 0.66,
+			"y": 0.5,
+			"size": "mini",
+			"rotation": 180
+		}
+	],
+	"drawings": [
+		{
+			"id": "c43b4ef8-bad8-476c-b2d6-b120f3bf2952",
+			"kind": "zone",
+			"x": 0.245,
+			"y": 0.32999999999999996,
+			"w": 0.23,
+			"h": 0.34,
+			"color": "#FFE14D",
+			"shape": "rect",
+			"dashed": true
+		},
+		{
+			"id": "af83ffc7-8ee0-4923-9c30-ac3d5a00f88e",
+			"kind": "zone",
+			"x": 0.6,
+			"y": 0.36,
+			"w": 0.09,
+			"h": 0.28,
+			"color": "#4CC9F0",
+			"shape": "rect",
+			"dashed": true
+		},
+		{
+			"id": "14624736-2ab3-493e-91f0-124c5345d993",
+			"kind": "line",
+			"from": [
+				0.245,
+				0.5
+			],
+			"to": [
+				0.36,
+				0.32999999999999996
+			],
+			"color": "#FFFFFF",
+			"width": "medium",
+			"stroke": "dashed",
+			"heads": "end"
+		},
+		{
+			"id": "09d8272f-2950-449f-827d-63713f529beb",
+			"kind": "line",
+			"from": [
+				0.36,
+				0.32999999999999996
+			],
+			"to": [
+				0.475,
+				0.5
+			],
+			"color": "#FFFFFF",
+			"width": "medium",
+			"stroke": "dashed",
+			"heads": "end"
+		},
+		{
+			"id": "94ee966c-ca72-4964-b955-29300e5aca2d",
+			"kind": "line",
+			"from": [
+				0.39999999999999997,
+				0.56
+			],
+			"to": [
+				0.62,
+				0.52
+			],
+			"color": "#FFE14D",
+			"width": "medium",
+			"stroke": "wavy",
+			"heads": "end"
+		},
+		{
+			"id": "89a715eb-2d24-4b57-b011-018530cf542e",
+			"kind": "text",
+			"x": 0.5,
+			"y": 0.2,
+			"text": "Win it → play out through the gate",
+			"color": "#FFFFFF",
+			"size": "small",
+			"background": true
+		}
+	],
+	"steps": []
+}
