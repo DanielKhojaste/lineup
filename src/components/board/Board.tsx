@@ -4,7 +4,7 @@ import {
 	useRef,
 	useState,
 } from "react";
-import { clamp01 } from "../../model/board";
+import { clamp01, ROTATE_STEP } from "../../model/board";
 import {
 	createLine,
 	createPen,
@@ -13,10 +13,13 @@ import {
 	drawingPoints,
 	isLineTool,
 } from "../../model/drawings";
-import { BOARD_HEIGHT, BOARD_WIDTH } from "../../model/pitch";
+import { BOARD_HEIGHT, BOARD_WIDTH, toBoardUnits } from "../../model/pitch";
 import {
+	BoardNode,
 	Drawing,
+	GoalNode,
 	LineDrawing,
+	MannequinNode,
 	Point,
 	TextDrawing,
 	ZoneDrawing,
@@ -61,6 +64,7 @@ type Interaction = { pointerId: number; startClient: Pos } & (
 	| { kind: "zone"; id: string; anchor: Point }
 	| { kind: "pen"; id: string; points: Point[] }
 	| { kind: "handle"; id: string; handle: HandleId; original: Drawing }
+	| { kind: "rotate"; id: string; center: Pos }
 	| { kind: "erase"; erased: Set<string> }
 );
 
@@ -104,6 +108,41 @@ function zoneRect(anchor: Point, to: Point, square: boolean) {
 		w: Math.abs(x2 - anchor[0]),
 		h: Math.abs(y2 - anchor[1]),
 	};
+}
+
+/** How far in front of a goal or mannequin its rotate handle sits, in board units. */
+function rotateReach(node: GoalNode | MannequinNode): number {
+	if (node.kind === "mannequin") return 32;
+	return node.size === "mini" ? 24 : 34;
+}
+
+function isRotatable(
+	node: BoardNode | undefined,
+): node is GoalNode | MannequinNode {
+	return node?.kind === "goal" || node?.kind === "mannequin";
+}
+
+/** A handle in front of a selected goal or mannequin; drag it around to turn it. */
+function RotateHandle({ node }: { node: GoalNode | MannequinNode }) {
+	const c = toBoardUnits(node.x, node.y);
+	const angle = (node.rotation * Math.PI) / 180;
+	const reach = rotateReach(node);
+	const hx = c.x + Math.cos(angle) * reach;
+	const hy = c.y + Math.sin(angle) * reach;
+	return (
+		<g className="rotate-handle">
+			<line className="rotate-handle__link" x1={c.x} y1={c.y} x2={hx} y2={hy} />
+			<circle
+				className="handle handle--rotate"
+				data-rotate-handle={node.id}
+				cx={hx}
+				cy={hy}
+				r={7}
+			>
+				<title>Drag to turn (Shift snaps to {ROTATE_STEP}°)</title>
+			</circle>
+		</g>
+	);
 }
 
 const OPPOSITE_CORNER: Record<string, (z: ZoneDrawing) => Point> = {
@@ -184,6 +223,25 @@ export default function Board() {
 		const startClient = { x: e.clientX, y: e.clientY };
 		const pointerId = e.pointerId;
 		const capture = () => e.currentTarget.setPointerCapture(pointerId);
+
+		// Turning a goal or mannequin by its handle.
+		const rotateEl = target.closest<SVGElement>("[data-rotate-handle]");
+		if (rotateEl) {
+			const id = rotateEl.dataset.rotateHandle!;
+			const node = board.nodes.find((n) => n.id === id);
+			if (node) {
+				capture();
+				dispatch({ type: "beginGesture" });
+				interaction.current = {
+					kind: "rotate",
+					pointerId,
+					startClient,
+					id,
+					center: toBoardUnits(node.x, node.y),
+				};
+				return;
+			}
+		}
 
 		// Edit handles on a selected line or zone take priority over every tool but the eraser.
 		const handleEl = target.closest<SVGElement>("[data-handle]");
@@ -426,6 +484,19 @@ export default function Board() {
 			case "erase":
 				erase(e.clientX, e.clientY, current.erased);
 				return;
+			case "rotate": {
+				const p = toBoardUnits(point.x, point.y);
+				let angle =
+					(Math.atan2(p.y - current.center.y, p.x - current.center.x) * 180) /
+					Math.PI;
+				if (e.shiftKey) angle = Math.round(angle / ROTATE_STEP) * ROTATE_STEP;
+				dispatch({
+					type: "updateNodes",
+					ids: [current.id],
+					patch: { rotation: angle },
+				});
+				return;
+			}
 		}
 	};
 
@@ -476,6 +547,7 @@ export default function Board() {
 				return;
 			case "handle":
 			case "erase":
+			case "rotate":
 				dispatch({ type: end });
 				return;
 			case "marquee": {
@@ -604,6 +676,12 @@ export default function Board() {
 				{!editingText && (
 					<SelectionOverlay drawings={selectedDrawings(state)} />
 				)}
+				{tool === "select" &&
+					selection.length === 1 &&
+					(() => {
+						const node = board.nodes.find((n) => n.id === selection[0]);
+						return isRotatable(node) ? <RotateHandle node={node} /> : null;
+					})()}
 				{marqueeRect && <rect className="board__marquee" {...marqueeRect} />}
 			</svg>
 			{editingDrawing && (

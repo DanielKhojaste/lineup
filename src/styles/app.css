@@ -423,6 +423,17 @@ h3 {
 	cursor: grab;
 }
 
+.handle--rotate {
+	cursor: grab;
+}
+
+.rotate-handle__link {
+	stroke: var(--accent);
+	stroke-width: 1.5;
+	stroke-dasharray: 3 3;
+	pointer-events: none;
+}
+
 .handle--bend {
 	fill: var(--accent);
 }
@@ -644,6 +655,45 @@ h3 {
 	gap: 8px;
 }
 
+.field__swatch--add {
+	display: grid;
+	place-items: center;
+	border-style: dashed;
+	color: var(--text-muted);
+	font-size: 16px;
+	line-height: 1;
+}
+
+.field__swatch--add:hover {
+	color: var(--text);
+	border-color: var(--text-muted);
+}
+
+.stripe-field {
+	position: relative;
+	display: inline-flex;
+}
+
+.stripe-field__remove {
+	position: absolute;
+	top: -6px;
+	right: -6px;
+	width: 16px;
+	height: 16px;
+	display: grid;
+	place-items: center;
+	border-radius: 50%;
+	border: 1px solid var(--border);
+	background: var(--surface);
+	color: var(--text-muted);
+	font-size: 11px;
+	line-height: 1;
+}
+
+.stripe-field__remove:hover {
+	color: var(--text);
+}
+
 .team-row > .field:first-child {
 	flex: 1;
 }
@@ -840,6 +890,102 @@ h3 {
 .object-list__item.is-selected {
 	background: var(--accent-soft);
 	box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.object-list__item--player {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.object-list__number {
+	min-width: 2ch;
+	text-align: right;
+	color: var(--text-muted);
+	font-size: 12px;
+}
+
+.object-list__name {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.object-list__position {
+	font-size: 12px;
+}
+
+.team-group + .team-group {
+	margin-top: 6px;
+}
+
+.team-group__head {
+	display: flex;
+	align-items: center;
+	margin: 0 -8px 2px;
+	border-radius: var(--radius-small);
+}
+
+.team-group__head.is-selected {
+	background: var(--accent-soft);
+	box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.team-group__toggle {
+	display: grid;
+	place-items: center;
+	width: 26px;
+	height: 30px;
+	flex-shrink: 0;
+	border-radius: var(--radius-small);
+	color: var(--text-muted);
+}
+
+.team-group__toggle:hover {
+	color: var(--text);
+	background: var(--hover);
+}
+
+.team-group__name {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 6px 8px 6px 2px;
+	border-radius: var(--radius-small);
+	text-align: left;
+	color: var(--text);
+}
+
+.team-group__name:hover {
+	background: var(--hover);
+}
+
+.team-group__label {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.team-group .object-list {
+	margin-left: 10px;
+}
+
+.kit-dot {
+	width: 14px;
+	height: 14px;
+	flex-shrink: 0;
+	border-radius: 50%;
+	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
+.kit-dot--small {
+	width: 10px;
+	height: 10px;
 }
 
 /* --------------------------------- Dialog --------------------------------- */
@@ -1482,4 +1628,14 @@ button.save-status--error:hover {
 	gap: 14px;
 	padding: 60px 0;
 	color: var(--text-muted);
+}
+
+.field__hint {
+	font-size: 12px;
+	color: var(--text-muted);
+}
+
+.angle-input {
+	width: 64px;
+	margin-left: 4px;
 }

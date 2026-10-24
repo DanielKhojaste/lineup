@@ -1,8 +1,9 @@
-import { CONE_COLORS } from "../../model/board";
+import { CONE_COLORS, playerKit, ROTATE_STEP } from "../../model/board";
 import {
 	BoardItem,
 	BoardNode,
 	GoalNode,
+	Kit,
 	MannequinNode,
 	PlayerNode,
 	PoleNode,
@@ -14,10 +15,17 @@ import { NodePatch, selectedDrawings, selectedNodes } from "../../state/editor";
 import { describeNode } from "../board/Markers";
 import { Icon } from "../Icon";
 import { common, Segmented, Swatches } from "../ui/controls";
-import { BoardInput, ColorField, Section } from "../ui/fields";
+import { BoardInput, ColorField, Section, StripeField } from "../ui/fields";
+import { readableOn } from "../../theme/color";
 import { describeDrawing, DrawingFields, ToolOptions } from "./DrawingFields";
+import ObjectList, { kitBackground } from "./ObjectList";
 
 const TEAMS: TeamId[] = ["home", "away", "neutral"];
+
+/** A stripe colour that stands out on the given kit colour. */
+function suggestStripes(color: string): string {
+	return readableOn(color, "#F2F4F5", "#15181B");
+}
 
 function SelectionActions({ ids }: { ids: string[] }) {
 	const { dispatch } = useEditor();
@@ -132,7 +140,10 @@ function PlayerFields({ players }: { players: PlayerNode[] }) {
 							}`}
 							onClick={() => update({ team })}
 						>
-							<span className="dot" style={{ background: teams[team].color }} />
+							<span
+								className="dot"
+								style={{ background: kitBackground(teams[team]) }}
+							/>
 							{teams[team].name}
 						</button>
 					))}
@@ -146,20 +157,86 @@ function PlayerFields({ players }: { players: PlayerNode[] }) {
 				/>
 				Goalkeeper
 			</label>
+			<KitFields players={players} />
+		</>
+	);
+}
+
+/** Solid or striped kit for the selected players; changing it gives them their own kit. */
+function KitFields({ players }: { players: PlayerNode[] }) {
+	const { state, dispatch } = useEditor();
+	const teams = state.board.teams;
+	const kits = players.map((p) => playerKit(p, teams));
+	const pattern = common(kits, (k) => (k.stripes ? "stripes" : "solid"));
+	const color = common(kits, (k) => k.color) ?? kits[0].color;
+	const stripes = common(kits, (k) => k.stripes ?? "");
+	// The board's kit colours, so a player can take another team's colours in one click.
+	const palette = [
+		...new Set(
+			TEAMS.flatMap((t) => [teams[t].color, teams[t].stripes]).filter(
+				(c): c is string => !!c,
+			),
+		),
+	];
+	const setKit = (kit: Kit) =>
+		dispatch({
+			type: "updateNodes",
+			ids: players.map((p) => p.id),
+			patch: { color: kit.color, stripes: kit.stripes },
+		});
+
+	return (
+		<>
+			<Segmented
+				label="Kit"
+				value={pattern}
+				options={[
+					{ value: "solid", label: "Solid" },
+					{ value: "stripes", label: "Stripes" },
+				]}
+				onChange={(next) =>
+					setKit(
+						next === "solid"
+							? { color }
+							: { color, stripes: stripes || suggestStripes(color) },
+					)
+				}
+			/>
 			<Swatches
 				label="Colour"
-				value={common(players, (p) => p.color ?? teams[p.team].color)}
-				colors={[...new Set(TEAMS.map((t) => teams[t].color))]}
+				value={common(kits, (k) => k.color)}
+				colors={palette}
 				custom
-				onChange={(color) => update({ color })}
+				onChange={(c) =>
+					setKit({
+						color: c,
+						stripes:
+							pattern === "stripes" ? stripes || suggestStripes(c) : undefined,
+					})
+				}
 			/>
+			{pattern === "stripes" && (
+				<Swatches
+					label="Stripe colour"
+					value={stripes || null}
+					colors={palette}
+					custom
+					onChange={(c) => setKit({ color, stripes: c })}
+				/>
+			)}
 			{players.some((p) => p.color) && (
 				<button
 					type="button"
 					className="link-button"
-					onClick={() => update({ color: undefined })}
+					onClick={() =>
+						dispatch({
+							type: "updateNodes",
+							ids: players.map((p) => p.id),
+							patch: { color: undefined, stripes: undefined },
+						})
+					}
 				>
-					Use team colour
+					Use team kit
 				</button>
 			)}
 		</>
@@ -222,9 +299,11 @@ function EquipmentFields({ nodes }: { nodes: BoardNode[] }) {
 						<button
 							type="button"
 							className="icon-button"
-							aria-label="Rotate left 90°"
-							title="Rotate left 90°"
-							onClick={() => dispatch({ type: "rotateNodes", ids, by: -90 })}
+							aria-label={`Rotate left ${ROTATE_STEP}° (Alt+Shift+R)`}
+							title={`Rotate left ${ROTATE_STEP}° (Alt+Shift+R)`}
+							onClick={() =>
+								dispatch({ type: "rotateNodes", ids, by: -ROTATE_STEP })
+							}
 						>
 							<Icon
 								name="rotate"
@@ -235,16 +314,40 @@ function EquipmentFields({ nodes }: { nodes: BoardNode[] }) {
 						<button
 							type="button"
 							className="icon-button"
-							aria-label="Rotate right 90° (Shift+R)"
-							title="Rotate right 90° (Shift+R)"
-							onClick={() => dispatch({ type: "rotateNodes", ids, by: 90 })}
+							aria-label={`Rotate right ${ROTATE_STEP}° (Shift+R)`}
+							title={`Rotate right ${ROTATE_STEP}° (Shift+R)`}
+							onClick={() =>
+								dispatch({ type: "rotateNodes", ids, by: ROTATE_STEP })
+							}
 						>
 							<Icon name="rotate" size={18} />
 						</button>
-						<span className="muted mono">
-							{common(rotatable, (n) => n.rotation) ?? "–"}°
-						</span>
+						<BoardInput
+							className="angle-input"
+							label="Angle in degrees"
+							hideLabel
+							inputMode="numeric"
+							maxLength={4}
+							value={String(common(rotatable, (n) => n.rotation) ?? "")}
+							placeholder="–"
+							onValue={(v) => {
+								const digits = v.replace(/[^\d-]/g, "");
+								const angle = Number(digits);
+								if (digits === "" || digits === "-" || Number.isNaN(angle))
+									return;
+								dispatch({
+									type: "updateNodes",
+									ids: rotatable.map((n) => n.id),
+									patch: { rotation: angle },
+								});
+							}}
+						/>
+						<span className="muted">°</span>
 					</div>
+					<span className="field__hint">
+						Or drag the round handle on the board. Hold Shift to snap to{" "}
+						{ROTATE_STEP}°.
+					</span>
 				</div>
 			)}
 		</>
@@ -275,6 +378,13 @@ function BoardSettings() {
 								dispatch({ type: "updateTeam", team, patch: { color } })
 							}
 						/>
+						<StripeField
+							value={teams[team].stripes}
+							suggestion={suggestStripes(teams[team].color)}
+							onValue={(stripes) =>
+								dispatch({ type: "updateTeam", team, patch: { stripes } })
+							}
+						/>
 					</div>
 				))}
 			</Section>
@@ -302,49 +412,6 @@ function describeItem(
 	board: Parameters<typeof describeNode>[1],
 ): string {
 	return isDrawing(item) ? describeDrawing(item) : describeNode(item, board);
-}
-
-function ObjectList() {
-	const { state, dispatch } = useEditor();
-	const selected = new Set(state.selection);
-	// Top-most first: text, then markers, then other drawings.
-	const items: BoardItem[] = [
-		...state.board.drawings.filter((d) => d.kind === "text").reverse(),
-		...[...state.board.nodes].reverse(),
-		...state.board.drawings.filter((d) => d.kind !== "text").reverse(),
-	];
-	if (items.length === 0) return null;
-
-	return (
-		<Section
-			title="Objects"
-			aside={<span className="muted">{items.length}</span>}
-		>
-			<ul className="object-list">
-				{items.map((item) => (
-					<li key={item.id}>
-						<button
-							type="button"
-							className={`object-list__item${
-								selected.has(item.id) ? " is-selected" : ""
-							}`}
-							aria-pressed={selected.has(item.id)}
-							onClick={(e) =>
-								dispatch({
-									type: "select",
-									ids: [item.id],
-									mode:
-										e.shiftKey || e.ctrlKey || e.metaKey ? "toggle" : "replace",
-								})
-							}
-						>
-							{describeItem(item, state.board)}
-						</button>
-					</li>
-				))}
-			</ul>
-		</Section>
-	);
 }
 
 export default function Inspector() {
