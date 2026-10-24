@@ -4,14 +4,12 @@ import {
 	MutableRefObject,
 	ReactNode,
 	useContext,
-	useEffect,
 	useMemo,
 	useReducer,
 	useRef,
 	useState,
 } from "react";
-import { createBoard } from "../model/board";
-import { Board, SCHEMA_VERSION } from "../model/types";
+import { Board } from "../model/types";
 import {
 	createEditorState,
 	EditorAction,
@@ -35,55 +33,17 @@ interface EditorContextValue {
 
 const EditorContext = createContext<EditorContextValue | null>(null);
 
-// Until saving to files lands (v0.5.0), the board in progress is kept as a
-// local draft so closing the app does not lose it.
-const DRAFT_KEY = "lineup.draft";
-
-function loadDraft(): Board {
-	try {
-		const raw = localStorage.getItem(DRAFT_KEY);
-		if (raw) {
-			const board = JSON.parse(raw) as Board;
-			if (
-				board?.schemaVersion === SCHEMA_VERSION &&
-				Array.isArray(board.nodes)
-			) {
-				const fresh = createBoard();
-				// Fill in any fields added since the draft was written.
-				return {
-					...fresh,
-					...board,
-					meta: { ...fresh.meta, ...board.meta },
-					notes: { ...fresh.notes, ...board.notes },
-					teams: { ...fresh.teams, ...board.teams },
-					display: { ...fresh.display, ...board.display },
-				};
-			}
-		}
-	} catch {
-		// Fall through to a new board.
-	}
-	return createBoard();
-}
-
-export function EditorProvider({ children }: { children: ReactNode }) {
-	const [state, dispatch] = useReducer(editorReducer, undefined, () =>
-		createEditorState(loadDraft()),
-	);
+export function EditorProvider({
+	board,
+	children,
+}: {
+	board: Board;
+	children: ReactNode;
+}) {
+	const [state, dispatch] = useReducer(editorReducer, board, createEditorState);
 	const [panelTab, setPanelTab] = useState<SidePanelTab>("inspector");
 	const boardRef = useRef<SVGSVGElement | null>(null);
 	const inspectorFocusRef = useRef<HTMLInputElement | null>(null);
-
-	useEffect(() => {
-		const handle = window.setTimeout(() => {
-			try {
-				localStorage.setItem(DRAFT_KEY, JSON.stringify(state.board));
-			} catch {
-				// Ignore: drafts are a convenience only.
-			}
-		}, 400);
-		return () => window.clearTimeout(handle);
-	}, [state.board]);
 
 	const value = useMemo<EditorContextValue>(
 		() => ({

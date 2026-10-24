@@ -8,6 +8,19 @@ This project adheres to semantic versioning (0.x during early development).
 
 ## [Unreleased]
 
+### Added
+
+- Library home screen: every saved board with a preview, search across titles, tags and notes, sorting, and folders (create, rename, delete, move boards between them)
+- Boards save automatically as you work (Ctrl+S saves straight away), as `.lineup` files in `Documents\Lineup`
+- Duplicate, delete (with confirmation), import and export `.lineup` files, and export a board as a PNG image
+- Folder picker in the Notes tab
+- The board from earlier versions' local draft is moved into the library on first launch
+
+### Changed
+
+- The app opens on the library; boards open in the editor, with a "Library" button to go back
+- The selected folder in the library sidebar is no longer bold
+
 ---
 
 ## [0.4.0] - 2026-10-23

@@ -36,7 +36,7 @@ export function createBoard(title = "Untitled board"): Board {
 	return {
 		schemaVersion: SCHEMA_VERSION,
 		id: newId(),
-		meta: { title, tags: [], createdAt: now, updatedAt: now },
+		meta: { title, tags: [], folder: "", createdAt: now, updatedAt: now },
 		notes: {
 			category: "",
 			ageGroup: "",
