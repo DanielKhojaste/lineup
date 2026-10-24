@@ -8,6 +8,10 @@ This project adheres to semantic versioning (0.x during early development).
 
 ## [Unreleased]
 
+---
+
+## [0.5.0] - 2026-10-23
+
 ### Added
 
 - Library home screen: every saved board as a card with a live preview, its folder, duration and when it was last edited
