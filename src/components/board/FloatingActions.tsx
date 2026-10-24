@@ -26,7 +26,7 @@ function nodeExtent(node: BoardNode, showLabels: boolean) {
 }
 
 /**
- * A small bar under the current selection with a Delete button, so deleting
+ * A small bar under the current selection with a delete button, so deleting
  * doesn't depend on knowing the keyboard shortcut.
  */
 export default function FloatingActions({ hidden }: { hidden: boolean }) {
@@ -117,12 +117,12 @@ export default function FloatingActions({ hidden }: { hidden: boolean }) {
 			<button
 				type="button"
 				className="floating-actions__button floating-actions__button--danger"
-				title="Delete (Del)"
+				aria-label={count > 1 ? `Delete ${count} items (Del)` : "Delete (Del)"}
+				title={count > 1 ? `Delete ${count} items (Del)` : "Delete (Del)"}
 				onPointerDown={(e) => e.stopPropagation()}
 				onClick={() => dispatch({ type: "deleteItems", ids })}
 			>
 				<Icon name="trash" size={16} />
-				{count > 1 ? `Delete ${count}` : "Delete"}
 			</button>
 		</div>
 	);
