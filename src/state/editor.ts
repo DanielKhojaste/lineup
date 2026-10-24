@@ -10,6 +10,7 @@ import {
 	newId,
 	nextShirtNumber,
 } from "../model/board";
+import { boardAtStep, createStep, pruneSteps } from "../model/animation";
 import {
 	DEFAULT_TOOL_STYLES,
 	DrawTool,
@@ -28,6 +29,7 @@ import {
 	DrillNotes,
 	Drawing,
 	LineStroke,
+	Move,
 	PlayerNode,
 	Point,
 	StrokeWidth,
@@ -45,7 +47,8 @@ export type PlaceTool =
 	| "goal"
 	| "mannequin"
 	| "pole";
-export type Tool = "select" | PlaceTool | DrawTool;
+/** "route" clicks out the path a marker runs in the current animation step. */
+export type Tool = "select" | PlaceTool | DrawTool | "route";
 
 export const HISTORY_LIMIT = 200;
 
@@ -65,6 +68,11 @@ export interface EditorState {
 	 * field). Changes made during a gesture become a single undo step.
 	 */
 	gestureBase: Board | null;
+	/**
+	 * The animation step being edited: 0 is the starting position, n is after
+	 * step n. Moving markers on a step records where they go in that step.
+	 */
+	step: number;
 }
 
 export interface NodePatch {
@@ -128,7 +136,14 @@ export type EditorAction =
 	| { type: "cancelGesture" }
 	| { type: "undo" }
 	| { type: "redo" }
-	| { type: "loadBoard"; board: Board };
+	| { type: "loadBoard"; board: Board }
+	| { type: "setStep"; step: number }
+	/** Insert an empty step after the current one and go to it. */
+	| { type: "addStep" }
+	| { type: "deleteStep"; step: number }
+	| { type: "setStepDuration"; step: number; duration: number }
+	/** Set (or with null, remove) where a marker goes in the current step. */
+	| { type: "setMove"; id: string; move: Move | null };
 
 export function createEditorState(board: Board = createBoard()): EditorState {
 	return {
@@ -139,6 +154,7 @@ export function createEditorState(board: Board = createBoard()): EditorState {
 		tool: "select",
 		toolStyles: structuredClone(DEFAULT_TOOL_STYLES),
 		gestureBase: null,
+		step: 0,
 	};
 }
 
@@ -273,6 +289,42 @@ function offsetItems(
 }
 
 /**
+ * Record markers that were moved while viewing a step as that step's moves,
+ * keeping any waypoints they already had. `moved` holds the new positions.
+ */
+function recordMoves(board: Board, step: number, moved: BoardNode[]): Board {
+	const current = board.steps[step - 1];
+	if (!current || moved.length === 0) return board;
+	const moves = { ...current.moves };
+	for (const n of moved) {
+		moves[n.id] = { ...moves[n.id], x: clamp01(n.x), y: clamp01(n.y) };
+	}
+	const steps = [...board.steps];
+	steps[step - 1] = { ...current, moves };
+	return { ...board, steps };
+}
+
+/**
+ * Move items by an offset. On an animation step, markers keep their starting
+ * position and the step records where they go; drawings always move for good.
+ */
+function offsetOnStep(
+	source: Board,
+	step: number,
+	ids: string[],
+	dx: number,
+	dy: number,
+): Board | null {
+	if (step === 0) return offsetItems(source, ids, dx, dy);
+	const view = boardAtStep(source, step);
+	const moved = offsetItems(view, ids, dx, dy);
+	if (!moved) return null;
+	const targets = new Set(ids);
+	const movedNodes = moved.nodes.filter((n) => targets.has(n.id));
+	return recordMoves({ ...source, drawings: moved.drawings }, step, movedNodes);
+}
+
+/**
  * After players change team, give any whose shirt number is already taken in
  * their new team the next free number. Mutates `nodes` (a fresh array).
  */
@@ -340,10 +392,7 @@ function reorder<T extends { id: string }>(
 	return next.every((item, i) => item === list[i]) ? list : next;
 }
 
-export function editorReducer(
-	state: EditorState,
-	action: EditorAction,
-): EditorState {
+function reduce(state: EditorState, action: EditorAction): EditorState {
 	const { board } = state;
 
 	switch (action.type) {
@@ -417,7 +466,13 @@ export function editorReducer(
 		}
 
 		case "moveItems": {
-			const moved = offsetItems(board, action.ids, action.dx, action.dy);
+			const moved = offsetOnStep(
+				board,
+				state.step,
+				action.ids,
+				action.dx,
+				action.dy,
+			);
 			return moved ? commit(state, moved) : state;
 		}
 
@@ -425,6 +480,16 @@ export function editorReducer(
 			// Offsets are relative to where the items were when the gesture began,
 			// so they stay under the pointer even after hitting an edge.
 			const base = state.gestureBase ?? board;
+			if (state.step > 0) {
+				const moved = offsetOnStep(
+					base,
+					state.step,
+					action.ids,
+					action.dx,
+					action.dy,
+				);
+				return moved ? commit(state, { ...board, ...moved }) : state;
+			}
 			const moved = offsetItems(base, action.ids, action.dx, action.dy) ?? base;
 			const targets = new Set(action.ids);
 			const nodeById = new Map(moved.nodes.map((n) => [n.id, n]));
@@ -509,7 +574,8 @@ export function editorReducer(
 				drawings.length === board.drawings.length
 			)
 				return state;
-			const next = commit(state, { ...board, nodes, drawings });
+			const steps = pruneSteps(board.steps, new Set(nodes.map((n) => n.id)));
+			const next = commit(state, { ...board, nodes, drawings, steps });
 			return { ...next, selection: pruneSelection(next.selection, next.board) };
 		}
 
@@ -646,12 +712,75 @@ export function editorReducer(
 				...createEditorState(action.board),
 				toolStyles: state.toolStyles,
 			};
+
+		case "setStep": {
+			const step = Math.min(Math.max(0, action.step), board.steps.length);
+			return step === state.step ? state : { ...state, step };
+		}
+
+		case "addStep": {
+			const steps = [...board.steps];
+			steps.splice(state.step, 0, createStep());
+			return { ...commit(state, { ...board, steps }), step: state.step + 1 };
+		}
+
+		case "deleteStep": {
+			if (action.step < 1 || action.step > board.steps.length) return state;
+			const steps = board.steps.filter((_, i) => i !== action.step - 1);
+			const next = commit(state, { ...board, steps });
+			return { ...next, step: Math.min(state.step, steps.length) };
+		}
+
+		case "setStepDuration": {
+			const current = board.steps[action.step - 1];
+			if (!current || current.duration === action.duration) return state;
+			const steps = [...board.steps];
+			steps[action.step - 1] = { ...current, duration: action.duration };
+			return commit(state, { ...board, steps });
+		}
+
+		case "setMove": {
+			const current = board.steps[state.step - 1];
+			if (!current) return state;
+			const moves = { ...current.moves };
+			if (action.move) {
+				const { x, y, via } = action.move;
+				moves[action.id] = {
+					x: clamp01(x),
+					y: clamp01(y),
+					...(via && via.length > 0
+						? { via: via.map(([vx, vy]): Point => [clamp01(vx), clamp01(vy)]) }
+						: {}),
+				};
+			} else if (moves[action.id]) delete moves[action.id];
+			else return state;
+			const steps = [...board.steps];
+			steps[state.step - 1] = { ...current, moves };
+			return commit(state, { ...board, steps });
+		}
 	}
 }
 
+/**
+ * The editor reducer. Undo and redo can remove steps, so the current step is
+ * kept within the board's steps afterwards.
+ */
+export function editorReducer(
+	state: EditorState,
+	action: EditorAction,
+): EditorState {
+	const next = reduce(state, action);
+	return next.step > next.board.steps.length
+		? { ...next, step: next.board.steps.length }
+		: next;
+}
+
+/** The selected markers, where they stand on the current step. */
 export function selectedNodes(state: EditorState): BoardNode[] {
 	const ids = new Set(state.selection);
-	return state.board.nodes.filter((n) => ids.has(n.id));
+	return boardAtStep(state.board, state.step).nodes.filter((n) =>
+		ids.has(n.id),
+	);
 }
 
 export function selectedDrawings(state: EditorState): Drawing[] {

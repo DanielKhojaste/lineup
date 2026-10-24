@@ -4,7 +4,7 @@
  * class instances, functions and DOM references.
  */
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export type TeamId = "home" | "away" | "neutral";
 
@@ -185,4 +185,26 @@ export interface Board {
 	 * sits on top. Later drawings are drawn on top of earlier ones.
 	 */
 	drawings: Drawing[];
+	/**
+	 * Animation. The board's own node positions are the starting position, and
+	 * each step moves some markers on from where the previous step left them.
+	 */
+	steps: Step[];
+}
+
+/** Where a marker goes in one step of an animation. */
+export interface Move {
+	/** Where the marker ends up, normalised like a node's own x and y. */
+	x: number;
+	y: number;
+	/** Points the marker passes through on the way, for a smooth curved run. */
+	via?: Point[];
+}
+
+export interface Step {
+	id: string;
+	/** Seconds the step takes to play. */
+	duration: number;
+	/** The markers that move in this step, by node id. Others stay where they are. */
+	moves: Record<string, Move>;
 }

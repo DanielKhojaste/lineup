@@ -62,6 +62,41 @@ describe("board files", () => {
 		expect((parsed.nodes[1] as { stripes?: string }).stripes).toBeUndefined();
 	});
 
+	it("keeps animation steps and drops moves for missing markers", () => {
+		const player = createPlayer(0.2, 0.5, "home");
+		const board = {
+			...createBoard(),
+			nodes: [player],
+			steps: [
+				{
+					id: "s1",
+					duration: 2,
+					moves: {
+						[player.id]: {
+							x: 0.6,
+							y: 0.4,
+							via: [[0.4, 0.2] as [number, number]],
+						},
+						ghost: { x: 0.1, y: 0.1 },
+					},
+				},
+			],
+		};
+		const parsed = parseBoard(JSON.stringify(board));
+		expect(parsed.steps).toEqual([
+			{
+				id: "s1",
+				duration: 2,
+				moves: { [player.id]: { x: 0.6, y: 0.4, via: [[0.4, 0.2]] } },
+			},
+		]);
+	});
+
+	it("opens version 1 boards with no steps", () => {
+		const { steps: _none, ...old } = { ...createBoard(), schemaVersion: 1 };
+		expect(parseBoard(JSON.stringify(old)).steps).toEqual([]);
+	});
+
 	it("rejects files that aren't boards", () => {
 		expect(() => parseBoard("not json")).toThrow(BoardFileError);
 		expect(() => parseBoard('{"hello": 1}')).toThrow(BoardFileError);

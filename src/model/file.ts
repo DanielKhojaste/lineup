@@ -3,8 +3,10 @@ import {
 	Board,
 	BoardNode,
 	Drawing,
+	Move,
 	Point,
 	SCHEMA_VERSION,
+	Step,
 	TeamStyle,
 } from "./types";
 
@@ -157,6 +159,33 @@ function cleanTeam(raw: unknown, fallback: TeamStyle): TeamStyle {
 	};
 }
 
+/** Steps keep only moves for markers that exist; broken moves and steps are dropped. */
+function cleanSteps(raw: unknown, nodeIds: Set<string>): Step[] {
+	if (!Array.isArray(raw)) return [];
+	return raw.filter(isObject).map((step): Step => {
+		const moves: Record<string, Move> = {};
+		const rawMoves = isObject(step.moves) ? step.moves : {};
+		for (const [id, m] of Object.entries(rawMoves)) {
+			if (!nodeIds.has(id) || !isObject(m) || !isNum(m.x) || !isNum(m.y))
+				continue;
+			const via = Array.isArray(m.via) ? m.via.filter(isPoint).map(point) : [];
+			moves[id] = {
+				x: clamp01(m.x),
+				y: clamp01(m.y),
+				...(via.length > 0 ? { via } : {}),
+			};
+		}
+		return {
+			id: isStr(step.id) ? step.id : newId(),
+			duration:
+				isNum(step.duration) && step.duration > 0
+					? Math.min(step.duration, 60)
+					: 1.5,
+			moves,
+		};
+	});
+}
+
 /**
  * Read a board from file contents. Unknown or broken items are dropped rather
  * than failing the whole file, and missing fields get defaults, so files from
@@ -190,6 +219,11 @@ export function parseBoard(text: string): Board {
 	const teams = isObject(raw.teams) ? raw.teams : {};
 	const display = isObject(raw.display) ? raw.display : {};
 
+	const nodes = raw.nodes
+		.map(cleanNode)
+		.filter((n): n is BoardNode => n !== null);
+
+	// Version 1 files (Lineup 0.5) have no animation; they open with no steps.
 	return {
 		...fresh,
 		id: isStr(raw.id) ? raw.id : fresh.id,
@@ -217,10 +251,11 @@ export function parseBoard(text: string): Board {
 			neutral: cleanTeam(teams.neutral, fresh.teams.neutral),
 		},
 		display: { ...fresh.display, showLabels: display.showLabels !== false },
-		nodes: raw.nodes.map(cleanNode).filter((n): n is BoardNode => n !== null),
+		nodes,
 		drawings: Array.isArray(raw.drawings)
 			? raw.drawings.map(cleanDrawing).filter((d): d is Drawing => d !== null)
 			: [],
+		steps: cleanSteps(raw.steps, new Set(nodes.map((n) => n.id))),
 	};
 }
 
