@@ -4,6 +4,7 @@ import {
 	BoardNode,
 	ConeNode,
 	GoalNode,
+	Kit,
 	MannequinNode,
 	PlayerNode,
 	PoleNode,
@@ -29,6 +30,16 @@ export const DEFAULT_TEAMS: Board["teams"] = {
 	away: { name: "Away", color: "#F2F4F5" },
 	neutral: { name: "Neutral", color: "#2F80ED" },
 };
+
+/** Degrees the rotate buttons and Shift+R turn a goal or mannequin by. */
+export const ROTATE_STEP = 15;
+
+/** The kit a player is drawn in: their own if they have one, otherwise the team's. */
+export function playerKit(node: PlayerNode, teams: Board["teams"]): Kit {
+	if (node.color) return { color: node.color, stripes: node.stripes };
+	const team = teams[node.team];
+	return { color: team.color, stripes: team.stripes };
+}
 
 export function createBoard(title = "Untitled board"): Board {
 	const now = new Date().toISOString();

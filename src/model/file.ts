@@ -58,6 +58,8 @@ function cleanNode(raw: unknown): BoardNode | null {
 				label: isStr(raw.label) ? raw.label : undefined,
 				name: isStr(raw.name) ? raw.name : undefined,
 				color: isStr(raw.color) ? raw.color : undefined,
+				stripes:
+					isStr(raw.color) && isStr(raw.stripes) ? raw.stripes : undefined,
 			} as BoardNode;
 		case "cone":
 		case "pole":
@@ -145,12 +147,13 @@ function cleanDrawing(raw: unknown): Drawing | null {
 	}
 }
 
-/** Keeps a team's name and colour; anything else (like old keeper colours) is dropped. */
+/** Keeps a team's name and kit; anything else (like old keeper colours) is dropped. */
 function cleanTeam(raw: unknown, fallback: TeamStyle): TeamStyle {
 	const team = isObject(raw) ? raw : {};
 	return {
 		name: isStr(team.name) ? team.name : fallback.name,
 		color: isStr(team.color) ? team.color : fallback.color,
+		...(isStr(team.stripes) ? { stripes: team.stripes } : {}),
 	};
 }
 

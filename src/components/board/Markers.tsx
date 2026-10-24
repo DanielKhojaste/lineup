@@ -14,6 +14,7 @@ import {
 	PlayerNode,
 	PoleNode,
 } from "../../model/types";
+import { playerKit } from "../../model/board";
 import { readableOn } from "../../theme/color";
 import { truncate } from "../../utils/text";
 
@@ -26,9 +27,27 @@ interface MarkerProps<T extends BoardNode> {
 	board: Board;
 }
 
-export function playerFill(node: PlayerNode, teams: Board["teams"]): string {
-	const team = teams[node.team];
-	return node.color ?? team.color;
+/** Number of vertical bands in a striped kit (kit colour, stripe, kit, stripe, kit). */
+const STRIPE_BANDS = 5;
+
+/**
+ * The stripe bands of a striped kit, as circle segments. Built as plain paths
+ * rather than a clip path so that boards drawn several times on one page (the
+ * library previews) never share an SVG id.
+ */
+export function stripePaths(r: number): string[] {
+	const width = (2 * r) / STRIPE_BANDS;
+	const paths: string[] = [];
+	for (let band = 1; band < STRIPE_BANDS; band += 2) {
+		const a = -r + band * width;
+		const b = a + width;
+		const ya = Math.sqrt(r * r - a * a);
+		const yb = Math.sqrt(r * r - b * b);
+		paths.push(
+			`M${a} ${-ya}A${r} ${r} 0 0 1 ${b} ${-yb}L${b} ${yb}A${r} ${r} 0 0 1 ${a} ${ya}Z`,
+		);
+	}
+	return paths;
 }
 
 function SelectionRing({ r, selected }: { r: number; selected: boolean }) {
@@ -41,7 +60,8 @@ function SelectionRing({ r, selected }: { r: number; selected: boolean }) {
 }
 
 function PlayerMarker({ node, selected, board }: MarkerProps<PlayerNode>) {
-	const fill = playerFill(node, board.teams);
+	const kit = playerKit(node, board.teams);
+	const fill = kit.color;
 	const ink = readableOn(fill, "#FFFFFF", "#15181B");
 	const outline = ink === "#FFFFFF" ? "#FFFFFF" : "#15181B";
 	const caption = truncate(
@@ -53,9 +73,14 @@ function PlayerMarker({ node, selected, board }: MarkerProps<PlayerNode>) {
 	return (
 		<>
 			<SelectionRing r={PLAYER_RADIUS} selected={selected} />
+			<circle r={PLAYER_RADIUS} fill={fill} />
+			{kit.stripes &&
+				stripePaths(PLAYER_RADIUS).map((d) => (
+					<path key={d} d={d} fill={kit.stripes} />
+				))}
 			<circle
 				r={PLAYER_RADIUS}
-				fill={fill}
+				fill="none"
 				stroke={outline}
 				strokeWidth={2.5}
 			/>
@@ -63,6 +88,10 @@ function PlayerMarker({ node, selected, board }: MarkerProps<PlayerNode>) {
 				<text
 					className="marker__number"
 					fill={ink}
+					// On stripes, a thin edge in the kit colour keeps the number readable.
+					stroke={kit.stripes ? fill : undefined}
+					strokeWidth={kit.stripes ? 3 : undefined}
+					paintOrder="stroke"
 					fontSize={numberText.length > 2 ? 13 : 16}
 					textAnchor="middle"
 					dominantBaseline="central"

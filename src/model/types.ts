@@ -8,9 +8,15 @@ export const SCHEMA_VERSION = 1;
 
 export type TeamId = "home" | "away" | "neutral";
 
-export interface TeamStyle {
-	name: string;
+/** What a player marker looks like: one colour, or vertical stripes of two. */
+export interface Kit {
 	color: string;
+	/** Second colour for a striped kit (like Barcelona's); solid when absent. */
+	stripes?: string;
+}
+
+export interface TeamStyle extends Kit {
+	name: string;
 }
 
 interface NodeBase {
@@ -29,8 +35,10 @@ export interface PlayerNode extends NodeBase {
 	/** Short position label shown under the marker, e.g. "RW". */
 	label?: string;
 	name?: string;
-	/** Overrides the team colour for this one marker. */
+	/** This player's own kit colour, instead of the team's. */
 	color?: string;
+	/** Stripe colour for the player's own kit; only used together with `color`. */
+	stripes?: string;
 }
 
 export interface ConeNode extends NodeBase {
