@@ -1,10 +1,21 @@
 import { CONE_COLORS } from "../../model/board";
-import { BoardNode, ConeNode, PlayerNode, TeamId } from "../../model/types";
+import {
+	BoardItem,
+	BoardNode,
+	GoalNode,
+	MannequinNode,
+	PlayerNode,
+	PoleNode,
+	TeamId,
+} from "../../model/types";
+import { isDrawing } from "../../model/drawings";
 import { useEditor } from "../../state/EditorContext";
-import { NodePatch, selectedNodes } from "../../state/editor";
+import { NodePatch, selectedDrawings, selectedNodes } from "../../state/editor";
 import { describeNode } from "../board/Markers";
 import { Icon } from "../Icon";
+import { common, Segmented, Swatches } from "../ui/controls";
 import { BoardInput, ColorField, Section } from "../ui/fields";
+import { describeDrawing, DrawingFields, ToolOptions } from "./DrawingFields";
 
 const TEAMS: TeamId[] = ["home", "away", "neutral"];
 
@@ -15,25 +26,25 @@ function SelectionActions({ ids }: { ids: string[] }) {
 			label: "Duplicate",
 			shortcut: "Ctrl+D",
 			icon: "duplicate" as const,
-			run: () => dispatch({ type: "duplicateNodes", ids }),
+			run: () => dispatch({ type: "duplicateItems", ids }),
 		},
 		{
 			label: "Bring to front",
 			shortcut: "]",
 			icon: "front" as const,
-			run: () => dispatch({ type: "reorderNodes", ids, to: "front" }),
+			run: () => dispatch({ type: "reorderItems", ids, to: "front" }),
 		},
 		{
 			label: "Send to back",
 			shortcut: "[",
 			icon: "back" as const,
-			run: () => dispatch({ type: "reorderNodes", ids, to: "back" }),
+			run: () => dispatch({ type: "reorderItems", ids, to: "back" }),
 		},
 		{
 			label: "Delete",
 			shortcut: "Del",
 			icon: "trash" as const,
-			run: () => dispatch({ type: "deleteNodes", ids }),
+			run: () => dispatch({ type: "deleteItems", ids }),
 		},
 	];
 	return (
@@ -135,42 +146,108 @@ function PlayerFields({ players }: { players: PlayerNode[] }) {
 				/>
 				Goalkeeper
 			</label>
+			<Swatches
+				label="Colour"
+				value={common(players, (p) => p.color ?? teams[p.team].color)}
+				colors={[...new Set(TEAMS.map((t) => teams[t].color))]}
+				custom
+				onChange={(color) => update({ color })}
+			/>
+			{players.some((p) => p.color) && (
+				<button
+					type="button"
+					className="link-button"
+					onClick={() => update({ color: undefined })}
+				>
+					Use team colour
+				</button>
+			)}
 		</>
 	);
 }
 
-function ConeFields({ cones }: { cones: ConeNode[] }) {
+const EQUIPMENT_COLORS = CONE_COLORS;
+
+/** Colour, size and rotation for cones, goals, mannequins and poles. */
+function EquipmentFields({ nodes }: { nodes: BoardNode[] }) {
 	const { dispatch } = useEditor();
-	const ids = cones.map((c) => c.id);
-	const current = cones.every((c) => c.color === cones[0].color)
-		? cones[0].color
-		: null;
+	const ids = nodes.map((n) => n.id);
+	const coloured = nodes.filter(
+		(n): n is Extract<BoardNode, { color: string }> =>
+			n.kind === "cone" || n.kind === "mannequin" || n.kind === "pole",
+	);
+	const goals = nodes.filter((n): n is GoalNode => n.kind === "goal");
+	const rotatable = nodes.filter(
+		(n): n is GoalNode | MannequinNode =>
+			n.kind === "goal" || n.kind === "mannequin",
+	);
+
 	return (
-		<div className="field">
-			<span className="field__label" id="cone-color-label">
-				Cone colour
-			</span>
-			<div
-				className="swatches"
-				role="radiogroup"
-				aria-labelledby="cone-color-label"
-			>
-				{CONE_COLORS.map((color) => (
-					<button
-						key={color}
-						type="button"
-						role="radio"
-						aria-checked={current === color}
-						aria-label={color}
-						className={`swatch${current === color ? " is-active" : ""}`}
-						style={{ background: color }}
-						onClick={() =>
-							dispatch({ type: "updateNodes", ids, patch: { color } })
-						}
-					/>
-				))}
-			</div>
-		</div>
+		<>
+			{coloured.length > 0 && (
+				<Swatches
+					label="Colour"
+					value={common(coloured, (n) => n.color)}
+					colors={EQUIPMENT_COLORS}
+					onChange={(color) =>
+						dispatch({
+							type: "updateNodes",
+							ids: coloured.map((n) => n.id),
+							patch: { color },
+						})
+					}
+				/>
+			)}
+			{goals.length > 0 && (
+				<Segmented
+					label="Goal size"
+					value={common(goals, (g) => g.size)}
+					options={[
+						{ value: "full", label: "Full size" },
+						{ value: "mini", label: "Mini" },
+					]}
+					onChange={(size) =>
+						dispatch({
+							type: "updateNodes",
+							ids: goals.map((g) => g.id),
+							patch: { size },
+						})
+					}
+				/>
+			)}
+			{rotatable.length > 0 && (
+				<div className="field">
+					<span className="field__label">Facing</span>
+					<div className="action-row action-row--plain">
+						<button
+							type="button"
+							className="icon-button"
+							aria-label="Rotate left 90°"
+							title="Rotate left 90°"
+							onClick={() => dispatch({ type: "rotateNodes", ids, by: -90 })}
+						>
+							<Icon
+								name="rotate"
+								size={18}
+								style={{ transform: "scaleX(-1)" }}
+							/>
+						</button>
+						<button
+							type="button"
+							className="icon-button"
+							aria-label="Rotate right 90° (Shift+R)"
+							title="Rotate right 90° (Shift+R)"
+							onClick={() => dispatch({ type: "rotateNodes", ids, by: 90 })}
+						>
+							<Icon name="rotate" size={18} />
+						</button>
+						<span className="muted mono">
+							{common(rotatable, (n) => n.rotation) ?? "–"}°
+						</span>
+					</div>
+				</div>
+			)}
+		</>
 	);
 }
 
@@ -198,15 +275,6 @@ function BoardSettings() {
 								dispatch({ type: "updateTeam", team, patch: { color } })
 							}
 						/>
-						{team !== "neutral" && (
-							<ColorField
-								label="GK"
-								value={teams[team].keeperColor}
-								onValue={(keeperColor) =>
-									dispatch({ type: "updateTeam", team, patch: { keeperColor } })
-								}
-							/>
-						)}
 					</div>
 				))}
 			</Section>
@@ -229,36 +297,48 @@ function BoardSettings() {
 	);
 }
 
+function describeItem(
+	item: BoardItem,
+	board: Parameters<typeof describeNode>[1],
+): string {
+	return isDrawing(item) ? describeDrawing(item) : describeNode(item, board);
+}
+
 function ObjectList() {
 	const { state, dispatch } = useEditor();
 	const selected = new Set(state.selection);
-	const nodes = [...state.board.nodes].reverse();
-	if (nodes.length === 0) return null;
+	// Top-most first: text, then markers, then other drawings.
+	const items: BoardItem[] = [
+		...state.board.drawings.filter((d) => d.kind === "text").reverse(),
+		...[...state.board.nodes].reverse(),
+		...state.board.drawings.filter((d) => d.kind !== "text").reverse(),
+	];
+	if (items.length === 0) return null;
 
 	return (
 		<Section
 			title="Objects"
-			aside={<span className="muted">{nodes.length}</span>}
+			aside={<span className="muted">{items.length}</span>}
 		>
 			<ul className="object-list">
-				{nodes.map((node: BoardNode) => (
-					<li key={node.id}>
+				{items.map((item) => (
+					<li key={item.id}>
 						<button
 							type="button"
 							className={`object-list__item${
-								selected.has(node.id) ? " is-selected" : ""
+								selected.has(item.id) ? " is-selected" : ""
 							}`}
-							aria-pressed={selected.has(node.id)}
+							aria-pressed={selected.has(item.id)}
 							onClick={(e) =>
 								dispatch({
 									type: "select",
-									ids: [node.id],
+									ids: [item.id],
 									mode:
 										e.shiftKey || e.ctrlKey || e.metaKey ? "toggle" : "replace",
 								})
 							}
 						>
-							{describeNode(node, state.board)}
+							{describeItem(item, state.board)}
 						</button>
 					</li>
 				))}
@@ -270,14 +350,38 @@ function ObjectList() {
 export default function Inspector() {
 	const { state } = useEditor();
 	const nodes = selectedNodes(state);
+	const drawings = selectedDrawings(state);
 	const players = nodes.filter((n): n is PlayerNode => n.kind === "player");
-	const cones = nodes.filter((n): n is ConeNode => n.kind === "cone");
+	const equipment = nodes.filter(
+		(n) => n.kind !== "player" && n.kind !== "ball",
+	);
+	const count = nodes.length + drawings.length;
+	const drawTool = ![
+		"select",
+		"home",
+		"away",
+		"neutral",
+		"cone",
+		"ball",
+		"goal",
+		"mannequin",
+		"pole",
+	].includes(state.tool);
 
-	if (nodes.length === 0) {
+	if (count === 0) {
+		if (drawTool) {
+			return (
+				<div className="panel-body">
+					<Section title="Tool options">
+						<ToolOptions tool={state.tool} />
+					</Section>
+				</div>
+			);
+		}
 		return (
 			<div className="panel-body">
 				<p className="panel-hint">
-					Select a marker to edit it. Shift-click or drag a box to select
+					Select something to edit it. Shift-click or drag a box to select
 					several.
 				</p>
 				<BoardSettings />
@@ -286,27 +390,29 @@ export default function Inspector() {
 		);
 	}
 
+	const first = nodes[0] ?? drawings[0];
 	const title =
-		nodes.length === 1
-			? describeNode(nodes[0], state.board)
-			: `${nodes.length} selected`;
-	const single = nodes.length === 1 ? nodes[0] : null;
+		count === 1 ? describeItem(first, state.board) : `${count} selected`;
+	const singleNode = count === 1 && nodes.length === 1 ? nodes[0] : null;
 
 	return (
 		<div className="panel-body">
 			<Section
 				title={title}
 				aside={
-					single && (
+					singleNode && (
 						<span className="mono muted">
-							x {single.x.toFixed(2)} · y {single.y.toFixed(2)}
+							x {singleNode.x.toFixed(2)} · y {singleNode.y.toFixed(2)}
 						</span>
 					)
 				}
 			>
 				{players.length > 0 && <PlayerFields players={players} />}
-				{cones.length > 0 && <ConeFields cones={cones} />}
-				<SelectionActions ids={nodes.map((n) => n.id)} />
+				{equipment.length > 0 && <EquipmentFields nodes={equipment} />}
+				{drawings.length > 0 && <DrawingFields drawings={drawings} />}
+				<SelectionActions
+					ids={[...nodes, ...drawings].map((item) => item.id)}
+				/>
 			</Section>
 			<ObjectList />
 		</div>

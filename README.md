@@ -19,7 +19,8 @@ Everything is stored as files on your computer. Windows comes first, then macOS 
 
 ## Current Features
 
-- Place home, away and neutral players, goalkeepers, cones and a ball by clicking or dragging them onto the pitch
+- Place home, away and neutral players, goalkeepers, cones, a ball, goals, mannequins and poles by clicking or dragging them onto the pitch
+- Draw run, pass and dribble arrows, lines, zones, freehand ink, highlights and text; bend arrows and resize zones
 - Select with a click, Shift-click or a drag box; move, nudge, duplicate, reorder and delete
 - Edit shirt numbers, positions, names, teams and kit colours
 - Drill notes: details, description, coaching points and tags

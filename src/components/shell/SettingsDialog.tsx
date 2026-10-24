@@ -122,80 +122,82 @@ export default function SettingsDialog({
 				</header>
 
 				<section className="dialog__section">
-					<h3>Theme</h3>
-					<div
-						className="theme-grid"
-						role="radiogroup"
-						aria-label="Theme presets"
-					>
-						{THEME_PRESETS.map((preset) => {
-							const active = theme.preset === preset.preset;
-							return (
-								<button
-									key={preset.preset}
-									type="button"
-									role="radio"
-									aria-checked={active}
-									className={`theme-card${active ? " is-active" : ""}`}
-									onClick={() => setTheme(preset)}
-								>
-									<ThemePreview settings={preset} />
-									<span className="theme-card__name">
-										{preset.name}
-										{active && <Icon name="check" size={14} />}
-									</span>
-								</button>
-							);
-						})}
-					</div>
-				</section>
-
-				<section className="dialog__section">
-					<h3>
-						Customise
-						{theme.preset === "custom" && <span className="badge">Custom</span>}
-					</h3>
-					<div className="customise">
+					<h3>Appearance</h3>
+					<div className="theme-picker">
+						<ThemePreview settings={theme} />
 						<div className="field">
-							<span className="field__label" id="mode-label">
-								Mode
-							</span>
-							<div
-								className="segmented"
-								role="radiogroup"
-								aria-labelledby="mode-label"
+							<label className="field__label" htmlFor="theme-select">
+								Theme
+							</label>
+							<select
+								id="theme-select"
+								className="field__input"
+								value={theme.preset}
+								onChange={(e) => {
+									const preset = THEME_PRESETS.find(
+										(p) => p.preset === e.target.value,
+									);
+									if (preset) setTheme(preset);
+								}}
 							>
-								{(["dark", "light"] as ThemeMode[]).map((mode) => (
-									<button
-										key={mode}
-										type="button"
-										role="radio"
-										aria-checked={theme.mode === mode}
-										className={`segmented__item${
-											theme.mode === mode ? " is-active" : ""
-										}`}
-										onClick={() => setMode(mode)}
-									>
-										{mode === "dark" ? "Dark" : "Light"}
-									</button>
+								{THEME_PRESETS.map((preset) => (
+									<option key={preset.preset} value={preset.preset}>
+										{preset.name} ({preset.mode === "dark" ? "dark" : "light"})
+									</option>
 								))}
-							</div>
+								{theme.preset === "custom" && (
+									<option value="custom">Custom</option>
+								)}
+							</select>
 						</div>
-						<HexColorInput
-							label="Primary"
-							value={theme.accent}
-							onChange={(accent) => custom({ accent })}
-						/>
-						<HexColorInput
-							label="Secondary"
-							value={theme.secondary}
-							onChange={(secondary) => custom({ secondary })}
-						/>
 					</div>
-					<p className="muted small">
-						Text on your colours switches between light and dark automatically
-						so it stays readable.
-					</p>
+
+					<details className="disclosure">
+						<summary>Customise colours</summary>
+						<div className="disclosure__body">
+							<div className="customise">
+								<div className="field">
+									<span className="field__label" id="mode-label">
+										Mode
+									</span>
+									<div
+										className="segmented"
+										role="radiogroup"
+										aria-labelledby="mode-label"
+									>
+										{(["dark", "light"] as ThemeMode[]).map((mode) => (
+											<button
+												key={mode}
+												type="button"
+												role="radio"
+												aria-checked={theme.mode === mode}
+												className={`segmented__item${
+													theme.mode === mode ? " is-active" : ""
+												}`}
+												onClick={() => setMode(mode)}
+											>
+												{mode === "dark" ? "Dark" : "Light"}
+											</button>
+										))}
+									</div>
+								</div>
+								<HexColorInput
+									label="Primary"
+									value={theme.accent}
+									onChange={(accent) => custom({ accent })}
+								/>
+								<HexColorInput
+									label="Secondary"
+									value={theme.secondary}
+									onChange={(secondary) => custom({ secondary })}
+								/>
+							</div>
+							<p className="muted small">
+								Changing a colour switches the theme to Custom. Text on your
+								colours turns light or dark automatically so it stays readable.
+							</p>
+						</div>
+					</details>
 				</section>
 
 				<section className="dialog__section">
