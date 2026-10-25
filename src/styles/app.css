@@ -28,7 +28,17 @@ body,
 	height: 100%;
 }
 
+input,
+textarea,
+[contenteditable="true"] {
+	user-select: text;
+	-webkit-user-select: text;
+}
+
 body {
+	/* An app, not a web page: double-clicking or Ctrl+A doesn't highlight text. */
+	user-select: none;
+	-webkit-user-select: none;
 	background: var(--bg);
 	color: var(--text);
 	font-family: var(--font-sans);
