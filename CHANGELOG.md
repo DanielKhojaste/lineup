@@ -10,9 +10,17 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Changed
 
+- The app no longer shows the browser's right-click menu (Back, Reload, Inspect…) except in text fields, which keep Cut, Copy and Paste
+- Text on the page can't be highlighted by double-clicking or Ctrl+A; text fields still can
+- The README roadmap follows the new plan: any team sport next, then sessions, then present mode and export, then the planner
 - Clicking a team's name in the sidebar when all its players are selected now deselects them
 - The step section's buttons are now "Straighten run" and "Remove run" (it was "Stay put this step"), with clearer descriptions
 - The Barça example board and screenshots show the kit as garnet with blue stripes, with the keepers in their 2023/24 goalkeeper colours (Cata Coll in green, Misa in black)
+
+### Fixed
+
+- Release builds of the desktop app compile on macOS and Linux again (a Windows-only import broke them)
+- `Cargo.toml` and `Cargo.lock` no longer show as changed on Windows after a build (`.gitattributes` keeps them at LF line endings)
 
 ---
 

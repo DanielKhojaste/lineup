@@ -10,12 +10,13 @@ A tactical board for coaches: draw drills, set out line-ups, animate plays, and 
 
 ## Overview
 
-Lineup is a local-first desktop app for coaches. It brings four things together:
+Lineup is a local-first desktop app for coaches of any team sport. It brings these together:
 
 - **Library**: every drill, line-up and play you've saved, organised in folders
 - **Editor**: players, equipment, arrows, zones and text on the pitch, with notes for the drill and step-by-step animation
 - **Present / whiteboard** _(coming)_: show a drill or play full screen and draw over it live
-- **Planner** _(coming)_: plan sessions and a season, and keep a log of the drills you ran with your team
+- **Sessions** _(coming)_: build a training session from your drills, with breaks and timings, and print the session sheet
+- **Planner** _(coming)_: plan a season and keep a log of the sessions you ran with your team
 
 Everything is stored as files on your computer. Windows comes first, then macOS and Linux, then tablets.
 
@@ -74,8 +75,10 @@ The [`examples`](examples) folder has boards you can import from the library's *
 | v0.4.0 | Drawing tools: arrows, lines, zones, pen, text, equipment | ✅ |
 | v0.5.0 | Drills: library, saving and loading, notes, PNG export | ✅ |
 | v0.6.0 | Animation: steps, routes and playback; striped kits | ✅ |
-| v0.7.0 | Plays: present mode, video and GIF export | Next |
-| v0.8.0 | Planner and session log | |
+| v0.7.0 | Any team sport: soccer, futsal, basketball, volleyball, handball, hockey; a default sport; right-click menus | Next |
+| v0.8.0 | Sessions: drills and breaks with timings, a session sheet you can print | |
+| v0.9.0 | Plays: present mode, GIF and video export, highlights, animation round two | |
+| v0.10.0 | Planner: season, calendar and session log | |
 | v1.0.0 | Stable desktop release (Windows, macOS, Linux) | |
 
 ## Tech stack
