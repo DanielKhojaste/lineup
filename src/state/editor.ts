@@ -11,6 +11,7 @@ import {
 	nextShirtNumber,
 } from "../model/board";
 import { boardAtStep, createStep, pruneSteps } from "../model/animation";
+import { clampToBounds, fieldBounds } from "../model/sports";
 import {
 	DEFAULT_TOOL_STYLES,
 	DrawTool,
@@ -276,8 +277,16 @@ function offsetItems(
 	const maxX = Math.max(...points.map((p) => p[0]));
 	const minY = Math.min(...points.map((p) => p[1]));
 	const maxY = Math.max(...points.map((p) => p[1]));
-	const cdx = Math.min(Math.max(0, 1 - maxX), Math.max(Math.min(0, -minX), dx));
-	const cdy = Math.min(Math.max(0, 1 - maxY), Math.max(Math.min(0, -minY), dy));
+	// Keep the whole group on the field's part of the board.
+	const b = fieldBounds(source.pitch);
+	const cdx = Math.min(
+		Math.max(0, b.maxX - maxX),
+		Math.max(Math.min(0, b.minX - minX), dx),
+	);
+	const cdy = Math.min(
+		Math.max(0, b.maxY - maxY),
+		Math.max(Math.min(0, b.minY - minY), dy),
+	);
 	if (cdx === 0 && cdy === 0) return null;
 
 	return {
@@ -299,8 +308,9 @@ function recordMoves(board: Board, step: number, moved: BoardNode[]): Board {
 	const current = board.steps[step - 1];
 	if (!current || moved.length === 0) return board;
 	const moves = { ...current.moves };
+	const bounds = fieldBounds(board.pitch);
 	for (const n of moved) {
-		moves[n.id] = { ...moves[n.id], x: clamp01(n.x), y: clamp01(n.y) };
+		moves[n.id] = { ...moves[n.id], ...clampToBounds(n.x, n.y, bounds) };
 	}
 	const steps = [...board.steps];
 	steps[step - 1] = { ...current, moves };
@@ -437,12 +447,8 @@ function reduce(state: EditorState, action: EditorAction): EditorState {
 			return state.selection.length === 0 ? state : { ...state, selection: [] };
 
 		case "place": {
-			let node = createForTool(
-				action.tool,
-				clamp01(action.x),
-				clamp01(action.y),
-				board.nodes,
-			);
+			const at = clampToBounds(action.x, action.y, fieldBounds(board.pitch));
+			let node = createForTool(action.tool, at.x, at.y, board.nodes);
 			// On a half field the goal end is at the top, so goals face down (or up).
 			if (node.kind === "goal" && board.pitch.variant === "half") {
 				node = { ...node, rotation: node.y < 0.5 ? 90 : 270 };
@@ -667,7 +673,22 @@ function reduce(state: EditorState, action: EditorAction): EditorState {
 				pitch.variant === board.pitch.variant
 			)
 				return state;
-			return commit(state, { ...board, pitch });
+			// Markers that would be off the new field's area are brought onto it.
+			const bounds = fieldBounds(pitch);
+			const nodes = board.nodes.map((n) => {
+				const c = clampToBounds(n.x, n.y, bounds);
+				return c.x === n.x && c.y === n.y ? n : { ...n, ...c };
+			});
+			const steps = board.steps.map((st) => ({
+				...st,
+				moves: Object.fromEntries(
+					Object.entries(st.moves).map(([id, mv]) => [
+						id,
+						{ ...mv, ...clampToBounds(mv.x, mv.y, bounds) },
+					]),
+				),
+			}));
+			return commit(state, { ...board, pitch, nodes, steps });
 		}
 
 		case "beginGesture":
@@ -762,11 +783,17 @@ function reduce(state: EditorState, action: EditorAction): EditorState {
 			const moves = { ...current.moves };
 			if (action.move) {
 				const { x, y, via } = action.move;
+				const bounds = fieldBounds(board.pitch);
+				const clamp = (px: number, py: number): Point => {
+					const c = clampToBounds(px, py, bounds);
+					return [c.x, c.y];
+				};
+				const [cx, cy] = clamp(x, y);
 				moves[action.id] = {
-					x: clamp01(x),
-					y: clamp01(y),
+					x: cx,
+					y: cy,
 					...(via && via.length > 0
-						? { via: via.map(([vx, vy]): Point => [clamp01(vx), clamp01(vy)]) }
+						? { via: via.map(([vx, vy]) => clamp(vx, vy)) }
 						: {}),
 				};
 			} else if (moves[action.id]) delete moves[action.id];

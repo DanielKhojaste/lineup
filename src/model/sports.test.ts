@@ -3,7 +3,7 @@ import { createEditorState, editorReducer } from "../state/editor";
 import { createBoard } from "./board";
 import { parseBoard, serializeBoard } from "./file";
 import { BOARD_HEIGHT, BOARD_WIDTH } from "./pitch";
-import { fieldLayout, goalSize, SPORTS } from "./sports";
+import { fieldBounds, fieldLayout, goalSize, SPORTS } from "./sports";
 
 describe("sports", () => {
 	it("draws a full soccer pitch exactly as before (10 units per metre)", () => {
@@ -87,5 +87,36 @@ describe("sports", () => {
 			y: 0.08,
 		});
 		expect(state.board.nodes[0]).toMatchObject({ kind: "goal", rotation: 90 });
+	});
+	it("keeps markers on the field's part of the board", () => {
+		const pitch = { sport: "volleyball", variant: "full" } as const;
+		const b = fieldBounds(pitch);
+		expect(b.minY).toBeGreaterThan(0);
+		let state = createEditorState(createBoard("Rotation", pitch));
+		state = editorReducer(state, { type: "place", tool: "home", x: 0, y: 0 });
+		expect(state.board.nodes[0]).toMatchObject({ x: b.minX, y: b.minY });
+		state = editorReducer(state, {
+			type: "moveItems",
+			ids: [state.board.nodes[0].id],
+			dx: 0,
+			dy: -0.5,
+		});
+		expect(state.board.nodes[0].y).toBeCloseTo(b.minY);
+	});
+
+	it("brings markers onto a smaller field when the sport changes", () => {
+		let state = createEditorState(createBoard());
+		state = editorReducer(state, {
+			type: "place",
+			tool: "home",
+			x: 0.5,
+			y: 0.02,
+		});
+		state = editorReducer(state, {
+			type: "updatePitch",
+			patch: { sport: "volleyball" },
+		});
+		const b = fieldBounds({ sport: "volleyball", variant: "full" });
+		expect(state.board.nodes[0].y).toBeCloseTo(b.minY);
 	});
 });

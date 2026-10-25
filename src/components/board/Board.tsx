@@ -12,7 +12,13 @@ import {
 	sampleRoute,
 	stepAtTime,
 } from "../../model/animation";
-import { clamp01, ROTATE_STEP } from "../../model/board";
+import { ROTATE_STEP } from "../../model/board";
+import {
+	Bounds,
+	clampToBounds,
+	fieldBounds,
+	fieldView,
+} from "../../model/sports";
 import {
 	createLine,
 	createPen,
@@ -79,7 +85,11 @@ type Interaction = { pointerId: number; startClient: Pos } & (
 	| { kind: "erase"; erased: Set<string> }
 );
 
-const clampPoint = (p: Pos): Point => [clamp01(p.x), clamp01(p.y)];
+/** A point kept on the field's part of the board. */
+const clampTo = (p: Pos, b: Bounds): Point => {
+	const c = clampToBounds(p.x, p.y, b);
+	return [c.x, c.y];
+};
 
 function blurActiveField() {
 	const active = document.activeElement;
@@ -87,30 +97,34 @@ function blurActiveField() {
 }
 
 /** Hold Shift to snap a line to 15° steps. */
-function snapAngle(from: Point, to: Point): Point {
+function snapAngle(from: Point, to: Point, bounds: Bounds): Point {
 	const a = toUnits(from);
 	const b = toUnits(to);
 	const len = Math.hypot(b.x - a.x, b.y - a.y);
 	const step = Math.PI / 12;
 	const angle = Math.round(Math.atan2(b.y - a.y, b.x - a.x) / step) * step;
-	return clampPoint({
-		x: (a.x + Math.cos(angle) * len) / BOARD_WIDTH,
-		y: (a.y + Math.sin(angle) * len) / BOARD_HEIGHT,
-	});
+	return clampTo(
+		{
+			x: (a.x + Math.cos(angle) * len) / BOARD_WIDTH,
+			y: (a.y + Math.sin(angle) * len) / BOARD_HEIGHT,
+		},
+		bounds,
+	);
 }
 
 /** A zone from an anchor corner to the pointer; Shift makes it square (in metres). */
-function zoneRect(anchor: Point, to: Point, square: boolean) {
+function zoneRect(anchor: Point, to: Point, square: boolean, bounds: Bounds) {
 	let [x2, y2] = to;
 	if (square) {
 		const w = Math.abs(x2 - anchor[0]) * BOARD_WIDTH;
 		const h = Math.abs(y2 - anchor[1]) * BOARD_HEIGHT;
 		const side = Math.max(w, h);
-		x2 = clamp01(
-			anchor[0] + (Math.sign(x2 - anchor[0]) || 1) * (side / BOARD_WIDTH),
-		);
-		y2 = clamp01(
-			anchor[1] + (Math.sign(y2 - anchor[1]) || 1) * (side / BOARD_HEIGHT),
+		[x2, y2] = clampTo(
+			{
+				x: anchor[0] + (Math.sign(x2 - anchor[0]) || 1) * (side / BOARD_WIDTH),
+				y: anchor[1] + (Math.sign(y2 - anchor[1]) || 1) * (side / BOARD_HEIGHT),
+			},
+			bounds,
 		);
 	}
 	return {
@@ -229,6 +243,10 @@ export default function Board() {
 		return nodesAtStep(board, step);
 	}, [board, step, playback.time]);
 	const nodeById = new Map(shownNodes.map((n) => [n.id, n]));
+	// Everything stays on the field's part of the board (what the view shows).
+	const bounds = fieldBounds(board.pitch);
+	const view = fieldView(board.pitch);
+	const clampPoint = (p: Pos) => clampTo(p, bounds);
 
 	// The marker whose route is being clicked out with the route tool.
 	const routeSession = useRef<{ id: string; step: number } | null>(null);
@@ -370,7 +388,7 @@ export default function Board() {
 			target.closest<SVGGElement>("[data-item-id]")?.dataset.itemId ?? null;
 
 		if (PLACE_TOOLS.has(tool)) {
-			if (isOnBoard(point))
+			if (isOnBoard(point, bounds))
 				dispatch({
 					type: "place",
 					tool: tool as PlaceTool,
@@ -439,7 +457,7 @@ export default function Board() {
 				startEditingText(existing.id);
 				return;
 			}
-			if (!isOnBoard(point)) return;
+			if (!isOnBoard(point, bounds)) return;
 			const drawing = createText(point.x, point.y, "", toolStyles.text);
 			dispatch({ type: "beginGesture" });
 			dispatch({ type: "addDrawing", drawing });
@@ -560,7 +578,7 @@ export default function Board() {
 				return;
 			case "line": {
 				const to = e.shiftKey
-					? snapAngle(current.from, clampPoint(point))
+					? snapAngle(current.from, clampPoint(point), bounds)
 					: clampPoint(point);
 				dispatch({ type: "updateDrawing", id: current.id, changes: { to } });
 				return;
@@ -569,7 +587,12 @@ export default function Board() {
 				dispatch({
 					type: "updateDrawing",
 					id: current.id,
-					changes: zoneRect(current.anchor, clampPoint(point), e.shiftKey),
+					changes: zoneRect(
+						current.anchor,
+						clampPoint(point),
+						e.shiftKey,
+						bounds,
+					),
 				});
 				return;
 			case "pen": {
@@ -591,7 +614,7 @@ export default function Board() {
 				if (d.kind === "line") {
 					if (current.handle === "from" || current.handle === "to") {
 						const fixed = current.handle === "from" ? d.to : d.from;
-						const value = e.shiftKey ? snapAngle(fixed, p) : p;
+						const value = e.shiftKey ? snapAngle(fixed, p, bounds) : p;
 						dispatch({
 							type: "updateDrawing",
 							id: d.id,
@@ -619,7 +642,7 @@ export default function Board() {
 					dispatch({
 						type: "updateDrawing",
 						id: d.id,
-						changes: zoneRect(anchor, p, e.shiftKey),
+						changes: zoneRect(anchor, p, e.shiftKey, bounds),
 					});
 				}
 				return;
@@ -824,7 +847,7 @@ export default function Board() {
 			<svg
 				ref={boardRef}
 				className="board__svg"
-				viewBox={`0 0 ${BOARD_WIDTH} ${BOARD_HEIGHT}`}
+				viewBox={`${view.x} ${view.y} ${view.width} ${view.height}`}
 				role="application"
 				aria-label={`Pitch with ${board.nodes.length} markers and ${
 					board.drawings.length

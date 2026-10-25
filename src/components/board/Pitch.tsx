@@ -1,5 +1,4 @@
 import { memo, ReactNode } from "react";
-import { BOARD_HEIGHT, BOARD_WIDTH } from "../../model/pitch";
 import { fieldLayout, Sport, SPORT_INFO } from "../../model/sports";
 import { PitchSettings } from "../../model/types";
 
@@ -11,7 +10,7 @@ import { PitchSettings } from "../../model/types";
  * hockey turf with a green surround, blue indoor courts, and a sand-orange
  * volleyball court with a blue free zone.
  */
-const SURFACES: Record<
+export const SURFACES: Record<
 	Sport,
 	{
 		floor: string;
@@ -331,7 +330,7 @@ function Pitch({ pitch }: { pitch: PitchSettings }) {
 	const { scale: s, half } = layout;
 	const L = info.length;
 	const W = info.width;
-	const m = info.margin;
+	const { ends: me, sides: ms } = info.margin;
 	const lw = LINE_UNITS / s;
 	// A half volleyball court is drawn with the net at the top (the half from the
 	// net to the end line); other half fields put their goal end at the top.
@@ -339,33 +338,31 @@ function Pitch({ pitch }: { pitch: PitchSettings }) {
 	// Metres → board units. A half field swaps its axes (a mirror rather than a
 	// turn, which is the same for a symmetric field) so its top end is on top.
 	const toBoard = half
-		? `translate(${layout.x + m * s} ${
-				layout.y + m * s
+		? `translate(${layout.x + ms * s} ${
+				layout.y + me * s
 		  }) scale(${s}) matrix(0 1 1 0 0 0)${
 				netOnTop ? ` translate(${-L / 2} 0)` : ""
 		  }`
-		: `translate(${layout.x + m * s} ${layout.y + m * s}) scale(${s})`;
+		: `translate(${layout.x + me * s} ${layout.y + ms * s}) scale(${s})`;
 	// On a half field, only one end shows, to just past halfway.
 	const shown = netOnTop
-		? { x: L / 2 - m, y: -m, w: L / 2 + m * 2, h: W + m * 2 }
+		? { x: L / 2 - me, y: -ms, w: L / 2 + me * 2, h: W + ms * 2 }
 		: half
-		  ? { x: -m, y: -m, w: L / 2 + m * 2, h: W + m * 2 }
-		  : { x: -m, y: -m, w: L + m * 2, h: W + m * 2 };
+		  ? { x: -me, y: -ms, w: L / 2 + me * 2, h: W + ms * 2 }
+		  : { x: -me, y: -ms, w: L + me * 2, h: W + ms * 2 };
 	const clipId = `pitch-clip-${pitch.sport}-${pitch.variant}`;
 
 	return (
 		<g className={`pitch pitch--${pitch.sport}`} aria-hidden="true">
-			<rect
-				x={0}
-				y={0}
-				width={BOARD_WIDTH}
-				height={BOARD_HEIGHT}
-				rx={8}
-				fill={colors.outside}
-			/>
 			<g transform={toBoard}>
 				<clipPath id={clipId}>
-					<rect x={shown.x} y={shown.y} width={shown.w} height={shown.h} />
+					<rect
+						x={shown.x}
+						y={shown.y}
+						width={shown.w}
+						height={shown.h}
+						rx={8 / s}
+					/>
 				</clipPath>
 				<g clipPath={`url(#${clipId})`}>
 					<rect
@@ -382,9 +379,9 @@ function Pitch({ pitch }: { pitch: PitchSettings }) {
 								<rect
 									key={i}
 									x={(i * L * 2) / STRIPE_COUNT}
-									y={-m}
+									y={-ms}
 									width={L / STRIPE_COUNT}
-									height={W + m * 2}
+									height={W + ms * 2}
 								/>
 							))}
 						</g>

@@ -1,3 +1,4 @@
+import { Bounds } from "../../model/sports";
 import { BOARD_HEIGHT, BOARD_WIDTH } from "../../model/pitch";
 
 /**
@@ -17,10 +18,16 @@ export function clientToBoard(
 	return { x: point.x / BOARD_WIDTH, y: point.y / BOARD_HEIGHT };
 }
 
+/** Whether a point is on the board, or on the given part of it (a field's bounds). */
 export function isOnBoard(
 	point: { x: number; y: number } | null,
+	bounds: Bounds = { minX: 0, maxX: 1, minY: 0, maxY: 1 },
 ): point is { x: number; y: number } {
 	return (
-		!!point && point.x >= 0 && point.x <= 1 && point.y >= 0 && point.y <= 1
+		!!point &&
+		point.x >= bounds.minX &&
+		point.x <= bounds.maxX &&
+		point.y >= bounds.minY &&
+		point.y <= bounds.maxY
 	);
 }

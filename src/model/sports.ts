@@ -20,8 +20,13 @@ export interface SportInfo {
 	/** Playing area, in metres: length is goal to goal (or end line to end line). */
 	length: number;
 	width: number;
-	/** Space drawn around the lines, in metres (run-off or free zone). */
-	margin: number;
+	/**
+	 * Space drawn around the lines, in metres (run-off or free zone): behind the
+	 * end lines, and outside the sidelines.
+	 */
+	margin: { ends: number; sides: number };
+	// Soccer keeps 3 m all round: its field then fills the whole board exactly, as
+	// it did before other sports existed, so older boards line up unchanged.
 	/** A full-size goal in metres, or null for sports without goals (or with hoops). */
 	goal: { width: number; depth: number } | null;
 	/** Typical number of players a side, for hints. */
@@ -34,7 +39,7 @@ export const SPORT_INFO: Record<Sport, SportInfo> = {
 		surface: "pitch",
 		length: 105,
 		width: 68,
-		margin: 3,
+		margin: { ends: 3, sides: 3 },
 		goal: { width: 7.32, depth: 2 },
 		players: 11,
 	},
@@ -43,7 +48,7 @@ export const SPORT_INFO: Record<Sport, SportInfo> = {
 		surface: "court",
 		length: 40,
 		width: 20,
-		margin: 2,
+		margin: { ends: 1.5, sides: 1.5 },
 		goal: { width: 3, depth: 1 },
 		players: 5,
 	},
@@ -52,7 +57,7 @@ export const SPORT_INFO: Record<Sport, SportInfo> = {
 		surface: "court",
 		length: 28,
 		width: 15,
-		margin: 2,
+		margin: { ends: 1.5, sides: 1.5 },
 		goal: null,
 		players: 5,
 	},
@@ -61,7 +66,7 @@ export const SPORT_INFO: Record<Sport, SportInfo> = {
 		surface: "court",
 		length: 18,
 		width: 9,
-		margin: 3,
+		margin: { ends: 3, sides: 1.5 },
 		goal: null,
 		players: 6,
 	},
@@ -70,7 +75,7 @@ export const SPORT_INFO: Record<Sport, SportInfo> = {
 		surface: "court",
 		length: 40,
 		width: 20,
-		margin: 2,
+		margin: { ends: 1.5, sides: 1.5 },
 		goal: { width: 3, depth: 1 },
 		players: 7,
 	},
@@ -79,7 +84,7 @@ export const SPORT_INFO: Record<Sport, SportInfo> = {
 		surface: "field",
 		length: 91.4,
 		width: 55,
-		margin: 3,
+		margin: { ends: 3, sides: 3 },
 		goal: { width: 3.66, depth: 1.2 },
 		players: 11,
 	},
@@ -117,10 +122,10 @@ export interface FieldLayout {
 export function fieldLayout(pitch: PitchSettings): FieldLayout {
 	const info = SPORT_INFO[pitch.sport];
 	const half = pitch.variant === "half";
-	const m = info.margin;
-	// A half field shows a little past halfway, so the centre circle reads.
-	const across = (half ? info.width : info.length) + m * 2;
-	const down = (half ? info.length / 2 : info.width) + m * 2;
+	const { ends, sides } = info.margin;
+	// A half field shows one end to a little past halfway (one end margin's worth).
+	const across = half ? info.width + sides * 2 : info.length + ends * 2;
+	const down = half ? info.length / 2 + ends * 2 : info.width + sides * 2;
 	const scale = Math.min(BOARD_WIDTH / across, BOARD_HEIGHT / down);
 	return {
 		scale,
@@ -129,6 +134,45 @@ export function fieldLayout(pitch: PitchSettings): FieldLayout {
 		across,
 		down,
 		half,
+	};
+}
+
+/**
+ * The part of the board a field takes up, in board units: the editor and
+ * pictures of the board show just this, so there are no empty bands around it.
+ */
+export function fieldView(pitch: PitchSettings) {
+	const l = fieldLayout(pitch);
+	return {
+		x: l.x,
+		y: l.y,
+		width: l.across * l.scale,
+		height: l.down * l.scale,
+	};
+}
+
+export interface Bounds {
+	minX: number;
+	maxX: number;
+	minY: number;
+	maxY: number;
+}
+
+/** Where markers and drawings can go on a board: its field, normalised (0–1). */
+export function fieldBounds(pitch: PitchSettings): Bounds {
+	const v = fieldView(pitch);
+	return {
+		minX: v.x / BOARD_WIDTH,
+		maxX: (v.x + v.width) / BOARD_WIDTH,
+		minY: v.y / BOARD_HEIGHT,
+		maxY: (v.y + v.height) / BOARD_HEIGHT,
+	};
+}
+
+export function clampToBounds(x: number, y: number, b: Bounds) {
+	return {
+		x: Math.min(b.maxX, Math.max(b.minX, x)),
+		y: Math.min(b.maxY, Math.max(b.minY, y)),
 	};
 }
 

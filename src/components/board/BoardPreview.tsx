@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { BOARD_HEIGHT, BOARD_WIDTH } from "../../model/pitch";
+import { fieldView } from "../../model/sports";
 import { Board } from "../../model/types";
 import DrawingShape from "./Drawings";
 import NodeMarker from "./Markers";
@@ -23,11 +23,13 @@ function BoardPreview({
 	height,
 	children,
 }: BoardPreviewProps) {
+	// Just the field, like the editor shows it.
+	const view = fieldView(board.pitch);
 	return (
 		<svg
 			xmlns="http://www.w3.org/2000/svg"
 			className={className}
-			viewBox={`0 0 ${BOARD_WIDTH} ${BOARD_HEIGHT}`}
+			viewBox={`${view.x} ${view.y} ${view.width} ${view.height}`}
 			width={width}
 			height={height}
 			role="img"

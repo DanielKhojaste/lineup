@@ -1,7 +1,7 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import BoardPreview from "../components/board/BoardPreview";
-import { BOARD_HEIGHT, BOARD_WIDTH } from "../model/pitch";
+import { fieldView } from "../model/sports";
 import { Board } from "../model/types";
 
 /**
@@ -16,10 +16,18 @@ text { font-family: "IBM Plex Sans", "Segoe UI", Arial, sans-serif; }
 .drawing__text { font-weight: 600; }
 `;
 
-/** Render a board to a PNG at `scale` × the board's size (1110 × 740 units). */
-export async function boardToPng(board: Board, scale = 2): Promise<Uint8Array> {
-	const width = BOARD_WIDTH * scale;
-	const height = BOARD_HEIGHT * scale;
+/**
+ * Render a board to a PNG of its field (the part of the board the editor
+ * shows), at least `minWidth` pixels wide.
+ */
+export async function boardToPng(
+	board: Board,
+	minWidth = 2200,
+): Promise<Uint8Array> {
+	const view = fieldView(board.pitch);
+	const scale = Math.max(2, minWidth / view.width);
+	const width = Math.round(view.width * scale);
+	const height = Math.round(view.height * scale);
 	const svg = renderToStaticMarkup(
 		createElement(
 			BoardPreview,

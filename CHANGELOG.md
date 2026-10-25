@@ -15,6 +15,8 @@ This project adheres to semantic versioning (0.x during early development).
 - A default sport in Settings (New boards), so new boards start with it without asking; the arrow next to New board makes a board for any other sport
 - A Field section in the board's settings to change its sport or switch between a full and a half field (undoable)
 - The ball looks like the sport's ball (basketball, volleyball, hockey ball), and full-size goals are the sport's real goal size
+- The editor, library previews and PNG export show just the field and its margin, so half fields and narrow courts fill the screen instead of sitting in empty bands; markers and drawings stay on the field
+- Volleyball has 3 m behind the end lines (room to serve) and 1.5 m at the sides; futsal, basketball and handball have 1.5 m around the court
 - Library cards show each board's sport, and a Sport filter appears once the library has boards for more than one sport
 
 ### Changed
