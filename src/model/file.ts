@@ -1,3 +1,4 @@
+import { gunzipSync, gzipSync, strFromU8, strToU8 } from "fflate";
 import { createBoard, newId } from "./board";
 import { isSport } from "./sports";
 import {
@@ -16,8 +17,51 @@ export const FILE_EXTENSION = "lineup";
 
 export class BoardFileError extends Error {}
 
+/** A board as JSON text: how the library keeps boards in a browser. */
 export function serializeBoard(board: Board): string {
 	return JSON.stringify(board, null, "\t");
+}
+
+/**
+ * Board files start with these bytes ("LNUP") and a format number, followed by
+ * the board as gzip-compressed JSON. That keeps files small and stops them
+ * reading as plain text; it isn't encryption.
+ */
+const MAGIC = [0x4c, 0x4e, 0x55, 0x50];
+const FILE_FORMAT = 1;
+
+/** A board as the bytes of a `.lineup` file. */
+export function encodeBoardFile(board: Board): Uint8Array {
+	const body = gzipSync(strToU8(JSON.stringify(board)), { level: 9, mtime: 0 });
+	const file = new Uint8Array(MAGIC.length + 1 + body.length);
+	file.set(MAGIC);
+	file[MAGIC.length] = FILE_FORMAT;
+	file.set(body, MAGIC.length + 1);
+	return file;
+}
+
+function isBoardFile(bytes: Uint8Array): boolean {
+	return MAGIC.every((b, i) => bytes[i] === b);
+}
+
+/**
+ * Read a `.lineup` file. Files saved before v0.7.0 are plain JSON text, and
+ * still open.
+ */
+export function decodeBoardFile(bytes: Uint8Array): Board {
+	if (!isBoardFile(bytes)) return parseBoard(strFromU8(bytes));
+	if (bytes[MAGIC.length] > FILE_FORMAT) {
+		throw new BoardFileError(
+			"This board was made with a newer version of Lineup. Update the app to open it.",
+		);
+	}
+	let text: string;
+	try {
+		text = strFromU8(gunzipSync(bytes.subarray(MAGIC.length + 1)));
+	} catch {
+		throw new BoardFileError("This board file is damaged and can't be opened.");
+	}
+	return parseBoard(text);
 }
 
 const isObject = (v: unknown): v is Record<string, unknown> =>
