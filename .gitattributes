@@ -2,3 +2,6 @@
 # LF too stops them showing as changed on Windows after every build.
 src-tauri/Cargo.toml text eol=lf
 src-tauri/Cargo.lock text eol=lf
+
+# Board files are compressed binary; never convert their line endings.
+*.lineup binary
