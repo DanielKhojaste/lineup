@@ -4,6 +4,8 @@
  * class instances, functions and DOM references.
  */
 
+import type { FieldVariant, Sport } from "./sports";
+
 export const SCHEMA_VERSION = 2;
 
 export type TeamId = "home" | "away" | "neutral";
@@ -166,8 +168,8 @@ export interface BoardDisplay {
 }
 
 export interface PitchSettings {
-	sport: "soccer";
-	variant: "full";
+	sport: Sport;
+	variant: FieldVariant;
 }
 
 export interface Board {

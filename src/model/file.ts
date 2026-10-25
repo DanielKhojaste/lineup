@@ -1,4 +1,5 @@
 import { createBoard, newId } from "./board";
+import { isSport } from "./sports";
 import {
 	Board,
 	BoardNode,
@@ -218,6 +219,7 @@ export function parseBoard(text: string): Board {
 	const notes = isObject(raw.notes) ? raw.notes : {};
 	const teams = isObject(raw.teams) ? raw.teams : {};
 	const display = isObject(raw.display) ? raw.display : {};
+	const pitch = isObject(raw.pitch) ? raw.pitch : {};
 
 	const nodes = raw.nodes
 		.map(cleanNode)
@@ -251,6 +253,12 @@ export function parseBoard(text: string): Board {
 			neutral: cleanTeam(teams.neutral, fresh.teams.neutral),
 		},
 		display: { ...fresh.display, showLabels: display.showLabels !== false },
+		// Boards from before v0.7.0 are all soccer, full pitch. An unknown sport
+		// (from a newer version) falls back to soccer rather than failing.
+		pitch: {
+			sport: isSport(pitch.sport) ? pitch.sport : "soccer",
+			variant: pitch.variant === "half" ? "half" : "full",
+		},
 		nodes,
 		drawings: Array.isArray(raw.drawings)
 			? raw.drawings.map(cleanDrawing).filter((d): d is Drawing => d !== null)

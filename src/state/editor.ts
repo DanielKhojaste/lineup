@@ -30,6 +30,7 @@ import {
 	Drawing,
 	LineStroke,
 	Move,
+	PitchSettings,
 	PlayerNode,
 	Point,
 	StrokeWidth,
@@ -131,6 +132,8 @@ export type EditorAction =
 	| { type: "updateNotes"; patch: Partial<DrillNotes> }
 	| { type: "updateTeam"; team: TeamId; patch: Partial<TeamStyle> }
 	| { type: "updateDisplay"; patch: Partial<BoardDisplay> }
+	/** Change the board's sport or switch between a full and a half field. */
+	| { type: "updatePitch"; patch: Partial<PitchSettings> }
 	| { type: "beginGesture" }
 	| { type: "endGesture" }
 	| { type: "cancelGesture" }
@@ -434,12 +437,16 @@ function reduce(state: EditorState, action: EditorAction): EditorState {
 			return state.selection.length === 0 ? state : { ...state, selection: [] };
 
 		case "place": {
-			const node = createForTool(
+			let node = createForTool(
 				action.tool,
 				clamp01(action.x),
 				clamp01(action.y),
 				board.nodes,
 			);
+			// On a half field the goal end is at the top, so goals face down (or up).
+			if (node.kind === "goal" && board.pitch.variant === "half") {
+				node = { ...node, rotation: node.y < 0.5 ? 90 : 270 };
+			}
 			return {
 				...commit(state, { ...board, nodes: [...board.nodes, node] }),
 				selection: [node.id],
@@ -652,6 +659,16 @@ function reduce(state: EditorState, action: EditorAction): EditorState {
 				...board,
 				display: { ...board.display, ...action.patch },
 			});
+
+		case "updatePitch": {
+			const pitch = { ...board.pitch, ...action.patch };
+			if (
+				pitch.sport === board.pitch.sport &&
+				pitch.variant === board.pitch.variant
+			)
+				return state;
+			return commit(state, { ...board, pitch });
+		}
 
 		case "beginGesture":
 			return state.gestureBase ? state : { ...state, gestureBase: board };

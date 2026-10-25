@@ -1,14 +1,15 @@
 import { useEffect, useLayoutEffect, useState } from "react";
 import { PLAYER_RADIUS, toBoardUnits } from "../../model/pitch";
-import { BoardNode } from "../../model/types";
+import { Board, BoardNode } from "../../model/types";
 import { useEditor } from "../../state/EditorContext";
 import { selectedDrawings, selectedNodes } from "../../state/editor";
 import { Icon } from "../Icon";
 import { drawingBox } from "./Drawings";
-import { GOAL_SIZES } from "./Markers";
+import { goalDimensions } from "./Markers";
 
 /** Rough extent of a marker around its centre, in board units. */
-function nodeExtent(node: BoardNode, showLabels: boolean) {
+function nodeExtent(node: BoardNode, board: Board) {
+	const showLabels = board.display.showLabels;
 	switch (node.kind) {
 		case "player":
 			return {
@@ -17,7 +18,7 @@ function nodeExtent(node: BoardNode, showLabels: boolean) {
 					PLAYER_RADIUS + (showLabels && (node.label || node.name) ? 26 : 6),
 			};
 		case "goal": {
-			const { width } = GOAL_SIZES[node.size];
+			const { width } = goalDimensions(node.size, board.pitch);
 			return { up: width / 2 + 6, down: width / 2 + 6 };
 		}
 		default:
@@ -65,7 +66,7 @@ export default function FloatingActions({ hidden }: { hidden: boolean }) {
 		let maxY = -Infinity;
 		for (const node of nodes) {
 			const c = toBoardUnits(node.x, node.y);
-			const e = nodeExtent(node, state.board.display.showLabels);
+			const e = nodeExtent(node, state.board);
 			minX = Math.min(minX, c.x - 20);
 			maxX = Math.max(maxX, c.x + 20);
 			minY = Math.min(minY, c.y - e.up);

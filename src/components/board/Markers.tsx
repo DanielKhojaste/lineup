@@ -15,6 +15,7 @@ import {
 	PoleNode,
 } from "../../model/types";
 import { playerKit } from "../../model/board";
+import { goalSize } from "../../model/sports";
 import { readableOn } from "../../theme/color";
 import { truncate } from "../../utils/text";
 
@@ -129,29 +130,106 @@ function ConeMarker({ node, selected }: MarkerProps<ConeNode>) {
 	);
 }
 
-function BallMarker({ selected }: MarkerProps<BoardNode>) {
+/** The ball drawn for each sport. Soccer, futsal and handball share one. */
+function BallShape({ sport }: { sport: Board["pitch"]["sport"] }) {
 	const r = BALL_RADIUS;
+	const ink = "#15181B";
+	switch (sport) {
+		case "basketball":
+			return (
+				<>
+					<circle r={r} fill="#E8742C" stroke={ink} strokeWidth={1.6} />
+					<g fill="none" stroke={ink} strokeWidth={1.1}>
+						<line x1={-r} y1={0} x2={r} y2={0} />
+						<line x1={0} y1={-r} x2={0} y2={r} />
+						<path
+							d={`M${-r * 0.62} ${-r * 0.78}Q${-r * 0.2} 0 ${-r * 0.62} ${
+								r * 0.78
+							}`}
+						/>
+						<path
+							d={`M${r * 0.62} ${-r * 0.78}Q${r * 0.2} 0 ${r * 0.62} ${
+								r * 0.78
+							}`}
+						/>
+					</g>
+				</>
+			);
+		case "volleyball":
+			return (
+				<>
+					<circle r={r} fill="#FFFFFF" stroke={ink} strokeWidth={1.6} />
+					<path
+						d={`M0 0L0 ${-r}A${r} ${r} 0 0 1 ${r * 0.87} ${r * 0.5}Z`}
+						fill="#F5C518"
+						stroke="none"
+					/>
+					<path
+						d={`M0 0L${-r * 0.87} ${r * 0.5}A${r} ${r} 0 0 1 ${-r * 0.87} ${
+							-r * 0.5
+						}Z`}
+						fill="#2F6FAE"
+						stroke="none"
+					/>
+					<g fill="none" stroke={ink} strokeWidth={1}>
+						<line x1={0} y1={0} x2={0} y2={-r} />
+						<line x1={0} y1={0} x2={r * 0.87} y2={r * 0.5} />
+						<line x1={0} y1={0} x2={-r * 0.87} y2={r * 0.5} />
+					</g>
+					<circle r={r} fill="none" stroke={ink} strokeWidth={1.6} />
+				</>
+			);
+		case "hockey":
+			// A hockey ball is small and plain; drawn a little smaller than other balls.
+			return (
+				<circle r={r * 0.75} fill="#FFFFFF" stroke={ink} strokeWidth={1.8} />
+			);
+		default:
+			return (
+				<>
+					<circle r={r} fill="#FFFFFF" stroke={ink} strokeWidth={2} />
+					<path
+						d={`M0 ${-r * 0.45}L${r * 0.43} ${-r * 0.14}L${r * 0.27} ${
+							r * 0.37
+						}H${-r * 0.27}L${-r * 0.43} ${-r * 0.14}Z`}
+						fill={ink}
+					/>
+				</>
+			);
+	}
+}
+
+function BallMarker({ selected, board }: MarkerProps<BoardNode>) {
 	return (
 		<>
-			<SelectionRing r={r + 4} selected={selected} />
-			<circle r={r} fill="#FFFFFF" stroke="#15181B" strokeWidth={2} />
-			<path
-				d={`M0 ${-r * 0.45}L${r * 0.43} ${-r * 0.14}L${r * 0.27} ${r * 0.37}H${
-					-r * 0.27
-				}L${-r * 0.43} ${-r * 0.14}Z`}
-				fill="#15181B"
-			/>
+			<SelectionRing r={BALL_RADIUS + 4} selected={selected} />
+			<BallShape sport={board.pitch.sport} />
 		</>
 	);
 }
 
+/** A full soccer goal, and a training mini goal, in board units. */
 export const GOAL_SIZES = {
 	full: { width: 73.2, depth: 20 },
 	mini: { width: 36, depth: 12 },
 };
 
-function GoalMarker({ node, selected }: MarkerProps<GoalNode>) {
-	const { width: w, depth: d } = GOAL_SIZES[node.size];
+/**
+ * A goal's size on this board: a full goal is the sport's real goal at the
+ * field's scale (or a soccer goal for sports without one); a mini goal is the
+ * same small training goal everywhere.
+ */
+export function goalDimensions(size: GoalNode["size"], pitch: Board["pitch"]) {
+	if (size === "mini") return GOAL_SIZES.mini;
+	const real = goalSize(pitch);
+	// Very small goals (at the scale of a big field) still need to be grabbable.
+	return real
+		? { width: Math.max(real.width, 30), depth: Math.max(real.depth, 10) }
+		: GOAL_SIZES.full;
+}
+
+function GoalMarker({ node, selected, board }: MarkerProps<GoalNode>) {
+	const { width: w, depth: d } = goalDimensions(node.size, board.pitch);
 	const half = w / 2;
 	const netLines = [];
 	for (let y = -half + 8; y < half; y += 8) netLines.push(`M${-d} ${y}H0`);

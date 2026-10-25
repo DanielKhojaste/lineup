@@ -34,7 +34,7 @@ function BoardPreview({
 			aria-label={`Preview of ${board.meta.title}`}
 		>
 			{children}
-			<Pitch />
+			<Pitch pitch={board.pitch} />
 			{board.drawings
 				.filter((d) => d.kind !== "text")
 				.map((d) => (

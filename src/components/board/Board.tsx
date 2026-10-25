@@ -837,7 +837,7 @@ export default function Board() {
 				onPointerCancel={(e) => finish(e, true)}
 				onDoubleClick={onDoubleClick}
 			>
-				<Pitch />
+				<Pitch pitch={board.pitch} />
 				<g className="board__drawings">
 					{underMarkers.map((d) => (
 						<DrawingShape key={d.id} drawing={d} />

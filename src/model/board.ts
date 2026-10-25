@@ -6,6 +6,7 @@ import {
 	GoalNode,
 	Kit,
 	MannequinNode,
+	PitchSettings,
 	PlayerNode,
 	PoleNode,
 	SCHEMA_VERSION,
@@ -41,7 +42,10 @@ export function playerKit(node: PlayerNode, teams: Board["teams"]): Kit {
 	return { color: team.color, stripes: team.stripes };
 }
 
-export function createBoard(title = "Untitled board"): Board {
+export function createBoard(
+	title = "Untitled board",
+	pitch: PitchSettings = { sport: "soccer", variant: "full" },
+): Board {
 	const now = new Date().toISOString();
 
 	return {
@@ -58,7 +62,7 @@ export function createBoard(title = "Untitled board"): Board {
 			description: "",
 			coachingPoints: [],
 		},
-		pitch: { sport: "soccer", variant: "full" },
+		pitch: { ...pitch },
 		teams: structuredClone(DEFAULT_TEAMS),
 		display: { showLabels: true },
 		nodes: [],
