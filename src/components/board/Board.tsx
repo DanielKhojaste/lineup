@@ -12,7 +12,7 @@ import {
 	sampleRoute,
 	stepAtTime,
 } from "../../model/animation";
-import { ROTATE_STEP } from "../../model/board";
+import { markerScale, ROTATE_STEP } from "../../model/board";
 import {
 	Bounds,
 	clampToBounds,
@@ -136,8 +136,8 @@ function zoneRect(anchor: Point, to: Point, square: boolean, bounds: Bounds) {
 }
 
 /** How far in front of a goal or mannequin its rotate handle sits, in board units. */
-function rotateReach(node: GoalNode | MannequinNode): number {
-	if (node.kind === "mannequin") return 32;
+function rotateReach(node: GoalNode | MannequinNode, scale: number): number {
+	if (node.kind === "mannequin") return 32 * scale;
 	return node.size === "mini" ? 24 : 34;
 }
 
@@ -148,10 +148,16 @@ function isRotatable(
 }
 
 /** A handle in front of a selected goal or mannequin; drag it around to turn it. */
-function RotateHandle({ node }: { node: GoalNode | MannequinNode }) {
+function RotateHandle({
+	node,
+	scale,
+}: {
+	node: GoalNode | MannequinNode;
+	scale: number;
+}) {
 	const c = toBoardUnits(node.x, node.y);
 	const angle = (node.rotation * Math.PI) / 180;
-	const reach = rotateReach(node);
+	const reach = rotateReach(node, scale);
 	const hx = c.x + Math.cos(angle) * reach;
 	const hy = c.y + Math.sin(angle) * reach;
 	return (
@@ -912,7 +918,12 @@ export default function Board() {
 					selection.length === 1 &&
 					(() => {
 						const node = nodeById.get(selection[0]);
-						return isRotatable(node) ? <RotateHandle node={node} /> : null;
+						return isRotatable(node) ? (
+							<RotateHandle
+								node={node}
+								scale={markerScale(node, board.display)}
+							/>
+						) : null;
 					})()}
 				{viaFor.map(([x, y], index) => {
 					const u = toBoardUnits(x, y);

@@ -14,6 +14,7 @@ This project adheres to semantic versioning (0.x during early development).
 - Full or half field for every sport; a half field is drawn with the goal (or hoop, or net) at the top, and goals placed on it face down the field
 - A New board window: pick the sport, then a full or half field, from pictures of each; it opens on your default sport (set in Settings, or tick "Use this for new boards from now on"), so Enter makes a board straight away
 - A Field section in the board's settings to change its sport or switch between a full and a half field (undoable)
+- Player size and equipment size (S, M, L, XL) in each board's Display settings: players, and cones, balls, mannequins and poles, can be drawn smaller or bigger; goals stay their real size
 - The ball looks like the sport's ball (basketball, volleyball, hockey ball), and full-size goals are the sport's real goal size
 - The editor, library previews and PNG export show just the field and its margin, so half fields and narrow courts fill the screen instead of sitting in empty bands; markers and drawings stay on the field
 - Volleyball has 3 m behind the end lines (room to serve) and 1.5 m at the sides; futsal, basketball and handball have 1.5 m around the court

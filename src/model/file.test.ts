@@ -97,6 +97,21 @@ describe("board files", () => {
 		expect(parseBoard(JSON.stringify(old)).steps).toEqual([]);
 	});
 
+	it("keeps marker sizes within limits, and defaults old boards to normal", () => {
+		const board = createBoard();
+		board.display = { showLabels: true, playerScale: 1.3, equipmentScale: 9 };
+		expect(parseBoard(JSON.stringify(board)).display).toEqual({
+			showLabels: true,
+			playerScale: 1.3,
+			equipmentScale: 2,
+		});
+		const { display: _none, ...old } = createBoard();
+		expect(parseBoard(JSON.stringify(old)).display).toMatchObject({
+			playerScale: 1,
+			equipmentScale: 1,
+		});
+	});
+
 	it("rejects files that aren't boards", () => {
 		expect(() => parseBoard("not json")).toThrow(BoardFileError);
 		expect(() => parseBoard('{"hello": 1}')).toThrow(BoardFileError);

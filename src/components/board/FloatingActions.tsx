@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useState } from "react";
 import { PLAYER_RADIUS, toBoardUnits } from "../../model/pitch";
 import { Board, BoardNode } from "../../model/types";
+import { markerScale } from "../../model/board";
 import { useEditor } from "../../state/EditorContext";
 import { selectedDrawings, selectedNodes } from "../../state/editor";
 import { Icon } from "../Icon";
@@ -66,11 +67,12 @@ export default function FloatingActions({ hidden }: { hidden: boolean }) {
 		let maxY = -Infinity;
 		for (const node of nodes) {
 			const c = toBoardUnits(node.x, node.y);
+			const k = markerScale(node, state.board.display);
 			const e = nodeExtent(node, state.board);
-			minX = Math.min(minX, c.x - 20);
-			maxX = Math.max(maxX, c.x + 20);
-			minY = Math.min(minY, c.y - e.up);
-			maxY = Math.max(maxY, c.y + e.down);
+			minX = Math.min(minX, c.x - 20 * k);
+			maxX = Math.max(maxX, c.x + 20 * k);
+			minY = Math.min(minY, c.y - e.up * k);
+			maxY = Math.max(maxY, c.y + e.down * k);
 		}
 		for (const d of drawings) {
 			const b = drawingBox(d);

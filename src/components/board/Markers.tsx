@@ -14,7 +14,7 @@ import {
 	PlayerNode,
 	PoleNode,
 } from "../../model/types";
-import { playerKit } from "../../model/board";
+import { markerScale, playerKit } from "../../model/board";
 import { goalSize } from "../../model/sports";
 import { readableOn } from "../../theme/color";
 import { truncate } from "../../utils/text";
@@ -363,10 +363,11 @@ interface NodeMarkerProps {
 
 function NodeMarker({ node, selected, board }: NodeMarkerProps) {
 	const { x, y } = toBoardUnits(node.x, node.y);
+	const k = markerScale(node, board.display);
 	return (
 		<g
 			className={`marker marker--${node.kind}${selected ? " is-selected" : ""}`}
-			transform={`translate(${x} ${y})`}
+			transform={`translate(${x} ${y})${k !== 1 ? ` scale(${k})` : ""}`}
 			data-item-id={node.id}
 			role="img"
 			aria-label={describe(node, board)}

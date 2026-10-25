@@ -150,6 +150,11 @@ function cleanDrawing(raw: unknown): Drawing | null {
 	}
 }
 
+/** A marker size from a file, kept within sensible limits (normal if missing). */
+function scaleOr1(value: unknown): number {
+	return isNum(value) ? Math.min(2, Math.max(0.5, value)) : 1;
+}
+
 /** Keeps a team's name and kit; anything else (like old keeper colours) is dropped. */
 function cleanTeam(raw: unknown, fallback: TeamStyle): TeamStyle {
 	const team = isObject(raw) ? raw : {};
@@ -252,7 +257,12 @@ export function parseBoard(text: string): Board {
 			away: cleanTeam(teams.away, fresh.teams.away),
 			neutral: cleanTeam(teams.neutral, fresh.teams.neutral),
 		},
-		display: { ...fresh.display, showLabels: display.showLabels !== false },
+		display: {
+			...fresh.display,
+			showLabels: display.showLabels !== false,
+			playerScale: scaleOr1(display.playerScale),
+			equipmentScale: scaleOr1(display.equipmentScale),
+		},
 		// Boards from before v0.7.0 are all soccer, full pitch. An unknown sport
 		// (from a newer version) falls back to soccer rather than failing.
 		pitch: {

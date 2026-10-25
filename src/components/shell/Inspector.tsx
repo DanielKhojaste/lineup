@@ -1,4 +1,9 @@
-import { CONE_COLORS, playerKit, ROTATE_STEP } from "../../model/board";
+import {
+	CONE_COLORS,
+	MARKER_SCALES,
+	playerKit,
+	ROTATE_STEP,
+} from "../../model/board";
 import {
 	BoardItem,
 	BoardNode,
@@ -466,6 +471,35 @@ function BoardSettings() {
 					/>
 					Show positions and names
 				</label>
+				<Segmented
+					label="Player size"
+					value={String(display.playerScale)}
+					options={MARKER_SCALES.map((o) => ({
+						value: String(o.value),
+						label: o.label,
+					}))}
+					onChange={(v) =>
+						dispatch({
+							type: "updateDisplay",
+							patch: { playerScale: Number(v) },
+						})
+					}
+				/>
+				<Segmented
+					label="Equipment size"
+					value={String(display.equipmentScale)}
+					options={MARKER_SCALES.map((o) => ({
+						value: String(o.value),
+						label: o.label,
+						title: "Cones, balls, mannequins and poles",
+					}))}
+					onChange={(v) =>
+						dispatch({
+							type: "updateDisplay",
+							patch: { equipmentScale: Number(v) },
+						})
+					}
+				/>
 			</Section>
 		</>
 	);
