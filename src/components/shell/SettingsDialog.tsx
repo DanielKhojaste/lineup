@@ -132,8 +132,8 @@ export default function SettingsDialog({
 						onChange={(defaultPitch) => setPreferences({ defaultPitch })}
 					/>
 					<p className="muted small">
-						New boards start with this sport. Pick another one from the arrow
-						next to New board, or change a board's sport in its settings.
+						New boards start with this sport. You can pick another one in the
+						New board window, or change a board's sport in its settings.
 					</p>
 				</section>
 

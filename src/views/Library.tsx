@@ -6,10 +6,11 @@ import SettingsDialog from "../components/shell/SettingsDialog";
 import { ConfirmDialog, Modal, PromptDialog } from "../components/ui/Dialog";
 import { Menu } from "../components/ui/Menu";
 import { boardToPng } from "../export/png";
+import { SURFACES } from "../components/board/Pitch";
+import NewBoardDialog from "../components/library/NewBoardDialog";
 import { pitchLabel, Sport, SPORT_INFO, SPORTS } from "../model/sports";
 import { Board, PitchSettings } from "../model/types";
 import { allFolders, useLibrary } from "../state/LibraryContext";
-import { usePreferences } from "../state/preferences";
 import { exportBoardFile, exportPng, pickBoardFiles } from "../storage/files";
 import { relativeTime } from "../utils/time";
 
@@ -17,7 +18,8 @@ import { relativeTime } from "../utils/time";
 type View =
 	| { kind: "all" }
 	| { kind: "unfiled" }
-	| { kind: "folder"; name: string };
+	| { kind: "folder"; name: string }
+	| { kind: "sport"; sport: Sport };
 type Sort = "updated" | "title";
 
 function matches(board: Board, query: string): boolean {
@@ -152,8 +154,7 @@ export default function Library() {
 	const [view, setView] = useState<View>({ kind: "all" });
 	const [query, setQuery] = useState("");
 	const [sort, setSort] = useState<Sort>("updated");
-	const [sportFilter, setSportFilter] = useState<Sport | "all">("all");
-	const { defaultPitch } = usePreferences();
+	const [newBoardOpen, setNewBoardOpen] = useState(false);
 	const [notice, setNotice] = useState<{
 		text: string;
 		tone: "info" | "error";
@@ -174,21 +175,19 @@ export default function Library() {
 				? true
 				: view.kind === "unfiled"
 				  ? !b.meta.folder
-				  : b.meta.folder === view.name,
+				  : view.kind === "sport"
+				    ? b.pitch.sport === view.sport
+				    : b.meta.folder === view.name,
 		);
-		const found = inView.filter(
-			(b) =>
-				matches(b, query.trim()) &&
-				(sportFilter === "all" || b.pitch.sport === sportFilter),
-		);
+		const found = inView.filter((b) => matches(b, query.trim()));
 		return sort === "title"
 			? [...found].sort((a, b) => a.meta.title.localeCompare(b.meta.title))
 			: [...found].sort((a, b) =>
 					b.meta.updatedAt.localeCompare(a.meta.updatedAt),
 			  );
-	}, [library.boards, view, query, sort, sportFilter]);
+	}, [library.boards, view, query, sort]);
 
-	// The filter only lists sports the library actually has boards for.
+	// The sidebar lists the sports the library has boards for.
 	const sportsInLibrary = SPORTS.filter((s) =>
 		library.boards.some((b) => b.pitch.sport === s),
 	);
@@ -206,8 +205,8 @@ export default function Library() {
 
 	const openBoard = (id: string) => navigate(`/board/${id}`);
 
-	/** A new board with the default sport, or the one picked from the menu. */
-	const newBoard = (pitch?: PitchSettings) =>
+	/** A new board for the sport and field picked in the New board dialog. */
+	const newBoard = (pitch: PitchSettings) =>
 		run(async () => {
 			const board = await library.createBoard(currentFolder, pitch);
 			openBoard(board.id);
@@ -243,7 +242,9 @@ export default function Library() {
 			? "All boards"
 			: view.kind === "unfiled"
 			  ? "Not in a folder"
-			  : view.name;
+			  : view.kind === "sport"
+			    ? SPORT_INFO[view.sport].name
+			    : view.name;
 
 	const navItem = (
 		label: string,
@@ -300,35 +301,15 @@ export default function Library() {
 				<button type="button" className="button" onClick={importBoards}>
 					Import
 				</button>
-				<div className="split-button">
-					<button
-						type="button"
-						className="button button--primary split-button__main"
-						onClick={() => newBoard()}
-						disabled={library.status !== "ready"}
-						title={`New ${pitchLabel(
-							defaultPitch,
-						).toLowerCase()} board (change the default in Settings)`}
-					>
-						<Icon name="plus" size={16} />
-						New board
-					</button>
-					<Menu
-						label="New board for another sport"
-						button={<Icon name="chevronDown" size={16} />}
-						buttonClassName="button button--primary split-button__more"
-						items={SPORTS.flatMap((sport) => [
-							{
-								label: `${SPORT_INFO[sport].name}`,
-								onSelect: () => newBoard({ sport, variant: "full" }),
-							},
-							{
-								label: `${SPORT_INFO[sport].name}, half ${SPORT_INFO[sport].surface}`,
-								onSelect: () => newBoard({ sport, variant: "half" }),
-							},
-						])}
-					/>
-				</div>
+				<button
+					type="button"
+					className="button button--primary"
+					onClick={() => setNewBoardOpen(true)}
+					disabled={library.status !== "ready"}
+				>
+					<Icon name="plus" size={16} />
+					New board
+				</button>
 				<button
 					type="button"
 					className="icon-button"
@@ -358,6 +339,45 @@ export default function Library() {
 							"inbox",
 						)}
 					</div>
+					{sportsInLibrary.length > 0 && (
+						<div className="nav-group">
+							<div className="nav-group__head">
+								<span>Sports</span>
+							</div>
+							{sportsInLibrary.map((sport) => (
+								<button
+									key={sport}
+									type="button"
+									className={`nav-item${
+										view.kind === "sport" && view.sport === sport
+											? " is-active"
+											: ""
+									}`}
+									aria-current={
+										view.kind === "sport" && view.sport === sport
+											? "page"
+											: undefined
+									}
+									onClick={() => setView({ kind: "sport", sport })}
+								>
+									<span
+										className="sport-swatch"
+										style={{ background: SURFACES[sport].floor }}
+										aria-hidden="true"
+									/>
+									<span className="nav-item__label">
+										{SPORT_INFO[sport].name}
+									</span>
+									<span className="nav-item__count">
+										{
+											library.boards.filter((b) => b.pitch.sport === sport)
+												.length
+										}
+									</span>
+								</button>
+							))}
+						</div>
+					)}
 					<div className="nav-group">
 						<div className="nav-group__head">
 							<span>Folders</span>
@@ -413,25 +433,6 @@ export default function Library() {
 							{shown.length} {shown.length === 1 ? "board" : "boards"}
 						</span>
 						<span className="topbar__spacer" />
-						{sportsInLibrary.length > 1 && (
-							<label className="sort">
-								<span className="muted">Sport</span>
-								<select
-									className="field__input"
-									value={sportFilter}
-									onChange={(e) =>
-										setSportFilter(e.target.value as Sport | "all")
-									}
-								>
-									<option value="all">All sports</option>
-									{sportsInLibrary.map((s) => (
-										<option key={s} value={s}>
-											{SPORT_INFO[s].name}
-										</option>
-									))}
-								</select>
-							</label>
-						)}
 						<label className="sort">
 							<span className="muted">Sort</span>
 							<select
@@ -493,7 +494,7 @@ export default function Library() {
 									<button
 										type="button"
 										className="button button--primary"
-										onClick={() => newBoard()}
+										onClick={() => setNewBoardOpen(true)}
 									>
 										<Icon name="plus" size={16} />
 										New board
@@ -610,6 +611,12 @@ export default function Library() {
 					onClose={() => setMoving(null)}
 				/>
 			)}
+			<NewBoardDialog
+				open={newBoardOpen}
+				initialSport={view.kind === "sport" ? view.sport : undefined}
+				onClose={() => setNewBoardOpen(false)}
+				onCreate={newBoard}
+			/>
 			<SettingsDialog
 				open={settingsOpen}
 				onClose={() => setSettingsOpen(false)}

@@ -12,12 +12,12 @@ This project adheres to semantic versioning (0.x during early development).
 
 - More sports: futsal, basketball, volleyball, handball and field hockey, as well as soccer, each with its own field or court drawn to scale with its markings (basketball keys, three-point lines and hoops; the volleyball net and attack lines; handball and futsal goal areas; the hockey shooting circles)
 - Full or half field for every sport; a half field is drawn with the goal (or hoop, or net) at the top, and goals placed on it face down the field
-- A default sport in Settings (New boards), so new boards start with it without asking; the arrow next to New board makes a board for any other sport
+- A New board window: pick the sport, then a full or half field, from pictures of each; it opens on your default sport (set in Settings, or tick "Use this for new boards from now on"), so Enter makes a board straight away
 - A Field section in the board's settings to change its sport or switch between a full and a half field (undoable)
 - The ball looks like the sport's ball (basketball, volleyball, hockey ball), and full-size goals are the sport's real goal size
 - The editor, library previews and PNG export show just the field and its margin, so half fields and narrow courts fill the screen instead of sitting in empty bands; markers and drawings stay on the field
 - Volleyball has 3 m behind the end lines (room to serve) and 1.5 m at the sides; futsal, basketball and handball have 1.5 m around the court
-- Library cards show each board's sport, and a Sport filter appears once the library has boards for more than one sport
+- The library sidebar lists your sports, with how many boards each has; click one to see just its boards. Cards show each board's sport and are all the same shape
 
 ### Changed
 

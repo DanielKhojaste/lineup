@@ -1255,24 +1255,6 @@ kbd {
 	font-weight: 700;
 }
 
-/* A main button with a menu of variations next to it (New board ▾). */
-.split-button {
-	display: inline-flex;
-	align-items: stretch;
-}
-
-.split-button__main {
-	border-top-right-radius: 0;
-	border-bottom-right-radius: 0;
-}
-
-.split-button__more {
-	padding: 0 8px;
-	border-top-left-radius: 0;
-	border-bottom-left-radius: 0;
-	border-left: 1px solid color-mix(in srgb, var(--on-accent) 25%, transparent);
-}
-
 .button--primary:hover:not(:disabled) {
 	background: var(--accent);
 	filter: brightness(1.08);
@@ -1611,7 +1593,10 @@ button.save-status--error:hover {
 
 .board-card__preview {
 	width: 100%;
+	/* Every card the same shape, whatever the field's shape. */
+	aspect-ratio: 3 / 2;
 	height: auto;
+	background: var(--sunken);
 	display: block;
 	border-radius: 6px;
 	margin-bottom: 6px;
@@ -1833,4 +1818,111 @@ button.save-status--error:hover {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 6px;
+}
+
+/* ------------------------------ New board ---------------------------------- */
+
+.dialog--wide {
+	width: min(860px, calc(100vw - 32px));
+}
+
+.new-board {
+	display: grid;
+	grid-template-columns: 220px 1fr;
+	gap: 18px;
+	padding: 4px 20px 0;
+}
+
+.new-board__sports {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.new-board__sport {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 6px 8px;
+	border-radius: var(--radius-small);
+	border: 1px solid transparent;
+	color: var(--text);
+	text-align: left;
+}
+
+.new-board__sport:hover {
+	background: var(--hover);
+}
+
+.new-board__sport.is-active {
+	background: var(--accent-soft);
+	border-color: var(--accent);
+}
+
+.new-board__thumb {
+	width: 54px;
+	height: 36px;
+	flex-shrink: 0;
+	border-radius: 4px;
+	pointer-events: none;
+}
+
+.new-board__fields {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	min-width: 0;
+}
+
+.new-board__variants {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 12px;
+}
+
+.new-board__variant {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 10px;
+	border-radius: var(--radius);
+	border: 1px solid var(--border);
+	color: var(--text);
+	text-align: center;
+}
+
+.new-board__variant:hover {
+	background: var(--hover);
+}
+
+.new-board__variant.is-active {
+	border-color: var(--accent);
+	box-shadow: inset 0 0 0 1px var(--accent);
+	background: var(--accent-soft);
+}
+
+.new-board__preview {
+	width: 100%;
+	aspect-ratio: 1 / 1;
+	height: auto;
+	pointer-events: none;
+}
+
+.new-board__actions {
+	grid-column: 1 / -1;
+	align-items: center;
+}
+
+@media (max-width: 640px) {
+	.new-board {
+		grid-template-columns: 1fr;
+	}
+}
+
+.sport-swatch {
+	width: 16px;
+	height: 11px;
+	flex-shrink: 0;
+	border-radius: 3px;
+	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
 }
