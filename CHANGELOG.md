@@ -8,6 +8,10 @@ This project adheres to semantic versioning (0.x during early development).
 
 ## [Unreleased]
 
+---
+
+## [0.6.1] - 2026-10-25
+
 ### Changed
 
 - The app no longer shows the browser's right-click menu (Back, Reload, Inspect…) except in text fields, which keep Cut, Copy and Paste
