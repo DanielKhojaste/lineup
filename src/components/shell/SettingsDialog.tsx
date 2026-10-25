@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { setPreferences, usePreferences } from "../../state/preferences";
 import { SHORTCUTS } from "../../state/useShortcuts";
 import { isHexColor, normalizeHex } from "../../theme/color";
 import {
@@ -9,6 +10,7 @@ import {
 } from "../../theme/themes";
 import { useTheme } from "../../theme/ThemeProvider";
 import { Icon } from "../Icon";
+import PitchPicker from "./PitchPicker";
 
 function ThemePreview({ settings }: { settings: ThemeSettings }) {
 	const t = themeTokens(settings);
@@ -85,6 +87,7 @@ export default function SettingsDialog({
 }) {
 	const ref = useRef<HTMLDialogElement>(null);
 	const { theme, setTheme } = useTheme();
+	const preferences = usePreferences();
 
 	useEffect(() => {
 		const dialog = ref.current;
@@ -120,6 +123,19 @@ export default function SettingsDialog({
 						<Icon name="close" size={18} />
 					</button>
 				</header>
+
+				<section className="dialog__section">
+					<h3>New boards</h3>
+					<PitchPicker
+						label="Default sport"
+						value={preferences.defaultPitch}
+						onChange={(defaultPitch) => setPreferences({ defaultPitch })}
+					/>
+					<p className="muted small">
+						New boards start with this sport. Pick another one from the arrow
+						next to New board, or change a board's sport in its settings.
+					</p>
+				</section>
 
 				<section className="dialog__section">
 					<h3>Appearance</h3>

@@ -37,6 +37,7 @@ export const ICONS = {
 		"M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z",
 	inbox: "M4 13l2-8h12l2 8M4 13v6h16v-6M4 13h5l1 2h4l1-2h5",
 	chevronLeft: "M15 5l-7 7 7 7",
+	chevronDown: "M6 9l6 6 6-6",
 	download: "M12 4v11M7 10l5 5 5-5M5 20h14",
 	close: "M6 6l12 12M18 6L6 18",
 	check: "M5 12l5 5L20 7",

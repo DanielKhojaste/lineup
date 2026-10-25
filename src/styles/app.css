@@ -667,6 +667,12 @@ h3 {
 	gap: 8px;
 }
 
+.pitch-picker {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
 .field__swatch--add {
 	display: grid;
 	place-items: center;
@@ -1247,6 +1253,24 @@ kbd {
 	border-color: var(--accent);
 	color: var(--on-accent);
 	font-weight: 700;
+}
+
+/* A main button with a menu of variations next to it (New board ▾). */
+.split-button {
+	display: inline-flex;
+	align-items: stretch;
+}
+
+.split-button__main {
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
+}
+
+.split-button__more {
+	padding: 0 8px;
+	border-top-left-radius: 0;
+	border-bottom-left-radius: 0;
+	border-left: 1px solid color-mix(in srgb, var(--on-accent) 25%, transparent);
 }
 
 .button--primary:hover:not(:disabled) {

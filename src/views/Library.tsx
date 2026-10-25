@@ -6,8 +6,10 @@ import SettingsDialog from "../components/shell/SettingsDialog";
 import { ConfirmDialog, Modal, PromptDialog } from "../components/ui/Dialog";
 import { Menu } from "../components/ui/Menu";
 import { boardToPng } from "../export/png";
-import { Board } from "../model/types";
+import { pitchLabel, Sport, SPORT_INFO, SPORTS } from "../model/sports";
+import { Board, PitchSettings } from "../model/types";
 import { allFolders, useLibrary } from "../state/LibraryContext";
+import { usePreferences } from "../state/preferences";
 import { exportBoardFile, exportPng, pickBoardFiles } from "../storage/files";
 import { relativeTime } from "../utils/time";
 
@@ -54,6 +56,7 @@ function BoardCard({
 	onDelete: () => void;
 }) {
 	const details = [
+		pitchLabel(board.pitch),
 		board.meta.folder,
 		board.notes.duration,
 		board.steps.length > 0 &&
@@ -149,6 +152,8 @@ export default function Library() {
 	const [view, setView] = useState<View>({ kind: "all" });
 	const [query, setQuery] = useState("");
 	const [sort, setSort] = useState<Sort>("updated");
+	const [sportFilter, setSportFilter] = useState<Sport | "all">("all");
+	const { defaultPitch } = usePreferences();
 	const [notice, setNotice] = useState<{
 		text: string;
 		tone: "info" | "error";
@@ -171,13 +176,22 @@ export default function Library() {
 				  ? !b.meta.folder
 				  : b.meta.folder === view.name,
 		);
-		const found = inView.filter((b) => matches(b, query.trim()));
+		const found = inView.filter(
+			(b) =>
+				matches(b, query.trim()) &&
+				(sportFilter === "all" || b.pitch.sport === sportFilter),
+		);
 		return sort === "title"
 			? [...found].sort((a, b) => a.meta.title.localeCompare(b.meta.title))
 			: [...found].sort((a, b) =>
 					b.meta.updatedAt.localeCompare(a.meta.updatedAt),
 			  );
-	}, [library.boards, view, query, sort]);
+	}, [library.boards, view, query, sort, sportFilter]);
+
+	// The filter only lists sports the library actually has boards for.
+	const sportsInLibrary = SPORTS.filter((s) =>
+		library.boards.some((b) => b.pitch.sport === s),
+	);
 
 	const run = async (task: () => Promise<unknown>, failure: string) => {
 		try {
@@ -192,9 +206,10 @@ export default function Library() {
 
 	const openBoard = (id: string) => navigate(`/board/${id}`);
 
-	const newBoard = () =>
+	/** A new board with the default sport, or the one picked from the menu. */
+	const newBoard = (pitch?: PitchSettings) =>
 		run(async () => {
-			const board = await library.createBoard(currentFolder);
+			const board = await library.createBoard(currentFolder, pitch);
 			openBoard(board.id);
 		}, "Couldn't create the board");
 
@@ -285,15 +300,35 @@ export default function Library() {
 				<button type="button" className="button" onClick={importBoards}>
 					Import
 				</button>
-				<button
-					type="button"
-					className="button button--primary"
-					onClick={newBoard}
-					disabled={library.status !== "ready"}
-				>
-					<Icon name="plus" size={16} />
-					New board
-				</button>
+				<div className="split-button">
+					<button
+						type="button"
+						className="button button--primary split-button__main"
+						onClick={() => newBoard()}
+						disabled={library.status !== "ready"}
+						title={`New ${pitchLabel(
+							defaultPitch,
+						).toLowerCase()} board (change the default in Settings)`}
+					>
+						<Icon name="plus" size={16} />
+						New board
+					</button>
+					<Menu
+						label="New board for another sport"
+						button={<Icon name="chevronDown" size={16} />}
+						buttonClassName="button button--primary split-button__more"
+						items={SPORTS.flatMap((sport) => [
+							{
+								label: `${SPORT_INFO[sport].name}`,
+								onSelect: () => newBoard({ sport, variant: "full" }),
+							},
+							{
+								label: `${SPORT_INFO[sport].name}, half ${SPORT_INFO[sport].surface}`,
+								onSelect: () => newBoard({ sport, variant: "half" }),
+							},
+						])}
+					/>
+				</div>
 				<button
 					type="button"
 					className="icon-button"
@@ -378,6 +413,25 @@ export default function Library() {
 							{shown.length} {shown.length === 1 ? "board" : "boards"}
 						</span>
 						<span className="topbar__spacer" />
+						{sportsInLibrary.length > 1 && (
+							<label className="sort">
+								<span className="muted">Sport</span>
+								<select
+									className="field__input"
+									value={sportFilter}
+									onChange={(e) =>
+										setSportFilter(e.target.value as Sport | "all")
+									}
+								>
+									<option value="all">All sports</option>
+									{sportsInLibrary.map((s) => (
+										<option key={s} value={s}>
+											{SPORT_INFO[s].name}
+										</option>
+									))}
+								</select>
+							</label>
+						)}
 						<label className="sort">
 							<span className="muted">Sort</span>
 							<select
@@ -439,7 +493,7 @@ export default function Library() {
 									<button
 										type="button"
 										className="button button--primary"
-										onClick={newBoard}
+										onClick={() => newBoard()}
 									>
 										<Icon name="plus" size={16} />
 										New board

@@ -10,8 +10,9 @@ import {
 } from "react";
 import { createBoard, newId } from "../model/board";
 import { parseBoard } from "../model/file";
-import { Board } from "../model/types";
+import { Board, PitchSettings } from "../model/types";
 import { getStore } from "../storage";
+import { getPreferences } from "./preferences";
 import { LibraryIndex, LibraryStore } from "../storage/types";
 
 export type LibraryStatus = "loading" | "ready" | "error";
@@ -25,7 +26,7 @@ interface LibraryContextValue {
 	boards: Board[];
 	folders: string[];
 	getBoard: (id: string) => Board | undefined;
-	createBoard: (folder?: string) => Promise<Board>;
+	createBoard: (folder?: string, pitch?: PitchSettings) => Promise<Board>;
 	saveBoard: (board: Board) => Promise<void>;
 	duplicateBoard: (id: string) => Promise<Board | undefined>;
 	deleteBoard: (id: string) => Promise<void>;
@@ -130,8 +131,12 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 			getBoard: (id) => boardsRef.current.find((b) => b.id === id),
 			saveBoard,
 
-			createBoard: async (folder = "") => {
-				const board = createBoard();
+			createBoard: async (folder = "", pitch) => {
+				// New boards use the default sport from Settings unless one is picked.
+				const board = createBoard(
+					"Untitled board",
+					pitch ?? getPreferences().defaultPitch,
+				);
 				board.meta.folder = folder;
 				await saveBoard(board);
 				return board;
