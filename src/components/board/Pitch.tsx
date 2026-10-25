@@ -4,12 +4,20 @@ import { fieldLayout, Sport, SPORT_INFO } from "../../model/sports";
 import { PitchSettings } from "../../model/types";
 
 /** Colours of each playing surface: inside the lines, around them, and the lines. */
+/**
+ * Colours of each playing surface: inside the lines, around them, and the
+ * lines. Muted versions of real surfaces, so markers stand out on them and the
+ * board sits quietly in the app: maple floors with a brick-red key, blue
+ * hockey turf with a green surround, blue indoor courts, and a sand-orange
+ * volleyball court with a blue free zone.
+ */
 const SURFACES: Record<
 	Sport,
 	{
 		floor: string;
 		outside: string;
 		line: string;
+		lineOpacity?: number;
 		stripes?: boolean;
 		key?: string;
 	}
@@ -20,21 +28,24 @@ const SURFACES: Record<
 		line: "#FFFFFF",
 		stripes: true,
 	},
-	hockey: { floor: "#2463A6", outside: "#2E7D4F", line: "#FFFFFF" },
-	futsal: { floor: "#2F6FAE", outside: "#C9783E", line: "#FFFFFF" },
+	hockey: { floor: "#2F5E8C", outside: "#3A6B4D", line: "#FFFFFF" },
+	futsal: { floor: "#3C6B93", outside: "#2E5273", line: "#FFFFFF" },
 	handball: {
-		floor: "#2F6FAE",
-		outside: "#C9783E",
+		floor: "#3B6890",
+		outside: "#8F6A52",
 		line: "#FFFFFF",
-		key: "#4B8FD0",
+		key: "#4C7DA6",
 	},
+	// Light maple with darker stained edges. Lines are dark, as on many maple
+	// courts, because white lines barely show on light wood.
 	basketball: {
-		floor: "#C8925C",
-		outside: "#A87542",
-		line: "#FFFFFF",
-		key: "#A85A3A",
+		floor: "#D8B88E",
+		outside: "#BC9468",
+		line: "#2A2119",
+		lineOpacity: 0.75,
+		key: "#C08A6C",
 	},
-	volleyball: { floor: "#DB7A3C", outside: "#2F6FAE", line: "#FFFFFF" },
+	volleyball: { floor: "#C98D63", outside: "#3F6A8E", line: "#FFFFFF" },
 };
 
 /** Line width on the board, whatever the sport's scale. */
@@ -382,7 +393,7 @@ function Pitch({ pitch }: { pitch: PitchSettings }) {
 						className="pitch__lines"
 						fill="none"
 						stroke={colors.line}
-						strokeOpacity={0.85}
+						strokeOpacity={colors.lineOpacity ?? 0.85}
 						strokeWidth={lw}
 					>
 						<rect x={0} y={0} width={L} height={W} />
