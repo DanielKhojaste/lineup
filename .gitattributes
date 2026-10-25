@@ -1,0 +1,4 @@
+# Cargo and the Tauri CLI write these with LF endings. Checking them out with
+# LF too stops them showing as changed on Windows after every build.
+src-tauri/Cargo.toml text eol=lf
+src-tauri/Cargo.lock text eol=lf
