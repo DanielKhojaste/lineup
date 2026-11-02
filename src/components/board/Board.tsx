@@ -1,4 +1,5 @@
 import {
+	MouseEvent as ReactMouseEvent,
 	PointerEvent as ReactPointerEvent,
 	useEffect,
 	useMemo,
@@ -42,7 +43,9 @@ import { useEditor } from "../../state/EditorContext";
 import { usePlayback } from "../../state/PlaybackContext";
 import AnimationBar from "./AnimationBar";
 import { PlaceTool, selectedDrawings } from "../../state/editor";
-import { clientToBoard, isOnBoard } from "./coords";
+import { boardToClient, clientToBoard, isOnBoard } from "./coords";
+import { isTextField, useContextMenu } from "../ui/ContextMenu";
+import { useBoardMenus } from "./useBoardMenus";
 import DrawingShape, { HandleId, SelectionOverlay } from "./Drawings";
 import FloatingActions from "./FloatingActions";
 import {
@@ -308,6 +311,60 @@ export default function Board() {
 		dispatch({ type: "select", ids: [id] });
 		setEditingText(id);
 	};
+
+	const menus = useBoardMenus({ editText: startEditingText });
+	const { openMenu } = useContextMenu();
+
+	/** Right-click: a menu for the marker or drawing under the pointer, or for the board. */
+	const onContextMenu = (e: ReactMouseEvent<SVGSVGElement>) => {
+		if (isTextField(e.target)) return; // the text editor gets Cut / Copy / Paste
+		e.preventDefault();
+		if (interaction.current) return;
+		if (inPlayback) playback.stop();
+		const point = toBoard(e);
+		if (!point) return;
+		blurActiveField();
+		const hitId =
+			(e.target as Element)
+				.closest<SVGGElement>("[data-item-id]")
+				?.dataset.itemId ?? null;
+		if (hitId) {
+			// Right-clicking something outside the selection selects just that.
+			const ids = selected.has(hitId) ? selection : [hitId];
+			if (!selected.has(hitId)) dispatch({ type: "select", ids });
+			openMenu(e, menus.itemMenu(ids));
+		} else {
+			dispatch({ type: "clearSelection" });
+			openMenu(e, menus.boardMenu(clampPoint(point)));
+		}
+	};
+
+	// The menu key and Shift+F10 open the same menus from the keyboard: for the
+	// selection, or for the middle of the field.
+	useEffect(() => {
+		const onKey = (e: KeyboardEvent) => {
+			const menuKey =
+				e.key === "ContextMenu" || (e.key === "F10" && e.shiftKey);
+			if (!menuKey || e.defaultPrevented || isTextField(e.target)) return;
+			if (document.querySelector("dialog[open], .context-menu")) return;
+			const svg = boardRef.current;
+			if (!svg) return;
+			e.preventDefault();
+			const targets = state.selection;
+			const first = nodeById.get(targets[0]);
+			const anchor: Point = first
+				? [first.x, first.y]
+				: [(bounds.minX + bounds.maxX) / 2, (bounds.minY + bounds.maxY) / 2];
+			const at = boardToClient(svg, anchor[0], anchor[1]);
+			if (!at) return;
+			openMenu(
+				{ x: at.x, y: at.y },
+				targets.length ? menus.itemMenu(targets) : menus.boardMenu(anchor),
+			);
+		};
+		window.addEventListener("keydown", onKey);
+		return () => window.removeEventListener("keydown", onKey);
+	});
 
 	const erase = (clientX: number, clientY: number, erased: Set<string>) => {
 		const id = itemAt(clientX, clientY);
@@ -865,6 +922,7 @@ export default function Board() {
 				onPointerUp={(e) => finish(e, false)}
 				onPointerCancel={(e) => finish(e, true)}
 				onDoubleClick={onDoubleClick}
+				onContextMenu={onContextMenu}
 			>
 				<Pitch pitch={board.pitch} />
 				<g className="board__drawings">
@@ -956,6 +1014,7 @@ export default function Board() {
 					onDone={finishTextEdit}
 				/>
 			)}
+			{menus.clearDialog}
 			<AnimationBar />
 			<FloatingActions
 				hidden={

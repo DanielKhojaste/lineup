@@ -31,3 +31,13 @@ export function isOnBoard(
 		point.y <= bounds.maxY
 	);
 }
+
+/** The screen position of a point in normalised board coordinates. */
+export function boardToClient(svg: SVGSVGElement, x: number, y: number) {
+	const matrix = svg.getScreenCTM();
+	if (!matrix) return null;
+	const point = new DOMPoint(x * BOARD_WIDTH, y * BOARD_HEIGHT).matrixTransform(
+		matrix,
+	);
+	return { x: point.x, y: point.y };
+}

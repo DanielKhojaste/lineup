@@ -5,6 +5,7 @@ import { Icon } from "../components/Icon";
 import SettingsDialog from "../components/shell/SettingsDialog";
 import { ConfirmDialog, Modal, PromptDialog } from "../components/ui/Dialog";
 import { Menu } from "../components/ui/Menu";
+import { ContextMenuEntry, useContextMenu } from "../components/ui/ContextMenu";
 import { boardToPng } from "../export/png";
 import { SURFACES } from "../components/board/Pitch";
 import NewBoardDialog from "../components/library/NewBoardDialog";
@@ -48,8 +49,11 @@ function BoardCard({
 	onExport,
 	onExportPng,
 	onDelete,
+	contextMenu,
 }: {
 	board: Board;
+	/** Entries for the card's right-click menu. */
+	contextMenu: () => ContextMenuEntry[];
 	onOpen: () => void;
 	onDuplicate: () => void;
 	onMove: () => void;
@@ -65,8 +69,12 @@ function BoardCard({
 			`${board.steps.length} step${board.steps.length > 1 ? "s" : ""}`,
 		`Edited ${relativeTime(board.meta.updatedAt)}`,
 	].filter(Boolean);
+	const { openMenu } = useContextMenu();
 	return (
-		<article className="board-card">
+		<article
+			className="board-card"
+			onContextMenu={(e) => openMenu(e, contextMenu())}
+		>
 			<button
 				type="button"
 				className="board-card__open"
@@ -151,6 +159,7 @@ function MoveDialog({
 export default function Library() {
 	const library = useLibrary();
 	const navigate = useNavigate();
+	const { openMenu } = useContextMenu();
 	const [view, setView] = useState<View>({ kind: "all" });
 	const [query, setQuery] = useState("");
 	const [sort, setSort] = useState<Sort>("updated");
@@ -395,7 +404,32 @@ export default function Library() {
 							<p className="muted small nav-group__empty">No folders yet.</p>
 						)}
 						{folders.map((name) => (
-							<div key={name} className="nav-row">
+							<div
+								key={name}
+								className="nav-row"
+								onContextMenu={(e) =>
+									openMenu(e, [
+										{
+											label: "Open",
+											onSelect: () => setView({ kind: "folder", name }),
+										},
+										{
+											label: "New board here…",
+											onSelect: () => {
+												setView({ kind: "folder", name });
+												setNewBoardOpen(true);
+											},
+										},
+										"separator",
+										{ label: "Rename…", onSelect: () => setRenaming(name) },
+										{
+											label: "Delete folder…",
+											danger: true,
+											onSelect: () => setDeletingFolder(name),
+										},
+									])
+								}
+							>
 								{navItem(
 									name,
 									counts(name),
@@ -426,7 +460,18 @@ export default function Library() {
 					</div>
 				</nav>
 
-				<main className="library__main">
+				<main
+					className="library__main"
+					onContextMenu={(e) => {
+						if (e.defaultPrevented) return;
+						openMenu(e, [
+							{ label: "New board…", onSelect: () => setNewBoardOpen(true) },
+							{ label: "Import boards…", onSelect: importBoards },
+							"separator",
+							{ label: "New folder…", onSelect: () => setNewFolderOpen(true) },
+						]);
+					}}
+				>
 					<div className="library__head">
 						<h1>{heading}</h1>
 						<span className="muted">
@@ -527,6 +572,66 @@ export default function Library() {
 									)
 								}
 								onDelete={() => setDeletingBoard(board)}
+								contextMenu={() => [
+									{ label: "Open", onSelect: () => openBoard(board.id) },
+									{
+										label: "Duplicate",
+										onSelect: () =>
+											run(
+												() => library.duplicateBoard(board.id),
+												"Couldn't duplicate the board",
+											),
+									},
+									{
+										label: "Move to folder",
+										submenu: [
+											{
+												label: "No folder",
+												checked: !board.meta.folder,
+												onSelect: () =>
+													run(
+														() => library.moveToFolder(board.id, ""),
+														"Couldn't move the board",
+													),
+											},
+											...(folders.length ? ["separator" as const] : []),
+											...folders.map((f) => ({
+												label: f,
+												checked: board.meta.folder === f,
+												onSelect: () =>
+													run(
+														() => library.moveToFolder(board.id, f),
+														"Couldn't move the board",
+													),
+											})),
+										],
+									},
+									"separator",
+									{
+										label: "Export",
+										submenu: [
+											{
+												label: ".lineup file",
+												onSelect: () =>
+													run(() => exportBoardFile(board), "Export failed"),
+											},
+											{
+												label: "PNG image",
+												onSelect: () =>
+													run(
+														async () => exportPng(board, await boardToPng(board)),
+														"Export failed",
+													),
+											},
+										],
+									},
+									"separator",
+									{
+										label: "Delete…",
+										danger: true,
+										onSelect: () => setDeletingBoard(board),
+									},
+								]}
 							/>
 						))}
 					</div>

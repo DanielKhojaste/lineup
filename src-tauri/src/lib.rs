@@ -1,8 +1,8 @@
 // Browser behaviour that doesn't belong in a desktop app (find, print, reload,
 // zoom shortcuts...) is turned off by tauri-plugin-prevent-default. Right-click
-// is left to the frontend (src/main.tsx): it keeps the native copy/paste menu
-// in text fields, blocks the browser menu everywhere else, and is where
-// Lineup's own right-click menus live.
+// is left to the frontend (src/components/ui/ContextMenu.tsx): it never shows
+// the browser's menu, and draws Lineup's own menus instead, including Cut /
+// Copy / Paste in text fields (through the clipboard plugin).
 
 use tauri_plugin_prevent_default::Flags;
 
@@ -12,6 +12,7 @@ pub fn run() {
 		.plugin(tauri_plugin_opener::init())
 		.plugin(tauri_plugin_fs::init())
 		.plugin(tauri_plugin_dialog::init())
+		.plugin(tauri_plugin_clipboard_manager::init())
 		// Reopen the window at the size and place it was closed at, maximised or
 		// full screen if it was.
 		.plugin(tauri_plugin_window_state::Builder::default().build())
@@ -54,9 +55,8 @@ fn prevent_default() -> tauri::plugin::TauriPlugin<tauri::Wry> {
 		builder = builder.platform(
 			PlatformOptions::new()
 				.browser_accelerator_keys(false)
-				// Kept on so text fields have Cut / Copy / Paste; the frontend blocks the
-				// menu everywhere else.
-				.default_context_menus(true)
+				// Lineup draws its own right-click menus, text fields included.
+				.default_context_menus(false)
 				.default_script_dialogs(false)
 				.general_autofill(false)
 				.password_autosave(false),
