@@ -15,6 +15,7 @@ This project adheres to semantic versioning (0.x during early development).
 - Add drills from the library panel beside the plan (search, filter by type, or just the session's sport); each drill shows its picture and notes, and opens on a click (the back button returns to the session). Reorder blocks by dragging their handle or with the arrow keys, and right-click a block for more
 - **Print or save a session as PDF** (Ctrl+P): a session sheet with a header table and one row per block with its time, what happens, coaching points and the drill's diagram
 - Sessions in the library: their own "Sessions" view, cards with the first drills' pictures and a strip showing how the time is split, and they show up in folders and sports next to boards
+- A "Desktop builds" workflow on GitHub that builds the Windows, macOS and Linux installers on demand (Actions tab, "Run workflow") and for every version tag, so the app can be tried on a Mac or Linux without building it there
 - **Board types:** Drill, Play, Line-up, Set piece or Other, set in the Notes tab. The library filters boards by type; boards from earlier versions become Plays if they're animated and Drills if not
 
 - More sports: futsal, basketball, volleyball, handball and field hockey, as well as soccer, each with its own field or court drawn to scale with its markings (basketball keys, three-point lines and hoops; the volleyball net and attack lines; handball and futsal goal areas; the hockey shooting circles)
