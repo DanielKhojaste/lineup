@@ -4,6 +4,7 @@ import { BOARD_HEIGHT, BOARD_WIDTH } from "../model/pitch";
 import { useEditor } from "./EditorContext";
 import { usePlayback } from "./PlaybackContext";
 import { Tool } from "./editor";
+import { copySelection, cutSelection, paste } from "./itemClipboard";
 
 const TOOL_KEYS: Record<string, Tool> = {
 	v: "select",
@@ -49,7 +50,9 @@ export const SHORTCUTS: { keys: string; action: string }[] = [
 		keys: "Shift+R, Alt+Shift+R",
 		action: "Turn a goal or mannequin 15° right / left",
 	},
+	{ keys: "Ctrl+C, Ctrl+X, Ctrl+V", action: "Copy, cut, paste (also between boards)" },
 	{ keys: "Ctrl+D", action: "Duplicate" },
+	{ keys: "Right-click, Menu key", action: "Actions for what's under the pointer" },
 	{ keys: "Delete", action: "Delete" },
 	{ keys: "] / [", action: "Bring to front / send to back" },
 	{ keys: "Ctrl+Z", action: "Undo" },
@@ -95,6 +98,18 @@ export function useShortcuts(enabled: boolean) {
 			if (mod && key === "a") {
 				handled();
 				dispatch({ type: "selectAll" });
+				return;
+			}
+			if (mod && (key === "c" || key === "x")) {
+				if (!ids.length) return;
+				handled();
+				if (key === "c") copySelection(state);
+				else cutSelection(state, dispatch);
+				return;
+			}
+			if (mod && key === "v") {
+				handled();
+				paste(dispatch);
 				return;
 			}
 			if (mod && key === "d") {
@@ -178,13 +193,5 @@ export function useShortcuts(enabled: boolean) {
 
 		window.addEventListener("keydown", onKeyDown);
 		return () => window.removeEventListener("keydown", onKeyDown);
-	}, [
-		enabled,
-		state.selection,
-		state.tool,
-		state.step,
-		state.board.steps.length,
-		dispatch,
-		playback,
-	]);
+	}, [enabled, state, dispatch, playback]);
 }

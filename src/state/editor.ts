@@ -128,7 +128,11 @@ export type EditorAction =
 	| { type: "updateDrawings"; ids: string[]; patch: DrawingPatch }
 	| { type: "deleteItems"; ids: string[] }
 	| { type: "duplicateItems"; ids: string[] }
+	/** Add copied items (from the clipboard), next to where they were or centred on `at`. */
+	| { type: "pasteItems"; nodes: BoardNode[]; drawings: Drawing[]; at?: Point }
 	| { type: "reorderItems"; ids: string[]; to: "front" | "back" }
+	/** Remove every marker, drawing and animation step. */
+	| { type: "clearBoard" }
 	| { type: "updateMeta"; patch: Partial<BoardMeta> }
 	| { type: "updateNotes"; patch: Partial<DrillNotes> }
 	| { type: "updateTeam"; team: TeamId; patch: Partial<TeamStyle> }
@@ -405,6 +409,73 @@ function reorder<T extends { id: string }>(
 	return next.every((item, i) => item === list[i]) ? list : next;
 }
 
+/**
+ * Add copies of the given markers and drawings (with new ids) and select them.
+ * They land next to the originals, or centred on `at` when it's given, and
+ * always on the field. Copied players get shirt numbers that are still free.
+ */
+function insertCopies(
+	state: EditorState,
+	nodes: BoardNode[],
+	drawings: Drawing[],
+	at: Point | null,
+): EditorState {
+	const { board } = state;
+	const nodeCopies = nodes.map((n): BoardNode => ({ ...n, id: newId() }));
+	const drawingCopies = drawings.map((d): Drawing => ({ ...d, id: newId() }));
+	if (nodeCopies.length === 0 && drawingCopies.length === 0) return state;
+
+	// Place the group next to the originals (or centred on `at`), moved as a
+	// whole to stay on this field; anything still off it (copied from a bigger
+	// field) is brought onto the edge.
+	const points = [...nodeCopies, ...drawingCopies].flatMap(itemPoints);
+	const minX = Math.min(...points.map((p) => p[0]));
+	const maxX = Math.max(...points.map((p) => p[0]));
+	const minY = Math.min(...points.map((p) => p[1]));
+	const maxY = Math.max(...points.map((p) => p[1]));
+	const b = fieldBounds(board.pitch);
+	const wantX = at ? at[0] - (maxX - minX) / 2 : minX + DUPLICATE_OFFSET.x;
+	const wantY = at ? at[1] - (maxY - minY) / 2 : minY + DUPLICATE_OFFSET.y;
+	const fit = (want: number, size: number, lo: number, hi: number) =>
+		size >= hi - lo ? lo : Math.min(hi - size, Math.max(lo, want));
+	const dx = fit(wantX, maxX - minX, b.minX, b.maxX) - minX;
+	const dy = fit(wantY, maxY - minY, b.minY, b.maxY) - minY;
+	const shifted = {
+		nodes: nodeCopies.map((n) => ({
+			...n,
+			...clampToBounds(n.x + dx, n.y + dy, b),
+		})),
+		drawings: drawingCopies.map((d) => offsetDrawing(d, dx, dy)),
+	};
+
+	const all = [...board.nodes];
+	const newNodes = shifted.nodes.map((copy) => {
+		const taken =
+			copy.kind === "player" &&
+			copy.number !== undefined &&
+			all.some(
+				(n) =>
+					n.kind === "player" && n.team === copy.team && n.number === copy.number,
+			);
+		const numbered =
+			copy.kind === "player" && taken
+				? { ...copy, number: nextShirtNumber(all, copy.team) }
+				: copy;
+		all.push(numbered);
+		return numbered;
+	});
+
+	const next = commit(state, {
+		...board,
+		nodes: [...board.nodes, ...newNodes],
+		drawings: [...board.drawings, ...shifted.drawings],
+	});
+	return {
+		...next,
+		selection: [...newNodes, ...shifted.drawings].map((c) => c.id),
+	};
+}
+
 function reduce(state: EditorState, action: EditorAction): EditorState {
 	const { board } = state;
 
@@ -594,41 +665,22 @@ function reduce(state: EditorState, action: EditorAction): EditorState {
 
 		case "duplicateItems": {
 			const targets = new Set(action.ids);
-			const nodeCopies = board.nodes
-				.filter((n) => targets.has(n.id))
-				.map((n): BoardNode => ({ ...n, id: newId() }));
-			const drawingCopies = board.drawings
-				.filter((d) => targets.has(d.id))
-				.map((d): Drawing => ({ ...d, id: newId() }));
-			if (nodeCopies.length === 0 && drawingCopies.length === 0) return state;
+			return insertCopies(
+				state,
+				board.nodes.filter((n) => targets.has(n.id)),
+				board.drawings.filter((d) => targets.has(d.id)),
+				null,
+			);
+		}
 
-			const copies: Board = {
-				...board,
-				nodes: nodeCopies,
-				drawings: drawingCopies,
-			};
-			const copyIds = [...nodeCopies, ...drawingCopies].map((c) => c.id);
-			const shifted =
-				offsetItems(copies, copyIds, DUPLICATE_OFFSET.x, DUPLICATE_OFFSET.y) ??
-				copies;
+		case "pasteItems":
+			return insertCopies(state, action.nodes, action.drawings, action.at ?? null);
 
-			// Give duplicated players fresh shirt numbers so two markers never share one.
-			const all = [...board.nodes];
-			const newNodes = shifted.nodes.map((copy) => {
-				const numbered =
-					copy.kind === "player" && copy.number !== undefined
-						? { ...copy, number: nextShirtNumber(all, copy.team) }
-						: copy;
-				all.push(numbered);
-				return numbered;
-			});
-
-			const next = commit(state, {
-				...board,
-				nodes: [...board.nodes, ...newNodes],
-				drawings: [...board.drawings, ...shifted.drawings],
-			});
-			return { ...next, selection: copyIds };
+		case "clearBoard": {
+			if (!board.nodes.length && !board.drawings.length && !board.steps.length)
+				return state;
+			const next = commit(state, { ...board, nodes: [], drawings: [], steps: [] });
+			return { ...next, selection: [], step: 0 };
 		}
 
 		case "reorderItems": {
