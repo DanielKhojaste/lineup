@@ -1368,7 +1368,7 @@ export default function Library() {
 			<ConfirmDialog
 				open={deletingSession !== null}
 				title="Delete session"
-				message={`Delete the session “${deletingSession ? sessionTitle(deletingSession) : ""}”? Its drills stay in your library. This can't be undone.`}
+				message={`Delete the session “${deletingSession ? sessionTitle(deletingSession) : ""}”? Its drills stay in your library. It's also taken out of plans and off the calendar dates it hasn't run on yet. This can't be undone.`}
 				confirmLabel="Delete"
 				danger
 				onConfirm={() =>

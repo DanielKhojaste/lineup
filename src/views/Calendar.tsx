@@ -1,0 +1,543 @@
+import { PointerEvent as ReactPointerEvent, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Icon } from "../components/Icon";
+import PlanToCalendarDialog from "../components/plan/PlanToCalendarDialog";
+import { ContextMenuEntry, useContextMenu } from "../components/ui/ContextMenu";
+import { ConfirmDialog, Modal } from "../components/ui/Dialog";
+import {
+	addDays,
+	CalendarEntry,
+	createEntry,
+	describeDay,
+	EntryStatus,
+	monthGrid,
+	parseISODate,
+	sortEntries,
+	toISODate,
+	WEEKDAYS,
+} from "../model/calendar";
+import { Plan } from "../model/plan";
+import { formatMinutes, Session, totalMinutes } from "../model/session";
+import { useLibrary } from "../state/LibraryContext";
+
+/** Each team gets its own colour, picked from its name. */
+const TEAM_COLORS = ["#2F80ED", "#E2552B", "#27AE60", "#9B51E0", "#F2994A", "#EB5757", "#2BB5A8", "#C2A100"];
+function teamColor(team: string): string {
+	if (!team) return "var(--accent)";
+	let h = 0;
+	for (const ch of team) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+	return TEAM_COLORS[h % TEAM_COLORS.length];
+}
+
+const STATUS_LABEL: Record<EntryStatus, string> = {
+	planned: "Planned",
+	done: "Done",
+	cancelled: "Cancelled",
+};
+
+/** Add a session to a day (or edit an entry already on the calendar). */
+function EntryDialog({
+	entry,
+	sessions,
+	onSave,
+	onRemove,
+	onOpenSession,
+	onClose,
+}: {
+	/** A new entry (not on the calendar yet) or an existing one. */
+	entry: CalendarEntry & { isNew?: boolean };
+	sessions: Session[];
+	onSave: (entry: CalendarEntry) => void;
+	onRemove: () => void;
+	onOpenSession: (id: string) => void;
+	onClose: () => void;
+}) {
+	const [draft, setDraft] = useState(entry);
+	const set = (patch: Partial<CalendarEntry>) => setDraft((d) => ({ ...d, ...patch }));
+	const session = sessions.find((s) => s.id === draft.sessionId);
+	const sorted = [...sessions].sort((a, b) => a.meta.title.localeCompare(b.meta.title));
+	const date = parseISODate(draft.date);
+
+	return (
+		<Modal
+			open
+			title={entry.isNew ? "Add a session" : session?.meta.title ?? "Session"}
+			onClose={onClose}
+		>
+			<form
+				className="dialog__section"
+				onSubmit={(e) => {
+					e.preventDefault();
+					if (!draft.sessionId) return;
+					const { isNew: _, ...clean } = draft;
+					onSave(clean);
+					onClose();
+				}}
+			>
+				<label className="field">
+					<span className="field__label">Session</span>
+					<select
+						className="field__input"
+						value={draft.sessionId}
+						required
+						data-autofocus={entry.isNew ? "" : undefined}
+						onChange={(e) => {
+							const s = sessions.find((x) => x.id === e.target.value);
+							set({
+								sessionId: e.target.value,
+								team: draft.team || s?.header.team || "",
+								time: draft.time ?? null,
+							});
+						}}
+					>
+						<option value="" disabled>
+							Pick a session…
+						</option>
+						{sorted.map((s) => (
+							<option key={s.id} value={s.id}>
+								{s.meta.title}
+								{totalMinutes(s) ? ` (${formatMinutes(totalMinutes(s))})` : ""}
+							</option>
+						))}
+						{!session && draft.sessionId && (
+							<option value={draft.sessionId}>Deleted session</option>
+						)}
+					</select>
+				</label>
+				<div className="field-grid">
+					<label className="field">
+						<span className="field__label">Date</span>
+						<input
+							className="field__input"
+							type="date"
+							required
+							value={draft.date}
+							onChange={(e) => e.target.value && set({ date: e.target.value })}
+						/>
+					</label>
+					<label className="field">
+						<span className="field__label">
+							Time <span className="muted">(optional)</span>
+						</span>
+						<input
+							className="field__input"
+							type="time"
+							value={draft.time ?? ""}
+							onChange={(e) => set({ time: e.target.value || null })}
+						/>
+					</label>
+				</div>
+				<label className="field">
+					<span className="field__label">Team</span>
+					<input
+						className="field__input"
+						value={draft.team}
+						maxLength={120}
+						placeholder="U12 Girls"
+						onChange={(e) => set({ team: e.target.value })}
+					/>
+				</label>
+				{!entry.isNew && (
+					<>
+						<div className="field">
+							<span className="field__label">Status</span>
+							<div className="segmented" role="radiogroup" aria-label="Status">
+								{(["planned", "done", "cancelled"] as const).map((s) => (
+									<button
+										key={s}
+										type="button"
+										role="radio"
+										aria-checked={draft.status === s}
+										className={`segmented__item${draft.status === s ? " is-active" : ""}`}
+										onClick={() => set({ status: s })}
+									>
+										{STATUS_LABEL[s]}
+									</button>
+								))}
+							</div>
+						</div>
+						<label className="field">
+							<span className="field__label">
+								{draft.status === "done" ? "How did it go?" : "Notes"}
+							</span>
+							<textarea
+								className="field__input field__input--area"
+								rows={3}
+								maxLength={4000}
+								placeholder={
+									draft.status === "done"
+										? "Who was there, what worked, what to change next time…"
+										: "Anything to remember for this date"
+								}
+								value={draft.log}
+								onChange={(e) => set({ log: e.target.value })}
+							/>
+						</label>
+					</>
+				)}
+				{date && (
+					<p className="muted small">
+						{date.toLocaleDateString(undefined, {
+							weekday: "long",
+							day: "numeric",
+							month: "long",
+						})}{" "}
+						({describeDay(draft.date)})
+					</p>
+				)}
+				<div className="dialog__actions">
+					{!entry.isNew && (
+						<>
+							<button type="button" className="button button--danger-text" onClick={onRemove}>
+								Remove
+							</button>
+							{session && (
+								<button
+									type="button"
+									className="button"
+									onClick={() => onOpenSession(session.id)}
+								>
+									Open session
+								</button>
+							)}
+							<span className="topbar__spacer" />
+						</>
+					)}
+					<button type="button" className="button" onClick={onClose}>
+						Cancel
+					</button>
+					<button type="submit" className="button button--primary" disabled={!draft.sessionId}>
+						{entry.isNew ? "Add" : "Save"}
+					</button>
+				</div>
+			</form>
+		</Modal>
+	);
+}
+
+/** Pick a plan to lay out on the calendar. */
+function PickPlanDialog({
+	plans,
+	onPick,
+	onClose,
+}: {
+	plans: Plan[];
+	onPick: (plan: Plan) => void;
+	onClose: () => void;
+}) {
+	return (
+		<Modal open title="Put a plan on the calendar" onClose={onClose}>
+			<div className="dialog__section">
+				{plans.length === 0 ? (
+					<p className="muted">No plans yet. Make one in the library under Plans.</p>
+				) : (
+					<ul className="pick-list">
+						{plans.map((p) => (
+							<li key={p.id}>
+								<button type="button" className="pick-list__item" onClick={() => onPick(p)}>
+									<strong>{p.meta.title}</strong>
+									<span className="muted small">
+										{[p.team, `${p.topics.length} topics`, `${p.topics.reduce((n, t) => n + t.sessionIds.length, 0)} sessions`]
+											.filter(Boolean)
+											.join(" · ")}
+									</span>
+								</button>
+							</li>
+						))}
+					</ul>
+				)}
+			</div>
+		</Modal>
+	);
+}
+
+export default function Calendar() {
+	const library = useLibrary();
+	const navigate = useNavigate();
+	const { openMenu } = useContextMenu();
+	const jumpTo = (useLocation().state as { date?: string } | null)?.date;
+	const today = toISODate(new Date());
+	const [month, setMonth] = useState(() => {
+		const d = (jumpTo && parseISODate(jumpTo)) || new Date();
+		return { year: d.getFullYear(), month: d.getMonth() };
+	});
+	const [team, setTeam] = useState<string>("all");
+	const [editing, setEditing] = useState<(CalendarEntry & { isNew?: boolean }) | null>(null);
+	const [removing, setRemoving] = useState<CalendarEntry | null>(null);
+	const [pickPlan, setPickPlan] = useState(false);
+	const [layingOut, setLayingOut] = useState<Plan | null>(null);
+	const [dropDate, setDropDate] = useState<string | null>(null);
+
+	const days = monthGrid(month.year, month.month);
+	const teams = useMemo(
+		() => [...new Set(library.calendar.map((e) => e.team).filter(Boolean))].sort(),
+		[library.calendar],
+	);
+	const entries = library.calendar.filter((e) => team === "all" || e.team === team);
+	const byDay = useMemo(() => {
+		const map = new Map<string, CalendarEntry[]>();
+		for (const e of entries) map.set(e.date, [...(map.get(e.date) ?? []), e]);
+		return map;
+	}, [entries]);
+	const upcoming = sortEntries(entries.filter((e) => e.date >= today && e.status === "planned")).slice(0, 6);
+	const recent = sortEntries(entries.filter((e) => e.status === "done")).reverse().slice(0, 6);
+	const title = new Date(month.year, month.month, 1).toLocaleDateString(undefined, {
+		month: "long",
+		year: "numeric",
+	});
+	const shift = (by: number) =>
+		setMonth(({ year, month: m }) => {
+			const d = new Date(year, m + by, 1);
+			return { year: d.getFullYear(), month: d.getMonth() };
+		});
+
+	const openSession = (id: string) => navigate(`/session/${id}`, { state: { from: "/calendar" } });
+	const sessionTitle = (id: string) => library.getSession(id)?.meta.title ?? "Deleted session";
+	const newEntry = (date: string) =>
+		setEditing({ ...createEntry("", date, { team: team === "all" ? "" : team }), isNew: true });
+
+	/** Drag an entry onto another day to move it. */
+	const startDrag = (e: ReactPointerEvent, entry: CalendarEntry) => {
+		if (e.button !== 0) return;
+		const start = { x: e.clientX, y: e.clientY };
+		let dragging = false;
+		const dayAt = (ev: PointerEvent) =>
+			document
+				.elementFromPoint(ev.clientX, ev.clientY)
+				?.closest<HTMLElement>("[data-date]")?.dataset.date ?? null;
+		const move = (ev: PointerEvent) => {
+			if (!dragging && Math.hypot(ev.clientX - start.x, ev.clientY - start.y) < 5) return;
+			dragging = true;
+			setDropDate(dayAt(ev));
+		};
+		const up = (ev: PointerEvent) => {
+			window.removeEventListener("pointermove", move);
+			window.removeEventListener("pointerup", up);
+			setDropDate(null);
+			if (!dragging) {
+				setEditing(entry);
+				return;
+			}
+			const date = dayAt(ev);
+			if (date && date !== entry.date) void library.updateEntry(entry.id, { date });
+		};
+		window.addEventListener("pointermove", move);
+		window.addEventListener("pointerup", up);
+	};
+
+	const entryMenu = (entry: CalendarEntry): ContextMenuEntry[] => [
+		{ label: "Edit…", onSelect: () => setEditing(entry) },
+		{ label: "Open session", disabled: !library.getSession(entry.sessionId), onSelect: () => openSession(entry.sessionId) },
+		"separator",
+		...(["planned", "done", "cancelled"] as const).map((s) => ({
+			label: s === "done" ? "Mark as done" : s === "cancelled" ? "Mark as cancelled" : "Mark as planned",
+			checked: entry.status === s,
+			onSelect: () => library.updateEntry(entry.id, { status: s }),
+		})),
+		"separator",
+		{
+			label: "Copy to next week",
+			onSelect: () =>
+				library.addEntries([
+					{
+						...entry,
+						id: createEntry("", "").id,
+						date: toISODate(addDays(parseISODate(entry.date)!, 7)),
+						status: "planned",
+						log: "",
+					},
+				]),
+		},
+		"separator",
+		{ label: "Remove from calendar", danger: true, onSelect: () => setRemoving(entry) },
+	];
+
+	const listItem = (e: CalendarEntry) => (
+		<li key={e.id}>
+			<button type="button" className="agenda__item" onClick={() => setEditing(e)}>
+				<span className="agenda__dot" style={{ background: teamColor(e.team) }} />
+				<span className="agenda__text">
+					<span className="agenda__title">{sessionTitle(e.sessionId)}</span>
+					<span className="muted small">
+						{[describeDay(e.date), e.time, e.team].filter(Boolean).join(" · ")}
+					</span>
+				</span>
+			</button>
+		</li>
+	);
+
+	return (
+		<div className="calendar-view">
+			<header className="topbar">
+				<button type="button" className="back-button" onClick={() => navigate("/")}>
+					<Icon name="chevronLeft" size={16} />
+					Library
+				</button>
+				<span className="topbar__divider" aria-hidden="true" />
+				<h1 className="calendar-view__title">Calendar</h1>
+				<span className="topbar__spacer" />
+				{teams.length > 0 && (
+					<label className="sort">
+						<span className="muted">Team</span>
+						<select className="field__input" value={team} onChange={(e) => setTeam(e.target.value)}>
+							<option value="all">All teams</option>
+							{teams.map((t) => (
+								<option key={t} value={t}>
+									{t}
+								</option>
+							))}
+						</select>
+					</label>
+				)}
+				<button type="button" className="button" onClick={() => setPickPlan(true)}>
+					<Icon name="plan" size={16} />
+					Put a plan on it
+				</button>
+				<button type="button" className="button button--primary" onClick={() => newEntry(today)}>
+					<Icon name="plus" size={16} />
+					Add session
+				</button>
+			</header>
+
+			<div className="calendar-view__body">
+				<main className="calendar">
+					<div className="calendar__head">
+						<button type="button" className="icon-button" aria-label="Previous month" onClick={() => shift(-1)}>
+							<Icon name="chevronLeft" size={18} />
+						</button>
+						<h2>{title}</h2>
+						<button type="button" className="icon-button" aria-label="Next month" onClick={() => shift(1)}>
+							<Icon name="chevronRight" size={18} />
+						</button>
+						<button
+							type="button"
+							className="button button--small"
+							onClick={() => {
+								const d = new Date();
+								setMonth({ year: d.getFullYear(), month: d.getMonth() });
+							}}
+						>
+							Today
+						</button>
+					</div>
+					<div className="calendar__grid" role="grid" aria-label={title}>
+						{WEEKDAYS.map((d) => (
+							<div key={d} className="calendar__weekday" role="columnheader">
+								{d}
+							</div>
+						))}
+						{days.map((day) => {
+							const iso = toISODate(day);
+							const list = byDay.get(iso) ?? [];
+							const outside = day.getMonth() !== month.month;
+							return (
+								<div
+									key={iso}
+									role="gridcell"
+									data-date={iso}
+									className={`calendar__day${outside ? " is-outside" : ""}${iso === today ? " is-today" : ""}${dropDate === iso ? " is-drop" : ""}`}
+									onClick={(e) => {
+										if (e.target === e.currentTarget || (e.target as Element).classList.contains("calendar__date"))
+											newEntry(iso);
+									}}
+									onContextMenu={(e) => {
+										if ((e.target as Element).closest(".calendar__entry")) return;
+										openMenu(e, [
+											{ label: "Add a session here…", onSelect: () => newEntry(iso) },
+											{ label: "Put a plan on the calendar…", onSelect: () => setPickPlan(true) },
+										]);
+									}}
+								>
+									<span className="calendar__date">{day.getDate()}</span>
+									{list.map((e) => (
+										<button
+											key={e.id}
+											type="button"
+											className={`calendar__entry calendar__entry--${e.status}`}
+											style={{ borderLeftColor: teamColor(e.team) }}
+											title={[sessionTitle(e.sessionId), e.team, STATUS_LABEL[e.status]].filter(Boolean).join(" · ")}
+											onPointerDown={(ev) => startDrag(ev, e)}
+											onKeyDown={(ev) => {
+												if (ev.key === "Enter" || ev.key === " ") {
+													ev.preventDefault();
+													setEditing(e);
+												}
+											}}
+											onContextMenu={(ev) => openMenu(ev, entryMenu(e))}
+										>
+											{e.status === "done" && <Icon name="check" size={12} />}
+											{e.time && <span className="calendar__time mono">{e.time}</span>}
+											<span className="calendar__entry-title">{sessionTitle(e.sessionId)}</span>
+										</button>
+									))}
+								</div>
+							);
+						})}
+					</div>
+				</main>
+				<aside className="agenda" aria-label="Coming up and recently run">
+					<h2>Coming up</h2>
+					{upcoming.length ? (
+						<ul>{upcoming.map(listItem)}</ul>
+					) : (
+						<p className="muted small">Nothing planned. Add a session, or put a plan on the calendar.</p>
+					)}
+					<h2>Recently run</h2>
+					{recent.length ? (
+						<ul>{recent.map(listItem)}</ul>
+					) : (
+						<p className="muted small">Sessions you mark as done show up here, with your notes.</p>
+					)}
+				</aside>
+			</div>
+
+			{editing && (
+				<EntryDialog
+					key={editing.id}
+					entry={editing}
+					sessions={library.sessions}
+					onClose={() => setEditing(null)}
+					onSave={(entry) =>
+						editing.isNew ? library.addEntries([entry]) : library.updateEntry(entry.id, entry)
+					}
+					onRemove={() => {
+						setRemoving(editing);
+						setEditing(null);
+					}}
+					onOpenSession={openSession}
+				/>
+			)}
+			<ConfirmDialog
+				open={removing !== null}
+				title="Remove from calendar"
+				message={`Take “${removing ? sessionTitle(removing.sessionId) : ""}” off ${removing ? describeDay(removing.date) : ""}? The session stays in your library.`}
+				confirmLabel="Remove"
+				danger
+				onConfirm={() => removing && library.removeEntries([removing.id])}
+				onClose={() => setRemoving(null)}
+			/>
+			{pickPlan && (
+				<PickPlanDialog
+					plans={library.plans}
+					onClose={() => setPickPlan(false)}
+					onPick={(p) => {
+						setPickPlan(false);
+						setLayingOut(p);
+					}}
+				/>
+			)}
+			{layingOut && (
+				<PlanToCalendarDialog
+					plan={layingOut}
+					open
+					onClose={() => setLayingOut(null)}
+					onConfirm={async (list, first) => {
+						await library.addEntries(list);
+						const d = parseISODate(first)!;
+						setMonth({ year: d.getFullYear(), month: d.getMonth() });
+					}}
+				/>
+			)}
+		</div>
+	);
+}

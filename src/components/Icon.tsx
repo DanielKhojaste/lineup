@@ -65,6 +65,8 @@ export const ICONS = {
 	session: "M5 5h14M5 10h14M5 15h9M5 20h6M17 15l3 2.5-3 2.5",
 	note: "M6 4h9l3 3v13H6zM9 10h6M9 14h6M9 18h3",
 	chevronUp: "M6 15l6-6 6 6",
+	calendar: "M4 6h16v14H4zM4 10h16M8 3v4M16 3v4",
+	plan: "M4 5h6v6H4zM14 5h6v6h-6zM4 15h6v4H4zM14 15h6v4h-6z",
 };
 
 export type IconName = keyof typeof ICONS;

@@ -46,6 +46,8 @@ function SessionLayout() {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[],
 	);
+	// Opened from a plan or the calendar: the back button goes back there.
+	const from = (useLocation().state as { from?: string } | null)?.from;
 	const { session } = state;
 	const mainRef = useRef<HTMLElement>(null);
 	// Back from a drill opened in this session: scroll to where the coach was.
@@ -104,9 +106,21 @@ function SessionLayout() {
 	return (
 		<div className="session-editor">
 			<header className="topbar">
-				<button type="button" className="back-button" onClick={() => navigate("/")}>
+				<button
+					type="button"
+					className="back-button"
+					onClick={() =>
+						from
+							? navigate(from)
+							: navigate("/")
+					}
+				>
 					<Icon name="chevronLeft" size={16} />
-					Library
+					{from?.startsWith("/plan")
+						? "Plan"
+						: from?.startsWith("/calendar")
+						  ? "Calendar"
+						  : "Library"}
 				</button>
 				<span className="topbar__divider" aria-hidden="true" />
 				<span className="badge">Session</span>

@@ -1,3 +1,5 @@
+import { CalendarData } from "../model/calendar";
+import { Plan } from "../model/plan";
 import { Session } from "../model/session";
 import { Board } from "../model/types";
 
@@ -24,6 +26,7 @@ export function cleanIndex(raw: unknown): LibraryIndex {
 export interface LibraryContents {
 	boards: Board[];
 	sessions: Session[];
+	plans: Plan[];
 	problems: string[];
 }
 
@@ -40,6 +43,10 @@ export interface LibraryStore {
 	remove(id: string): Promise<void>;
 	saveSession(session: Session): Promise<void>;
 	removeSession(id: string): Promise<void>;
+	savePlan(plan: Plan): Promise<void>;
+	removePlan(id: string): Promise<void>;
+	loadCalendar(): Promise<CalendarData>;
+	saveCalendar(calendar: CalendarData): Promise<void>;
 	loadIndex(): Promise<LibraryIndex>;
 	saveIndex(index: LibraryIndex): Promise<void>;
 }
