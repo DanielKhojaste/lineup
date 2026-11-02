@@ -10,6 +10,13 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Added
 
+- **Sessions:** a new kind of document in the library. A session puts drills from your library in order with water breaks and other blocks (a team talk, a game), each with its own length in minutes. Give it a start time to see clock times (18:00–18:12), or leave it out to see just durations
+- Session details like a coach's session sheet: team or age group, sport, phase, topic, principle, focus points, area, equipment, planned time and notes. The total shows against the planned time, with how much is left or over
+- Add drills from the library panel beside the plan (search, filter by type, or just the session's sport); each drill shows its picture and notes, and opens on a click (the back button returns to the session). Reorder blocks by dragging their handle or with the arrow keys, and right-click a block for more
+- **Print or save a session as PDF** (Ctrl+P): a session sheet with a header table and one row per block with its time, what happens, coaching points and the drill's diagram
+- Sessions in the library: their own "Sessions" view, cards with the first drills' pictures and a strip showing how the time is split, and they show up in folders and sports next to boards
+- **Board types:** Drill, Play, Line-up, Set piece or Other, set in the Notes tab. The library filters boards by type; boards from earlier versions become Plays if they're animated and Drills if not
+
 - More sports: futsal, basketball, volleyball, handball and field hockey, as well as soccer, each with its own field or court drawn to scale with its markings (basketball keys, three-point lines and hoops; the volleyball net and attack lines; handball and futsal goal areas; the hockey shooting circles)
 - Full or half field for every sport; a half field is drawn with the goal (or hoop, or net) at the top, and goals placed on it face down the field
 - A New board window: pick the sport, then a full or half field, from pictures of each; it opens on your default sport (set in Settings, or tick "Use this for new boards from now on"), so Enter makes a board straight away
