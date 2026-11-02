@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import Board from "../components/board/Board";
 import Loader from "../components/Loader";
 import SettingsDialog from "../components/shell/SettingsDialog";
@@ -17,6 +17,8 @@ function EditorLayout() {
 	const { state } = useEditor();
 	const library = useLibrary();
 	const navigate = useNavigate();
+	// Opened from a session: the back button goes back to it.
+	const from = (useLocation().state as { from?: string } | null)?.from;
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	const { status, flush } = useAutosave(state.board, library.saveBoard);
 	useShortcuts(!settingsOpen);
@@ -38,7 +40,8 @@ function EditorLayout() {
 			<TopBar
 				saveStatus={status}
 				onRetrySave={() => void flush()}
-				onBack={() => navigate("/")}
+				backLabel={from ? "Session" : "Library"}
+				onBack={() => navigate(from ?? "/")}
 				onOpenSettings={() => setSettingsOpen(true)}
 			/>
 			<div className="editor__body">

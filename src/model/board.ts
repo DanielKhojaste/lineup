@@ -1,6 +1,7 @@
 import {
 	BallNode,
 	Board,
+	BoardType,
 	BoardNode,
 	ConeNode,
 	GoalNode,
@@ -30,6 +31,14 @@ export const DEFAULT_TEAMS: Board["teams"] = {
 	home: { name: "Home", color: "#ED1B24" },
 	away: { name: "Away", color: "#F2F4F5" },
 	neutral: { name: "Neutral", color: "#2F80ED" },
+};
+
+export const BOARD_TYPE_LABELS: Record<BoardType, { one: string; many: string }> = {
+	drill: { one: "Drill", many: "Drills" },
+	play: { one: "Play", many: "Plays" },
+	lineup: { one: "Line-up", many: "Line-ups" },
+	setpiece: { one: "Set piece", many: "Set pieces" },
+	other: { one: "Other", many: "Other" },
 };
 
 /** Marker sizes on offer, as a factor of the normal size. */
@@ -69,7 +78,14 @@ export function createBoard(
 	return {
 		schemaVersion: SCHEMA_VERSION,
 		id: newId(),
-		meta: { title, tags: [], folder: "", createdAt: now, updatedAt: now },
+		meta: {
+			title,
+			type: "drill",
+			tags: [],
+			folder: "",
+			createdAt: now,
+			updatedAt: now,
+		},
 		notes: {
 			category: "",
 			ageGroup: "",

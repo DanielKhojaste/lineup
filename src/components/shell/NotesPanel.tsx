@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { DrillNotes } from "../../model/types";
+import { BOARD_TYPE_LABELS } from "../../model/board";
+import { BOARD_TYPES, BoardType, DrillNotes } from "../../model/types";
 import { useEditor } from "../../state/EditorContext";
 import { allFolders, useLibrary } from "../../state/LibraryContext";
 import { Icon } from "../Icon";
@@ -18,11 +19,42 @@ const DETAIL_FIELDS: {
 	{ key: "equipment", label: "Equipment", placeholder: "Cones, balls" },
 ];
 
+function TypeField() {
+	const { state, dispatch } = useEditor();
+	return (
+		<div className="field">
+			<label className="field__label" htmlFor="board-type">
+				Type
+			</label>
+			<select
+				id="board-type"
+				className="field__input"
+				value={state.board.meta.type}
+				onChange={(e) =>
+					dispatch({
+						type: "updateMeta",
+						patch: { type: e.target.value as BoardType },
+					})
+				}
+			>
+				{BOARD_TYPES.map((t) => (
+					<option key={t} value={t}>
+						{BOARD_TYPE_LABELS[t].one}
+					</option>
+				))}
+			</select>
+		</div>
+	);
+}
+
 function FolderField() {
 	const { state, dispatch } = useEditor();
 	const library = useLibrary();
 	const folder = state.board.meta.folder;
-	const folders = allFolders(library.folders, library.boards);
+	const folders = allFolders(library.folders, [
+		...library.boards,
+		...library.sessions,
+	]);
 	const options =
 		folder && !folders.includes(folder) ? [...folders, folder] : folders;
 
@@ -161,7 +193,10 @@ export default function NotesPanel() {
 	return (
 		<div className="panel-body">
 			<Section title="Details">
-				<FolderField />
+				<div className="field-grid">
+					<TypeField />
+					<FolderField />
+				</div>
 				<div className="field-grid">
 					{DETAIL_FIELDS.map((f) => (
 						<BoardInput

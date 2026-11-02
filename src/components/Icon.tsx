@@ -45,6 +45,13 @@ export const ICONS = {
 	play: "M8 5.5v13l10-6.5z",
 	pause: "M8 5v14M16 5v14",
 	route: "M5 19a2 2 0 1 0 0.01 0M8 17c3-1 2-6 6-7s4-3 4-5M15 5h3v3",
+	grip: "M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01",
+	water: "M12 3.5c3 4 5.5 7 5.5 10a5.5 5.5 0 0 1-11 0c0-3 2.5-6 5.5-10z",
+	print: "M7 9V4h10v5M7 17H5a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2M7 14h10v6H7z",
+	clock: "M12 4a8 8 0 1 0 0.01 0M12 8v4l3 2",
+	session: "M5 5h14M5 10h14M5 15h9M5 20h6M17 15l3 2.5-3 2.5",
+	note: "M6 4h9l3 3v13H6zM9 10h6M9 14h6M9 18h3",
+	chevronUp: "M6 15l6-6 6 6",
 };
 
 export type IconName = keyof typeof ICONS;

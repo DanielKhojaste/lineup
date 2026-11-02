@@ -1,39 +1,64 @@
 import {
+	createContext,
 	forwardRef,
 	InputHTMLAttributes,
 	ReactNode,
 	TextareaHTMLAttributes,
+	useContext,
 	useEffect,
 	useId,
 	useRef,
 } from "react";
-import { useEditor } from "../../state/EditorContext";
+import { useOptionalEditor } from "../../state/EditorContext";
 
 /**
- * Text fields that edit the board. Everything typed between focusing and
+ * Where a field's edits are grouped into one undo step. The board editor is
+ * the default; other editors (sessions) provide their own.
+ */
+export const FieldGestureContext = createContext<{
+	begin: () => void;
+	end: () => void;
+} | null>(null);
+
+/**
+ * Text fields that edit a document. Everything typed between focusing and
  * leaving a field is recorded as one undo step.
  */
 function useGestureHandlers() {
-	const { dispatch } = useEditor();
+	const custom = useContext(FieldGestureContext);
+	const editor = useOptionalEditor();
+	const latest = useRef({ custom, editor });
+	latest.current = { custom, editor };
 	const focused = useRef(false);
+
+	const begin = () => {
+		const { custom, editor } = latest.current;
+		if (custom) custom.begin();
+		else editor?.dispatch({ type: "beginGesture" });
+	};
+	const end = () => {
+		const { custom, editor } = latest.current;
+		if (custom) custom.end();
+		else editor?.dispatch({ type: "endGesture" });
+	};
 
 	// A field can disappear while focused (e.g. its marker was deleted), and
 	// browsers do not reliably fire blur then, so close the gesture here too.
 	useEffect(
 		() => () => {
-			if (focused.current) dispatch({ type: "endGesture" });
+			if (focused.current) end();
 		},
-		[dispatch],
+		[],
 	);
 
 	return {
 		onFocus: () => {
 			focused.current = true;
-			dispatch({ type: "beginGesture" });
+			begin();
 		},
 		onBlur: () => {
 			focused.current = false;
-			dispatch({ type: "endGesture" });
+			end();
 		},
 	};
 }

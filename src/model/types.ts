@@ -153,8 +153,13 @@ export interface DrillNotes {
 	coachingPoints: string[];
 }
 
+/** What a board is for. Separate from tags; sessions pick drills by it. */
+export const BOARD_TYPES = ["drill", "play", "lineup", "setpiece", "other"] as const;
+export type BoardType = (typeof BOARD_TYPES)[number];
+
 export interface BoardMeta {
 	title: string;
+	type: BoardType;
 	tags: string[];
 	/** Library folder name; empty when the board isn't in a folder. */
 	folder: string;

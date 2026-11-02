@@ -16,7 +16,11 @@ import {
 	encodeBoardFile,
 	FILE_EXTENSION,
 } from "../model/file";
-import { Board } from "../model/types";
+import {
+	decodeSessionFile,
+	encodeSessionFile,
+	SESSION_EXTENSION,
+} from "../model/session";
 import { EMPTY_INDEX, LibraryIndex, LibraryStore } from "./types";
 
 /**
@@ -25,10 +29,14 @@ import { EMPTY_INDEX, LibraryIndex, LibraryStore } from "./types";
  * folder is used instead.
  */
 const ROOT = "Lineup";
-const BOARDS = `${ROOT}/boards`;
 const INDEX_FILE = `${ROOT}/library.json`;
 
-const boardPath = (id: string) => `${BOARDS}/${id}.${FILE_EXTENSION}`;
+/** Each kind of document has its own folder and file extension. */
+const BOARDS = { dir: `${ROOT}/boards`, extension: FILE_EXTENSION };
+const SESSIONS = { dir: `${ROOT}/sessions`, extension: SESSION_EXTENSION };
+type Collection = typeof BOARDS;
+
+const pathOf = (c: Collection, id: string) => `${c.dir}/${id}.${c.extension}`;
 
 async function chooseBase(): Promise<{
 	baseDir: BaseDirectory;
@@ -52,8 +60,9 @@ export async function createTauriStore(): Promise<LibraryStore> {
 	const options = { baseDir };
 
 	const ensureFolders = async () => {
-		if (!(await exists(BOARDS, options)))
-			await mkdir(BOARDS, { ...options, recursive: true });
+		for (const c of [BOARDS, SESSIONS])
+			if (!(await exists(c.dir, options)))
+				await mkdir(c.dir, { ...options, recursive: true });
 	};
 
 	/** Write to a temporary file first, then swap it in, so a crash can't leave half a file. */
@@ -67,6 +76,28 @@ export async function createTauriStore(): Promise<LibraryStore> {
 		});
 	};
 
+	/** Read every file of one kind; files that fail are reported, not thrown. */
+	const loadCollection = async <T>(
+		c: Collection,
+		decode: (bytes: Uint8Array) => T,
+		problems: string[],
+	): Promise<T[]> => {
+		const docs: T[] = [];
+		for (const entry of await readDir(c.dir, options)) {
+			if (!entry.isFile || !entry.name.endsWith(`.${c.extension}`)) continue;
+			try {
+				docs.push(decode(await readFile(`${c.dir}/${entry.name}`, options)));
+			} catch (error) {
+				problems.push(`${entry.name}: ${(error as Error).message}`);
+			}
+		}
+		return docs;
+	};
+
+	const removeFile = async (path: string) => {
+		if (await exists(path, options)) await remove(path, options);
+	};
+
 	await ensureFolders();
 
 	return {
@@ -74,32 +105,29 @@ export async function createTauriStore(): Promise<LibraryStore> {
 
 		async loadAll() {
 			await ensureFolders();
-			const boards: Board[] = [];
 			const problems: string[] = [];
-			const entries = await readDir(BOARDS, options);
-			for (const entry of entries) {
-				if (!entry.isFile || !entry.name.endsWith(`.${FILE_EXTENSION}`))
-					continue;
-				try {
-					boards.push(
-						decodeBoardFile(await readFile(`${BOARDS}/${entry.name}`, options)),
-					);
-				} catch (error) {
-					problems.push(`${entry.name}: ${(error as Error).message}`);
-				}
-			}
-			return { boards, problems };
+			const boards = await loadCollection(BOARDS, decodeBoardFile, problems);
+			const sessions = await loadCollection(
+				SESSIONS,
+				decodeSessionFile,
+				problems,
+			);
+			return { boards, sessions, problems };
 		},
 
 		async save(board) {
 			await ensureFolders();
-			await writeSafely(boardPath(board.id), encodeBoardFile(board));
+			await writeSafely(pathOf(BOARDS, board.id), encodeBoardFile(board));
 		},
 
-		async remove(id) {
-			const path = boardPath(id);
-			if (await exists(path, options)) await remove(path, options);
+		remove: (id) => removeFile(pathOf(BOARDS, id)),
+
+		async saveSession(session) {
+			await ensureFolders();
+			await writeSafely(pathOf(SESSIONS, session.id), encodeSessionFile(session));
 		},
+
+		removeSession: (id) => removeFile(pathOf(SESSIONS, id)),
 
 		async loadIndex() {
 			try {
