@@ -17,7 +17,6 @@ This project adheres to semantic versioning (0.x during early development).
 - Sessions in the library: their own "Sessions" view, cards with the first drills' pictures and a strip showing how the time is split, and they show up in folders and sports next to boards
 - A "Desktop builds" workflow on GitHub that builds the Windows, macOS and Linux installers on demand (Actions tab, "Run workflow") and for every version tag, so the app can be tried on a Mac or Linux without building it there
 - **Board types:** Drill, Play, Line-up, Set piece or Other, set in the Notes tab. The library filters boards by type; boards from earlier versions become Plays if they're animated and Drills if not
-
 - More sports: futsal, basketball, volleyball, handball and field hockey, as well as soccer, each with its own field or court drawn to scale with its markings (basketball keys, three-point lines and hoops; the volleyball net and attack lines; handball and futsal goal areas; the hockey shooting circles)
 - Full or half field for every sport; a half field is drawn with the goal (or hoop, or net) at the top, and goals placed on it face down the field
 - A New board window: pick the sport, then a full or half field, from pictures of each; it opens on your default sport (set in Settings, or tick "Use this for new boards from now on"), so Enter makes a board straight away
