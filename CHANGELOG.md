@@ -28,6 +28,7 @@ This project adheres to semantic versioning (0.x during early development).
 - `.lineup` files are now saved compressed, so they no longer open as readable text (they're also about a third of the size); files from earlier versions still open and are converted the next time they're saved
 - The window opens at the size and position it was closed at, and maximised or full screen if it was
 - The goal tool is hidden for basketball and volleyball, which don't have goals
+- The README covers the new sports and the new plan: sessions, season plans and a calendar next, then sharing, then accounts and a premium cloud subscription
 - Text fields have Lineup's own Cut, Copy, Paste and Select all menu instead of the browser's, so "Inspect" and other browser items never show (Tauri clipboard plugin)
 
 ---
