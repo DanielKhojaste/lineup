@@ -5,3 +5,6 @@ src-tauri/Cargo.lock text eol=lf
 
 # Board files are compressed binary; never convert their line endings.
 *.lineup binary
+
+# npm writes the lockfile with LF endings; keep it that way on Windows too.
+package-lock.json text eol=lf
