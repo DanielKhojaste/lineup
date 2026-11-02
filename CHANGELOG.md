@@ -10,8 +10,8 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Added
 
-- **Sessions:** a new kind of document in the library. A session puts drills from your library in order with water breaks and other blocks (a team talk, a game), each with its own length in minutes. Give it a start time to see clock times (18:00–18:12), or leave it out to see just durations
-- Session details like a coach's session sheet: team or age group, sport, phase, topic, principle, focus points, area, equipment, planned time and notes. The total shows against the planned time, with how much is left or over
+- **Sessions:** a new kind of document in the library. A session puts drills from your library in order with water breaks and other blocks (a team talk, a game), each with its own length in minutes, and shows when each one starts (0–12 min, 12–14 min…)
+- Session details, enough for another coach to run it: a title (the only thing required), age group or team, sport, time (hours and minutes), a description and **topics**: tags like Passing or Pressing, suggested for the session's sport, plus your own. Equipment and area are under "More details". The plan's total shows against the session's time, with how much is left or over
 - Add drills from the library panel beside the plan (search, filter by type, or just the session's sport); each drill shows its picture and notes, and opens on a click (the back button returns to the session). Reorder blocks by dragging their handle or with the arrow keys, and right-click a block for more
 - **Print or save a session as PDF** (Ctrl+P): a session sheet with a header table and one row per block with its time, what happens, coaching points and the drill's diagram
 - Sessions in the library: their own "Sessions" view, cards with the first drills' pictures and a strip showing how the time is split, and they show up in folders and sports next to boards
@@ -33,6 +33,7 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Changed
 
+- Text fields no longer suggest things you typed before
 - `.lineup` files are now saved compressed, so they no longer open as readable text (they're also about a third of the size); files from earlier versions still open and are converted the next time they're saved
 - The window opens at the size and position it was closed at, and maximised or full screen if it was
 - The goal tool is hidden for basketball and volleyball, which don't have goals

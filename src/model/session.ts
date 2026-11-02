@@ -27,25 +27,23 @@ export interface SessionMeta {
 	updatedAt: string;
 }
 
-/** The top of the session sheet. Every field is optional free text. */
+/**
+ * What a coach needs to know before running the session. Only the title (in
+ * `meta`) is required; everything else is optional.
+ */
 export interface SessionHeader {
-	/** Team or age group, e.g. "U12 Girls". */
+	/** Age group or team, e.g. "U12" or "U12 Girls". */
 	team: string;
-	/** The session's sport, used to suggest drills; empty for any. */
+	/** The session's sport: it picks the suggested topics and drills. Empty for any. */
 	sport: Sport | "";
-	/** Game phase, e.g. "Attacking". */
-	phase: string;
-	/** Principle of play, e.g. "Beat an opponent 1v1 to create scoring chances". */
-	principle: string;
-	/** Topic, e.g. "Attacking transition". */
-	topic: string;
-	focusPoints: string[];
+	/** What the session is about and how it runs, for whoever coaches it. */
+	description: string;
+	/** Tags like "Passing" or "Pressing": suggested ones for the sport, or your own. */
+	topics: string[];
+	/** How long the session lasts, in minutes; null when not set. */
+	plannedMinutes: number | null;
 	equipment: string;
 	area: string;
-	/** How long the session should last, in minutes; null when not set. */
-	plannedMinutes: number | null;
-	/** Anything else for the sheet. */
-	notes: string;
 }
 
 interface BlockBase {
@@ -81,8 +79,6 @@ export interface Session {
 	id: string;
 	meta: SessionMeta;
 	header: SessionHeader;
-	/** Clock time the session starts ("18:00"), or null to show only durations. */
-	startTime: string | null;
 	blocks: SessionBlock[];
 }
 
@@ -90,7 +86,14 @@ export const DEFAULT_DRILL_MINUTES = 12;
 export const DEFAULT_BREAK_MINUTES = 2;
 export const MAX_BLOCK_MINUTES = 240;
 
-export function createSession(title = "Untitled session"): Session {
+/** Shown wherever a session has no title yet. */
+export const UNTITLED_SESSION = "Untitled session";
+
+export const sessionTitle = (session: Session) =>
+	session.meta.title.trim() || UNTITLED_SESSION;
+
+/** New sessions start without a title: it's the first thing the form asks for. */
+export function createSession(title = ""): Session {
 	const now = new Date().toISOString();
 	return {
 		schemaVersion: SESSION_SCHEMA_VERSION,
@@ -100,16 +103,12 @@ export function createSession(title = "Untitled session"): Session {
 		header: {
 			team: "",
 			sport: "",
-			phase: "",
-			principle: "",
-			topic: "",
-			focusPoints: [],
+			description: "",
+			topics: [],
+			plannedMinutes: null,
 			equipment: "",
 			area: "",
-			plannedMinutes: null,
-			notes: "",
 		},
-		startTime: null,
 		blocks: [],
 	};
 }
@@ -142,22 +141,6 @@ export function totalMinutes(session: Session): number {
 	return session.blocks.reduce((sum, b) => sum + b.minutes, 0);
 }
 
-/** "18:00" → minutes after midnight, or null if it isn't a time. */
-export function parseClock(value: string | null): number | null {
-	if (!value) return null;
-	const match = /^(\d{1,2}):(\d{2})$/.exec(value.trim());
-	if (!match) return null;
-	const h = Number(match[1]);
-	const m = Number(match[2]);
-	return h < 24 && m < 60 ? h * 60 + m : null;
-}
-
-/** Minutes after midnight → "18:00" (wrapping past midnight). */
-export function formatClock(minutes: number): string {
-	const m = ((Math.round(minutes) % 1440) + 1440) % 1440;
-	return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}`;
-}
-
 /** "75 min", "1 h 15 min", "2 h". */
 export function formatMinutes(minutes: number): string {
 	if (minutes < 60) return `${minutes} min`;
@@ -166,28 +149,13 @@ export function formatMinutes(minutes: number): string {
 	return m ? `${h} h ${m} min` : `${h} h`;
 }
 
-/**
- * When each block starts and ends, in minutes from the session's start. With
- * a start time, `clock` gives the times of day too ("18:00–18:12").
- */
-export function blockTimes(session: Session): {
-	from: number;
-	to: number;
-	clock: string | null;
-}[] {
-	const start = parseClock(session.startTime);
+/** When each block starts and ends, in minutes from the start of the session. */
+export function blockTimes(session: Session): { from: number; to: number }[] {
 	let at = 0;
 	return session.blocks.map((b) => {
 		const from = at;
 		at += b.minutes;
-		return {
-			from,
-			to: at,
-			clock:
-				start === null
-					? null
-					: `${formatClock(start + from)}–${formatClock(start + at)}`,
-		};
+		return { from, to: at };
 	});
 }
 
@@ -213,6 +181,20 @@ export function decodeSessionFile(bytes: Uint8Array): Session {
 }
 
 const text = (v: unknown, max = 2000) => (isStr(v) ? v.slice(0, max) : "");
+
+/** Topic tags: trimmed, without blanks or repeats (ignoring case). */
+export function cleanTopics(values: unknown[]): string[] {
+	const seen = new Set<string>();
+	const out: string[] = [];
+	for (const v of values) {
+		if (!isStr(v)) continue;
+		const t = v.trim().slice(0, 40);
+		if (!t || seen.has(t.toLowerCase())) continue;
+		seen.add(t.toLowerCase());
+		out.push(t);
+	}
+	return out;
+}
 
 function cleanBlock(raw: unknown): SessionBlock | null {
 	if (!isObject(raw)) return null;
@@ -262,8 +244,7 @@ export function parseSession(source: string): Session {
 		...fresh,
 		id: isStr(raw.id) ? raw.id : fresh.id,
 		meta: {
-			title:
-				isStr(meta.title) && meta.title.trim() ? meta.title : "Untitled session",
+			title: text(meta.title, 120),
 			tags: Array.isArray(meta.tags) ? meta.tags.filter(isStr) : [],
 			folder: isStr(meta.folder) ? meta.folder : "",
 			createdAt: isStr(meta.createdAt) ? meta.createdAt : fresh.meta.createdAt,
@@ -272,21 +253,18 @@ export function parseSession(source: string): Session {
 		header: {
 			team: text(header.team, 120),
 			sport: isSport(header.sport) ? header.sport : "",
-			phase: text(header.phase, 120),
-			principle: text(header.principle, 300),
-			topic: text(header.topic, 120),
-			focusPoints: Array.isArray(header.focusPoints)
-				? header.focusPoints.filter(isStr).map((p) => p.slice(0, 160))
-				: [],
-			equipment: text(header.equipment, 300),
-			area: text(header.area, 120),
+			// Early test versions had "notes", a single "topic" and "focus points".
+			description: text(header.description ?? header.notes),
+			topics: cleanTopics([
+				...(Array.isArray(header.topics) ? header.topics : []),
+				header.topic,
+				...(Array.isArray(header.focusPoints) ? header.focusPoints : []),
+			]),
 			plannedMinutes:
 				isNum(planned) && planned > 0 ? cleanMinutes(planned) || null : null,
-			notes: text(header.notes),
+			equipment: text(header.equipment, 300),
+			area: text(header.area, 120),
 		},
-		startTime: parseClock(isStr(raw.startTime) ? raw.startTime : null) === null
-			? null
-			: (raw.startTime as string),
 		blocks: Array.isArray(raw.blocks)
 			? raw.blocks.map(cleanBlock).filter((b): b is SessionBlock => b !== null)
 			: [],

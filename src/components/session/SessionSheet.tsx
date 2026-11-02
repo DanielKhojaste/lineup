@@ -1,10 +1,9 @@
 import { BOARD_TYPE_LABELS } from "../../model/board";
 import {
 	blockTimes,
-	formatClock,
 	formatMinutes,
-	parseClock,
 	Session,
+	sessionTitle,
 	totalMinutes,
 } from "../../model/session";
 import { SPORT_INFO } from "../../model/sports";
@@ -26,31 +25,29 @@ export default function SessionSheet({
 	const { header } = session;
 	const times = blockTimes(session);
 	const total = totalMinutes(session);
-	const start = parseClock(session.startTime);
 	const rows: [string, string][] = [
-		["Team", header.team],
+		["Age group or team", header.team],
 		["Sport", header.sport ? SPORT_INFO[header.sport].name : ""],
-		["Phase", header.phase],
-		["Topic", header.topic],
-		["Principle", header.principle],
-		["Focus points", header.focusPoints.join(" · ")],
-		["Equipment", header.equipment],
-		["Area", header.area],
+		["Topics", header.topics.join(" · ")],
 		[
 			"Time",
 			[
-				formatMinutes(total),
-				header.plannedMinutes ? `(planned ${formatMinutes(header.plannedMinutes)})` : "",
-				start !== null ? `· ${formatClock(start)}–${formatClock(start + total)}` : "",
+				header.plannedMinutes ? formatMinutes(header.plannedMinutes) : "",
+				total && total !== header.plannedMinutes
+					? `(activities add up to ${formatMinutes(total)})`
+					: "",
 			]
 				.filter(Boolean)
-				.join(" "),
+				.join(" ") || (total ? formatMinutes(total) : ""),
 		],
+		["Equipment", header.equipment],
+		["Area", header.area],
 	];
 
 	return (
 		<div className="print-sheet" aria-hidden="true">
-			<h1 className="sheet__title">{session.meta.title}</h1>
+			<h1 className="sheet__title">{sessionTitle(session)}</h1>
+			{header.description && <p className="sheet__description">{header.description}</p>}
 			<table className="sheet__header">
 				<tbody>
 					{rows
@@ -84,7 +81,7 @@ export default function SessionSheet({
 						return (
 							<tr key={block.id} className={`sheet__row sheet__row--${block.kind}`}>
 								<td className="sheet__time">
-									<strong>{t.clock ?? `${t.from}–${t.to} min`}</strong>
+									<strong>{`${t.from}–${t.to} min`}</strong>
 									<div>{formatMinutes(block.minutes)}</div>
 								</td>
 								<td>
@@ -122,7 +119,6 @@ export default function SessionSheet({
 					})}
 				</tbody>
 			</table>
-			{header.notes && <p className="sheet__notes">{header.notes}</p>}
 		</div>
 	);
 }

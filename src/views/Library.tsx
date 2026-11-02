@@ -11,7 +11,7 @@ import { SURFACES } from "../components/board/Pitch";
 import NewBoardDialog from "../components/library/NewBoardDialog";
 import SessionCard from "../components/library/SessionCard";
 import { BOARD_TYPE_LABELS } from "../model/board";
-import { Session } from "../model/session";
+import { Session, sessionTitle } from "../model/session";
 import { pitchLabel, Sport, SPORT_INFO, SPORTS } from "../model/sports";
 import { Board, BOARD_TYPES, BoardType, PitchSettings } from "../model/types";
 import { allFolders, useLibrary } from "../state/LibraryContext";
@@ -53,10 +53,8 @@ function sessionMatches(session: Session, query: string): boolean {
 		meta.folder,
 		...meta.tags,
 		header.team,
-		header.topic,
-		header.phase,
-		header.principle,
-		...header.focusPoints,
+		header.description,
+		...header.topics,
 	]
 		.join(" ")
 		.toLowerCase()
@@ -249,7 +247,7 @@ export default function Library() {
 		);
 		const found = inView.filter((s) => sessionMatches(s, query.trim()));
 		return sort === "title"
-			? [...found].sort((a, b) => a.meta.title.localeCompare(b.meta.title))
+			? [...found].sort((a, b) => sessionTitle(a).localeCompare(sessionTitle(b)))
 			: [...found].sort((a, b) =>
 					b.meta.updatedAt.localeCompare(a.meta.updatedAt),
 			  );
@@ -926,7 +924,7 @@ export default function Library() {
 			<ConfirmDialog
 				open={deletingSession !== null}
 				title="Delete session"
-				message={`Delete the session “${deletingSession?.meta.title}”? Its drills stay in your library. This can't be undone.`}
+				message={`Delete the session “${deletingSession ? sessionTitle(deletingSession) : ""}”? Its drills stay in your library. This can't be undone.`}
 				confirmLabel="Delete"
 				danger
 				onConfirm={() =>

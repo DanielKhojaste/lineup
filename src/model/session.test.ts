@@ -32,32 +32,19 @@ function sampleSession() {
 }
 
 describe("session timings", () => {
-	it("adds up the blocks and shows clock times from the start time", () => {
+	it("adds up the blocks and gives each its minutes from the start", () => {
 		const session = sampleSession();
 		expect(totalMinutes(session)).toBe(49);
-		expect(blockTimes(session).map((t) => t.clock)).toEqual([
-			null,
-			null,
-			null,
-			null,
-			null,
-		]);
-
-		session.startTime = "18:00";
-		expect(blockTimes(session).map((t) => t.clock)).toEqual([
-			"18:00–18:12",
-			"18:12–18:14",
-			"18:14–18:34",
-			"18:34–18:39",
-			"18:39–18:49",
+		expect(blockTimes(session).map((t) => [t.from, t.to])).toEqual([
+			[0, 12],
+			[12, 14],
+			[14, 34],
+			[34, 39],
+			[39, 49],
 		]);
 	});
 
-	it("wraps past midnight and formats durations", () => {
-		const session = createSession();
-		session.startTime = "23:50";
-		session.blocks = [createDrillBlock("x", 20)];
-		expect(blockTimes(session)[0].clock).toBe("23:50–0:10");
+	it("formats durations", () => {
 		expect(formatMinutes(45)).toBe("45 min");
 		expect(formatMinutes(75)).toBe("1 h 15 min");
 		expect(formatMinutes(120)).toBe("2 h");
@@ -66,12 +53,20 @@ describe("session timings", () => {
 	it("lists the boards a session uses once each", () => {
 		expect(sessionBoardIds(sampleSession())).toEqual(["board-a", "board-b"]);
 	});
+
+	it("starts without a title, and shows one anyway", async () => {
+		const { sessionTitle } = await import("./session");
+		const session = createSession();
+		expect(session.meta.title).toBe("");
+		expect(sessionTitle(session)).toBe("Untitled session");
+	});
 });
 
 describe("session files", () => {
 	it("round-trips through a compressed file", () => {
 		const session = sampleSession();
-		session.header.focusPoints = ["Scanning", "First touch"];
+		session.header.topics = ["Scanning", "First touch"];
+		session.header.description = "Two groups of eight";
 		session.header.sport = "futsal";
 		const bytes = encodeSessionFile(session);
 		expect(String.fromCharCode(...bytes.slice(0, 4))).toBe("LNUP");
@@ -84,8 +79,13 @@ describe("session files", () => {
 				schemaVersion: 1,
 				docType: "session",
 				id: "s1",
-				header: { plannedMinutes: 90, sport: "curling" },
-				startTime: "25:00",
+				header: {
+					plannedMinutes: 90,
+					sport: "curling",
+					notes: "Old notes",
+					topic: "Pressing",
+					focusPoints: ["Scanning", "pressing", " "],
+				},
 				blocks: [
 					{ kind: "drill", boardId: "b", minutes: 12.4 },
 					{ kind: "drill" },
@@ -94,10 +94,12 @@ describe("session files", () => {
 				],
 			}),
 		);
-		expect(session.meta.title).toBe("Untitled session");
+		expect(session.meta.title).toBe("");
 		expect(session.header.plannedMinutes).toBe(90);
 		expect(session.header.sport).toBe("");
-		expect(session.startTime).toBeNull();
+		// Early test sessions: notes become the description, topic and focus points become topics.
+		expect(session.header.description).toBe("Old notes");
+		expect(session.header.topics).toEqual(["Pressing", "Scanning"]);
 		expect(session.blocks.map((b) => [b.kind, b.minutes])).toEqual([
 			["drill", 12],
 			["break", 0],
@@ -165,11 +167,13 @@ describe("editing a session", () => {
 			state,
 			{ type: "beginGesture" },
 			{ type: "updateHeader", patch: { team: "U" } },
+			{ type: "updateHeader", patch: { topics: ["Passing", " passing ", ""] } },
 			{ type: "updateHeader", patch: { team: "U1" } },
 			{ type: "updateHeader", patch: { team: "U12" } },
 			{ type: "endGesture" },
 		);
 		expect(state.past).toHaveLength(1);
+		expect(state.session.header.topics).toEqual(["Passing"]);
 		state = run(state, { type: "undo" });
 		expect(state.session.header.team).toBe("");
 	});
@@ -185,5 +189,16 @@ describe("durations from drill notes", () => {
 		expect(minutesFromText("1.5 hours")).toBe(90);
 		expect(minutesFromText("")).toBeNull();
 		expect(minutesFromText("long")).toBeNull();
+	});
+});
+
+describe("suggested topics", () => {
+	it("suggests the sport's topics first, then the coach's own, without repeats", async () => {
+		const { suggestedTopics } = await import("./topics");
+		const list = suggestedTopics("basketball", ["Pick and roll", "Zone press"]);
+		expect(list[0]).toBe("Ball handling");
+		expect(list).toContain("Zone press");
+		expect(list.filter((t) => t === "Pick and roll")).toHaveLength(1);
+		expect(suggestedTopics("")).toContain("Passing");
 	});
 });

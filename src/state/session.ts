@@ -1,5 +1,6 @@
 import {
 	cleanMinutes,
+	cleanTopics,
 	Session,
 	SessionBlock,
 	SessionHeader,
@@ -26,7 +27,6 @@ export type BlockPatch = Partial<
 export type SessionAction =
 	| { type: "updateMeta"; patch: Partial<SessionMeta> }
 	| { type: "updateHeader"; patch: Partial<SessionHeader> }
-	| { type: "setStartTime"; startTime: string | null }
 	/** Insert blocks at `index` (the end when missing). */
 	| { type: "addBlocks"; blocks: SessionBlock[]; index?: number }
 	| { type: "updateBlock"; id: string; patch: BlockPatch }
@@ -77,16 +77,12 @@ export function sessionReducer(
 			const patch = { ...action.patch };
 			if (patch.plannedMinutes !== undefined && patch.plannedMinutes !== null)
 				patch.plannedMinutes = cleanMinutes(patch.plannedMinutes) || null;
+			if (patch.topics) patch.topics = cleanTopics(patch.topics);
 			return commit(state, {
 				...session,
 				header: { ...session.header, ...patch },
 			});
 		}
-
-		case "setStartTime":
-			return session.startTime === action.startTime
-				? state
-				: commit(state, { ...session, startTime: action.startTime });
 
 		case "addBlocks": {
 			if (action.blocks.length === 0) return state;

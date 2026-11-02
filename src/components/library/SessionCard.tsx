@@ -1,6 +1,7 @@
 import {
 	formatMinutes,
 	Session,
+	sessionTitle,
 	sessionBoardIds,
 	totalMinutes,
 } from "../../model/session";
@@ -35,7 +36,7 @@ export default function SessionCard({
 		.slice(0, 4);
 	const details = [
 		session.header.team,
-		session.header.topic,
+		session.header.topics.slice(0, 2).join(", "),
 		total ? formatMinutes(total) : "",
 		`${drills} drill${drills === 1 ? "" : "s"}`,
 		`Edited ${relativeTime(session.meta.updatedAt)}`,
@@ -50,7 +51,7 @@ export default function SessionCard({
 				type="button"
 				className="board-card__open"
 				onClick={onOpen}
-				aria-label={`Open session ${session.meta.title}`}
+				aria-label={`Open session ${sessionTitle(session)}`}
 			>
 				<div className="session-card__preview">
 					{boards.length === 0 ? (
@@ -80,13 +81,13 @@ export default function SessionCard({
 					</span>
 				)}
 				<span className="board-card__title">
-					<span className="badge">Session</span> {session.meta.title}
+					<span className="badge">Session</span> {sessionTitle(session)}
 				</span>
 				<span className="board-card__meta">{details.join(" · ")}</span>
 			</button>
 			<div className="board-card__menu">
 				<Menu
-					label={`More actions for ${session.meta.title}`}
+					label={`More actions for ${sessionTitle(session)}`}
 					button={<Icon name="more" size={18} />}
 					items={menu().flatMap((e): (MenuItem | "separator")[] =>
 						e === "separator"

@@ -7,8 +7,7 @@ import SessionHeaderForm from "../components/session/SessionHeaderForm";
 import SessionSheet from "../components/session/SessionSheet";
 import Timeline from "../components/session/Timeline";
 import { isTextField } from "../components/ui/ContextMenu";
-import { BoardInput } from "../components/ui/fields";
-import { Session } from "../model/session";
+import { Session, sessionTitle } from "../model/session";
 import { useLibrary } from "../state/LibraryContext";
 import { SessionProvider, useSessionEditor } from "../state/SessionContext";
 import { SaveStatus, useAutosave } from "../state/useAutosave";
@@ -73,14 +72,12 @@ function SessionLayout() {
 				</button>
 				<span className="topbar__divider" aria-hidden="true" />
 				<span className="badge">Session</span>
-				<BoardInput
-					className="topbar__title"
-					label="Session title"
-					hideLabel
-					maxLength={80}
-					value={session.meta.title}
-					onValue={(title) => dispatch({ type: "updateMeta", patch: { title } })}
-				/>
+				{/* The title is edited in the form; up here it just says where you are. */}
+				<span
+					className={`topbar__heading${session.meta.title.trim() ? "" : " muted"}`}
+				>
+					{sessionTitle(session)}
+				</span>
 				{status === "error" ? (
 					<button
 						type="button"

@@ -2136,15 +2136,68 @@ button.save-status--error:hover {
 	gap: 12px 14px;
 }
 
-.session-header__wide,
-.session-header__grid > .field:last-child {
+.session-header__wide {
 	grid-column: 1 / -1;
 }
 
-.time-field {
+.topbar__heading {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.session-header__title .field__input {
+	font-size: 16px;
+	font-weight: 600;
+	padding: 9px 11px;
+}
+
+.session-header__title .field__input[aria-invalid="true"] {
+	border-color: var(--danger);
+}
+
+.duration-field {
+	display: flex;
+	gap: 8px;
+}
+
+.duration-field label {
+	flex: 1;
 	display: flex;
 	align-items: center;
-	gap: 4px;
+	gap: 6px;
+}
+
+.duration-field input {
+	min-width: 0;
+}
+
+fieldset.field {
+	border: 0;
+	min-width: 0;
+}
+
+.topic-suggestions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+	margin-top: 8px;
+}
+
+.topic-suggestions .filter-chip {
+	height: 26px;
+	padding: 0 10px;
+}
+
+.session-header__more {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+	gap: 12px 14px;
+	padding-top: 8px;
 }
 
 .timeline {

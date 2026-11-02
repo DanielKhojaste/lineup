@@ -9,9 +9,7 @@ import {
 	blockTimes,
 	createBreakBlock,
 	createCustomBlock,
-	formatClock,
 	formatMinutes,
-	parseClock,
 	SessionBlock,
 	totalMinutes,
 } from "../../model/session";
@@ -265,7 +263,6 @@ export default function Timeline() {
 	const times = blockTimes(session);
 	const total = totalMinutes(session);
 	const planned = session.header.plannedMinutes;
-	const start = parseClock(session.startTime);
 	const listRef = useRef<HTMLOListElement>(null);
 	const [drag, setDrag] = useState<{ id: string; to: number } | null>(null);
 
@@ -394,7 +391,7 @@ export default function Timeline() {
 								key={block.id}
 								block={block}
 								index={index}
-								time={t.clock ?? `${t.from}–${t.to}′`}
+								time={`${t.from}–${t.to}′`}
 								dragging={drag?.id === block.id}
 								onHandleDown={onHandleDown}
 								menu={menu}
@@ -443,11 +440,6 @@ export default function Timeline() {
 						</span>
 					) : null}
 				</div>
-				{start !== null && (
-					<span className="muted">
-						{formatClock(start)} to {formatClock(start + total)}
-					</span>
-				)}
 				{planned ? (
 					<div className="timeline__meter" aria-hidden="true">
 						<span style={{ width: `${Math.min(100, (total / planned) * 100)}%` }} />
