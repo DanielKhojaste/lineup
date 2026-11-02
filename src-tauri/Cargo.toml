@@ -27,5 +27,6 @@ serde_json = "1"
 tauri-plugin-fs = "~2.4.5"
 tauri-plugin-dialog = "~2.6.0"
 tauri-plugin-window-state = "~2.4.1"
-tauri-plugin-clipboard-manager = "~2.3.2"
+# 2.3.3 and later need Tauri 2.10; keep in step with the tauri version above.
+tauri-plugin-clipboard-manager = "=2.3.2"
 
