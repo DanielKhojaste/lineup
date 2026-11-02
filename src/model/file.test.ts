@@ -3,6 +3,8 @@ import { createBoard, createCone, createPlayer } from "./board";
 import { createLine, createText, DEFAULT_TOOL_STYLES } from "./drawings";
 import {
 	BoardFileError,
+	decodeBoardFile,
+	encodeBoardFile,
 	fileNameFor,
 	parseBoard,
 	serializeBoard,
@@ -95,6 +97,50 @@ describe("board files", () => {
 	it("opens version 1 boards with no steps", () => {
 		const { steps: _none, ...old } = { ...createBoard(), schemaVersion: 1 };
 		expect(parseBoard(JSON.stringify(old)).steps).toEqual([]);
+	});
+
+	it("keeps marker sizes within limits, and defaults old boards to normal", () => {
+		const board = createBoard();
+		board.display = { showLabels: true, playerScale: 1.3, equipmentScale: 9 };
+		expect(parseBoard(JSON.stringify(board)).display).toEqual({
+			showLabels: true,
+			playerScale: 1.3,
+			equipmentScale: 2,
+		});
+		const { display: _none, ...old } = createBoard();
+		expect(parseBoard(JSON.stringify(old)).display).toMatchObject({
+			playerScale: 1,
+			equipmentScale: 1,
+		});
+	});
+
+	it("saves files that don't read as text, and opens them again", () => {
+		const board = {
+			...createBoard("Cool Board"),
+			nodes: [createPlayer(0.5, 0.5, "home", { number: 9, name: "Alexia" })],
+		};
+		const bytes = encodeBoardFile(board);
+		expect(new TextDecoder().decode(bytes.subarray(0, 4))).toBe("LNUP");
+		const asText = new TextDecoder().decode(bytes);
+		expect(asText).not.toContain("Cool Board");
+		expect(asText).not.toContain("Alexia");
+		expect(bytes.length).toBeLessThan(serializeBoard(board).length);
+		expect(decodeBoardFile(bytes)).toEqual(JSON.parse(serializeBoard(board)));
+	});
+
+	it("still opens plain JSON files from before v0.7.0", () => {
+		const board = createBoard("Old board");
+		const bytes = new TextEncoder().encode(serializeBoard(board));
+		expect(decodeBoardFile(bytes).meta.title).toBe("Old board");
+	});
+
+	it("explains damaged files and files from a newer version", () => {
+		const bytes = encodeBoardFile(createBoard());
+		const damaged = bytes.slice(0, 20);
+		expect(() => decodeBoardFile(damaged)).toThrow(/damaged/);
+		const newer = bytes.slice();
+		newer[4] = 99;
+		expect(() => decodeBoardFile(newer)).toThrow(/newer version/);
 	});
 
 	it("rejects files that aren't boards", () => {

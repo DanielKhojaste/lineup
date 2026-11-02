@@ -1,5 +1,6 @@
 import { PointerEvent as ReactPointerEvent, useRef, useState } from "react";
 import { MANNEQUIN_COLOR, POLE_COLOR } from "../../model/board";
+import { fieldBounds, SPORT_INFO } from "../../model/sports";
 import { Board } from "../../model/types";
 import { useEditor } from "../../state/EditorContext";
 import { PlaceTool, Tool } from "../../state/editor";
@@ -148,7 +149,11 @@ export default function ToolRail() {
 
 		const point = clientToBoard(boardRef.current, e.clientX, e.clientY);
 		const target = document.elementFromPoint(e.clientX, e.clientY);
-		if (isOnBoard(point) && target && boardRef.current.contains(target)) {
+		if (
+			isOnBoard(point, fieldBounds(state.board.pitch)) &&
+			target &&
+			boardRef.current.contains(target)
+		) {
 			dispatch({ type: "place", tool: p.tool, x: point.x, y: point.y });
 			dispatch({ type: "setTool", tool: "select" });
 		}
@@ -190,7 +195,12 @@ export default function ToolRail() {
 			<span className="rail__label">Select</span>
 			<div className="rail__grid">{SELECT_TOOLS.map(renderTool)}</div>
 			<span className="rail__label">Place</span>
-			<div className="rail__grid">{PLACE_TOOLS.map(renderTool)}</div>
+			<div className="rail__grid">
+				{PLACE_TOOLS.filter(
+					// Basketball and volleyball have no goals to place.
+					(t) => t.tool !== "goal" || SPORT_INFO[state.board.pitch.sport].goal,
+				).map(renderTool)}
+			</div>
 			<span className="rail__label">Draw</span>
 			<div className="rail__grid">{DRAW_TOOLS.map(renderTool)}</div>
 			<span className="rail__label">Animate</span>

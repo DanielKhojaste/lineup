@@ -4,12 +4,18 @@ import {
 	exists,
 	mkdir,
 	readDir,
+	readFile,
 	readTextFile,
 	remove,
 	rename,
+	writeFile,
 	writeTextFile,
 } from "@tauri-apps/plugin-fs";
-import { FILE_EXTENSION, parseBoard, serializeBoard } from "../model/file";
+import {
+	decodeBoardFile,
+	encodeBoardFile,
+	FILE_EXTENSION,
+} from "../model/file";
 import { Board } from "../model/types";
 import { EMPTY_INDEX, LibraryIndex, LibraryStore } from "./types";
 
@@ -51,9 +57,10 @@ export async function createTauriStore(): Promise<LibraryStore> {
 	};
 
 	/** Write to a temporary file first, then swap it in, so a crash can't leave half a file. */
-	const writeSafely = async (path: string, text: string) => {
+	const writeSafely = async (path: string, data: string | Uint8Array) => {
 		const temp = `${path}.tmp`;
-		await writeTextFile(temp, text, options);
+		if (typeof data === "string") await writeTextFile(temp, data, options);
+		else await writeFile(temp, data, options);
 		await rename(temp, path, {
 			oldPathBaseDir: baseDir,
 			newPathBaseDir: baseDir,
@@ -75,7 +82,7 @@ export async function createTauriStore(): Promise<LibraryStore> {
 					continue;
 				try {
 					boards.push(
-						parseBoard(await readTextFile(`${BOARDS}/${entry.name}`, options)),
+						decodeBoardFile(await readFile(`${BOARDS}/${entry.name}`, options)),
 					);
 				} catch (error) {
 					problems.push(`${entry.name}: ${(error as Error).message}`);
@@ -86,7 +93,7 @@ export async function createTauriStore(): Promise<LibraryStore> {
 
 		async save(board) {
 			await ensureFolders();
-			await writeSafely(boardPath(board.id), serializeBoard(board));
+			await writeSafely(boardPath(board.id), encodeBoardFile(board));
 		},
 
 		async remove(id) {

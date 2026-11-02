@@ -11,6 +11,7 @@ import {
 	nextShirtNumber,
 } from "../model/board";
 import { boardAtStep, createStep, pruneSteps } from "../model/animation";
+import { clampToBounds, fieldBounds } from "../model/sports";
 import {
 	DEFAULT_TOOL_STYLES,
 	DrawTool,
@@ -30,6 +31,7 @@ import {
 	Drawing,
 	LineStroke,
 	Move,
+	PitchSettings,
 	PlayerNode,
 	Point,
 	StrokeWidth,
@@ -126,11 +128,17 @@ export type EditorAction =
 	| { type: "updateDrawings"; ids: string[]; patch: DrawingPatch }
 	| { type: "deleteItems"; ids: string[] }
 	| { type: "duplicateItems"; ids: string[] }
+	/** Add copied items (from the clipboard), next to where they were or centred on `at`. */
+	| { type: "pasteItems"; nodes: BoardNode[]; drawings: Drawing[]; at?: Point }
 	| { type: "reorderItems"; ids: string[]; to: "front" | "back" }
+	/** Remove every marker, drawing and animation step. */
+	| { type: "clearBoard" }
 	| { type: "updateMeta"; patch: Partial<BoardMeta> }
 	| { type: "updateNotes"; patch: Partial<DrillNotes> }
 	| { type: "updateTeam"; team: TeamId; patch: Partial<TeamStyle> }
 	| { type: "updateDisplay"; patch: Partial<BoardDisplay> }
+	/** Change the board's sport or switch between a full and a half field. */
+	| { type: "updatePitch"; patch: Partial<PitchSettings> }
 	| { type: "beginGesture" }
 	| { type: "endGesture" }
 	| { type: "cancelGesture" }
@@ -273,8 +281,16 @@ function offsetItems(
 	const maxX = Math.max(...points.map((p) => p[0]));
 	const minY = Math.min(...points.map((p) => p[1]));
 	const maxY = Math.max(...points.map((p) => p[1]));
-	const cdx = Math.min(Math.max(0, 1 - maxX), Math.max(Math.min(0, -minX), dx));
-	const cdy = Math.min(Math.max(0, 1 - maxY), Math.max(Math.min(0, -minY), dy));
+	// Keep the whole group on the field's part of the board.
+	const b = fieldBounds(source.pitch);
+	const cdx = Math.min(
+		Math.max(0, b.maxX - maxX),
+		Math.max(Math.min(0, b.minX - minX), dx),
+	);
+	const cdy = Math.min(
+		Math.max(0, b.maxY - maxY),
+		Math.max(Math.min(0, b.minY - minY), dy),
+	);
 	if (cdx === 0 && cdy === 0) return null;
 
 	return {
@@ -296,8 +312,9 @@ function recordMoves(board: Board, step: number, moved: BoardNode[]): Board {
 	const current = board.steps[step - 1];
 	if (!current || moved.length === 0) return board;
 	const moves = { ...current.moves };
+	const bounds = fieldBounds(board.pitch);
 	for (const n of moved) {
-		moves[n.id] = { ...moves[n.id], x: clamp01(n.x), y: clamp01(n.y) };
+		moves[n.id] = { ...moves[n.id], ...clampToBounds(n.x, n.y, bounds) };
 	}
 	const steps = [...board.steps];
 	steps[step - 1] = { ...current, moves };
@@ -392,6 +409,73 @@ function reorder<T extends { id: string }>(
 	return next.every((item, i) => item === list[i]) ? list : next;
 }
 
+/**
+ * Add copies of the given markers and drawings (with new ids) and select them.
+ * They land next to the originals, or centred on `at` when it's given, and
+ * always on the field. Copied players get shirt numbers that are still free.
+ */
+function insertCopies(
+	state: EditorState,
+	nodes: BoardNode[],
+	drawings: Drawing[],
+	at: Point | null,
+): EditorState {
+	const { board } = state;
+	const nodeCopies = nodes.map((n): BoardNode => ({ ...n, id: newId() }));
+	const drawingCopies = drawings.map((d): Drawing => ({ ...d, id: newId() }));
+	if (nodeCopies.length === 0 && drawingCopies.length === 0) return state;
+
+	// Place the group next to the originals (or centred on `at`), moved as a
+	// whole to stay on this field; anything still off it (copied from a bigger
+	// field) is brought onto the edge.
+	const points = [...nodeCopies, ...drawingCopies].flatMap(itemPoints);
+	const minX = Math.min(...points.map((p) => p[0]));
+	const maxX = Math.max(...points.map((p) => p[0]));
+	const minY = Math.min(...points.map((p) => p[1]));
+	const maxY = Math.max(...points.map((p) => p[1]));
+	const b = fieldBounds(board.pitch);
+	const wantX = at ? at[0] - (maxX - minX) / 2 : minX + DUPLICATE_OFFSET.x;
+	const wantY = at ? at[1] - (maxY - minY) / 2 : minY + DUPLICATE_OFFSET.y;
+	const fit = (want: number, size: number, lo: number, hi: number) =>
+		size >= hi - lo ? lo : Math.min(hi - size, Math.max(lo, want));
+	const dx = fit(wantX, maxX - minX, b.minX, b.maxX) - minX;
+	const dy = fit(wantY, maxY - minY, b.minY, b.maxY) - minY;
+	const shifted = {
+		nodes: nodeCopies.map((n) => ({
+			...n,
+			...clampToBounds(n.x + dx, n.y + dy, b),
+		})),
+		drawings: drawingCopies.map((d) => offsetDrawing(d, dx, dy)),
+	};
+
+	const all = [...board.nodes];
+	const newNodes = shifted.nodes.map((copy) => {
+		const taken =
+			copy.kind === "player" &&
+			copy.number !== undefined &&
+			all.some(
+				(n) =>
+					n.kind === "player" && n.team === copy.team && n.number === copy.number,
+			);
+		const numbered =
+			copy.kind === "player" && taken
+				? { ...copy, number: nextShirtNumber(all, copy.team) }
+				: copy;
+		all.push(numbered);
+		return numbered;
+	});
+
+	const next = commit(state, {
+		...board,
+		nodes: [...board.nodes, ...newNodes],
+		drawings: [...board.drawings, ...shifted.drawings],
+	});
+	return {
+		...next,
+		selection: [...newNodes, ...shifted.drawings].map((c) => c.id),
+	};
+}
+
 function reduce(state: EditorState, action: EditorAction): EditorState {
 	const { board } = state;
 
@@ -434,12 +518,12 @@ function reduce(state: EditorState, action: EditorAction): EditorState {
 			return state.selection.length === 0 ? state : { ...state, selection: [] };
 
 		case "place": {
-			const node = createForTool(
-				action.tool,
-				clamp01(action.x),
-				clamp01(action.y),
-				board.nodes,
-			);
+			const at = clampToBounds(action.x, action.y, fieldBounds(board.pitch));
+			let node = createForTool(action.tool, at.x, at.y, board.nodes);
+			// On a half field the goal end is at the top, so goals face down (or up).
+			if (node.kind === "goal" && board.pitch.variant === "half") {
+				node = { ...node, rotation: node.y < 0.5 ? 90 : 270 };
+			}
 			return {
 				...commit(state, { ...board, nodes: [...board.nodes, node] }),
 				selection: [node.id],
@@ -581,41 +665,22 @@ function reduce(state: EditorState, action: EditorAction): EditorState {
 
 		case "duplicateItems": {
 			const targets = new Set(action.ids);
-			const nodeCopies = board.nodes
-				.filter((n) => targets.has(n.id))
-				.map((n): BoardNode => ({ ...n, id: newId() }));
-			const drawingCopies = board.drawings
-				.filter((d) => targets.has(d.id))
-				.map((d): Drawing => ({ ...d, id: newId() }));
-			if (nodeCopies.length === 0 && drawingCopies.length === 0) return state;
+			return insertCopies(
+				state,
+				board.nodes.filter((n) => targets.has(n.id)),
+				board.drawings.filter((d) => targets.has(d.id)),
+				null,
+			);
+		}
 
-			const copies: Board = {
-				...board,
-				nodes: nodeCopies,
-				drawings: drawingCopies,
-			};
-			const copyIds = [...nodeCopies, ...drawingCopies].map((c) => c.id);
-			const shifted =
-				offsetItems(copies, copyIds, DUPLICATE_OFFSET.x, DUPLICATE_OFFSET.y) ??
-				copies;
+		case "pasteItems":
+			return insertCopies(state, action.nodes, action.drawings, action.at ?? null);
 
-			// Give duplicated players fresh shirt numbers so two markers never share one.
-			const all = [...board.nodes];
-			const newNodes = shifted.nodes.map((copy) => {
-				const numbered =
-					copy.kind === "player" && copy.number !== undefined
-						? { ...copy, number: nextShirtNumber(all, copy.team) }
-						: copy;
-				all.push(numbered);
-				return numbered;
-			});
-
-			const next = commit(state, {
-				...board,
-				nodes: [...board.nodes, ...newNodes],
-				drawings: [...board.drawings, ...shifted.drawings],
-			});
-			return { ...next, selection: copyIds };
+		case "clearBoard": {
+			if (!board.nodes.length && !board.drawings.length && !board.steps.length)
+				return state;
+			const next = commit(state, { ...board, nodes: [], drawings: [], steps: [] });
+			return { ...next, selection: [], step: 0 };
 		}
 
 		case "reorderItems": {
@@ -652,6 +717,31 @@ function reduce(state: EditorState, action: EditorAction): EditorState {
 				...board,
 				display: { ...board.display, ...action.patch },
 			});
+
+		case "updatePitch": {
+			const pitch = { ...board.pitch, ...action.patch };
+			if (
+				pitch.sport === board.pitch.sport &&
+				pitch.variant === board.pitch.variant
+			)
+				return state;
+			// Markers that would be off the new field's area are brought onto it.
+			const bounds = fieldBounds(pitch);
+			const nodes = board.nodes.map((n) => {
+				const c = clampToBounds(n.x, n.y, bounds);
+				return c.x === n.x && c.y === n.y ? n : { ...n, ...c };
+			});
+			const steps = board.steps.map((st) => ({
+				...st,
+				moves: Object.fromEntries(
+					Object.entries(st.moves).map(([id, mv]) => [
+						id,
+						{ ...mv, ...clampToBounds(mv.x, mv.y, bounds) },
+					]),
+				),
+			}));
+			return commit(state, { ...board, pitch, nodes, steps });
+		}
 
 		case "beginGesture":
 			return state.gestureBase ? state : { ...state, gestureBase: board };
@@ -745,11 +835,17 @@ function reduce(state: EditorState, action: EditorAction): EditorState {
 			const moves = { ...current.moves };
 			if (action.move) {
 				const { x, y, via } = action.move;
+				const bounds = fieldBounds(board.pitch);
+				const clamp = (px: number, py: number): Point => {
+					const c = clampToBounds(px, py, bounds);
+					return [c.x, c.y];
+				};
+				const [cx, cy] = clamp(x, y);
 				moves[action.id] = {
-					x: clamp01(x),
-					y: clamp01(y),
+					x: cx,
+					y: cy,
 					...(via && via.length > 0
-						? { via: via.map(([vx, vy]): Point => [clamp01(vx), clamp01(vy)]) }
+						? { via: via.map(([vx, vy]) => clamp(vx, vy)) }
 						: {}),
 				};
 			} else if (moves[action.id]) delete moves[action.id];

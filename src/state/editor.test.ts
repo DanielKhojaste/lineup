@@ -627,3 +627,69 @@ describe("empty gestures", () => {
 		expect(state.past).toHaveLength(0);
 	});
 });
+
+describe("copy and paste", () => {
+	it("pastes copies next to the originals, keeping free shirt numbers", () => {
+		const nine = createPlayer(0.4, 0.5, "home", { number: 9 });
+		const cone = createCone(0.5, 0.5);
+		// Pasting onto another board where #9 is free keeps the number.
+		let state = run(createEditorState(boardWith()), {
+			type: "pasteItems",
+			nodes: [nine, cone],
+			drawings: [],
+		});
+		const [player, copy] = state.board.nodes;
+		expect(player).toMatchObject({ kind: "player", number: 9 });
+		expect(player.id).not.toBe(nine.id);
+		expect(copy.x).toBeCloseTo(0.52);
+		expect(state.selection).toEqual([player.id, copy.id]);
+
+		// Pasting it again on the same board needs a new number.
+		state = run(state, { type: "pasteItems", nodes: [nine], drawings: [] });
+		expect((state.board.nodes[2] as PlayerNode).number).toBe(1);
+	});
+
+	it("pastes centred on a point and keeps the copies on the field", () => {
+		const a = createCone(0.3, 0.5);
+		const b = createCone(0.5, 0.5);
+		let state = run(createEditorState(boardWith()), {
+			type: "pasteItems",
+			nodes: [a, b],
+			drawings: [],
+			at: [0.6, 0.4],
+		});
+		expect(state.board.nodes.map((n) => n.x)).toEqual([
+			expect.closeTo(0.5),
+			expect.closeTo(0.7),
+		]);
+		expect(state.board.nodes[0].y).toBeCloseTo(0.4);
+
+		// Near the edge, the group is moved back onto the field as a whole.
+		state = run(createEditorState(boardWith()), {
+			type: "pasteItems",
+			nodes: [a, b],
+			drawings: [],
+			at: [1, 0.5],
+		});
+		const xs = state.board.nodes.map((n) => n.x);
+		expect(Math.max(...xs)).toBeLessThanOrEqual(1);
+		expect(xs[1] - xs[0]).toBeCloseTo(0.2);
+	});
+
+	it("clears the board in one undoable step", () => {
+		const line = createLine("run", [0.1, 0.1], [0.3, 0.3], DEFAULT_TOOL_STYLES.line);
+		let state = createEditorState({
+			...boardWith(createCone(0.5, 0.5)),
+			drawings: [line],
+		});
+		state = run(state, { type: "addStep" }, { type: "clearBoard" });
+		expect(state.board.nodes).toEqual([]);
+		expect(state.board.drawings).toEqual([]);
+		expect(state.board.steps).toEqual([]);
+		expect(state.step).toBe(0);
+		state = run(state, { type: "undo" });
+		expect(state.board.nodes).toHaveLength(1);
+		expect(state.board.drawings).toHaveLength(1);
+		expect(state.board.steps).toHaveLength(1);
+	});
+});

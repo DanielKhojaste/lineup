@@ -1,8 +1,8 @@
 import {
+	decodeBoardFile,
+	encodeBoardFile,
 	FILE_EXTENSION,
 	fileNameFor,
-	parseBoard,
-	serializeBoard,
 } from "../model/file";
 import { Board } from "../model/types";
 import { isTauri } from "./index";
@@ -13,6 +13,7 @@ async function saveFile(
 	extension: string,
 	label: string,
 	data: string | Uint8Array,
+	mimeType = "application/octet-stream",
 ): Promise<boolean> {
 	if (isTauri()) {
 		const { save } = await import("@tauri-apps/plugin-dialog");
@@ -27,9 +28,7 @@ async function saveFile(
 		return true;
 	}
 
-	const blob = new Blob([data as BlobPart], {
-		type: typeof data === "string" ? "application/json" : "image/png",
-	});
+	const blob = new Blob([data as BlobPart], { type: mimeType });
 	const url = URL.createObjectURL(blob);
 	const link = document.createElement("a");
 	link.href = url;
@@ -44,7 +43,7 @@ export function exportBoardFile(board: Board) {
 		fileNameFor(board.meta.title, FILE_EXTENSION),
 		FILE_EXTENSION,
 		"Lineup board",
-		serializeBoard(board),
+		encodeBoardFile(board),
 	);
 }
 
@@ -54,6 +53,7 @@ export function exportPng(board: Board, png: Uint8Array) {
 		"png",
 		"PNG image",
 		png,
+		"image/png",
 	);
 }
 
@@ -62,11 +62,11 @@ export async function pickBoardFiles(): Promise<{
 	boards: Board[];
 	problems: string[];
 }> {
-	const texts: { name: string; text: string }[] = [];
+	const files: { name: string; bytes: Uint8Array }[] = [];
 
 	if (isTauri()) {
 		const { open } = await import("@tauri-apps/plugin-dialog");
-		const { readTextFile } = await import("@tauri-apps/plugin-fs");
+		const { readFile } = await import("@tauri-apps/plugin-fs");
 		const picked = await open({
 			multiple: true,
 			filters: [{ name: "Lineup board", extensions: [FILE_EXTENSION] }],
@@ -74,28 +74,31 @@ export async function pickBoardFiles(): Promise<{
 		const paths =
 			picked === null ? [] : Array.isArray(picked) ? picked : [picked];
 		for (const path of paths)
-			texts.push({
+			files.push({
 				name: path.split(/[\\/]/).pop() ?? path,
-				text: await readTextFile(path),
+				bytes: await readFile(path),
 			});
 	} else {
-		const files = await new Promise<File[]>((resolve) => {
+		const picked = await new Promise<File[]>((resolve) => {
 			const input = document.createElement("input");
 			input.type = "file";
 			input.multiple = true;
-			input.accept = `.${FILE_EXTENSION},application/json`;
+			input.accept = `.${FILE_EXTENSION}`;
 			input.onchange = () => resolve([...(input.files ?? [])]);
 			input.click();
 		});
-		for (const file of files)
-			texts.push({ name: file.name, text: await file.text() });
+		for (const file of picked)
+			files.push({
+				name: file.name,
+				bytes: new Uint8Array(await file.arrayBuffer()),
+			});
 	}
 
 	const boards: Board[] = [];
 	const problems: string[] = [];
-	for (const { name, text } of texts) {
+	for (const { name, bytes } of files) {
 		try {
-			boards.push(parseBoard(text));
+			boards.push(decodeBoardFile(bytes));
 		} catch (error) {
 			problems.push(`${name}: ${(error as Error).message}`);
 		}

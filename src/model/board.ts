@@ -6,6 +6,7 @@ import {
 	GoalNode,
 	Kit,
 	MannequinNode,
+	PitchSettings,
 	PlayerNode,
 	PoleNode,
 	SCHEMA_VERSION,
@@ -31,6 +32,24 @@ export const DEFAULT_TEAMS: Board["teams"] = {
 	neutral: { name: "Neutral", color: "#2F80ED" },
 };
 
+/** Marker sizes on offer, as a factor of the normal size. */
+export const MARKER_SCALES = [
+	{ value: 0.75, label: "S" },
+	{ value: 1, label: "M" },
+	{ value: 1.3, label: "L" },
+	{ value: 1.6, label: "XL" },
+] as const;
+
+/** How much bigger (or smaller) than normal a marker is drawn on this board. */
+export function markerScale(
+	node: BoardNode,
+	display: Board["display"],
+): number {
+	if (node.kind === "player") return display.playerScale;
+	if (node.kind === "goal") return 1;
+	return display.equipmentScale;
+}
+
 /** Degrees the rotate buttons and Shift+R turn a goal or mannequin by. */
 export const ROTATE_STEP = 15;
 
@@ -41,7 +60,10 @@ export function playerKit(node: PlayerNode, teams: Board["teams"]): Kit {
 	return { color: team.color, stripes: team.stripes };
 }
 
-export function createBoard(title = "Untitled board"): Board {
+export function createBoard(
+	title = "Untitled board",
+	pitch: PitchSettings = { sport: "soccer", variant: "full" },
+): Board {
 	const now = new Date().toISOString();
 
 	return {
@@ -58,9 +80,9 @@ export function createBoard(title = "Untitled board"): Board {
 			description: "",
 			coachingPoints: [],
 		},
-		pitch: { sport: "soccer", variant: "full" },
+		pitch: { ...pitch },
 		teams: structuredClone(DEFAULT_TEAMS),
-		display: { showLabels: true },
+		display: { showLabels: true, playerScale: 1, equipmentScale: 1 },
 		nodes: [],
 		drawings: [],
 		steps: [],

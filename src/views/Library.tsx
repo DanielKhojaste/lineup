@@ -5,8 +5,12 @@ import { Icon } from "../components/Icon";
 import SettingsDialog from "../components/shell/SettingsDialog";
 import { ConfirmDialog, Modal, PromptDialog } from "../components/ui/Dialog";
 import { Menu } from "../components/ui/Menu";
+import { ContextMenuEntry, useContextMenu } from "../components/ui/ContextMenu";
 import { boardToPng } from "../export/png";
-import { Board } from "../model/types";
+import { SURFACES } from "../components/board/Pitch";
+import NewBoardDialog from "../components/library/NewBoardDialog";
+import { pitchLabel, Sport, SPORT_INFO, SPORTS } from "../model/sports";
+import { Board, PitchSettings } from "../model/types";
 import { allFolders, useLibrary } from "../state/LibraryContext";
 import { exportBoardFile, exportPng, pickBoardFiles } from "../storage/files";
 import { relativeTime } from "../utils/time";
@@ -15,7 +19,8 @@ import { relativeTime } from "../utils/time";
 type View =
 	| { kind: "all" }
 	| { kind: "unfiled" }
-	| { kind: "folder"; name: string };
+	| { kind: "folder"; name: string }
+	| { kind: "sport"; sport: Sport };
 type Sort = "updated" | "title";
 
 function matches(board: Board, query: string): boolean {
@@ -44,8 +49,11 @@ function BoardCard({
 	onExport,
 	onExportPng,
 	onDelete,
+	contextMenu,
 }: {
 	board: Board;
+	/** Entries for the card's right-click menu. */
+	contextMenu: () => ContextMenuEntry[];
 	onOpen: () => void;
 	onDuplicate: () => void;
 	onMove: () => void;
@@ -54,14 +62,19 @@ function BoardCard({
 	onDelete: () => void;
 }) {
 	const details = [
+		pitchLabel(board.pitch),
 		board.meta.folder,
 		board.notes.duration,
 		board.steps.length > 0 &&
 			`${board.steps.length} step${board.steps.length > 1 ? "s" : ""}`,
 		`Edited ${relativeTime(board.meta.updatedAt)}`,
 	].filter(Boolean);
+	const { openMenu } = useContextMenu();
 	return (
-		<article className="board-card">
+		<article
+			className="board-card"
+			onContextMenu={(e) => openMenu(e, contextMenu())}
+		>
 			<button
 				type="button"
 				className="board-card__open"
@@ -146,9 +159,11 @@ function MoveDialog({
 export default function Library() {
 	const library = useLibrary();
 	const navigate = useNavigate();
+	const { openMenu } = useContextMenu();
 	const [view, setView] = useState<View>({ kind: "all" });
 	const [query, setQuery] = useState("");
 	const [sort, setSort] = useState<Sort>("updated");
+	const [newBoardOpen, setNewBoardOpen] = useState(false);
 	const [notice, setNotice] = useState<{
 		text: string;
 		tone: "info" | "error";
@@ -169,7 +184,9 @@ export default function Library() {
 				? true
 				: view.kind === "unfiled"
 				  ? !b.meta.folder
-				  : b.meta.folder === view.name,
+				  : view.kind === "sport"
+				    ? b.pitch.sport === view.sport
+				    : b.meta.folder === view.name,
 		);
 		const found = inView.filter((b) => matches(b, query.trim()));
 		return sort === "title"
@@ -178,6 +195,11 @@ export default function Library() {
 					b.meta.updatedAt.localeCompare(a.meta.updatedAt),
 			  );
 	}, [library.boards, view, query, sort]);
+
+	// The sidebar lists the sports the library has boards for.
+	const sportsInLibrary = SPORTS.filter((s) =>
+		library.boards.some((b) => b.pitch.sport === s),
+	);
 
 	const run = async (task: () => Promise<unknown>, failure: string) => {
 		try {
@@ -192,9 +214,10 @@ export default function Library() {
 
 	const openBoard = (id: string) => navigate(`/board/${id}`);
 
-	const newBoard = () =>
+	/** A new board for the sport and field picked in the New board dialog. */
+	const newBoard = (pitch: PitchSettings) =>
 		run(async () => {
-			const board = await library.createBoard(currentFolder);
+			const board = await library.createBoard(currentFolder, pitch);
 			openBoard(board.id);
 		}, "Couldn't create the board");
 
@@ -228,7 +251,9 @@ export default function Library() {
 			? "All boards"
 			: view.kind === "unfiled"
 			  ? "Not in a folder"
-			  : view.name;
+			  : view.kind === "sport"
+			    ? SPORT_INFO[view.sport].name
+			    : view.name;
 
 	const navItem = (
 		label: string,
@@ -288,7 +313,7 @@ export default function Library() {
 				<button
 					type="button"
 					className="button button--primary"
-					onClick={newBoard}
+					onClick={() => setNewBoardOpen(true)}
 					disabled={library.status !== "ready"}
 				>
 					<Icon name="plus" size={16} />
@@ -323,6 +348,45 @@ export default function Library() {
 							"inbox",
 						)}
 					</div>
+					{sportsInLibrary.length > 0 && (
+						<div className="nav-group">
+							<div className="nav-group__head">
+								<span>Sports</span>
+							</div>
+							{sportsInLibrary.map((sport) => (
+								<button
+									key={sport}
+									type="button"
+									className={`nav-item${
+										view.kind === "sport" && view.sport === sport
+											? " is-active"
+											: ""
+									}`}
+									aria-current={
+										view.kind === "sport" && view.sport === sport
+											? "page"
+											: undefined
+									}
+									onClick={() => setView({ kind: "sport", sport })}
+								>
+									<span
+										className="sport-swatch"
+										style={{ background: SURFACES[sport].floor }}
+										aria-hidden="true"
+									/>
+									<span className="nav-item__label">
+										{SPORT_INFO[sport].name}
+									</span>
+									<span className="nav-item__count">
+										{
+											library.boards.filter((b) => b.pitch.sport === sport)
+												.length
+										}
+									</span>
+								</button>
+							))}
+						</div>
+					)}
 					<div className="nav-group">
 						<div className="nav-group__head">
 							<span>Folders</span>
@@ -340,7 +404,32 @@ export default function Library() {
 							<p className="muted small nav-group__empty">No folders yet.</p>
 						)}
 						{folders.map((name) => (
-							<div key={name} className="nav-row">
+							<div
+								key={name}
+								className="nav-row"
+								onContextMenu={(e) =>
+									openMenu(e, [
+										{
+											label: "Open",
+											onSelect: () => setView({ kind: "folder", name }),
+										},
+										{
+											label: "New board here…",
+											onSelect: () => {
+												setView({ kind: "folder", name });
+												setNewBoardOpen(true);
+											},
+										},
+										"separator",
+										{ label: "Rename…", onSelect: () => setRenaming(name) },
+										{
+											label: "Delete folder…",
+											danger: true,
+											onSelect: () => setDeletingFolder(name),
+										},
+									])
+								}
+							>
 								{navItem(
 									name,
 									counts(name),
@@ -371,7 +460,18 @@ export default function Library() {
 					</div>
 				</nav>
 
-				<main className="library__main">
+				<main
+					className="library__main"
+					onContextMenu={(e) => {
+						if (e.defaultPrevented) return;
+						openMenu(e, [
+							{ label: "New board…", onSelect: () => setNewBoardOpen(true) },
+							{ label: "Import boards…", onSelect: importBoards },
+							"separator",
+							{ label: "New folder…", onSelect: () => setNewFolderOpen(true) },
+						]);
+					}}
+				>
 					<div className="library__head">
 						<h1>{heading}</h1>
 						<span className="muted">
@@ -439,7 +539,7 @@ export default function Library() {
 									<button
 										type="button"
 										className="button button--primary"
-										onClick={newBoard}
+										onClick={() => setNewBoardOpen(true)}
 									>
 										<Icon name="plus" size={16} />
 										New board
@@ -472,6 +572,66 @@ export default function Library() {
 									)
 								}
 								onDelete={() => setDeletingBoard(board)}
+								contextMenu={() => [
+									{ label: "Open", onSelect: () => openBoard(board.id) },
+									{
+										label: "Duplicate",
+										onSelect: () =>
+											run(
+												() => library.duplicateBoard(board.id),
+												"Couldn't duplicate the board",
+											),
+									},
+									{
+										label: "Move to folder",
+										submenu: [
+											{
+												label: "No folder",
+												checked: !board.meta.folder,
+												onSelect: () =>
+													run(
+														() => library.moveToFolder(board.id, ""),
+														"Couldn't move the board",
+													),
+											},
+											...(folders.length ? ["separator" as const] : []),
+											...folders.map((f) => ({
+												label: f,
+												checked: board.meta.folder === f,
+												onSelect: () =>
+													run(
+														() => library.moveToFolder(board.id, f),
+														"Couldn't move the board",
+													),
+											})),
+										],
+									},
+									"separator",
+									{
+										label: "Export",
+										submenu: [
+											{
+												label: ".lineup file",
+												onSelect: () =>
+													run(() => exportBoardFile(board), "Export failed"),
+											},
+											{
+												label: "PNG image",
+												onSelect: () =>
+													run(
+														async () => exportPng(board, await boardToPng(board)),
+														"Export failed",
+													),
+											},
+										],
+									},
+									"separator",
+									{
+										label: "Delete…",
+										danger: true,
+										onSelect: () => setDeletingBoard(board),
+									},
+								]}
 							/>
 						))}
 					</div>
@@ -556,6 +716,12 @@ export default function Library() {
 					onClose={() => setMoving(null)}
 				/>
 			)}
+			<NewBoardDialog
+				open={newBoardOpen}
+				initialSport={view.kind === "sport" ? view.sport : undefined}
+				onClose={() => setNewBoardOpen(false)}
+				onCreate={newBoard}
+			/>
 			<SettingsDialog
 				open={settingsOpen}
 				onClose={() => setSettingsOpen(false)}

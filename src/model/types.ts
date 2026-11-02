@@ -4,6 +4,8 @@
  * class instances, functions and DOM references.
  */
 
+import type { FieldVariant, Sport } from "./sports";
+
 export const SCHEMA_VERSION = 2;
 
 export type TeamId = "home" | "away" | "neutral";
@@ -163,11 +165,15 @@ export interface BoardMeta {
 export interface BoardDisplay {
 	/** Show position labels and names under player markers. */
 	showLabels: boolean;
+	/** Size of player markers, 1 = normal. */
+	playerScale: number;
+	/** Size of cones, balls, mannequins and poles, 1 = normal. Goals keep their real size. */
+	equipmentScale: number;
 }
 
 export interface PitchSettings {
-	sport: "soccer";
-	variant: "full";
+	sport: Sport;
+	variant: FieldVariant;
 }
 
 export interface Board {

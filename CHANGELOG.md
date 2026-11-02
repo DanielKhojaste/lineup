@@ -8,6 +8,29 @@ This project adheres to semantic versioning (0.x during early development).
 
 ## [Unreleased]
 
+### Added
+
+- More sports: futsal, basketball, volleyball, handball and field hockey, as well as soccer, each with its own field or court drawn to scale with its markings (basketball keys, three-point lines and hoops; the volleyball net and attack lines; handball and futsal goal areas; the hockey shooting circles)
+- Full or half field for every sport; a half field is drawn with the goal (or hoop, or net) at the top, and goals placed on it face down the field
+- A New board window: pick the sport, then a full or half field, from pictures of each; it opens on your default sport (set in Settings, or tick "Use this for new boards from now on"), so Enter makes a board straight away
+- A Field section in the board's settings to change its sport or switch between a full and a half field (undoable)
+- Player size and equipment size (S, M, L, XL) in each board's Display settings: players, and cones, balls, mannequins and poles, can be drawn smaller or bigger; goals stay their real size
+- The ball looks like the sport's ball (basketball, volleyball, hockey ball), and full-size goals are the sport's real goal size
+- The editor, library previews and PNG export show just the field and its margin, so half fields and narrow courts fill the screen instead of sitting in empty bands; markers and drawings stay on the field
+- Volleyball has 3 m behind the end lines (room to serve) and 1.5 m at the sides; futsal, basketball and handball have 1.5 m around the court
+- The library sidebar lists your sports, with how many boards each has; click one to see just its boards. Cards show each board's sport and are all the same shape
+- Right-click menus everywhere: on markers and drawings (cut, copy, paste, duplicate, team, goalkeeper, goal size, turning, line style, straighten, remove a run from a step, front and back, delete), on an empty spot of the board (paste or add something there, select all, undo and redo, show names, full or half field, clear the board), on players and teams in the sidebar, on library cards (open, duplicate, move to a folder, export, delete), on folders and on the library itself. The menu key and Shift+F10 open them from the keyboard
+- Copy, cut and paste markers and drawings (Ctrl+C, Ctrl+X, Ctrl+V), on the same board or another one; pasted players keep their shirt numbers when they're free
+- Clear the board (from its right-click menu), with a confirmation; Ctrl+Z brings everything back
+
+### Changed
+
+- `.lineup` files are now saved compressed, so they no longer open as readable text (they're also about a third of the size); files from earlier versions still open and are converted the next time they're saved
+- The window opens at the size and position it was closed at, and maximised or full screen if it was
+- The goal tool is hidden for basketball and volleyball, which don't have goals
+- The README covers the new sports and the new plan: sessions, season plans and a calendar next, then sharing, then accounts and a premium cloud subscription
+- Text fields have Lineup's own Cut, Copy, Paste and Select all menu instead of the browser's, so "Inspect" and other browser items never show (Tauri clipboard plugin)
+
 ---
 
 ## [0.6.1] - 2026-10-25
