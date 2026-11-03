@@ -303,6 +303,7 @@ export function parseBoard(text: string): Board {
 				  : "drill",
 			tags: Array.isArray(meta.tags) ? meta.tags.filter(isStr) : [],
 			folder: isStr(meta.folder) ? meta.folder : "",
+			...(meta.imported === true ? { imported: true } : {}),
 			createdAt: isStr(meta.createdAt) ? meta.createdAt : fresh.meta.createdAt,
 			updatedAt: isStr(meta.updatedAt) ? meta.updatedAt : fresh.meta.updatedAt,
 		},

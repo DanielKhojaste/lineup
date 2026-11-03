@@ -15,6 +15,7 @@ import { getPreferences } from "../state/preferences";
 import { truncate } from "../utils/text";
 import { BOARD_TYPE_LABELS } from "../model/board";
 import { Session, sessionTitle } from "../model/session";
+import { drillsOf, sameDrill } from "../model/sessionFile";
 import { pitchLabel, Sport, SPORT_INFO, SPORTS } from "../model/sports";
 import { Board, BOARD_TYPES, BoardType, PitchSettings } from "../model/types";
 import { allFolders, useLibrary } from "../state/LibraryContext";
@@ -32,8 +33,42 @@ type View =
 	| { kind: "all" }
 	| { kind: "sessions" }
 	| { kind: "unfiled" }
+	| { kind: "created" }
+	| { kind: "imported" }
 	| { kind: "folder"; name: string }
 	| { kind: "sport"; sport: Sport };
+
+/**
+ * Whether a board or session belongs in a sidebar view. "Created" is what the
+ * coach made, "Imported" what came from files; "Not in a folder" leaves
+ * imported things out so they don't clutter it.
+ */
+function docInView(
+	meta: { folder: string; imported?: boolean },
+	sport: Sport,
+	view: View,
+): boolean {
+	switch (view.kind) {
+		case "all":
+		case "sessions":
+			return true;
+		case "unfiled":
+			return !meta.folder && !meta.imported;
+		case "created":
+			return !meta.imported;
+		case "imported":
+			return !!meta.imported;
+		case "sport":
+			return sport === view.sport;
+		case "folder":
+			return meta.folder === view.name;
+	}
+}
+
+const boardInView = (b: Board, view: View) =>
+	view.kind !== "sessions" && docInView(b.meta, b.pitch.sport, view);
+const sessionInView = (s: Session, view: View) =>
+	docInView(s.meta, s.header.sport, view);
 type Sort = "updated" | "title";
 
 function matches(board: Board, query: string): boolean {
@@ -164,15 +199,7 @@ export default function Library() {
 
 	const shown = useMemo(() => {
 		if (view.kind === "sessions" || type === "sessions") return [];
-		const inView = library.boards.filter((b) =>
-			view.kind === "all"
-				? true
-				: view.kind === "unfiled"
-				  ? !b.meta.folder
-				  : view.kind === "sport"
-				    ? b.pitch.sport === view.sport
-				    : b.meta.folder === view.name,
-		);
+		const inView = library.boards.filter((b) => boardInView(b, view));
 		const found = inView.filter(
 			(b) => (type === "all" || b.meta.type === type) && matches(b, query.trim()),
 		);
@@ -188,15 +215,7 @@ export default function Library() {
 		if (view.kind === "all") return [];
 		// A board type picked in the chips shows just those boards.
 		if (view.kind !== "sessions" && type !== "all" && type !== "sessions") return [];
-		const inView = library.sessions.filter((s) =>
-			view.kind === "sessions"
-				? true
-				: view.kind === "unfiled"
-				  ? !s.meta.folder
-				  : view.kind === "sport"
-				    ? s.header.sport === view.sport
-				    : s.meta.folder === view.name,
-		);
+		const inView = library.sessions.filter((s) => sessionInView(s, view));
 		const found = inView.filter((s) => sessionMatches(s, query.trim()));
 		return sort === "title"
 			? [...found].sort((a, b) => sessionTitle(a).localeCompare(sessionTitle(b)))
@@ -209,28 +228,12 @@ export default function Library() {
 	const sessionsInView =
 		view.kind === "all" || view.kind === "sessions"
 			? 0
-			: library.sessions.filter((s) =>
-					view.kind === "unfiled"
-						? !s.meta.folder
-						: view.kind === "sport"
-						  ? s.header.sport === view.sport
-						  : s.meta.folder === view.name,
-			  ).length;
+			: library.sessions.filter((s) => sessionInView(s, view)).length;
 
 	// Board types in this view, for the filter chips.
 	const typeCounts = useMemo(() => {
 		const counts = new Map<BoardType, number>();
-		const inView = library.boards.filter((b) =>
-			view.kind === "all"
-				? true
-				: view.kind === "unfiled"
-				  ? !b.meta.folder
-				  : view.kind === "sport"
-				    ? b.pitch.sport === view.sport
-				    : view.kind === "folder"
-				      ? b.meta.folder === view.name
-				      : false,
-		);
+		const inView = library.boards.filter((b) => boardInView(b, view));
 		for (const b of inView) counts.set(b.meta.type, (counts.get(b.meta.type) ?? 0) + 1);
 		return counts;
 	}, [library.boards, view]);
@@ -384,7 +387,10 @@ export default function Library() {
 				{
 					label: "Session file (.lineup-session)",
 					onSelect: () =>
-						run(() => exportSessionDocument(session), "Couldn't export the session"),
+						run(
+							() => exportSessionDocument(session, drillsOf(session, library.getBoard)),
+							"Couldn't export the session",
+						),
 				},
 			],
 		},
@@ -404,15 +410,36 @@ export default function Library() {
 		run(async () => {
 			const { boards, sessions, problems } = await pickLibraryFiles();
 			if (!boards.length && !sessions.length && !problems.length) return;
-			const inFolder = <T extends { meta: { folder: string } }>(doc: T): T => ({
-				...doc,
-				meta: { ...doc.meta, folder: doc.meta.folder || currentFolder },
-			});
-			const addedBoards = await library.addBoards(boards.map(inFolder));
+			// Everything imported is marked, so it shows under "Imported" and not
+			// in "Not in a folder". Boards and sessions picked here land in the
+			// folder being viewed; the drills inside a session stay out of folders.
+			const imported = <T extends { meta: { folder: string; imported?: boolean } }>(
+				doc: T,
+				folder = doc.meta.folder || currentFolder,
+			): T => ({ ...doc, meta: { ...doc.meta, folder, imported: true } });
+
+			const toAdd: Board[] = boards.map((b) => imported(b));
+			const sourceIds = boards.map((b) => b.id);
+			const boardIds = new Map<string, string>();
+			let alreadyHad = 0;
+			for (const { drills } of sessions)
+				for (const drill of drills) {
+					if (sourceIds.includes(drill.id) || boardIds.has(drill.id)) continue;
+					// The same drill is already here (the coach's own, or imported before): use it.
+					const existing = library.getBoard(drill.id);
+					if (existing && sameDrill(existing, drill)) {
+						boardIds.set(drill.id, drill.id);
+						alreadyHad++;
+						continue;
+					}
+					toAdd.push(imported(drill, ""));
+					sourceIds.push(drill.id);
+				}
+			const addedBoards = await library.addBoards(toAdd);
 			// A drill that needed a new id keeps its place in the sessions imported with it.
-			const boardIds = new Map(boards.map((b, i) => [b.id, addedBoards[i].id]));
+			sourceIds.forEach((id, i) => boardIds.set(id, addedBoards[i].id));
 			const addedSessions = await library.addSessions(
-				sessions.map(inFolder),
+				sessions.map((s) => imported(s.session)),
 				boardIds,
 			);
 
@@ -431,12 +458,16 @@ export default function Library() {
 
 			const plural = (n: number, word: string) =>
 				`${n} ${word}${n === 1 ? "" : "s"}`;
-			const imported = [
+			const done = [
 				addedBoards.length && plural(addedBoards.length, "board"),
 				addedSessions.length && plural(addedSessions.length, "session"),
 			].filter(Boolean);
 			const parts = [];
-			if (imported.length) parts.push(`Imported ${imported.join(" and ")}.`);
+			if (done.length) parts.push(`Imported ${done.join(" and ")}.`);
+			if (alreadyHad)
+				parts.push(
+					`${alreadyHad === 1 ? "One drill was" : `${alreadyHad} drills were`} already in your library, so the session uses ${alreadyHad === 1 ? "it" : "them"}.`,
+				);
 			for (const m of missing)
 				parts.push(
 					`“${m.title}” uses ${plural(m.count, "drill")} that ${
@@ -455,9 +486,9 @@ export default function Library() {
 	const counts = (name: string) =>
 		library.boards.filter((b) => b.meta.folder === name).length +
 		library.sessions.filter((s) => s.meta.folder === name).length;
-	const unfiledCount =
-		library.boards.filter((b) => !b.meta.folder).length +
-		library.sessions.filter((s) => !s.meta.folder).length;
+	const countIn = (v: View) =>
+		library.boards.filter((b) => boardInView(b, v)).length +
+		library.sessions.filter((s) => sessionInView(s, v)).length;
 	const heading =
 		view.kind === "all"
 			? "Boards"
@@ -465,6 +496,10 @@ export default function Library() {
 			  ? "Sessions"
 			  : view.kind === "unfiled"
 			  ? "Not in a folder"
+			  : view.kind === "created"
+			  ? "Created"
+			  : view.kind === "imported"
+			  ? "Imported"
 			  : view.kind === "sport"
 			    ? SPORT_INFO[view.sport].name
 			    : view.name;
@@ -474,7 +509,7 @@ export default function Library() {
 		count: number,
 		active: boolean,
 		onClick: () => void,
-		icon: "grid" | "folder" | "inbox" | "session",
+		icon: "grid" | "folder" | "inbox" | "session" | "pen" | "download",
 	) => (
 		<button
 			type="button"
@@ -625,10 +660,24 @@ export default function Library() {
 						</div>
 						{navItem(
 							"Not in a folder",
-							unfiledCount,
+							countIn({ kind: "unfiled" }),
 							view.kind === "unfiled",
 							() => setView({ kind: "unfiled" }),
 							"inbox",
+						)}
+						{navItem(
+							"Created",
+							countIn({ kind: "created" }),
+							view.kind === "created",
+							() => setView({ kind: "created" }),
+							"pen",
+						)}
+						{navItem(
+							"Imported",
+							countIn({ kind: "imported" }),
+							view.kind === "imported",
+							() => setView({ kind: "imported" }),
+							"download",
 						)}
 						{folders.length === 0 && (
 							<p className="muted small nav-group__empty">No folders yet.</p>

@@ -11,6 +11,7 @@ import { Menu } from "../components/ui/Menu";
 import { useSessionExport } from "../export/useSessionExport";
 import { exportSessionDocument } from "../storage/files";
 import { Session, sessionTitle } from "../model/session";
+import { drillsOf } from "../model/sessionFile";
 import { useLibrary } from "../state/LibraryContext";
 import { SessionProvider, useSessionEditor } from "../state/SessionContext";
 import { SaveStatus, useAutosave } from "../state/useAutosave";
@@ -132,7 +133,11 @@ function SessionLayout() {
 						"separator",
 						{
 							label: "Session file (.lineup-session)",
-							onSelect: () => void exportSessionDocument(session).catch(console.error),
+							onSelect: () =>
+								void exportSessionDocument(
+									session,
+									drillsOf(session, library.getBoard),
+								).catch(console.error),
 						},
 					]}
 				/>

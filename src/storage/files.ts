@@ -5,9 +5,8 @@ import {
 	fileNameFor,
 	parseBoard,
 } from "../model/file";
+import { encodeSharedSession, parseSharedSession, SharedSession } from "../model/sessionFile";
 import {
-	encodeSessionFile,
-	parseSession,
 	Session,
 	SESSION_EXTENSION,
 	sessionTitle,
@@ -55,12 +54,13 @@ export function exportBoardFile(board: Board) {
 	);
 }
 
-export function exportSessionDocument(session: Session) {
+/** Save a session to share, with a copy of every drill it uses inside. */
+export function exportSessionDocument(session: Session, drills: Board[]) {
 	return saveFile(
 		fileNameFor(sessionTitle(session), SESSION_EXTENSION),
 		SESSION_EXTENSION,
 		"Lineup session",
-		encodeSessionFile(session),
+		encodeSharedSession(session, drills),
 	);
 }
 
@@ -95,7 +95,7 @@ export function exportPng(board: Board, png: Uint8Array) {
  */
 export async function pickLibraryFiles(): Promise<{
 	boards: Board[];
-	sessions: Session[];
+	sessions: SharedSession[];
 	problems: string[];
 }> {
 	const files: { name: string; bytes: Uint8Array }[] = [];
@@ -136,12 +136,12 @@ export async function pickLibraryFiles(): Promise<{
 	}
 
 	const boards: Board[] = [];
-	const sessions: Session[] = [];
+	const sessions: SharedSession[] = [];
 	const problems: string[] = [];
 	for (const { name, bytes } of files) {
 		try {
 			const doc = readLibraryDocument(bytes);
-			if (doc.kind === "session") sessions.push(doc.session);
+			if (doc.kind === "session") sessions.push(doc);
 			else boards.push(doc.board);
 		} catch (error) {
 			problems.push(`${name}: ${(error as Error).message}`);
@@ -153,7 +153,7 @@ export async function pickLibraryFiles(): Promise<{
 /** A board or a session from a file's bytes, told apart by what's inside rather than the file name. */
 export function readLibraryDocument(
 	bytes: Uint8Array,
-): { kind: "board"; board: Board } | { kind: "session"; session: Session } {
+): { kind: "board"; board: Board } | ({ kind: "session" } & SharedSession) {
 	const text = decodeDocumentText(bytes);
 	let docType: unknown;
 	try {
@@ -162,6 +162,6 @@ export function readLibraryDocument(
 		docType = undefined;
 	}
 	return docType === "session"
-		? { kind: "session", session: parseSession(text) }
+		? { kind: "session", ...parseSharedSession(text) }
 		: { kind: "board", board: parseBoard(text) };
 }

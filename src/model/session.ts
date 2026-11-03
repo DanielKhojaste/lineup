@@ -23,6 +23,8 @@ export interface SessionMeta {
 	tags: string[];
 	/** Library folder name; empty when the session isn't in a folder. */
 	folder: string;
+	/** True for a session that came from someone else's file. */
+	imported?: boolean;
 	createdAt: string;
 	updatedAt: string;
 }
@@ -278,6 +280,7 @@ export function parseSession(source: string): Session {
 			title: text(meta.title, 120),
 			tags: Array.isArray(meta.tags) ? meta.tags.filter(isStr) : [],
 			folder: isStr(meta.folder) ? meta.folder : "",
+			...(meta.imported === true ? { imported: true } : {}),
 			createdAt: isStr(meta.createdAt) ? meta.createdAt : fresh.meta.createdAt,
 			updatedAt: isStr(meta.updatedAt) ? meta.updatedAt : fresh.meta.updatedAt,
 		},

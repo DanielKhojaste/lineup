@@ -210,6 +210,8 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 					id: newId(),
 					meta: {
 						...original.meta,
+						// A copy is the coach's own, even of an imported drill or session.
+						imported: undefined,
 						title: `${original.meta.title} (copy)`,
 						createdAt: now,
 						updatedAt: now,
@@ -275,6 +277,8 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 					id: newId(),
 					meta: {
 						...original.meta,
+						// A copy is the coach's own, even of an imported drill or session.
+						imported: undefined,
 						title: `${original.meta.title} (copy)`,
 						createdAt: now,
 						updatedAt: now,
