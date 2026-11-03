@@ -17,6 +17,10 @@ This project adheres to semantic versioning (0.x during early development).
 - Other blocks in a session (a game, a team talk) can be a part of the session too, like **Scrimmage**, and are numbered with the rest
 - Hide the session editor's **Add from library** panel to give the plan more room; Lineup remembers it
 
+### Changed
+
+- The plan's colours follow the part of the session: warm-ups, activities, games and scrimmages in yellow, and water breaks and cool-downs in grey
+
 ---
 
 ## [0.8.0] - 2026-11-03

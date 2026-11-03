@@ -2245,11 +2245,8 @@ fieldset.field {
 	border-left: 4px solid var(--accent);
 }
 
-.block--break {
-	border-left-color: var(--secondary);
-}
-
-.block--custom {
+/* Warm-ups, activities, games and scrimmages in the accent colour; breaks and cool-downs neutral. */
+.block--rest {
 	border-left-color: var(--border-strong);
 }
 
@@ -2259,8 +2256,8 @@ fieldset.field {
 	box-shadow: 0 0 0 1px var(--accent);
 }
 
-.block--break.is-selected {
-	border-left-color: var(--secondary);
+.block--rest.is-selected {
+	border-left-color: var(--border-strong);
 }
 
 .block.is-dragging {
@@ -2318,7 +2315,7 @@ fieldset.field {
 	text-overflow: ellipsis;
 }
 
-.block--drill .block__name {
+.block--active .block__name {
 	color: var(--accent-text);
 }
 
@@ -2407,7 +2404,7 @@ fieldset.field {
 
 .block__icon {
 	display: inline-flex;
-	color: var(--secondary-text);
+	color: var(--text-muted);
 }
 
 .block__label {

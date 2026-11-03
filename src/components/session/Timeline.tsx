@@ -98,6 +98,16 @@ function BlockRow({
 	const update = (patch: BlockPatch) =>
 		dispatch({ type: "updateBlock", id: block.id, patch });
 
+	// Training parts are in the accent colour; breaks, cool-downs and blocks
+	// without a part are neutral.
+	const part =
+		block.kind === "break"
+			? ""
+			: block.kind === "custom"
+			  ? block.stage.trim()
+			  : block.stage.trim() || board?.notes.stage.trim() || "Activity";
+	const resting = !part || part.toLowerCase() === "cool-down";
+
 	const entries = menu(block, index);
 	const summary = board
 		? [
@@ -112,7 +122,9 @@ function BlockRow({
 
 	return (
 		<li
-			className={`block block--${block.kind}${selected ? " is-selected" : ""}${
+			className={`block block--${block.kind} ${resting ? "block--rest" : "block--active"}${
+				selected ? " is-selected" : ""
+			}${
 				dragging ? " is-dragging" : ""
 			}`}
 			data-block-id={block.id}
