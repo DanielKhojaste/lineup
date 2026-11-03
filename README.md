@@ -59,13 +59,14 @@ Everything is stored as files on your computer, and the app works without an acc
 
 ### Sessions
 
-![A session plan: a warm-up rondo, water breaks and a third-man run, with the time adding up](screenshots/session.png)
+![A session plan: a warm-up rondo, an activity, water breaks, a scrimmage and a cool-down, with the time adding up](screenshots/session.png)
 
 - Build a training session for one sport from the drills in your library, plus water breaks and other blocks like a game or a team talk
 - Give each block its minutes; Lineup numbers the parts (Warm-up 1, Activity 1, Water break 1) and adds up the time against what you planned
-- Reorder blocks by dragging or with the arrows, and set what each drill is in this session (warm-up, activity, small-sided game, scrimmage, cool-down)
+- Reorder blocks by dragging or with the arrows, and click a block's name to set its part of the session (warm-up, activity, small-sided game, scrimmage, cool-down, or your own)
 - Details so another coach can run it: age group or team, time, description, topic tags, players, equipment and area
 - Export the session sheet as a PDF or an image, or print it straight from the app
+- Share a session as a `.lineup-session` file with its drills inside; importing it brings them all in
 
 ### Library and files
 
@@ -73,7 +74,8 @@ Everything is stored as files on your computer, and the app works without an acc
 
 - Every board and session saves automatically to `Documents\Lineup`, as `.lineup` and `.lineup-session` files
 - Browse by sport or folder, search across titles, tags and notes, sort, duplicate and delete
-- Import and export `.lineup` files, and export any board as a PNG image
+- Import and export boards (`.lineup`) and sessions (`.lineup-session`), and export any board as a PNG image
+- **Created** and **Imported** in the sidebar keep what you made apart from what came from files
 - Undo and redo for every change, and copy and paste between boards
 - Right-click anything for its actions
 - Dark and light themes, five presets, and your own primary and secondary colours
@@ -81,11 +83,12 @@ Everything is stored as files on your computer, and the app works without an acc
 
 ### Example boards
 
-The [`examples`](examples) folder has boards you can import from the library's **Import** button:
+The [`examples`](examples) folder has boards and a session you can import from the library's **Import** button:
 
 - [`barca-real-madrid-2023.lineup`](examples/barca-real-madrid-2023.lineup): Barça 5–0 Real Madrid, Liga F, 19 November 2023, with both starting XIs
 - [`rondo-4v2.lineup`](examples/rondo-4v2.lineup): a rondo with a transition gate
 - [`third-man-run.lineup`](examples/third-man-run.lineup): an animated third-man run down the right
+- [`playing-through-the-thirds.lineup-session`](examples/playing-through-the-thirds.lineup-session): a 75-minute U14 session with the rondo and the third-man run inside
 
 ## Roadmap
 
