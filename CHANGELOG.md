@@ -14,7 +14,7 @@ This project adheres to semantic versioning (0.x during early development).
 - Session details, enough for another coach to run it: a title (the only thing required), age group or team, sport, time (hours and minutes), a description and **topics**: tags like Passing or Pressing, suggested for the session's sport, plus your own. Equipment and area are under "More details". The plan's total shows against the session's time, with how much is left or over
 - Add drills from the library panel beside the plan (search, filter by type, or just the session's sport); each drill shows its picture and notes, and opens on a click (the back button returns to the session). Reorder blocks by dragging their handle or with the arrow keys, and right-click a block for more
 - **Print or save a session as PDF** (Ctrl+P): a session sheet with a header table and one row per block with its time, what happens, coaching points and the drill's diagram
-- Sessions in the library: their own "Sessions" view, cards with the first drills' pictures and a strip showing how the time is split, and they show up in folders and sports next to boards
+- Sessions in the library: their own "Sessions" view, a Sessions chip next to the board types in folders and sports (which count sessions too), cards with the first drills' pictures and a strip showing how the time is split, and they show up in folders and sports next to boards
 - A "Desktop builds" workflow on GitHub that builds the Windows, macOS and Linux installers on demand (Actions tab, "Run workflow") and for every version tag, so the app can be tried on a Mac or Linux without building it there
 - **Board types:** Drill, Play, Line-up, Set piece or Other, set in the Notes tab. The library filters boards by type; boards from earlier versions become Plays if they're animated and Drills if not
 - More sports: futsal, basketball, volleyball, handball and field hockey, as well as soccer, each with its own field or court drawn to scale with its markings (basketball keys, three-point lines and hoops; the volleyball net and attack lines; handball and futsal goal areas; the hockey shooting circles)
@@ -38,6 +38,10 @@ This project adheres to semantic versioning (0.x during early development).
 - The goal tool is hidden for basketball and volleyball, which don't have goals
 - The README covers the new sports and the new plan: sessions, season plans and a calendar next, then sharing, then accounts and a premium cloud subscription
 - Text fields have Lineup's own Cut, Copy, Paste and Select all menu instead of the browser's, so "Inspect" and other browser items never show (Tauri clipboard plugin)
+
+### Fixed
+
+- Boards no longer pile up in the wrong library view when two files in the Lineup folder hold the same board (one copied in by hand, say): the copy gets its own id, and saving writes back to the file a board came from instead of making a second one
 
 ---
 
