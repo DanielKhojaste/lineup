@@ -10,6 +10,29 @@ import { Board, BOARD_TYPES, BoardType } from "../../model/types";
 import { useLibrary } from "../../state/LibraryContext";
 import { useSessionEditor } from "../../state/SessionContext";
 import BoardPreview from "../board/BoardPreview";
+
+const COLLAPSED_KEY = "lineup.session.libraryHidden";
+
+/** Whether the library panel is hidden, remembered on this computer. */
+function useCollapsed(): [boolean, (value: boolean) => void] {
+	const [collapsed, set] = useState(() => {
+		try {
+			return localStorage.getItem(COLLAPSED_KEY) === "1";
+		} catch {
+			return false;
+		}
+	});
+	const setCollapsed = (value: boolean) => {
+		set(value);
+		try {
+			if (value) localStorage.setItem(COLLAPSED_KEY, "1");
+			else localStorage.removeItem(COLLAPSED_KEY);
+		} catch {
+			/* only remembered while the app is open */
+		}
+	};
+	return [collapsed, setCollapsed];
+}
 import { Icon } from "../Icon";
 
 function matches(board: Board, query: string) {
@@ -28,6 +51,7 @@ function matches(board: Board, query: string) {
  */
 export default function DrillPicker() {
 	const library = useLibrary();
+	const [collapsed, setCollapsed] = useCollapsed();
 	const { state, dispatch, selectedBlock, setSelectedBlock } =
 		useSessionEditor();
 	const { session } = state;
@@ -63,10 +87,41 @@ export default function DrillPicker() {
 		setSelectedBlock(block.id);
 	};
 
+	if (collapsed)
+		return (
+			<aside
+				className="drill-picker drill-picker--collapsed"
+				aria-label="Add drills from your library"
+			>
+				<button
+					type="button"
+					className="drill-picker__expand"
+					title="Show the library"
+					aria-expanded={false}
+					onClick={() => setCollapsed(false)}
+				>
+					<Icon name="chevronLeft" size={16} />
+					<span className="drill-picker__expand-label">Add from library</span>
+				</button>
+			</aside>
+		);
+
 	return (
 		<aside className="drill-picker" aria-label="Add drills from your library">
 			<div className="drill-picker__head">
-				<h2>Add from library</h2>
+				<div className="drill-picker__title">
+					<h2>Add from library</h2>
+					<button
+						type="button"
+						className="icon-button icon-button--small"
+						aria-label="Hide the library"
+						title="Hide the library"
+						aria-expanded={true}
+						onClick={() => setCollapsed(true)}
+					>
+						<Icon name="chevronRight" size={16} />
+					</button>
+				</div>
 				<label className="search search--small">
 					<Icon name="search" size={14} />
 					<span className="visually-hidden">Search boards</span>

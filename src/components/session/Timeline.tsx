@@ -178,7 +178,7 @@ function BlockRow({
 				</button>
 			</div>
 			<div className="block__time">
-				{block.kind !== "custom" && (
+				{(block.kind !== "custom" || block.stage.trim()) && (
 					<span className="block__name">{stage}</span>
 				)}
 				<span className="mono">{time}</span>
@@ -257,6 +257,16 @@ function BlockRow({
 					)
 				) : (
 					<div className="block__label-row">
+						{block.kind === "custom" && (
+							<StagePicker
+								className="block__stage"
+								label="Part of the session"
+								hideLabel
+								value={block.stage}
+								emptyLabel="—"
+								onChange={(value) => update({ stage: value })}
+							/>
+						)}
 						{block.kind === "break" && (
 							<span className="block__icon" aria-hidden="true">
 								<Icon name="water" size={18} />

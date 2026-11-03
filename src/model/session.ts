@@ -78,6 +78,8 @@ export interface BreakBlock extends BlockBase {
 export interface CustomBlock extends BlockBase {
 	kind: "custom";
 	label: string;
+	/** What it is in the session ("Scrimmage"…); empty when it isn't one of the parts. */
+	stage: string;
 }
 
 export type SessionBlock = DrillBlock | BreakBlock | CustomBlock;
@@ -140,7 +142,7 @@ export function createBreakBlock(
 }
 
 export function createCustomBlock(label = "", minutes = 5): CustomBlock {
-	return { id: newId(), kind: "custom", label, minutes, notes: "" };
+	return { id: newId(), kind: "custom", label, stage: "", minutes, notes: "" };
 }
 
 /** Minutes kept to whole numbers between 0 and four hours. */
@@ -244,7 +246,12 @@ function cleanBlock(raw: unknown): SessionBlock | null {
 		case "break":
 			return { ...base, kind: "break", label: text(raw.label, 120) || "Break" };
 		case "custom":
-			return { ...base, kind: "custom", label: text(raw.label, 120) };
+			return {
+				...base,
+				kind: "custom",
+				label: text(raw.label, 120),
+				stage: text(raw.stage, 60),
+			};
 		default:
 			return null;
 	}
@@ -341,6 +348,6 @@ export function blockStages(
 		if (b.kind === "drill")
 			return next(b.stage.trim() || stageOf(b.boardId).trim() || "Activity");
 		if (b.kind === "break") return next(b.label.trim() || "Break");
-		return b.label.trim() || "Block";
+		return b.stage.trim() ? next(b.stage.trim()) : b.label.trim() || "Block";
 	});
 }

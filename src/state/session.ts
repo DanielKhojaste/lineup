@@ -111,12 +111,11 @@ export function sessionReducer(
 				const patch = { ...action.patch };
 				if (patch.minutes !== undefined)
 					patch.minutes = cleanMinutes(patch.minutes);
-				// Only drills have a board, only breaks and custom blocks a label.
+				// Only drills have a board, only breaks and custom blocks a label,
+				// and breaks aren't a part of the session.
 				if (b.kind === "drill") delete patch.label;
-				else {
-					delete patch.boardId;
-					delete patch.stage;
-				}
+				else delete patch.boardId;
+				if (b.kind === "break") delete patch.stage;
 				const updated = { ...b, ...patch } as SessionBlock;
 				if (JSON.stringify(updated) === JSON.stringify(b)) return b;
 				changed = true;

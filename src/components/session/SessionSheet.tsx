@@ -66,7 +66,11 @@ export function SessionSheetContent({
 				if (block.kind !== "drill") {
 					return (
 						<div key={block.id} className="sheet__part sheet__pause">
-							<strong>{block.label || (block.kind === "break" ? "Break" : "Block")}</strong>
+							<strong>
+								{block.kind === "custom" && block.stage.trim()
+									? [stages[i], block.label.trim()].filter(Boolean).join(" · ")
+									: block.label || (block.kind === "break" ? "Break" : "Block")}
+							</strong>
 							<span>
 								{when} · {formatMinutes(block.minutes)}
 							</span>

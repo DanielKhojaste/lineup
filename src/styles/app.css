@@ -2969,3 +2969,37 @@ fieldset.field {
 	height: auto;
 	aspect-ratio: 3 / 2;
 }
+
+/* The session editor's library panel can be hidden to a thin strip. */
+.drill-picker__title {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.drill-picker--collapsed {
+	flex: 0 0 40px;
+}
+
+.drill-picker__expand {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 12px;
+	padding: 14px 0;
+	color: var(--text-muted);
+}
+
+.drill-picker__expand:hover {
+	color: var(--text);
+	background: var(--hover);
+}
+
+.drill-picker__expand-label {
+	writing-mode: vertical-rl;
+	font-size: 13px;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+}
