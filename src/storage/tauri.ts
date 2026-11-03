@@ -21,6 +21,7 @@ import {
 	encodeSessionFile,
 	SESSION_EXTENSION,
 } from "../model/session";
+import { giveRepeatsNewIds } from "./dedupe";
 import { EMPTY_INDEX, LibraryIndex, LibraryStore } from "./types";
 
 /**
@@ -76,25 +77,50 @@ export async function createTauriStore(): Promise<LibraryStore> {
 		});
 	};
 
-	/** Read every file of one kind; files that fail are reported, not thrown. */
-	const loadCollection = async <T>(
+	/**
+	 * Which file each document lives in, by id. Files aren't always named after
+	 * their id (one copied into the folder by hand, say), so saving writes back
+	 * to the file a document came from instead of making a second one.
+	 */
+	const files = new Map<string, string>();
+	const fileFor = (c: Collection, id: string) => files.get(id) ?? pathOf(c, id);
+
+	/**
+	 * Read every file of one kind; files that fail are reported, not thrown.
+	 * Two files with the same document inside get different ids (and the
+	 * second is saved again under its new id), so neither hides the other.
+	 */
+	const loadCollection = async <T extends { id: string }>(
 		c: Collection,
 		decode: (bytes: Uint8Array) => T,
+		encode: (doc: T) => Uint8Array,
 		problems: string[],
 	): Promise<T[]> => {
-		const docs: T[] = [];
+		const loaded: { doc: T; file: string }[] = [];
 		for (const entry of await readDir(c.dir, options)) {
 			if (!entry.isFile || !entry.name.endsWith(`.${c.extension}`)) continue;
+			const file = `${c.dir}/${entry.name}`;
 			try {
-				docs.push(decode(await readFile(`${c.dir}/${entry.name}`, options)));
+				loaded.push({ doc: decode(await readFile(file, options)), file });
 			} catch (error) {
 				problems.push(`${entry.name}: ${(error as Error).message}`);
 			}
 		}
-		return docs;
+		const { docs, changed } = giveRepeatsNewIds(loaded);
+		for (const { doc, file } of docs) files.set(doc.id, file);
+		for (const { doc, file } of changed) {
+			try {
+				await writeSafely(file, encode(doc));
+			} catch (error) {
+				problems.push(`${file}: ${(error as Error).message}`);
+			}
+		}
+		return docs.map((d) => d.doc);
 	};
 
-	const removeFile = async (path: string) => {
+	const removeFile = async (c: Collection, id: string) => {
+		const path = fileFor(c, id);
+		files.delete(id);
 		if (await exists(path, options)) await remove(path, options);
 	};
 
@@ -106,10 +132,17 @@ export async function createTauriStore(): Promise<LibraryStore> {
 		async loadAll() {
 			await ensureFolders();
 			const problems: string[] = [];
-			const boards = await loadCollection(BOARDS, decodeBoardFile, problems);
+			files.clear();
+			const boards = await loadCollection(
+				BOARDS,
+				decodeBoardFile,
+				encodeBoardFile,
+				problems,
+			);
 			const sessions = await loadCollection(
 				SESSIONS,
 				decodeSessionFile,
+				encodeSessionFile,
 				problems,
 			);
 			return { boards, sessions, problems };
@@ -117,17 +150,20 @@ export async function createTauriStore(): Promise<LibraryStore> {
 
 		async save(board) {
 			await ensureFolders();
-			await writeSafely(pathOf(BOARDS, board.id), encodeBoardFile(board));
+			await writeSafely(fileFor(BOARDS, board.id), encodeBoardFile(board));
 		},
 
-		remove: (id) => removeFile(pathOf(BOARDS, id)),
+		remove: (id) => removeFile(BOARDS, id),
 
 		async saveSession(session) {
 			await ensureFolders();
-			await writeSafely(pathOf(SESSIONS, session.id), encodeSessionFile(session));
+			await writeSafely(
+				fileFor(SESSIONS, session.id),
+				encodeSessionFile(session),
+			);
 		},
 
-		removeSession: (id) => removeFile(pathOf(SESSIONS, id)),
+		removeSession: (id) => removeFile(SESSIONS, id),
 
 		async loadIndex() {
 			try {
