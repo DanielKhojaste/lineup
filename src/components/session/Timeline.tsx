@@ -22,7 +22,7 @@ import BoardPreview from "../board/BoardPreview";
 import { Icon } from "../Icon";
 import { ContextMenuEntry, useContextMenu } from "../ui/ContextMenu";
 import { BoardInput, BoardTextarea } from "../ui/fields";
-import StagePicker from "../ui/StagePicker";
+import StageMenu from "./StageMenu";
 
 function MinutesField({
 	block,
@@ -178,8 +178,21 @@ function BlockRow({
 				</button>
 			</div>
 			<div className="block__time">
-				{(block.kind !== "custom" || block.stage.trim()) && (
+				{block.kind === "break" ? (
 					<span className="block__name">{stage}</span>
+				) : (
+					<StageMenu
+						name={block.kind === "custom" && !block.stage.trim() ? "" : stage}
+						value={block.stage}
+						emptyLabel={
+							block.kind === "custom"
+								? "None"
+								: board?.notes.stage.trim()
+								  ? `From the drill (${board.notes.stage.trim()})`
+								  : "From the drill"
+						}
+						onChange={(value) => update({ stage: value })}
+					/>
 				)}
 				<span className="mono">{time}</span>
 			</div>
@@ -201,16 +214,6 @@ function BlockRow({
 								<BoardPreview board={board} />
 							</button>
 							<div className="block__drill-text">
-								{block.kind === "drill" && (
-									<StagePicker
-										className="block__stage"
-										label="Part of the session"
-										hideLabel
-										value={block.stage}
-										emptyLabel="—"
-										onChange={(value) => update({ stage: value })}
-									/>
-								)}
 								<button
 									type="button"
 									className="block__title link-button"
@@ -257,16 +260,6 @@ function BlockRow({
 					)
 				) : (
 					<div className="block__label-row">
-						{block.kind === "custom" && (
-							<StagePicker
-								className="block__stage"
-								label="Part of the session"
-								hideLabel
-								value={block.stage}
-								emptyLabel="—"
-								onChange={(value) => update({ stage: value })}
-							/>
-						)}
 						{block.kind === "break" && (
 							<span className="block__icon" aria-hidden="true">
 								<Icon name="water" size={18} />

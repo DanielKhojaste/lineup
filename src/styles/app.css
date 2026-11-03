@@ -2235,7 +2235,7 @@ fieldset.field {
 
 .block {
 	display: grid;
-	grid-template-columns: 28px 96px minmax(0, 1fr) auto;
+	grid-template-columns: 28px 116px minmax(0, 1fr) auto;
 	align-items: start;
 	gap: 10px;
 	padding: 10px 10px 10px 4px;
@@ -2838,13 +2838,43 @@ fieldset.field {
 	min-width: 0;
 }
 
-.block__stage {
-	max-width: 360px;
+/* A block's name doubles as the button that picks its part of the session. */
+.stage-menu {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	max-width: 100%;
+	margin: -3px -6px;
+	padding: 3px 6px;
+	border: 1px solid transparent;
+	border-radius: 6px;
+	font: inherit;
+	font-weight: 700;
+	text-align: left;
 }
 
-.block__stage .field__input {
-	padding: 4px 8px;
-	font-size: 12px;
+/* Long names ("Small-sided game (SSG) 1") wrap rather than get cut off. */
+.stage-menu__text {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.stage-menu svg {
+	flex: none;
+	align-self: flex-start;
+	margin-top: 3px;
+	opacity: 0.7;
+}
+
+.stage-menu:hover,
+.stage-menu[aria-expanded="true"] {
+	border-color: var(--border);
+	background: var(--hover);
+}
+
+.stage-menu--unset {
+	color: var(--text-muted);
+	font-weight: 500;
 }
 
 .session-editor__notice {

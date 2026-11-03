@@ -13,6 +13,7 @@ This project adheres to semantic versioning (0.x during early development).
 - Share sessions: export a session as a `.lineup-session` file with every drill it uses inside, from the session's **Export** menu or its menu in the library
 - Import sessions: the library's **Import** button takes `.lineup-session` files as well as boards, and brings in the session's drills with it. A drill that's already in your library isn't added twice
 - **Created** and **Imported** in the sidebar: what you made yourself and what came from files. Imported boards and sessions stay out of **Not in a folder**, and a copy of one counts as yours
+- Click a block's name in the plan ("Activity 1") to pick its part of the session from a short menu, instead of a dropdown on every block
 - Other blocks in a session (a game, a team talk) can be a part of the session too, like **Scrimmage**, and are numbered with the rest
 - Hide the session editor's **Add from library** panel to give the plan more room; Lineup remembers it
 
