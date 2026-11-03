@@ -187,7 +187,8 @@ export default function Library() {
 	const [view, setView] = useState<View>(
 		backTo === "sessions" ? { kind: "sessions" } : { kind: "all" },
 	);
-	const [type, setType] = useState<BoardType | "all">("all");
+	// Filter chips: everything, just sessions, or one type of board.
+	const [type, setType] = useState<BoardType | "all" | "sessions">("all");
 	// Each view starts with every type showing.
 	useEffect(() => setType("all"), [view]);
 	const [query, setQuery] = useState("");
@@ -213,7 +214,7 @@ export default function Library() {
 	const currentFolder = view.kind === "folder" ? view.name : "";
 
 	const shown = useMemo(() => {
-		if (view.kind === "sessions") return [];
+		if (view.kind === "sessions" || type === "sessions") return [];
 		const inView = library.boards.filter((b) =>
 			view.kind === "all"
 				? true
@@ -236,6 +237,8 @@ export default function Library() {
 	// Sessions show in their own view, and next to boards in folders and sports.
 	const shownSessions = useMemo(() => {
 		if (view.kind === "all") return [];
+		// A board type picked in the chips shows just those boards.
+		if (view.kind !== "sessions" && type !== "all" && type !== "sessions") return [];
 		const inView = library.sessions.filter((s) =>
 			view.kind === "sessions"
 				? true
@@ -251,7 +254,19 @@ export default function Library() {
 			: [...found].sort((a, b) =>
 					b.meta.updatedAt.localeCompare(a.meta.updatedAt),
 			  );
-	}, [library.sessions, view, query, sort]);
+	}, [library.sessions, view, query, sort, type]);
+
+	// How many sessions this view has, for the Sessions chip (folders, sports and "Not in a folder").
+	const sessionsInView =
+		view.kind === "all" || view.kind === "sessions"
+			? 0
+			: library.sessions.filter((s) =>
+					view.kind === "unfiled"
+						? !s.meta.folder
+						: view.kind === "sport"
+						  ? s.header.sport === view.sport
+						  : s.meta.folder === view.name,
+			  ).length;
 
 	// Board types in this view, for the filter chips.
 	const typeCounts = useMemo(() => {
@@ -271,9 +286,11 @@ export default function Library() {
 		return counts;
 	}, [library.boards, view]);
 
-	// The sidebar lists the sports the library has boards for.
-	const sportsInLibrary = SPORTS.filter((s) =>
-		library.boards.some((b) => b.pitch.sport === s),
+	// The sidebar lists the sports the library has boards or sessions for.
+	const sportsInLibrary = SPORTS.filter(
+		(s) =>
+			library.boards.some((b) => b.pitch.sport === s) ||
+			library.sessions.some((x) => x.header.sport === s),
 	);
 
 	const run = async (task: () => Promise<unknown>, failure: string) => {
@@ -500,10 +517,10 @@ export default function Library() {
 										{SPORT_INFO[sport].name}
 									</span>
 									<span className="nav-item__count">
-										{
-											library.boards.filter((b) => b.pitch.sport === sport)
-												.length
-										}
+										{library.boards.filter((b) => b.pitch.sport === sport)
+											.length +
+											library.sessions.filter((x) => x.header.sport === sport)
+												.length}
 									</span>
 								</button>
 							))}
@@ -657,7 +674,8 @@ export default function Library() {
 						</div>
 					)}
 
-					{view.kind !== "sessions" && typeCounts.size > 1 && (
+					{view.kind !== "sessions" &&
+						typeCounts.size + (sessionsInView ? 1 : 0) > 1 && (
 						<div className="filter-chips" role="group" aria-label="Board type">
 							<button
 								type="button"
@@ -665,8 +683,19 @@ export default function Library() {
 								aria-pressed={type === "all"}
 								onClick={() => setType("all")}
 							>
-								All types
+								All
 							</button>
+							{sessionsInView > 0 && (
+								<button
+									type="button"
+									className={`filter-chip${type === "sessions" ? " is-active" : ""}`}
+									aria-pressed={type === "sessions"}
+									onClick={() => setType(type === "sessions" ? "all" : "sessions")}
+								>
+									Sessions
+									<span className="filter-chip__count">{sessionsInView}</span>
+								</button>
+							)}
 							{BOARD_TYPES.filter((t) => typeCounts.has(t)).map((t) => (
 								<button
 									key={t}
