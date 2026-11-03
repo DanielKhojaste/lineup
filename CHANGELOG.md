@@ -44,6 +44,7 @@ This project adheres to semantic versioning (0.x during early development).
 - The library remembers what it was showing (view, filters, search and sort) when you come back from a board or session
 - "All boards" is now "Boards", sorting by "Recent", and "Not in a folder" is at the top of the folders
 - Deleting a board says which sessions use it
+- The version number lives in a `VERSION` file; `npm run version:sync` copies it into `package.json`, `tauri.conf.json` and `Cargo.toml`, and the Desktop builds workflow checks they match
 - Long names are cut short with an ellipsis in menus and tooltips
 - Text in windows (like New board) can't be highlighted; "Use this for new boards from now on" says when the pick is already your default
 - `.lineup` files are now saved compressed, so they no longer open as readable text (they're also about a third of the size); files from earlier versions still open and are converted the next time they're saved
