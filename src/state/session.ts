@@ -1,5 +1,6 @@
 import {
 	cleanMinutes,
+	cleanPlayers,
 	cleanTopics,
 	Session,
 	SessionBlock,
@@ -82,6 +83,8 @@ export function sessionReducer(
 			if (patch.plannedMinutes !== undefined && patch.plannedMinutes !== null)
 				patch.plannedMinutes = cleanMinutes(patch.plannedMinutes) || null;
 			if (patch.topics) patch.topics = cleanTopics(patch.topics);
+			if (patch.playersMin !== undefined) patch.playersMin = cleanPlayers(patch.playersMin);
+			if (patch.playersMax !== undefined) patch.playersMax = cleanPlayers(patch.playersMax);
 			return commit(state, {
 				...session,
 				header: { ...session.header, ...patch },

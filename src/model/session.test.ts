@@ -202,3 +202,28 @@ describe("suggested topics", () => {
 		expect(suggestedTopics("")).toContain("Passing");
 	});
 });
+
+describe("block names", () => {
+	it("numbers each part of the session, and breaks, in order", async () => {
+		const { blockStages } = await import("./session");
+		const session = createSession();
+		const warm1 = { ...createDrillBlock("a"), stage: "Warm-up" };
+		const act = createDrillBlock("b"); // no stage here or on the drill
+		const brk1 = createBreakBlock();
+		const warm2 = createDrillBlock("c"); // the drill itself says Warm-up
+		const brk2 = createBreakBlock();
+		const talk = createCustomBlock("Team talk");
+		const act2 = createDrillBlock("d");
+		session.blocks = [warm1, act, brk1, warm2, brk2, talk, act2];
+		const drillStage = (id: string) => (id === "c" ? "Warm-up" : "");
+		expect(blockStages(session, drillStage)).toEqual([
+			"Warm-up 1",
+			"Activity 1",
+			"Water break 1",
+			"Warm-up 2",
+			"Water break 2",
+			"Team talk",
+			"Activity 2",
+		]);
+	});
+});

@@ -1,7 +1,7 @@
 import { parseBoard, serializeBoard } from "../model/file";
 import { parseSession, Session } from "../model/session";
 import { Board } from "../model/types";
-import { EMPTY_INDEX, LibraryIndex, LibraryStore } from "./types";
+import { cleanIndex, EMPTY_INDEX, LibraryIndex, LibraryStore } from "./types";
 
 const BOARDS_KEY = "lineup.library.boards";
 const SESSIONS_KEY = "lineup.library.sessions";
@@ -74,12 +74,7 @@ export const browserStore: LibraryStore = {
 		try {
 			const raw = localStorage.getItem(INDEX_KEY);
 			const index = raw ? (JSON.parse(raw) as LibraryIndex) : EMPTY_INDEX;
-			return {
-				version: 1,
-				folders: Array.isArray(index.folders)
-					? index.folders.filter((f) => typeof f === "string")
-					: [],
-			};
+			return cleanIndex(index);
 		} catch {
 			return EMPTY_INDEX;
 		}

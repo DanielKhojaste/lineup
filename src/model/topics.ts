@@ -5,7 +5,6 @@ import { Sport } from "./sports";
  * are just the common ones so most sessions can be tagged in a click or two.
  */
 const GENERAL = [
-	"Warm-up",
 	"Possession",
 	"Attacking transition",
 	"Defensive transition",
@@ -13,7 +12,6 @@ const GENERAL = [
 	"Set pieces",
 	"Small-sided games",
 	"Fitness",
-	"Cool-down",
 ];
 
 export const TOPIC_PRESETS: Record<Sport, string[]> = {
@@ -75,10 +73,8 @@ export const TOPIC_PRESETS: Record<Sport, string[]> = {
 		"Rotations",
 		"Transition",
 		"Out-of-system play",
-		"Warm-up",
 		"Small-sided games",
 		"Fitness",
-		"Cool-down",
 	],
 	handball: [
 		"Passing",

@@ -21,8 +21,8 @@ import {
 	encodeSessionFile,
 	SESSION_EXTENSION,
 } from "../model/session";
-import { giveRepeatsNewIds } from "./dedupe";
-import { EMPTY_INDEX, LibraryIndex, LibraryStore } from "./types";
+import { giveRepeatsNewIds, libraryFileName } from "./dedupe";
+import { cleanIndex, EMPTY_INDEX, LibraryIndex, LibraryStore } from "./types";
 
 /**
  * Everything lives under Documents/Lineup so coaches can find and back up their
@@ -33,9 +33,22 @@ const ROOT = "Lineup";
 const INDEX_FILE = `${ROOT}/library.json`;
 
 /** Each kind of document has its own folder and file extension. */
-const BOARDS = { dir: `${ROOT}/boards`, extension: FILE_EXTENSION };
-const SESSIONS = { dir: `${ROOT}/sessions`, extension: SESSION_EXTENSION };
+const BOARDS = {
+	dir: `${ROOT}/boards`,
+	extension: FILE_EXTENSION,
+	untitled: "Untitled board",
+};
+const SESSIONS = {
+	dir: `${ROOT}/sessions`,
+	extension: SESSION_EXTENSION,
+	untitled: "Untitled session",
+};
 type Collection = typeof BOARDS;
+
+/** What every document has that its file name is made from. */
+type Named = { id: string; meta: { title: string; createdAt: string } };
+
+const baseName = (path: string) => path.slice(path.lastIndexOf("/") + 1);
 
 const pathOf = (c: Collection, id: string) => `${c.dir}/${id}.${c.extension}`;
 
@@ -85,12 +98,48 @@ export async function createTauriStore(): Promise<LibraryStore> {
 	const files = new Map<string, string>();
 	const fileFor = (c: Collection, id: string) => files.get(id) ?? pathOf(c, id);
 
+	/** Names of the other documents' files in a folder, lower-cased. */
+	const takenNames = (c: Collection, exceptId: string) =>
+		new Set(
+			[...files.entries()]
+				.filter(([id, path]) => id !== exceptId && path.startsWith(`${c.dir}/`))
+				.map(([, path]) => baseName(path).toLowerCase()),
+		);
+
+	/** The file a document should be in: named after its title ("Cool Board.lineup"). */
+	const fileNamedFor = (c: Collection, doc: Named) =>
+		`${c.dir}/${libraryFileName(
+			doc.meta.title,
+			c.extension,
+			doc.meta.createdAt,
+			doc.id,
+			takenNames(c, doc.id),
+			c.untitled,
+		)}`;
+
+	/**
+	 * Save a document to the file named after its title. When the title has
+	 * changed, the old file goes once the new one is written.
+	 */
+	const saveNamed = async <T extends Named>(
+		c: Collection,
+		doc: T,
+		encode: (doc: T) => Uint8Array,
+	) => {
+		const current = files.get(doc.id);
+		const target = fileNamedFor(c, doc);
+		await writeSafely(target, encode(doc));
+		files.set(doc.id, target);
+		if (current && current !== target && (await exists(current, options)))
+			await remove(current, options);
+	};
+
 	/**
 	 * Read every file of one kind; files that fail are reported, not thrown.
 	 * Two files with the same document inside get different ids (and the
 	 * second is saved again under its new id), so neither hides the other.
 	 */
-	const loadCollection = async <T extends { id: string }>(
+	const loadCollection = async <T extends Named>(
 		c: Collection,
 		decode: (bytes: Uint8Array) => T,
 		encode: (doc: T) => Uint8Array,
@@ -113,6 +162,22 @@ export async function createTauriStore(): Promise<LibraryStore> {
 				await writeSafely(file, encode(doc));
 			} catch (error) {
 				problems.push(`${file}: ${(error as Error).message}`);
+			}
+		}
+		// Files from earlier versions are named by id ("4684539c-….lineup"):
+		// rename them after their titles.
+		for (const { doc, file } of docs) {
+			const target = fileNamedFor(c, doc);
+			if (target === file) continue;
+			try {
+				if (await exists(target, options)) continue;
+				await rename(file, target, {
+					oldPathBaseDir: baseDir,
+					newPathBaseDir: baseDir,
+				});
+				files.set(doc.id, target);
+			} catch (error) {
+				problems.push(`${baseName(file)}: ${(error as Error).message}`);
 			}
 		}
 		return docs.map((d) => d.doc);
@@ -150,17 +215,14 @@ export async function createTauriStore(): Promise<LibraryStore> {
 
 		async save(board) {
 			await ensureFolders();
-			await writeSafely(fileFor(BOARDS, board.id), encodeBoardFile(board));
+			await saveNamed(BOARDS, board, encodeBoardFile);
 		},
 
 		remove: (id) => removeFile(BOARDS, id),
 
 		async saveSession(session) {
 			await ensureFolders();
-			await writeSafely(
-				fileFor(SESSIONS, session.id),
-				encodeSessionFile(session),
-			);
+			await saveNamed(SESSIONS, session, encodeSessionFile);
 		},
 
 		removeSession: (id) => removeFile(SESSIONS, id),
@@ -171,12 +233,7 @@ export async function createTauriStore(): Promise<LibraryStore> {
 				const index = JSON.parse(
 					await readTextFile(INDEX_FILE, options),
 				) as LibraryIndex;
-				return {
-					version: 1,
-					folders: Array.isArray(index.folders)
-						? index.folders.filter((f) => typeof f === "string")
-						: [],
-				};
+				return cleanIndex(index);
 			} catch {
 				return EMPTY_INDEX;
 			}

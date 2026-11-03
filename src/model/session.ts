@@ -42,6 +42,11 @@ export interface SessionHeader {
 	topics: string[];
 	/** How long the session lasts, in minutes; null when not set. */
 	plannedMinutes: number | null;
+	/** Take the time from the plan (the blocks added up) instead of plannedMinutes. */
+	autoTime: boolean;
+	/** How many players the session is for; null when not set. */
+	playersMin: number | null;
+	playersMax: number | null;
 	equipment: string;
 	area: string;
 }
@@ -108,6 +113,9 @@ export function createSession(title = ""): Session {
 			description: "",
 			topics: [],
 			plannedMinutes: null,
+			autoTime: false,
+			playersMin: null,
+			playersMax: null,
 			equipment: "",
 			area: "",
 		},
@@ -183,6 +191,27 @@ export function decodeSessionFile(bytes: Uint8Array): Session {
 }
 
 const text = (v: unknown, max = 2000) => (isStr(v) ? v.slice(0, max) : "");
+
+/** A number of players: a whole number from 1 to 99, or null. */
+export function cleanPlayers(value: unknown): number | null {
+	if (!isNum(value)) return null;
+	const n = Math.round(value);
+	return n >= 1 ? Math.min(99, n) : null;
+}
+
+/** "8", "8–12", "up to 12" or "" for a session's players. */
+export function playersText(min: number | null, max: number | null): string {
+	if (min && max) return min === max ? `${min}` : `${Math.min(min, max)}–${Math.max(min, max)}`;
+	if (min) return `${min}+`;
+	if (max) return `up to ${max}`;
+	return "";
+}
+
+/** The session's length: its set time, or the plan added up when it's automatic (or not set). */
+export function sessionMinutes(session: Session): number {
+	const { plannedMinutes, autoTime } = session.header;
+	return autoTime || !plannedMinutes ? totalMinutes(session) : plannedMinutes;
+}
 
 /** Topic tags: trimmed, without blanks or repeats (ignoring case). */
 export function cleanTopics(values: unknown[]): string[] {
@@ -264,6 +293,9 @@ export function parseSession(source: string): Session {
 			]),
 			plannedMinutes:
 				isNum(planned) && planned > 0 ? cleanMinutes(planned) || null : null,
+			autoTime: header.autoTime === true,
+			playersMin: cleanPlayers(header.playersMin),
+			playersMax: cleanPlayers(header.playersMax),
 			equipment: text(header.equipment, 300),
 			area: text(header.area, 120),
 		},
@@ -284,17 +316,27 @@ export function minutesFromText(text: string): number | null {
 }
 
 /**
- * What each block is called on the session sheet: a drill's stage ("Warm-up"),
- * from the session or the drill, or else "Activity 1", "Activity 2"…
+ * What each block is called in the session and on its sheet. Drills are
+ * numbered by their part of the session ("Warm-up 1", "Warm-up 2",
+ * "Activity 1"…), from the session or else the drill (drills with neither
+ * count as Activities). Breaks are numbered by name ("Water break 1"); other
+ * blocks keep their own name.
  */
 export function blockStages(
 	session: Session,
 	stageOf: (boardId: string) => string,
 ): string[] {
-	let activity = 0;
+	const counts = new Map<string, number>();
+	const next = (name: string) => {
+		const key = name.toLowerCase();
+		const n = (counts.get(key) ?? 0) + 1;
+		counts.set(key, n);
+		return `${name} ${n}`;
+	};
 	return session.blocks.map((b) => {
-		if (b.kind !== "drill") return "";
-		activity += 1;
-		return b.stage.trim() || stageOf(b.boardId).trim() || `Activity ${activity}`;
+		if (b.kind === "drill")
+			return next(b.stage.trim() || stageOf(b.boardId).trim() || "Activity");
+		if (b.kind === "break") return next(b.label.trim() || "Break");
+		return b.label.trim() || "Block";
 	});
 }

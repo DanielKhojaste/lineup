@@ -34,6 +34,9 @@ interface LibraryContextValue {
 	moveToFolder: (id: string, folder: string) => Promise<void>;
 	addBoards: (boards: Board[]) => Promise<Board[]>;
 	sessions: Session[];
+	/** Session topics the coach made up (kept in library.json). */
+	topics: string[];
+	addTopics: (topics: string[]) => Promise<void>;
 	getSession: (id: string) => Session | undefined;
 	createSession: (folder?: string) => Promise<Session>;
 	saveSession: (session: Session) => Promise<void>;
@@ -102,6 +105,8 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 				setBoards(loaded.sort(byUpdated));
 				setSessions(sessions.sort(byUpdated));
 				setFolders(index.folders);
+				indexRef.current = index;
+				setTopics(index.topics);
 				setProblems(problems);
 				setStatus("ready");
 			} catch (e) {
@@ -120,10 +125,28 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 		return storeRef.current;
 	};
 
+	const [topics, setTopics] = useState<string[]>([]);
+	const indexRef = useRef<LibraryIndex>({ version: 1, folders: [], topics: [] });
+
 	const writeIndex = useCallback(async (next: string[]) => {
 		setFolders(next);
-		const index: LibraryIndex = { version: 1, folders: next };
-		await store().saveIndex(index);
+		indexRef.current = { ...indexRef.current, folders: next };
+		await store().saveIndex(indexRef.current);
+	}, []);
+
+	/** Remember topics the coach made up, so they're suggested in every session. */
+	const addTopics = useCallback(async (added: string[]) => {
+		const known = new Set(indexRef.current.topics.map((t) => t.toLowerCase()));
+		const fresh = added
+			.map((t) => t.trim())
+			.filter((t) => t && !known.has(t.toLowerCase()));
+		if (!fresh.length) return;
+		indexRef.current = {
+			...indexRef.current,
+			topics: [...indexRef.current.topics, ...fresh],
+		};
+		setTopics(indexRef.current.topics);
+		await store().saveIndex(indexRef.current);
 	}, []);
 
 	const saveBoard = useCallback(async (board: Board) => {
@@ -220,6 +243,8 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 			},
 
 			sessions,
+			topics,
+			addTopics,
 			getSession: (id) => sessionsRef.current.find((s) => s.id === id),
 			saveSession,
 
@@ -310,6 +335,8 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 			location,
 			boards,
 			sessions,
+			topics,
+			addTopics,
 			folders,
 			saveBoard,
 			saveSession,

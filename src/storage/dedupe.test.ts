@@ -16,3 +16,22 @@ describe("documents that share an id", () => {
 		expect(changed[0].doc.title).toBe("Barça");
 	});
 });
+
+describe("library file names", () => {
+	it("names files after the title, adding the date and then the id when taken", async () => {
+		const { libraryFileName } = await import("./dedupe");
+		const created = new Date(2026, 10, 2, 18, 5).toISOString();
+		const taken = new Set<string>();
+		const first = libraryFileName("Cool Board", "lineup", created, "aaaaaaaa-1", taken);
+		expect(first).toBe("Cool Board.lineup");
+		taken.add(first.toLowerCase());
+		const second = libraryFileName("cool board", "lineup", created, "bbbbbbbb-2", taken);
+		expect(second).toBe("cool board (2026-11-02 18.05).lineup");
+		taken.add(second.toLowerCase());
+		const third = libraryFileName("Cool Board", "lineup", created, "cccccccc-3", taken);
+		expect(third).toBe("Cool Board (2026-11-02 18.05, cccccccc).lineup");
+		expect(libraryFileName("", "lineup-session", created, "d", new Set(), "Untitled session")).toBe(
+			"Untitled session.lineup-session",
+		);
+	});
+});

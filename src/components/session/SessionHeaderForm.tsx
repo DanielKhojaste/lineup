@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { SessionHeader } from "../../model/session";
+import { SessionHeader, totalMinutes } from "../../model/session";
 import { SPORT_INFO, SPORTS } from "../../model/sports";
 import { suggestedTopics } from "../../model/topics";
 import { useLibrary } from "../../state/LibraryContext";
@@ -21,10 +21,10 @@ function Topics() {
 		dispatch({ type: "updateHeader", patch: { topics: next } });
 	const has = (t: string) => topics.some((x) => x.toLowerCase() === t.toLowerCase());
 
-	// Topics used in other sessions count as the coach's own suggestions.
+	// The coach's own topics (kept in the library) and ones used in other sessions.
 	const own = useMemo(
-		() => library.sessions.flatMap((s) => s.header.topics),
-		[library.sessions],
+		() => [...library.topics, ...library.sessions.flatMap((s) => s.header.topics)],
+		[library.topics, library.sessions],
 	);
 	const query = draft.trim().toLowerCase();
 	const suggestions = suggestedTopics(sport, own).filter(
@@ -35,7 +35,11 @@ function Topics() {
 	const add = (topic: string) => {
 		const t = topic.trim();
 		setDraft("");
-		if (t && !has(t)) set([...topics, t]);
+		if (!t || has(t)) return;
+		set([...topics, t]);
+		// A topic the coach made up is remembered for every session.
+		if (!suggestedTopics(sport).some((p) => p.toLowerCase() === t.toLowerCase()))
+			void library.addTopics([t]);
 	};
 
 	return (
@@ -95,10 +99,15 @@ function Topics() {
 	);
 }
 
-/** Planned length as two boxes: hours and minutes. */
+/**
+ * The session's length as two boxes, hours and minutes, or worked out from
+ * the plan (the blocks added up) with "From the plan" ticked.
+ */
 function DurationField() {
 	const { state, dispatch } = useSessionEditor();
-	const total = state.session.header.plannedMinutes ?? 0;
+	const { header } = state.session;
+	const auto = header.autoTime;
+	const total = auto ? totalMinutes(state.session) : (header.plannedMinutes ?? 0);
 	const hours = Math.floor(total / 60);
 	const minutes = total % 60;
 	const set = (h: number, m: number) => {
@@ -122,6 +131,7 @@ function DurationField() {
 						max={4}
 						placeholder="1"
 						aria-label="Hours"
+						disabled={auto}
 						value={total ? hours : ""}
 						onChange={(e) => set(num(e.target.value), minutes)}
 					/>
@@ -136,10 +146,73 @@ function DurationField() {
 						step={5}
 						placeholder="15"
 						aria-label="Minutes"
+						disabled={auto}
 						value={total ? minutes : ""}
 						onChange={(e) => set(hours, Math.min(59, num(e.target.value)))}
 					/>
 					<span className="muted">min</span>
+				</label>
+			</div>
+			<label className="check duration-field__auto">
+				<input
+					type="checkbox"
+					checked={auto}
+					onChange={(e) =>
+						dispatch({
+							type: "updateHeader",
+							patch: {
+								autoTime: e.target.checked,
+								// Unticking keeps the plan's total as the time to start from.
+								...(!e.target.checked && !header.plannedMinutes
+									? { plannedMinutes: totalMinutes(state.session) || null }
+									: {}),
+							},
+						})
+					}
+				/>
+				From the plan
+			</label>
+		</fieldset>
+	);
+}
+
+/** How many players: two boxes, from and to (either can be left empty). */
+function PlayersField() {
+	const { state, dispatch } = useSessionEditor();
+	const { playersMin, playersMax } = state.session.header;
+	const num = (v: string) => (v === "" ? null : Math.floor(Number(v)) || null);
+	return (
+		<fieldset className="field">
+			<legend className="field__label">Players</legend>
+			<div className="duration-field">
+				<label>
+					<input
+						className="field__input"
+						type="number"
+						min={1}
+						max={99}
+						placeholder="8"
+						aria-label="Fewest players"
+						value={playersMin ?? ""}
+						onChange={(e) =>
+							dispatch({ type: "updateHeader", patch: { playersMin: num(e.target.value) } })
+						}
+					/>
+					<span className="muted">to</span>
+				</label>
+				<label>
+					<input
+						className="field__input"
+						type="number"
+						min={1}
+						max={99}
+						placeholder="12"
+						aria-label="Most players"
+						value={playersMax ?? ""}
+						onChange={(e) =>
+							dispatch({ type: "updateHeader", patch: { playersMax: num(e.target.value) } })
+						}
+					/>
 				</label>
 			</div>
 		</fieldset>
@@ -176,7 +249,7 @@ export default function SessionHeaderForm() {
 						onValue={(title) => dispatch({ type: "updateMeta", patch: { title } })}
 					/>
 					{titleTouched && missingTitle && (
-						<p className="field__error">Give the session a title.</p>
+						<p className="field__error">Please give the session a title.</p>
 					)}
 				</div>
 				<BoardInput
@@ -217,10 +290,11 @@ export default function SessionHeaderForm() {
 				<Topics />
 				<details
 					className="disclosure session-header__wide"
-					open={!!(header.equipment || header.area)}
+					open={!!(header.equipment || header.area || header.playersMin || header.playersMax)}
 				>
 					<summary>More details (optional)</summary>
 					<div className="disclosure__body session-header__more">
+						<PlayersField />
 						<BoardInput
 							label="Equipment"
 							placeholder="Cones, bibs, 2 mini goals"

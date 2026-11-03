@@ -46,7 +46,7 @@ export const DRILL_STAGES = [
 	"Warm-up",
 	"Activity",
 	"Small-sided game (SSG)",
-	"Game",
+	"Scrimmage",
 	"Cool-down",
 ];
 

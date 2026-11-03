@@ -69,7 +69,7 @@ function SessionLayout() {
 	return (
 		<div className="session-editor">
 			<header className="topbar">
-				<button type="button" className="back-button" onClick={() => navigate("/", { state: { view: "sessions" } })}>
+				<button type="button" className="back-button" onClick={() => navigate("/")}>
 					<Icon name="chevronLeft" size={16} />
 					Library
 				</button>

@@ -3,9 +3,10 @@ import {
 	blockStages,
 	blockTimes,
 	formatMinutes,
+	playersText,
 	Session,
+	sessionMinutes,
 	sessionTitle,
-	totalMinutes,
 } from "../../model/session";
 import { SPORT_INFO } from "../../model/sports";
 import { Board } from "../../model/types";
@@ -27,16 +28,13 @@ export function SessionSheetContent({
 	const { header } = session;
 	const times = blockTimes(session);
 	const stages = blockStages(session, (id) => getBoard(id)?.notes.stage ?? "");
-	const total = totalMinutes(session);
-	const time = header.plannedMinutes
-		? formatMinutes(header.plannedMinutes)
-		: total
-		  ? formatMinutes(total)
-		  : "";
+	const minutes = sessionMinutes(session);
+	const time = minutes ? formatMinutes(minutes) : "";
 	// [label, value, takes two columns]
 	const cells = (
 		[
 			["Age group or team", header.team, false],
+			["Players", playersText(header.playersMin, header.playersMax), false],
 			["Sport", header.sport ? SPORT_INFO[header.sport].name : "", false],
 			["Time", time, false],
 			["Area", header.area, false],

@@ -51,7 +51,7 @@ export default function StagePicker({
 							{s}
 						</option>
 					))}
-					<option value="__custom">{custom ? value : "Your own…"}</option>
+					<option value="__custom">{custom ? value : "Custom…"}</option>
 				</select>
 				{(typing || custom) && (
 					<span

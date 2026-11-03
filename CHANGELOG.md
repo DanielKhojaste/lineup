@@ -15,7 +15,10 @@ This project adheres to semantic versioning (0.x during early development).
 - Add drills from the library panel beside the plan (search, filter by type, or just the session's sport); each drill shows its picture and notes, and opens on a click (the back button returns to the session). Reorder blocks by dragging their handle or with the arrow keys, and right-click a block for more
 - **Session sheet:** the title, a summary (age group or team, sport, time, area, topics, equipment) and the description, then a section per activity with its part of the session and minutes, what happens (players, area, equipment, organisation, variations and progressions, the block's notes), the set-up diagram and the focus points. Activities aren't split across pages
 - **Export a session as a PDF or an image (PNG)** from the session editor or its card in the library, and print it (Ctrl+P)
-- **Parts of a session:** each drill can say what part of a session it is (Warm-up, Activity, Small-sided game (SSG), Game, Cool-down, or your own), in its Notes; a session can set its own for each drill. Drills without one show as Activity 1, 2…
+- **Parts of a session:** each drill can say what part of a session it is (Warm-up, Activity, Small-sided game (SSG), Scrimmage, Cool-down, or Custom…), in its Notes; a session can set its own for each drill. They're numbered in order (Warm-up 1, Warm-up 2, Activity 1…), drills with none count as Activities, and water breaks are numbered too
+- Session time can come **from the plan** (the blocks added up), and the session's optional details include how many players (from and to)
+- Each block in the session plan has move up, move down and remove buttons, and dragging one shows a line where it will land
+- Topics you make up are remembered in the library and suggested in every session
 - **Variations and progressions** in a drill's Notes, shown in sessions and on the sheet
 - Sessions in the library: their own "Sessions" view, a Sessions chip next to the board types in folders and sports (which count sessions too), cards with the first drills' pictures and a strip showing how the time is split, and they show up in folders and sports next to boards
 - A "Desktop builds" workflow on GitHub that builds the Windows, macOS and Linux installers on demand (Actions tab, "Run workflow") and for every version tag, so the app can be tried on a Mac or Linux without building it there
@@ -36,6 +39,13 @@ This project adheres to semantic versioning (0.x during early development).
 ### Changed
 
 - Text fields no longer suggest things you typed before
+- **Library files are named after their board or session** ("Cool Board.lineup"); when two have the same name, the date and time they were made is added. Files named by id from earlier versions are renamed when the library opens, and renaming a board renames its file
+- Library cards: the ⋯ button opens the same menu as right-clicking, with **Rename…**, Move to folder › and Export › (Lineup file or PNG for boards, PDF or PNG for sessions)
+- The library remembers what it was showing (view, filters, search and sort) when you come back from a board or session
+- "All boards" is now "Boards", sorting by "Recent", and "Not in a folder" is at the top of the folders
+- Deleting a board says which sessions use it
+- Long names are cut short with an ellipsis in menus and tooltips
+- Text in windows (like New board) can't be highlighted; "Use this for new boards from now on" says when the pick is already your default
 - `.lineup` files are now saved compressed, so they no longer open as readable text (they're also about a third of the size); files from earlier versions still open and are converted the next time they're saved
 - The window opens at the size and position it was closed at, and maximised or full screen if it was
 - The goal tool is hidden for basketball and volleyball, which don't have goals

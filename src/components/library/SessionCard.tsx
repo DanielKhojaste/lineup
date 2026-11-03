@@ -1,6 +1,7 @@
 import {
 	formatMinutes,
 	Session,
+	sessionMinutes,
 	sessionTitle,
 	sessionBoardIds,
 	totalMinutes,
@@ -10,7 +11,7 @@ import { relativeTime } from "../../utils/time";
 import BoardPreview from "../board/BoardPreview";
 import { Icon } from "../Icon";
 import { ContextMenuEntry, useContextMenu } from "../ui/ContextMenu";
-import { Menu, MenuItem } from "../ui/Menu";
+import CardMenuButton from "./CardMenuButton";
 
 /**
  * A session in the library: the first drills' pictures, a strip showing how
@@ -29,6 +30,7 @@ export default function SessionCard({
 }) {
 	const { openMenu } = useContextMenu();
 	const total = totalMinutes(session);
+	const time = sessionMinutes(session);
 	const drills = session.blocks.filter((b) => b.kind === "drill").length;
 	const boards = sessionBoardIds(session)
 		.map(getBoard)
@@ -37,7 +39,7 @@ export default function SessionCard({
 	const details = [
 		session.header.team,
 		session.header.topics.slice(0, 2).join(", "),
-		total ? formatMinutes(total) : "",
+		time ? formatMinutes(time) : "",
 		`${drills} drill${drills === 1 ? "" : "s"}`,
 		`Edited ${relativeTime(session.meta.updatedAt)}`,
 	].filter(Boolean);
@@ -85,26 +87,7 @@ export default function SessionCard({
 				</span>
 				<span className="board-card__meta">{details.join(" · ")}</span>
 			</button>
-			<div className="board-card__menu">
-				<Menu
-					label={`More actions for ${sessionTitle(session)}`}
-					button={<Icon name="more" size={18} />}
-					items={menu().flatMap((e): (MenuItem | "separator")[] =>
-						e === "separator"
-							? ["separator"]
-							: e.submenu
-							  ? []
-							  : [
-										{
-											label: e.label,
-											onSelect: e.onSelect ?? (() => {}),
-											danger: e.danger,
-											disabled: e.disabled,
-										},
-							    ],
-					)}
-				/>
-			</div>
+			<CardMenuButton title={sessionTitle(session)} menu={menu} />
 		</article>
 	);
 }

@@ -1374,6 +1374,8 @@ button.save-status--error:hover {
 	position: fixed;
 	z-index: 1000;
 	min-width: 210px;
+	/* Long names (boards, teams) are cut short with an ellipsis. */
+	max-width: 380px;
 	max-height: calc(100vh - 12px);
 	overflow-y: auto;
 	font-size: 13px;
@@ -2233,7 +2235,7 @@ fieldset.field {
 
 .block {
 	display: grid;
-	grid-template-columns: 28px 84px 1fr auto;
+	grid-template-columns: 28px 96px minmax(0, 1fr) auto;
 	align-items: start;
 	gap: 10px;
 	padding: 10px 10px 10px 4px;
@@ -2270,7 +2272,8 @@ fieldset.field {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	height: 32px;
+	width: 24px;
+	height: 28px;
 	border-radius: var(--radius-small);
 	color: var(--text-muted);
 	cursor: grab;
@@ -2286,11 +2289,46 @@ fieldset.field {
 	cursor: grabbing;
 }
 
+.block__move {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 2px;
+}
+
+.block__move .icon-button {
+	width: 24px;
+	height: 22px;
+}
+
 .block__time {
-	padding-top: 7px;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding-top: 4px;
 	font-size: 12px;
 	color: var(--text-muted);
-	white-space: nowrap;
+	min-width: 0;
+}
+
+.block__name {
+	font-weight: 700;
+	color: var(--text);
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.block--drill .block__name {
+	color: var(--accent-text);
+}
+
+/* Where a dragged block will land. */
+.timeline__drop {
+	height: 0;
+	border-top: 3px solid var(--secondary-text);
+	border-radius: 2px;
+	margin: -5px 0;
+	box-shadow: 0 0 0 1px var(--secondary-soft);
 }
 
 .block__body {
@@ -2412,11 +2450,11 @@ fieldset.field {
 }
 
 .minutes-field__value input {
-	width: 34px;
+	width: 28px;
 	border: 0;
 	background: none;
-	text-align: right;
-	font-size: 14px;
+	text-align: center;
+	font-size: 13px;
 	font-weight: 600;
 	color: var(--text);
 	-moz-appearance: textfield;
@@ -2811,4 +2849,61 @@ fieldset.field {
 
 .session-editor__notice {
 	margin: 10px 24px 0;
+}
+
+/* An app, not a page: text in dialogs can't be highlighted either (fields still can). */
+.dialog {
+	user-select: none;
+	-webkit-user-select: none;
+}
+
+.check--static {
+	cursor: default;
+	color: var(--text-muted);
+}
+
+.block__remove:hover {
+	color: var(--danger);
+}
+
+/* Narrow windows: the minutes and buttons go under the block. */
+@media (max-width: 900px) {
+	.block {
+		grid-template-columns: 28px minmax(0, 1fr);
+	}
+
+	.block__time {
+		grid-column: 2;
+		flex-direction: row;
+		gap: 8px;
+		padding-top: 0;
+	}
+
+	.block__move {
+		grid-row: span 3;
+	}
+
+	.block__body,
+	.block__side {
+		grid-column: 2;
+	}
+
+	.block__drill {
+		flex-direction: column;
+	}
+}
+
+.timeline__hint {
+	flex-basis: 100%;
+	font-size: 12px;
+	color: var(--danger);
+}
+
+.duration-field__auto {
+	margin-top: 6px;
+	font-size: 12px;
+}
+
+.duration-field input:disabled {
+	opacity: 0.7;
 }
