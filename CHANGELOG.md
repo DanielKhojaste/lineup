@@ -8,6 +8,10 @@ This project adheres to semantic versioning (0.x during early development).
 
 ## [Unreleased]
 
+---
+
+## [0.8.0] - 2026-11-03
+
 ### Added
 
 - **Sessions:** a new kind of document in the library. A session puts drills from your library in order with water breaks and other blocks (a team talk, a game), each with its own length in minutes, and shows when each one starts (0–12 min, 12–14 min…)
