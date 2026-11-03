@@ -8,11 +8,88 @@ This project adheres to semantic versioning (0.x during early development).
 
 ## [Unreleased]
 
+---
+
+## [0.8.0] - 2026-11-03
+
+### Added
+
+- **Sessions:** a new kind of document in the library. A session puts drills from your library in order with water breaks and other blocks (a team talk, a game), each with its own length in minutes, and shows when each one starts (0–12 min, 12–14 min…)
+- Session details, enough for another coach to run it: a title (the only thing required), age group or team, sport, time (hours and minutes), a description and **topics**: tags like Passing or Pressing, suggested for the session's sport, plus your own. Equipment and area are under "More details". The plan's total shows against the session's time, with how much is left or over
+- Add drills from the library panel beside the plan (the session's sport only; search or filter by type); each drill shows its picture and notes, and opens on a click (the back button returns to the session). Reorder blocks by dragging their handle or with the arrow keys, and right-click a block for more
+- **Session sheet:** the title, a summary (age group or team, sport, time, area, topics, equipment) and the description, then a section per activity with its part of the session and minutes, what happens (players, area, equipment, organisation, variations and progressions, the block's notes), the set-up diagram and the focus points. Activities aren't split across pages
+- **Export a session as a PDF or an image (PNG)** from the session editor or its card in the library, and print it (Ctrl+P)
+- **Parts of a session:** each drill can say what part of a session it is (Warm-up, Activity, Small-sided game (SSG), Scrimmage, Cool-down, or Custom…; "—" when not set), in its Notes; a session can set its own for each drill. They're numbered in order (Warm-up 1, Warm-up 2, Activity 1…), drills with none count as Activities, and water breaks are numbered too
+- **A session's sport:** every session is for one sport, and only that sport's drills can go in it. A new session starts on the sport you're looking at or your default sport; without a default, it asks first, with the same pictures as New board. In the session, the sport is a chip that opens the same picker, and drills left from another sport are pointed out
+- Session time can come **from the plan** (the blocks added up), and the session's optional details include how many players (from and to)
+- Each block in the session plan has move up, move down and remove buttons, and dragging one shows a line where it will land
+- Topics you make up are remembered in the library and suggested in every session
+- **Variations and progressions** in a drill's Notes, shown in sessions and on the sheet
+- Sessions in the library: their own "Sessions" view, a Sessions chip next to the board types in folders and sports (which count sessions too), cards with the first drills' pictures and a strip showing how the time is split, and they show up in folders and sports next to boards
+- **Board types:** Drill, Play, Line-up, Set piece or Other, set in the Notes tab. The library filters boards by type; boards from earlier versions become Plays if they're animated and Drills if not
+
 ### Changed
 
+- Text fields no longer suggest things you typed before
+- **Library files are named after their board or session** ("Cool Board.lineup"); when two have the same name, the date and time they were made is added. Files named by id from earlier versions are renamed when the library opens, and renaming a board renames its file
+- Library cards: the ⋯ button opens the same menu as right-clicking, with **Rename…**, Move to folder › and Export › (Lineup file or PNG for boards, PDF or PNG for sessions)
+- The library remembers what it was showing (view, filters, search and sort) when you come back from a board or session
+- "All boards" is now "Boards", sorting by "Recent", and "Not in a folder" is at the top of the folders
+- Deleting a board says which sessions use it
+- Long names are cut short with an ellipsis in menus and tooltips
+- Text in windows (like New board) can't be highlighted; "Use this for new boards from now on" says when the pick is already your default
+
+### Fixed
+
+- Boards no longer pile up in the wrong library view when two files in the Lineup folder hold the same board (one copied in by hand, say): the copy gets its own id, and saving writes back to the file a board came from instead of making a second one
+
+---
+
+## [0.7.0] - 2026-11-03
+
+### Added
+
+- More sports: futsal, basketball, volleyball, handball and field hockey, as well as soccer, each with its own field or court drawn to scale with its markings (basketball keys, three-point lines and hoops; the volleyball net and attack lines; handball and futsal goal areas; the hockey shooting circles)
+- Full or half field for every sport; a half field is drawn with the goal (or hoop, or net) at the top, and goals placed on it face down the field
+- A New board window: pick the sport, then a full or half field, from pictures of each; it opens on your default sport (set in Settings, or tick "Use this for new boards from now on"), so Enter makes a board straight away
+- A Field section in the board's settings to change its sport or switch between a full and a half field (undoable)
+- Player size and equipment size (S, M, L, XL) in each board's Display settings: players, and cones, balls, mannequins and poles, can be drawn smaller or bigger; goals stay their real size
+- The ball looks like the sport's ball (basketball, volleyball, hockey ball), and full-size goals are the sport's real goal size
+- The editor, library previews and PNG export show just the field and its margin, so half fields and narrow courts fill the screen instead of sitting in empty bands; markers and drawings stay on the field
+- Volleyball has 3 m behind the end lines (room to serve) and 1.5 m at the sides; futsal, basketball and handball have 1.5 m around the court
+- The library sidebar lists your sports, with how many boards each has; click one to see just its boards. Cards show each board's sport and are all the same shape
+- Right-click menus everywhere: on markers and drawings (cut, copy, paste, duplicate, team, goalkeeper, goal size, turning, line style, straighten, remove a run from a step, front and back, delete), on an empty spot of the board (paste or add something there, select all, undo and redo, show names, full or half field, clear the board), on players and teams in the sidebar, on library cards (open, duplicate, move to a folder, export, delete), on folders and on the library itself. The menu key and Shift+F10 open them from the keyboard
+- Copy, cut and paste markers and drawings (Ctrl+C, Ctrl+X, Ctrl+V), on the same board or another one; pasted players keep their shirt numbers when they're free
+- Clear the board (from its right-click menu), with a confirmation; Ctrl+Z brings everything back
+
+### Changed
+
+- `.lineup` files are now saved compressed, so they no longer open as readable text (they're also about a third of the size); files from earlier versions still open and are converted the next time they're saved
+- The window opens at the size and position it was closed at, and maximised or full screen if it was
+- The goal tool is hidden for basketball and volleyball, which don't have goals
+- The README covers the new sports and the new plan: sessions, season plans and a calendar next, then sharing, then accounts and a premium cloud subscription
+- Text fields have Lineup's own Cut, Copy, Paste and Select all menu instead of the browser's, so "Inspect" and other browser items never show (Tauri clipboard plugin)
+- A "Desktop builds" workflow on GitHub builds the Windows, macOS and Linux installers on demand (Actions tab, "Run workflow") and for every version tag
+- The version number lives in a `VERSION` file; `npm run version:sync` copies it into `package.json`, `tauri.conf.json` and `Cargo.toml`, and the Desktop builds workflow checks they match
+- `.gitattributes`: `.lineup` files are binary, and `package-lock.json` stays at LF line endings
+
+---
+
+## [0.6.1] - 2026-10-25
+
+### Changed
+
+- The app no longer shows the browser's right-click menu (Back, Reload, Inspect…) except in text fields, which keep Cut, Copy and Paste
+- Text on the page can't be highlighted by double-clicking or Ctrl+A; text fields still can
+- The README roadmap follows the new plan: any team sport next, then sessions, then present mode and export, then the planner
 - Clicking a team's name in the sidebar when all its players are selected now deselects them
 - The step section's buttons are now "Straighten run" and "Remove run" (it was "Stay put this step"), with clearer descriptions
 - The Barça example board and screenshots show the kit as garnet with blue stripes, with the keepers in their 2023/24 goalkeeper colours (Cata Coll in green, Misa in black)
+
+### Fixed
+
+- Release builds of the desktop app compile on macOS and Linux again (a Windows-only import broke them)
+- `Cargo.toml` and `Cargo.lock` no longer show as changed on Windows after a build (`.gitattributes` keeps them at LF line endings)
 
 ---
 

@@ -4,6 +4,8 @@ import { isDrawing } from "../../model/drawings";
 import { BoardItem, Kit, PlayerNode, TeamId } from "../../model/types";
 import { useEditor } from "../../state/EditorContext";
 import { describeNode } from "../board/Markers";
+import { useBoardMenus } from "../board/useBoardMenus";
+import { useContextMenu } from "../ui/ContextMenu";
 import { Icon } from "../Icon";
 import { Section } from "../ui/fields";
 import { describeDrawing } from "./DrawingFields";
@@ -30,6 +32,8 @@ function selectMode(e: React.MouseEvent) {
 
 function TeamGroup({ team, players }: { team: TeamId; players: PlayerNode[] }) {
 	const { state, dispatch } = useEditor();
+	const menus = useBoardMenus();
+	const { openMenu } = useContextMenu();
 	const [open, setOpen] = useState(true);
 	const selected = new Set(state.selection);
 	const style = state.board.teams[team];
@@ -57,6 +61,34 @@ function TeamGroup({ team, players }: { team: TeamId; players: PlayerNode[] }) {
 				<button
 					type="button"
 					className="team-group__name"
+					onContextMenu={(e) =>
+						openMenu(e, [
+							{
+								label: `Select all of ${style.name}`,
+								onSelect: () => dispatch({ type: "select", ids }),
+							},
+							{
+								label: "Add them to the selection",
+								disabled: allSelected,
+								onSelect: () => dispatch({ type: "select", ids, mode: "add" }),
+							},
+							{
+								label: "Deselect them",
+								disabled: !ids.some((id) => selected.has(id)),
+								onSelect: () =>
+									dispatch({
+										type: "select",
+										ids: state.selection.filter((id) => !ids.includes(id)),
+									}),
+							},
+							"separator",
+							{
+								label: `Delete all ${players.length} players`,
+								danger: true,
+								onSelect: () => dispatch({ type: "deleteItems", ids }),
+							},
+						])
+					}
 					aria-pressed={allSelected}
 					title={
 						allSelected
@@ -102,6 +134,7 @@ function TeamGroup({ team, players }: { team: TeamId; players: PlayerNode[] }) {
 								onClick={(e) =>
 									dispatch({ type: "select", ids: [p.id], mode: selectMode(e) })
 								}
+								onContextMenu={(e) => menus.openItemMenu(e, p.id, openMenu)}
 							>
 								<span
 									className="kit-dot kit-dot--small"
@@ -130,6 +163,8 @@ function TeamGroup({ team, players }: { team: TeamId; players: PlayerNode[] }) {
 /** Every marker and drawing on the board: players grouped by team, then everything else. */
 export default function ObjectList() {
 	const { state, dispatch } = useEditor();
+	const menus = useBoardMenus();
+	const { openMenu } = useContextMenu();
 	const { board } = state;
 	const selected = new Set(state.selection);
 	const players = board.nodes.filter(
@@ -178,6 +213,7 @@ export default function ObjectList() {
 											mode: selectMode(e),
 										})
 									}
+									onContextMenu={(e) => menus.openItemMenu(e, item.id, openMenu)}
 								>
 									{isDrawing(item)
 										? describeDrawing(item)

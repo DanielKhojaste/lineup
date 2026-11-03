@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { DrillNotes } from "../../model/types";
+import { BOARD_TYPE_LABELS } from "../../model/board";
+import { BOARD_TYPES, BoardType, DrillNotes } from "../../model/types";
 import { useEditor } from "../../state/EditorContext";
 import { allFolders, useLibrary } from "../../state/LibraryContext";
 import { Icon } from "../Icon";
 import { BoardInput, BoardTextarea, Section } from "../ui/fields";
+import StagePicker from "../ui/StagePicker";
 
 const DETAIL_FIELDS: {
 	key: keyof DrillNotes;
@@ -18,11 +20,42 @@ const DETAIL_FIELDS: {
 	{ key: "equipment", label: "Equipment", placeholder: "Cones, balls" },
 ];
 
+function TypeField() {
+	const { state, dispatch } = useEditor();
+	return (
+		<div className="field">
+			<label className="field__label" htmlFor="board-type">
+				Type
+			</label>
+			<select
+				id="board-type"
+				className="field__input"
+				value={state.board.meta.type}
+				onChange={(e) =>
+					dispatch({
+						type: "updateMeta",
+						patch: { type: e.target.value as BoardType },
+					})
+				}
+			>
+				{BOARD_TYPES.map((t) => (
+					<option key={t} value={t}>
+						{BOARD_TYPE_LABELS[t].one}
+					</option>
+				))}
+			</select>
+		</div>
+	);
+}
+
 function FolderField() {
 	const { state, dispatch } = useEditor();
 	const library = useLibrary();
 	const folder = state.board.meta.folder;
-	const folders = allFolders(library.folders, library.boards);
+	const folders = allFolders(library.folders, [
+		...library.boards,
+		...library.sessions,
+	]);
 	const options =
 		folder && !folders.includes(folder) ? [...folders, folder] : folders;
 
@@ -106,14 +139,27 @@ function Tags() {
 	);
 }
 
-function CoachingPoints() {
+/** An editable numbered list in the notes: coaching points, variations. */
+function NoteList({
+	field,
+	title,
+	itemLabel,
+	addLabel,
+	placeholder,
+}: {
+	field: "coachingPoints" | "variations";
+	title: string;
+	itemLabel: string;
+	addLabel: string;
+	placeholder?: string;
+}) {
 	const { state, dispatch } = useEditor();
-	const points = state.board.notes.coachingPoints;
-	const set = (coachingPoints: string[]) =>
-		dispatch({ type: "updateNotes", patch: { coachingPoints } });
+	const points = state.board.notes[field];
+	const set = (list: string[]) =>
+		dispatch({ type: "updateNotes", patch: { [field]: list } });
 
 	return (
-		<Section title="Coaching points">
+		<Section title={title}>
 			{points.length > 0 && (
 				<ol className="points">
 					{points.map((point, i) => (
@@ -122,17 +168,18 @@ function CoachingPoints() {
 								{i + 1}.
 							</span>
 							<BoardInput
-								label={`Coaching point ${i + 1}`}
+								label={`${itemLabel} ${i + 1}`}
 								hideLabel
 								value={point}
-								maxLength={160}
+								maxLength={300}
+								placeholder={placeholder}
 								autoFocus={point === "" && i === points.length - 1}
 								onValue={(v) => set(points.map((p, j) => (j === i ? v : p)))}
 							/>
 							<button
 								type="button"
 								className="icon-button icon-button--small"
-								aria-label={`Remove coaching point ${i + 1}`}
+								aria-label={`Remove ${itemLabel.toLowerCase()} ${i + 1}`}
 								onClick={() => set(points.filter((_, j) => j !== i))}
 							>
 								<Icon name="close" size={14} />
@@ -146,7 +193,7 @@ function CoachingPoints() {
 				className="link-button"
 				onClick={() => set([...points, ""])}
 			>
-				+ Add point
+				{addLabel}
 			</button>
 		</Section>
 	);
@@ -161,7 +208,14 @@ export default function NotesPanel() {
 	return (
 		<div className="panel-body">
 			<Section title="Details">
-				<FolderField />
+				<StagePicker
+					value={notes.stage}
+					onChange={(stage) => update({ stage })}
+				/>
+				<div className="field-grid">
+					<TypeField />
+					<FolderField />
+				</div>
 				<div className="field-grid">
 					{DETAIL_FIELDS.map((f) => (
 						<BoardInput
@@ -177,13 +231,25 @@ export default function NotesPanel() {
 				<BoardTextarea
 					label="Description"
 					rows={4}
-					placeholder="How the drill runs, rotations, progressions…"
+					placeholder="How the drill is set up and runs: organisation, rotations, scoring…"
 					value={notes.description}
 					onValue={(description) => update({ description })}
 				/>
 				<Tags />
 			</Section>
-			<CoachingPoints />
+			<NoteList
+				field="coachingPoints"
+				title="Coaching points"
+				itemLabel="Coaching point"
+				addLabel="+ Add point"
+			/>
+			<NoteList
+				field="variations"
+				title="Variations and progressions"
+				itemLabel="Variation"
+				addLabel="+ Add a variation"
+				placeholder="e.g. Two touches only; add a second defender"
+			/>
 		</div>
 	);
 }

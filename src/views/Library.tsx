@@ -1,21 +1,34 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BoardPreview from "../components/board/BoardPreview";
 import { Icon } from "../components/Icon";
 import SettingsDialog from "../components/shell/SettingsDialog";
 import { ConfirmDialog, Modal, PromptDialog } from "../components/ui/Dialog";
-import { Menu } from "../components/ui/Menu";
+import { ContextMenuEntry, useContextMenu } from "../components/ui/ContextMenu";
 import { boardToPng } from "../export/png";
-import { Board } from "../model/types";
+import { SURFACES } from "../components/board/Pitch";
+import NewBoardDialog from "../components/library/NewBoardDialog";
+import CardMenuButton from "../components/library/CardMenuButton";
+import SessionCard from "../components/library/SessionCard";
+import SportPickerDialog from "../components/library/SportPickerDialog";
+import { getPreferences } from "../state/preferences";
+import { truncate } from "../utils/text";
+import { BOARD_TYPE_LABELS } from "../model/board";
+import { Session, sessionTitle } from "../model/session";
+import { pitchLabel, Sport, SPORT_INFO, SPORTS } from "../model/sports";
+import { Board, BOARD_TYPES, BoardType, PitchSettings } from "../model/types";
 import { allFolders, useLibrary } from "../state/LibraryContext";
 import { exportBoardFile, exportPng, pickBoardFiles } from "../storage/files";
+import { useSessionExport } from "../export/useSessionExport";
 import { relativeTime } from "../utils/time";
 
 /** Which boards the main area shows: everything, the boards outside folders, or one folder. */
 type View =
 	| { kind: "all" }
+	| { kind: "sessions" }
 	| { kind: "unfiled" }
-	| { kind: "folder"; name: string };
+	| { kind: "folder"; name: string }
+	| { kind: "sport"; sport: Sport };
 type Sort = "updated" | "title";
 
 function matches(board: Board, query: string): boolean {
@@ -36,119 +49,92 @@ function matches(board: Board, query: string): boolean {
 		.includes(q);
 }
 
+function sessionMatches(session: Session, query: string): boolean {
+	if (!query) return true;
+	const { meta, header } = session;
+	return [
+		meta.title,
+		meta.folder,
+		...meta.tags,
+		header.team,
+		header.description,
+		...header.topics,
+	]
+		.join(" ")
+		.toLowerCase()
+		.includes(query.toLowerCase());
+}
+
 function BoardCard({
 	board,
 	onOpen,
-	onDuplicate,
-	onMove,
-	onExport,
-	onExportPng,
-	onDelete,
+	menu,
 }: {
 	board: Board;
 	onOpen: () => void;
-	onDuplicate: () => void;
-	onMove: () => void;
-	onExport: () => void;
-	onExportPng: () => void;
-	onDelete: () => void;
+	/** The card's menu: the same from right-clicking and from its ⋯ button. */
+	menu: () => ContextMenuEntry[];
 }) {
 	const details = [
+		BOARD_TYPE_LABELS[board.meta.type].one,
+		pitchLabel(board.pitch),
 		board.meta.folder,
 		board.notes.duration,
 		board.steps.length > 0 &&
 			`${board.steps.length} step${board.steps.length > 1 ? "s" : ""}`,
 		`Edited ${relativeTime(board.meta.updatedAt)}`,
 	].filter(Boolean);
+	const { openMenu } = useContextMenu();
 	return (
-		<article className="board-card">
+		<article className="board-card" onContextMenu={(e) => openMenu(e, menu())}>
 			<button
 				type="button"
 				className="board-card__open"
 				onClick={onOpen}
-				aria-label={`Open ${board.meta.title}`}
+				aria-label={`Open ${truncate(board.meta.title, 60)}`}
+				title={board.meta.title}
 			>
 				<BoardPreview board={board} className="board-card__preview" />
 				<span className="board-card__title">{board.meta.title}</span>
 				<span className="board-card__meta">{details.join(" · ")}</span>
 			</button>
-			<div className="board-card__menu">
-				<Menu
-					label={`More actions for ${board.meta.title}`}
-					button={<Icon name="more" size={18} />}
-					items={[
-						{ label: "Open", onSelect: onOpen },
-						{ label: "Duplicate", onSelect: onDuplicate },
-						{ label: "Move to folder…", onSelect: onMove },
-						"separator",
-						{ label: "Export .lineup file", onSelect: onExport },
-						{ label: "Export PNG image", onSelect: onExportPng },
-						"separator",
-						{ label: "Delete", onSelect: onDelete, danger: true },
-					]}
-				/>
-			</div>
+			<CardMenuButton title={board.meta.title} menu={menu} />
 		</article>
 	);
 }
 
-function MoveDialog({
-	board,
-	folders,
-	onMove,
-	onClose,
-}: {
-	board: Board | null;
-	folders: string[];
-	onMove: (folder: string) => void;
-	onClose: () => void;
-}) {
-	const [folder, setFolder] = useState(board?.meta.folder ?? "");
-	return (
-		<Modal open={!!board} title="Move to folder" onClose={onClose}>
-			<form
-				className="dialog__section"
-				onSubmit={(e) => {
-					e.preventDefault();
-					onMove(folder);
-					onClose();
-				}}
-			>
-				<label className="field">
-					<span className="field__label">Folder for “{board?.meta.title}”</span>
-					<select
-						className="field__input"
-						value={folder}
-						onChange={(e) => setFolder(e.target.value)}
-						data-autofocus
-					>
-						<option value="">No folder</option>
-						{folders.map((f) => (
-							<option key={f} value={f}>
-								{f}
-							</option>
-						))}
-					</select>
-				</label>
-				<div className="dialog__actions">
-					<button type="button" className="button" onClick={onClose}>
-						Cancel
-					</button>
-					<button type="submit" className="button button--primary">
-						Move
-					</button>
-				</div>
-			</form>
-		</Modal>
-	);
-}
+/**
+ * What the library was showing (view, filters, search, sort), so coming back
+ * from a board or session shows the same thing. Kept while the app is open.
+ */
+const remembered: {
+	view: View;
+	type: BoardType | "all" | "sessions";
+	query: string;
+	sort: Sort;
+} = { view: { kind: "all" }, type: "all", query: "", sort: "updated" };
 
 export default function Library() {
 	const library = useLibrary();
 	const navigate = useNavigate();
-	const [view, setView] = useState<View>({ kind: "all" });
-	const [query, setQuery] = useState("");
-	const [sort, setSort] = useState<Sort>("updated");
+	const { openMenu } = useContextMenu();
+	const sessionExport = useSessionExport();
+	const [view, setViewState] = useState<View>(remembered.view);
+	// Filter chips: everything, just sessions, or one type of board.
+	const [type, setType] = useState<BoardType | "all" | "sessions">(
+		remembered.type,
+	);
+	/** Each view starts with every type showing. */
+	const setView = (next: View) => {
+		setViewState(next);
+		setType("all");
+	};
+	const [query, setQuery] = useState(remembered.query);
+	const [sort, setSort] = useState<Sort>(remembered.sort);
+	useEffect(() => {
+		Object.assign(remembered, { view, type, query, sort });
+	}, [view, type, query, sort]);
+	const [newBoardOpen, setNewBoardOpen] = useState(false);
 	const [notice, setNotice] = useState<{
 		text: string;
 		tone: "info" | "error";
@@ -158,26 +144,98 @@ export default function Library() {
 	const [renaming, setRenaming] = useState<string | null>(null);
 	const [deletingFolder, setDeletingFolder] = useState<string | null>(null);
 	const [deletingBoard, setDeletingBoard] = useState<Board | null>(null);
-	const [moving, setMoving] = useState<Board | null>(null);
+	const [renamingDoc, setRenamingDoc] = useState<{
+		kind: "board" | "session";
+		id: string;
+		title: string;
+	} | null>(null);
+	const [deletingSession, setDeletingSession] = useState<Session | null>(null);
 
-	const folders = allFolders(library.folders, library.boards);
+	const folders = allFolders(library.folders, [
+		...library.boards,
+		...library.sessions,
+	]);
 	const currentFolder = view.kind === "folder" ? view.name : "";
 
 	const shown = useMemo(() => {
+		if (view.kind === "sessions" || type === "sessions") return [];
 		const inView = library.boards.filter((b) =>
 			view.kind === "all"
 				? true
 				: view.kind === "unfiled"
 				  ? !b.meta.folder
-				  : b.meta.folder === view.name,
+				  : view.kind === "sport"
+				    ? b.pitch.sport === view.sport
+				    : b.meta.folder === view.name,
 		);
-		const found = inView.filter((b) => matches(b, query.trim()));
+		const found = inView.filter(
+			(b) => (type === "all" || b.meta.type === type) && matches(b, query.trim()),
+		);
 		return sort === "title"
 			? [...found].sort((a, b) => a.meta.title.localeCompare(b.meta.title))
 			: [...found].sort((a, b) =>
 					b.meta.updatedAt.localeCompare(a.meta.updatedAt),
 			  );
-	}, [library.boards, view, query, sort]);
+	}, [library.boards, view, query, sort, type]);
+
+	// Sessions show in their own view, and next to boards in folders and sports.
+	const shownSessions = useMemo(() => {
+		if (view.kind === "all") return [];
+		// A board type picked in the chips shows just those boards.
+		if (view.kind !== "sessions" && type !== "all" && type !== "sessions") return [];
+		const inView = library.sessions.filter((s) =>
+			view.kind === "sessions"
+				? true
+				: view.kind === "unfiled"
+				  ? !s.meta.folder
+				  : view.kind === "sport"
+				    ? s.header.sport === view.sport
+				    : s.meta.folder === view.name,
+		);
+		const found = inView.filter((s) => sessionMatches(s, query.trim()));
+		return sort === "title"
+			? [...found].sort((a, b) => sessionTitle(a).localeCompare(sessionTitle(b)))
+			: [...found].sort((a, b) =>
+					b.meta.updatedAt.localeCompare(a.meta.updatedAt),
+			  );
+	}, [library.sessions, view, query, sort, type]);
+
+	// How many sessions this view has, for the Sessions chip (folders, sports and "Not in a folder").
+	const sessionsInView =
+		view.kind === "all" || view.kind === "sessions"
+			? 0
+			: library.sessions.filter((s) =>
+					view.kind === "unfiled"
+						? !s.meta.folder
+						: view.kind === "sport"
+						  ? s.header.sport === view.sport
+						  : s.meta.folder === view.name,
+			  ).length;
+
+	// Board types in this view, for the filter chips.
+	const typeCounts = useMemo(() => {
+		const counts = new Map<BoardType, number>();
+		const inView = library.boards.filter((b) =>
+			view.kind === "all"
+				? true
+				: view.kind === "unfiled"
+				  ? !b.meta.folder
+				  : view.kind === "sport"
+				    ? b.pitch.sport === view.sport
+				    : view.kind === "folder"
+				      ? b.meta.folder === view.name
+				      : false,
+		);
+		for (const b of inView) counts.set(b.meta.type, (counts.get(b.meta.type) ?? 0) + 1);
+		return counts;
+	}, [library.boards, view]);
+
+	// The sidebar lists the sports the library has boards or sessions for.
+	const sportsInLibrary = SPORTS.filter(
+		(s) =>
+			library.boards.some((b) => b.pitch.sport === s) ||
+			library.sessions.some((x) => x.header.sport === s),
+	);
 
 	const run = async (task: () => Promise<unknown>, failure: string) => {
 		try {
@@ -191,10 +249,142 @@ export default function Library() {
 	};
 
 	const openBoard = (id: string) => navigate(`/board/${id}`);
+	const openSession = (id: string) => navigate(`/session/${id}`);
 
-	const newBoard = () =>
+	const [askingSport, setAskingSport] = useState(false);
+	const createSessionFor = (sport: Sport) =>
 		run(async () => {
-			const board = await library.createBoard(currentFolder);
+			const session = await library.createSession(currentFolder, sport);
+			openSession(session.id);
+		}, "Couldn't create the session");
+
+	/**
+	 * A new session starts on the sport being shown, or the default sport;
+	 * without either, it asks which sport it's for first.
+	 */
+	const newSession = () => {
+		const prefs = getPreferences();
+		if (view.kind === "sport") createSessionFor(view.sport);
+		else if (prefs.hasDefaultSport) createSessionFor(prefs.defaultPitch.sport);
+		else setAskingSport(true);
+	};
+
+	/** The delete confirmation, saying which sessions use the board. */
+	const deleteBoardMessage = (board: Board | null) => {
+		if (!board) return "";
+		const usedIn = library.sessions.filter((s) =>
+			s.blocks.some((b) => b.kind === "drill" && b.boardId === board.id),
+		);
+		const title = truncate(board.meta.title, 60);
+		const sessions =
+			usedIn.length === 0
+				? ""
+				: usedIn.length === 1
+				  ? ` It's used in the session “${truncate(sessionTitle(usedIn[0]), 40)}”, which will show it as a missing drill.`
+				  : ` It's used in ${usedIn.length} sessions (${usedIn
+							.slice(0, 3)
+							.map((s) => `“${truncate(sessionTitle(s), 30)}”`)
+							.join(", ")}${usedIn.length > 3 ? "…" : ""}), which will show it as a missing drill.`;
+		return `Delete “${title}”?${sessions} This can't be undone. Export it first if you might want it back.`;
+	};
+
+	/** A folder's menu, from right-clicking it in the sidebar or its ⋯ button. */
+	const folderMenu = (name: string): ContextMenuEntry[] => [
+		{ label: "Open", onSelect: () => setView({ kind: "folder", name }) },
+		{
+			label: "New board here…",
+			onSelect: () => {
+				setView({ kind: "folder", name });
+				setNewBoardOpen(true);
+			},
+		},
+		"separator",
+		{ label: "Rename…", onSelect: () => setRenaming(name) },
+		{ label: "Delete folder…", danger: true, onSelect: () => setDeletingFolder(name) },
+	];
+
+	/** "Move to folder ›" for a board or session. */
+	const folderSubmenu = (
+		current: string,
+		move: (folder: string) => Promise<void>,
+	): ContextMenuEntry => ({
+		label: "Move to folder",
+		submenu: [
+			{
+				label: "No folder",
+				checked: !current,
+				onSelect: () => run(() => move(""), "Couldn't move it"),
+			},
+			...(folders.length ? ["separator" as const] : []),
+			...folders.map((f) => ({
+				label: f,
+				checked: current === f,
+				onSelect: () => run(() => move(f), "Couldn't move it"),
+			})),
+			"separator" as const,
+			{ label: "New folder…", onSelect: () => setNewFolderOpen(true) },
+		],
+	});
+
+	/** A board card's menu, from right-clicking it or its ⋯ button. */
+	const boardMenu = (board: Board): ContextMenuEntry[] => [
+		{ label: "Open", onSelect: () => openBoard(board.id) },
+		{ label: "Rename…", onSelect: () => setRenamingDoc({ kind: "board", id: board.id, title: board.meta.title }) },
+		{
+			label: "Duplicate",
+			onSelect: () =>
+				run(() => library.duplicateBoard(board.id), "Couldn't duplicate the board"),
+		},
+		folderSubmenu(board.meta.folder, (f) => library.moveToFolder(board.id, f)),
+		"separator",
+		{
+			label: "Export",
+			submenu: [
+				{
+					label: "Lineup file (.lineup)",
+					onSelect: () => run(() => exportBoardFile(board), "Export failed"),
+				},
+				{
+					label: "Image (PNG)",
+					onSelect: () =>
+						run(async () => exportPng(board, await boardToPng(board)), "Export failed"),
+				},
+			],
+		},
+		"separator",
+		{ label: "Delete…", danger: true, onSelect: () => setDeletingBoard(board) },
+	];
+
+	/** A session card's menu, from right-clicking it or its ⋯ button. */
+	const sessionMenu = (session: Session) => (): ContextMenuEntry[] => [
+		{ label: "Open", onSelect: () => openSession(session.id) },
+		{
+			label: "Rename…",
+			onSelect: () =>
+				setRenamingDoc({ kind: "session", id: session.id, title: session.meta.title }),
+		},
+		{
+			label: "Duplicate",
+			onSelect: () =>
+				run(() => library.duplicateSession(session.id), "Couldn't duplicate the session"),
+		},
+		folderSubmenu(session.meta.folder, (f) => library.moveSessionToFolder(session.id, f)),
+		"separator",
+		{
+			label: "Export",
+			submenu: [
+				{ label: "PDF document", onSelect: () => sessionExport.exportAs(session, "pdf") },
+				{ label: "Image (PNG)", onSelect: () => sessionExport.exportAs(session, "png") },
+			],
+		},
+		"separator",
+		{ label: "Delete…", danger: true, onSelect: () => setDeletingSession(session) },
+	];
+
+	/** A new board for the sport and field picked in the New board dialog. */
+	const newBoard = (pitch: PitchSettings) =>
+		run(async () => {
+			const board = await library.createBoard(currentFolder, pitch);
 			openBoard(board.id);
 		}, "Couldn't create the board");
 
@@ -221,21 +411,28 @@ export default function Library() {
 		}, "Import failed");
 
 	const counts = (name: string) =>
-		library.boards.filter((b) => b.meta.folder === name).length;
-	const unfiledCount = library.boards.filter((b) => !b.meta.folder).length;
+		library.boards.filter((b) => b.meta.folder === name).length +
+		library.sessions.filter((s) => s.meta.folder === name).length;
+	const unfiledCount =
+		library.boards.filter((b) => !b.meta.folder).length +
+		library.sessions.filter((s) => !s.meta.folder).length;
 	const heading =
 		view.kind === "all"
-			? "All boards"
-			: view.kind === "unfiled"
+			? "Boards"
+			: view.kind === "sessions"
+			  ? "Sessions"
+			  : view.kind === "unfiled"
 			  ? "Not in a folder"
-			  : view.name;
+			  : view.kind === "sport"
+			    ? SPORT_INFO[view.sport].name
+			    : view.name;
 
 	const navItem = (
 		label: string,
 		count: number,
 		active: boolean,
 		onClick: () => void,
-		icon: "grid" | "folder" | "inbox",
+		icon: "grid" | "folder" | "inbox" | "session",
 	) => (
 		<button
 			type="button"
@@ -287,8 +484,17 @@ export default function Library() {
 				</button>
 				<button
 					type="button"
-					className="button button--primary"
-					onClick={newBoard}
+					className={`button${view.kind === "sessions" ? " button--primary" : ""}`}
+					onClick={newSession}
+					disabled={library.status !== "ready"}
+				>
+					<Icon name="plus" size={16} />
+					New session
+				</button>
+				<button
+					type="button"
+					className={`button${view.kind === "sessions" ? "" : " button--primary"}`}
+					onClick={() => setNewBoardOpen(true)}
 					disabled={library.status !== "ready"}
 				>
 					<Icon name="plus" size={16} />
@@ -309,20 +515,59 @@ export default function Library() {
 				<nav className="library__nav" aria-label="Library">
 					<div className="nav-group">
 						{navItem(
-							"All boards",
+							"Boards",
 							library.boards.length,
 							view.kind === "all",
 							() => setView({ kind: "all" }),
 							"grid",
 						)}
 						{navItem(
-							"Not in a folder",
-							unfiledCount,
-							view.kind === "unfiled",
-							() => setView({ kind: "unfiled" }),
-							"inbox",
+							"Sessions",
+							library.sessions.length,
+							view.kind === "sessions",
+							() => setView({ kind: "sessions" }),
+							"session",
 						)}
 					</div>
+					{sportsInLibrary.length > 0 && (
+						<div className="nav-group">
+							<div className="nav-group__head">
+								<span>Sports</span>
+							</div>
+							{sportsInLibrary.map((sport) => (
+								<button
+									key={sport}
+									type="button"
+									className={`nav-item${
+										view.kind === "sport" && view.sport === sport
+											? " is-active"
+											: ""
+									}`}
+									aria-current={
+										view.kind === "sport" && view.sport === sport
+											? "page"
+											: undefined
+									}
+									onClick={() => setView({ kind: "sport", sport })}
+								>
+									<span
+										className="sport-swatch"
+										style={{ background: SURFACES[sport].floor }}
+										aria-hidden="true"
+									/>
+									<span className="nav-item__label">
+										{SPORT_INFO[sport].name}
+									</span>
+									<span className="nav-item__count">
+										{library.boards.filter((b) => b.pitch.sport === sport)
+											.length +
+											library.sessions.filter((x) => x.header.sport === sport)
+												.length}
+									</span>
+								</button>
+							))}
+						</div>
+					)}
 					<div className="nav-group">
 						<div className="nav-group__head">
 							<span>Folders</span>
@@ -336,11 +581,22 @@ export default function Library() {
 								<Icon name="plus" size={16} />
 							</button>
 						</div>
+						{navItem(
+							"Not in a folder",
+							unfiledCount,
+							view.kind === "unfiled",
+							() => setView({ kind: "unfiled" }),
+							"inbox",
+						)}
 						{folders.length === 0 && (
 							<p className="muted small nav-group__empty">No folders yet.</p>
 						)}
 						{folders.map((name) => (
-							<div key={name} className="nav-row">
+							<div
+								key={name}
+								className="nav-row"
+								onContextMenu={(e) => openMenu(e, folderMenu(name))}
+							>
 								{navItem(
 									name,
 									counts(name),
@@ -348,19 +604,19 @@ export default function Library() {
 									() => setView({ kind: "folder", name }),
 									"folder",
 								)}
-								<Menu
-									label={`Folder actions for ${name}`}
-									button={<Icon name="more" size={16} />}
-									buttonClassName="icon-button icon-button--small nav-row__menu"
-									items={[
-										{ label: "Rename", onSelect: () => setRenaming(name) },
-										{
-											label: "Delete folder",
-											onSelect: () => setDeletingFolder(name),
-											danger: true,
-										},
-									]}
-								/>
+								<button
+									type="button"
+									className="icon-button icon-button--small nav-row__menu"
+									aria-label={`Folder actions for ${truncate(name, 40)}`}
+									title={`Folder actions for ${truncate(name, 40)}`}
+									aria-haspopup="menu"
+									onClick={(e) => {
+										const r = e.currentTarget.getBoundingClientRect();
+										openMenu({ x: r.left, y: r.bottom + 4 }, folderMenu(name));
+									}}
+								>
+									<Icon name="more" size={16} />
+								</button>
 							</div>
 						))}
 					</div>
@@ -371,11 +627,32 @@ export default function Library() {
 					</div>
 				</nav>
 
-				<main className="library__main">
+				<main
+					className="library__main"
+					onContextMenu={(e) => {
+						if (e.defaultPrevented) return;
+						openMenu(e, [
+							{ label: "New board…", onSelect: () => setNewBoardOpen(true) },
+							{ label: "New session", onSelect: newSession },
+							{ label: "Import boards…", onSelect: importBoards },
+							"separator",
+							{ label: "New folder…", onSelect: () => setNewFolderOpen(true) },
+						]);
+					}}
+				>
 					<div className="library__head">
 						<h1>{heading}</h1>
 						<span className="muted">
-							{shown.length} {shown.length === 1 ? "board" : "boards"}
+							{[
+								view.kind !== "sessions" &&
+									`${shown.length} ${shown.length === 1 ? "board" : "boards"}`,
+								shownSessions.length > 0 &&
+									`${shownSessions.length} ${
+										shownSessions.length === 1 ? "session" : "sessions"
+									}`,
+							]
+								.filter(Boolean)
+								.join(" · ") || "Nothing here yet"}
 						</span>
 						<span className="topbar__spacer" />
 						<label className="sort">
@@ -385,12 +662,25 @@ export default function Library() {
 								value={sort}
 								onChange={(e) => setSort(e.target.value as Sort)}
 							>
-								<option value="updated">Last edited</option>
+								<option value="updated">Recent</option>
 								<option value="title">Name</option>
 							</select>
 						</label>
 					</div>
 
+					{sessionExport.error && (
+						<div className="notice notice--error" role="alert">
+							<span>{sessionExport.error}</span>
+							<button
+								type="button"
+								className="icon-button icon-button--small"
+								aria-label="Dismiss"
+								onClick={sessionExport.clearError}
+							>
+								<Icon name="close" size={14} />
+							</button>
+						</div>
+					)}
 					{notice && (
 						<div
 							className={`notice notice--${notice.tone}`}
@@ -425,7 +715,92 @@ export default function Library() {
 						</div>
 					)}
 
-					{library.status === "ready" && shown.length === 0 && (
+					{view.kind !== "sessions" &&
+						typeCounts.size + (sessionsInView ? 1 : 0) > 1 && (
+						<div className="filter-chips" role="group" aria-label="Board type">
+							<button
+								type="button"
+								className={`filter-chip${type === "all" ? " is-active" : ""}`}
+								aria-pressed={type === "all"}
+								onClick={() => setType("all")}
+							>
+								All
+							</button>
+							{sessionsInView > 0 && (
+								<button
+									type="button"
+									className={`filter-chip${type === "sessions" ? " is-active" : ""}`}
+									aria-pressed={type === "sessions"}
+									onClick={() => setType(type === "sessions" ? "all" : "sessions")}
+								>
+									Sessions
+									<span className="filter-chip__count">{sessionsInView}</span>
+								</button>
+							)}
+							{BOARD_TYPES.filter((t) => typeCounts.has(t)).map((t) => (
+								<button
+									key={t}
+									type="button"
+									className={`filter-chip${type === t ? " is-active" : ""}`}
+									aria-pressed={type === t}
+									onClick={() => setType(type === t ? "all" : t)}
+								>
+									{BOARD_TYPE_LABELS[t].many}
+									<span className="filter-chip__count">{typeCounts.get(t)}</span>
+								</button>
+							))}
+						</div>
+					)}
+
+					{library.status === "ready" &&
+						view.kind === "sessions" &&
+						shownSessions.length === 0 && (
+							<div className="empty-state">
+								{query ? (
+									<p>No sessions match “{query}”.</p>
+								) : (
+									<>
+										<p>
+											No sessions yet. A session puts drills from your library in
+											order, with breaks and timings, and prints as a session sheet.
+										</p>
+										<button
+											type="button"
+											className="button button--primary"
+											onClick={newSession}
+										>
+											<Icon name="plus" size={16} />
+											New session
+										</button>
+									</>
+								)}
+							</div>
+						)}
+
+					{shownSessions.length > 0 && (
+						<>
+							{view.kind !== "sessions" && <h2 className="library__section">Sessions</h2>}
+							<div className="board-grid">
+								{shownSessions.map((session) => (
+									<SessionCard
+										key={session.id}
+										session={session}
+										getBoard={library.getBoard}
+										onOpen={() => openSession(session.id)}
+										menu={sessionMenu(session)}
+									/>
+								))}
+							</div>
+							{view.kind !== "sessions" && shown.length > 0 && (
+								<h2 className="library__section">Boards</h2>
+							)}
+						</>
+					)}
+
+					{library.status === "ready" &&
+						view.kind !== "sessions" &&
+						shown.length === 0 &&
+						shownSessions.length === 0 && (
 						<div className="empty-state">
 							{query ? (
 								<p>No boards match “{query}”.</p>
@@ -439,7 +814,7 @@ export default function Library() {
 									<button
 										type="button"
 										className="button button--primary"
-										onClick={newBoard}
+										onClick={() => setNewBoardOpen(true)}
 									>
 										<Icon name="plus" size={16} />
 										New board
@@ -455,23 +830,7 @@ export default function Library() {
 								key={board.id}
 								board={board}
 								onOpen={() => openBoard(board.id)}
-								onDuplicate={() =>
-									run(
-										() => library.duplicateBoard(board.id),
-										"Couldn't duplicate the board",
-									)
-								}
-								onMove={() => setMoving(board)}
-								onExport={() =>
-									run(() => exportBoardFile(board), "Export failed")
-								}
-								onExportPng={() =>
-									run(
-										async () => exportPng(board, await boardToPng(board)),
-										"Export failed",
-									)
-								}
-								onDelete={() => setDeletingBoard(board)}
+								menu={() => boardMenu(board)}
 							/>
 						))}
 					</div>
@@ -532,7 +891,7 @@ export default function Library() {
 			<ConfirmDialog
 				open={deletingBoard !== null}
 				title="Delete board"
-				message={`Delete “${deletingBoard?.meta.title}”? This can't be undone. Export it first if you might want it back.`}
+				message={deleteBoardMessage(deletingBoard)}
 				confirmLabel="Delete"
 				danger
 				onConfirm={() =>
@@ -543,19 +902,61 @@ export default function Library() {
 				}
 				onClose={() => setDeletingBoard(null)}
 			/>
-			{moving && (
-				<MoveDialog
-					board={moving}
-					folders={folders}
-					onMove={(folder) =>
-						run(
-							() => library.moveToFolder(moving.id, folder),
-							"Couldn't move the board",
-						)
+			<PromptDialog
+				open={renamingDoc !== null}
+				title={renamingDoc?.kind === "session" ? "Rename session" : "Rename board"}
+				label="Name"
+				initialValue={renamingDoc?.title ?? ""}
+				confirmLabel="Rename"
+				validate={(name) => (name.trim() ? null : "Please type a name.")}
+				onSubmit={(title) => {
+					const doc = renamingDoc!;
+					if (doc.kind === "board") {
+						const board = library.getBoard(doc.id);
+						if (board)
+							run(
+								() => library.saveBoard({ ...board, meta: { ...board.meta, title } }),
+								"Couldn't rename the board",
+							);
+					} else {
+						const session = library.getSession(doc.id);
+						if (session)
+							run(
+								() => library.saveSession({ ...session, meta: { ...session.meta, title } }),
+								"Couldn't rename the session",
+							);
 					}
-					onClose={() => setMoving(null)}
-				/>
-			)}
+				}}
+				onClose={() => setRenamingDoc(null)}
+			/>
+			<ConfirmDialog
+				open={deletingSession !== null}
+				title="Delete session"
+				message={`Delete the session “${deletingSession ? sessionTitle(deletingSession) : ""}”? Its drills stay in your library. This can't be undone.`}
+				confirmLabel="Delete"
+				danger
+				onConfirm={() =>
+					run(
+						() => library.deleteSession(deletingSession!.id),
+						"Couldn't delete the session",
+					)
+				}
+				onClose={() => setDeletingSession(null)}
+			/>
+			<SportPickerDialog
+				open={askingSport}
+				title="New session: which sport?"
+				confirmLabel="Create session"
+				initial={getPreferences().defaultPitch.sport}
+				onClose={() => setAskingSport(false)}
+				onPick={createSessionFor}
+			/>
+			<NewBoardDialog
+				open={newBoardOpen}
+				initialSport={view.kind === "sport" ? view.sport : undefined}
+				onClose={() => setNewBoardOpen(false)}
+				onCreate={newBoard}
+			/>
 			<SettingsDialog
 				open={settingsOpen}
 				onClose={() => setSettingsOpen(false)}

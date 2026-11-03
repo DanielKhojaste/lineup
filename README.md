@@ -1,6 +1,6 @@
 # Lineup
 
-A tactical board for coaches: draw drills, set out line-ups, animate plays, and keep them all in one library on your computer.
+A tactics board and session planner for coaches of any team sport: draw drills, set out line-ups, animate plays, and keep them all in one library on your computer.
 
 > ⚠️ **Status: Alpha**
 >
@@ -10,16 +10,26 @@ A tactical board for coaches: draw drills, set out line-ups, animate plays, and 
 
 ## Overview
 
-Lineup is a local-first desktop app for coaches. It brings four things together:
+Lineup is a local-first desktop app for coaches of any team sport. It brings these together:
 
-- **Library**: every drill, line-up and play you've saved, organised in folders
-- **Editor**: players, equipment, arrows, zones and text on the pitch, with notes for the drill and step-by-step animation
+- **Library**: every drill, line-up and play you've saved, organised by sport and in folders
+- **Editor**: players, equipment, arrows, zones and text on the field or court, with notes for the drill and step-by-step animation
+- **Sessions** _(coming)_: build a training session from your drills, with breaks and timings, and print the session sheet
+- **Plans** _(coming)_: season plans made of sessions grouped by topic (like "attacking transition"), not tied to dates, so you can reuse and share them
+- **Calendar** _(coming)_: put sessions or a whole plan on dates, and keep a log of the sessions you ran
+- **Sharing** _(coming)_: send a drill, session or plan to another coach as one file
 - **Present / whiteboard** _(coming)_: show a drill or play full screen and draw over it live
-- **Planner** _(coming)_: plan sessions and a season, and keep a log of the drills you ran with your team
 
-Everything is stored as files on your computer. Windows comes first, then macOS and Linux, then tablets.
+Everything is stored as files on your computer, and the app works without an account. An optional premium subscription with an account, cloud sync and sharing by link is planned. Windows comes first, then macOS and Linux, then tablets.
 
 ## Features
+
+### Any team sport
+
+- Soccer, futsal, basketball, volleyball, handball and field hockey, each drawn to scale with its own markings
+- A full or half field for every sport, picked in the **New board** window; set a default sport so new boards start on it
+- Change a board's sport or switch between full and half in its settings
+- The ball and goals match the sport, and players and equipment can be drawn smaller or bigger
 
 ### Line-ups and players
 
@@ -52,9 +62,10 @@ Everything is stored as files on your computer. Windows comes first, then macOS 
 ![The library with folders and previews](docs/screenshots/library.png)
 
 - Every board saves automatically to `Documents\Lineup` as a `.lineup` file
-- Folders, search across titles, tags and notes, sorting, duplicating and deleting
+- Browse by sport or folder, search across titles, tags and notes, sort, duplicate and delete
 - Import and export `.lineup` files, and export any board as a PNG image
-- Undo and redo for every change
+- Undo and redo for every change, and copy and paste between boards
+- Right-click anything for its actions
 - Dark and light themes, five presets, and your own primary and secondary colours
 - Keyboard shortcuts for everything (listed in Settings)
 
@@ -74,8 +85,12 @@ The [`examples`](examples) folder has boards you can import from the library's *
 | v0.4.0 | Drawing tools: arrows, lines, zones, pen, text, equipment | ✅ |
 | v0.5.0 | Drills: library, saving and loading, notes, PNG export | ✅ |
 | v0.6.0 | Animation: steps, routes and playback; striped kits | ✅ |
-| v0.7.0 | Plays: present mode, video and GIF export | Next |
-| v0.8.0 | Planner and session log | |
+| v0.7.0 | Any team sport: soccer, futsal, basketball, volleyball, handball, hockey; right-click menus | ✅ |
+| v0.8.0 | Sessions: drills and breaks with timings, board types, a session sheet you can print | ✅ |
+| v0.9.0 | Plans and calendar: season plans by topic, sessions on dates, a session log | Next |
+| v0.10.0 | Sharing: drills, sessions and plans as one file; GIF and video export of plays | |
+| v0.11.0 | Accounts, cloud sync and premium | |
+| v0.12.0 | Present mode, animation round two, highlights | |
 | v1.0.0 | Stable desktop release (Windows, macOS, Linux) | |
 
 ## Tech stack
@@ -105,6 +120,10 @@ npm run tauri dev
 ```bash
 npm test
 ```
+
+### Version
+
+The version number lives in [`VERSION`](VERSION). To release, change it there and run `npm run version:sync`, which copies it into `package.json`, `package-lock.json`, `tauri.conf.json` and `Cargo.toml`.
 
 ## License
 

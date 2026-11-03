@@ -3,6 +3,8 @@ import { createBoard, createCone, createPlayer } from "./board";
 import { createLine, createText, DEFAULT_TOOL_STYLES } from "./drawings";
 import {
 	BoardFileError,
+	decodeBoardFile,
+	encodeBoardFile,
 	fileNameFor,
 	parseBoard,
 	serializeBoard,
@@ -97,6 +99,50 @@ describe("board files", () => {
 		expect(parseBoard(JSON.stringify(old)).steps).toEqual([]);
 	});
 
+	it("keeps marker sizes within limits, and defaults old boards to normal", () => {
+		const board = createBoard();
+		board.display = { showLabels: true, playerScale: 1.3, equipmentScale: 9 };
+		expect(parseBoard(JSON.stringify(board)).display).toEqual({
+			showLabels: true,
+			playerScale: 1.3,
+			equipmentScale: 2,
+		});
+		const { display: _none, ...old } = createBoard();
+		expect(parseBoard(JSON.stringify(old)).display).toMatchObject({
+			playerScale: 1,
+			equipmentScale: 1,
+		});
+	});
+
+	it("saves files that don't read as text, and opens them again", () => {
+		const board = {
+			...createBoard("Cool Board"),
+			nodes: [createPlayer(0.5, 0.5, "home", { number: 9, name: "Alexia" })],
+		};
+		const bytes = encodeBoardFile(board);
+		expect(new TextDecoder().decode(bytes.subarray(0, 4))).toBe("LNUP");
+		const asText = new TextDecoder().decode(bytes);
+		expect(asText).not.toContain("Cool Board");
+		expect(asText).not.toContain("Alexia");
+		expect(bytes.length).toBeLessThan(serializeBoard(board).length);
+		expect(decodeBoardFile(bytes)).toEqual(JSON.parse(serializeBoard(board)));
+	});
+
+	it("still opens plain JSON files from before v0.7.0", () => {
+		const board = createBoard("Old board");
+		const bytes = new TextEncoder().encode(serializeBoard(board));
+		expect(decodeBoardFile(bytes).meta.title).toBe("Old board");
+	});
+
+	it("explains damaged files and files from a newer version", () => {
+		const bytes = encodeBoardFile(createBoard());
+		const damaged = bytes.slice(0, 20);
+		expect(() => decodeBoardFile(damaged)).toThrow(/damaged/);
+		const newer = bytes.slice();
+		newer[4] = 99;
+		expect(() => decodeBoardFile(newer)).toThrow(/newer version/);
+	});
+
 	it("rejects files that aren't boards", () => {
 		expect(() => parseBoard("not json")).toThrow(BoardFileError);
 		expect(() => parseBoard('{"hello": 1}')).toThrow(BoardFileError);
@@ -142,9 +188,30 @@ describe("board files", () => {
 
 describe("file names", () => {
 	it("strips characters Windows doesn't allow", () => {
-		expect(fileNameFor('Rondo: 4v2 / "switch"?', "lineup")).toBe(
+		expect(fileNameFor('Rondo: 4v2 "switch"?', "lineup")).toBe(
 			"Rondo 4v2 switch.lineup",
 		);
+		// Slashes become dashes, so "U9/U10" stays readable.
+		expect(fileNameFor("U9/U10 Session 1", "pdf")).toBe("U9-U10 Session 1.pdf");
 		expect(fileNameFor("   ", "png")).toBe("Untitled board.png");
+	});
+});
+
+describe("board types", () => {
+	it("keeps a board's type, and gives older boards one", async () => {
+		const { createBoard } = await import("./board");
+		const { parseBoard, serializeBoard } = await import("./file");
+		const board = createBoard("Corner");
+		board.meta.type = "setpiece";
+		expect(parseBoard(serializeBoard(board)).meta.type).toBe("setpiece");
+
+		// Before v0.8.0: no type. Animated boards become plays, the rest drills.
+		const old = JSON.parse(serializeBoard(createBoard("Old")));
+		delete old.meta.type;
+		expect(parseBoard(JSON.stringify(old)).meta.type).toBe("drill");
+		old.steps = [{ id: "s", duration: 1, moves: {} }];
+		expect(parseBoard(JSON.stringify(old)).meta.type).toBe("play");
+		old.meta.type = "nonsense";
+		expect(parseBoard(JSON.stringify(old)).meta.type).toBe("play");
 	});
 });

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Board } from "../model/types";
 
 export type SaveStatus = "saved" | "saving" | "error";
 
@@ -7,13 +6,11 @@ export type SaveStatus = "saved" | "saving" | "error";
 const DELAY = 600;
 
 /**
- * Save the board shortly after every change, and immediately when the editor
- * closes. Returns the current status and a `flush` for Ctrl+S.
+ * Save a document (a board, a session…) shortly after every change, and
+ * immediately when its editor closes. Returns the current status and a
+ * `flush` for Ctrl+S.
  */
-export function useAutosave(
-	board: Board,
-	save: (board: Board) => Promise<void>,
-) {
+export function useAutosave<T>(board: T, save: (doc: T) => Promise<void>) {
 	const [status, setStatus] = useState<SaveStatus>("saved");
 	const latest = useRef(board);
 	const pending = useRef(false);

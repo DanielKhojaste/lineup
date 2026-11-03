@@ -1,4 +1,5 @@
 import {
+	MouseEvent as ReactMouseEvent,
 	PointerEvent as ReactPointerEvent,
 	useEffect,
 	useMemo,
@@ -12,7 +13,13 @@ import {
 	sampleRoute,
 	stepAtTime,
 } from "../../model/animation";
-import { clamp01, ROTATE_STEP } from "../../model/board";
+import { markerScale, ROTATE_STEP } from "../../model/board";
+import {
+	Bounds,
+	clampToBounds,
+	fieldBounds,
+	fieldView,
+} from "../../model/sports";
 import {
 	createLine,
 	createPen,
@@ -36,7 +43,9 @@ import { useEditor } from "../../state/EditorContext";
 import { usePlayback } from "../../state/PlaybackContext";
 import AnimationBar from "./AnimationBar";
 import { PlaceTool, selectedDrawings } from "../../state/editor";
-import { clientToBoard, isOnBoard } from "./coords";
+import { boardToClient, clientToBoard, isOnBoard } from "./coords";
+import { isTextField, useContextMenu } from "../ui/ContextMenu";
+import { useBoardMenus } from "./useBoardMenus";
 import DrawingShape, { HandleId, SelectionOverlay } from "./Drawings";
 import FloatingActions from "./FloatingActions";
 import {
@@ -79,7 +88,11 @@ type Interaction = { pointerId: number; startClient: Pos } & (
 	| { kind: "erase"; erased: Set<string> }
 );
 
-const clampPoint = (p: Pos): Point => [clamp01(p.x), clamp01(p.y)];
+/** A point kept on the field's part of the board. */
+const clampTo = (p: Pos, b: Bounds): Point => {
+	const c = clampToBounds(p.x, p.y, b);
+	return [c.x, c.y];
+};
 
 function blurActiveField() {
 	const active = document.activeElement;
@@ -87,30 +100,34 @@ function blurActiveField() {
 }
 
 /** Hold Shift to snap a line to 15° steps. */
-function snapAngle(from: Point, to: Point): Point {
+function snapAngle(from: Point, to: Point, bounds: Bounds): Point {
 	const a = toUnits(from);
 	const b = toUnits(to);
 	const len = Math.hypot(b.x - a.x, b.y - a.y);
 	const step = Math.PI / 12;
 	const angle = Math.round(Math.atan2(b.y - a.y, b.x - a.x) / step) * step;
-	return clampPoint({
-		x: (a.x + Math.cos(angle) * len) / BOARD_WIDTH,
-		y: (a.y + Math.sin(angle) * len) / BOARD_HEIGHT,
-	});
+	return clampTo(
+		{
+			x: (a.x + Math.cos(angle) * len) / BOARD_WIDTH,
+			y: (a.y + Math.sin(angle) * len) / BOARD_HEIGHT,
+		},
+		bounds,
+	);
 }
 
 /** A zone from an anchor corner to the pointer; Shift makes it square (in metres). */
-function zoneRect(anchor: Point, to: Point, square: boolean) {
+function zoneRect(anchor: Point, to: Point, square: boolean, bounds: Bounds) {
 	let [x2, y2] = to;
 	if (square) {
 		const w = Math.abs(x2 - anchor[0]) * BOARD_WIDTH;
 		const h = Math.abs(y2 - anchor[1]) * BOARD_HEIGHT;
 		const side = Math.max(w, h);
-		x2 = clamp01(
-			anchor[0] + (Math.sign(x2 - anchor[0]) || 1) * (side / BOARD_WIDTH),
-		);
-		y2 = clamp01(
-			anchor[1] + (Math.sign(y2 - anchor[1]) || 1) * (side / BOARD_HEIGHT),
+		[x2, y2] = clampTo(
+			{
+				x: anchor[0] + (Math.sign(x2 - anchor[0]) || 1) * (side / BOARD_WIDTH),
+				y: anchor[1] + (Math.sign(y2 - anchor[1]) || 1) * (side / BOARD_HEIGHT),
+			},
+			bounds,
 		);
 	}
 	return {
@@ -122,8 +139,8 @@ function zoneRect(anchor: Point, to: Point, square: boolean) {
 }
 
 /** How far in front of a goal or mannequin its rotate handle sits, in board units. */
-function rotateReach(node: GoalNode | MannequinNode): number {
-	if (node.kind === "mannequin") return 32;
+function rotateReach(node: GoalNode | MannequinNode, scale: number): number {
+	if (node.kind === "mannequin") return 32 * scale;
 	return node.size === "mini" ? 24 : 34;
 }
 
@@ -134,10 +151,16 @@ function isRotatable(
 }
 
 /** A handle in front of a selected goal or mannequin; drag it around to turn it. */
-function RotateHandle({ node }: { node: GoalNode | MannequinNode }) {
+function RotateHandle({
+	node,
+	scale,
+}: {
+	node: GoalNode | MannequinNode;
+	scale: number;
+}) {
 	const c = toBoardUnits(node.x, node.y);
 	const angle = (node.rotation * Math.PI) / 180;
-	const reach = rotateReach(node);
+	const reach = rotateReach(node, scale);
 	const hx = c.x + Math.cos(angle) * reach;
 	const hy = c.y + Math.sin(angle) * reach;
 	return (
@@ -229,6 +252,10 @@ export default function Board() {
 		return nodesAtStep(board, step);
 	}, [board, step, playback.time]);
 	const nodeById = new Map(shownNodes.map((n) => [n.id, n]));
+	// Everything stays on the field's part of the board (what the view shows).
+	const bounds = fieldBounds(board.pitch);
+	const view = fieldView(board.pitch);
+	const clampPoint = (p: Pos) => clampTo(p, bounds);
 
 	// The marker whose route is being clicked out with the route tool.
 	const routeSession = useRef<{ id: string; step: number } | null>(null);
@@ -284,6 +311,60 @@ export default function Board() {
 		dispatch({ type: "select", ids: [id] });
 		setEditingText(id);
 	};
+
+	const menus = useBoardMenus({ editText: startEditingText });
+	const { openMenu } = useContextMenu();
+
+	/** Right-click: a menu for the marker or drawing under the pointer, or for the board. */
+	const onContextMenu = (e: ReactMouseEvent<SVGSVGElement>) => {
+		if (isTextField(e.target)) return; // the text editor gets Cut / Copy / Paste
+		e.preventDefault();
+		if (interaction.current) return;
+		if (inPlayback) playback.stop();
+		const point = toBoard(e);
+		if (!point) return;
+		blurActiveField();
+		const hitId =
+			(e.target as Element)
+				.closest<SVGGElement>("[data-item-id]")
+				?.dataset.itemId ?? null;
+		if (hitId) {
+			// Right-clicking something outside the selection selects just that.
+			const ids = selected.has(hitId) ? selection : [hitId];
+			if (!selected.has(hitId)) dispatch({ type: "select", ids });
+			openMenu(e, menus.itemMenu(ids));
+		} else {
+			dispatch({ type: "clearSelection" });
+			openMenu(e, menus.boardMenu(clampPoint(point)));
+		}
+	};
+
+	// The menu key and Shift+F10 open the same menus from the keyboard: for the
+	// selection, or for the middle of the field.
+	useEffect(() => {
+		const onKey = (e: KeyboardEvent) => {
+			const menuKey =
+				e.key === "ContextMenu" || (e.key === "F10" && e.shiftKey);
+			if (!menuKey || e.defaultPrevented || isTextField(e.target)) return;
+			if (document.querySelector("dialog[open], .context-menu")) return;
+			const svg = boardRef.current;
+			if (!svg) return;
+			e.preventDefault();
+			const targets = state.selection;
+			const first = nodeById.get(targets[0]);
+			const anchor: Point = first
+				? [first.x, first.y]
+				: [(bounds.minX + bounds.maxX) / 2, (bounds.minY + bounds.maxY) / 2];
+			const at = boardToClient(svg, anchor[0], anchor[1]);
+			if (!at) return;
+			openMenu(
+				{ x: at.x, y: at.y },
+				targets.length ? menus.itemMenu(targets) : menus.boardMenu(anchor),
+			);
+		};
+		window.addEventListener("keydown", onKey);
+		return () => window.removeEventListener("keydown", onKey);
+	});
 
 	const erase = (clientX: number, clientY: number, erased: Set<string>) => {
 		const id = itemAt(clientX, clientY);
@@ -370,7 +451,7 @@ export default function Board() {
 			target.closest<SVGGElement>("[data-item-id]")?.dataset.itemId ?? null;
 
 		if (PLACE_TOOLS.has(tool)) {
-			if (isOnBoard(point))
+			if (isOnBoard(point, bounds))
 				dispatch({
 					type: "place",
 					tool: tool as PlaceTool,
@@ -439,7 +520,7 @@ export default function Board() {
 				startEditingText(existing.id);
 				return;
 			}
-			if (!isOnBoard(point)) return;
+			if (!isOnBoard(point, bounds)) return;
 			const drawing = createText(point.x, point.y, "", toolStyles.text);
 			dispatch({ type: "beginGesture" });
 			dispatch({ type: "addDrawing", drawing });
@@ -560,7 +641,7 @@ export default function Board() {
 				return;
 			case "line": {
 				const to = e.shiftKey
-					? snapAngle(current.from, clampPoint(point))
+					? snapAngle(current.from, clampPoint(point), bounds)
 					: clampPoint(point);
 				dispatch({ type: "updateDrawing", id: current.id, changes: { to } });
 				return;
@@ -569,7 +650,12 @@ export default function Board() {
 				dispatch({
 					type: "updateDrawing",
 					id: current.id,
-					changes: zoneRect(current.anchor, clampPoint(point), e.shiftKey),
+					changes: zoneRect(
+						current.anchor,
+						clampPoint(point),
+						e.shiftKey,
+						bounds,
+					),
 				});
 				return;
 			case "pen": {
@@ -591,7 +677,7 @@ export default function Board() {
 				if (d.kind === "line") {
 					if (current.handle === "from" || current.handle === "to") {
 						const fixed = current.handle === "from" ? d.to : d.from;
-						const value = e.shiftKey ? snapAngle(fixed, p) : p;
+						const value = e.shiftKey ? snapAngle(fixed, p, bounds) : p;
 						dispatch({
 							type: "updateDrawing",
 							id: d.id,
@@ -619,7 +705,7 @@ export default function Board() {
 					dispatch({
 						type: "updateDrawing",
 						id: d.id,
-						changes: zoneRect(anchor, p, e.shiftKey),
+						changes: zoneRect(anchor, p, e.shiftKey, bounds),
 					});
 				}
 				return;
@@ -824,7 +910,7 @@ export default function Board() {
 			<svg
 				ref={boardRef}
 				className="board__svg"
-				viewBox={`0 0 ${BOARD_WIDTH} ${BOARD_HEIGHT}`}
+				viewBox={`${view.x} ${view.y} ${view.width} ${view.height}`}
 				role="application"
 				aria-label={`Pitch with ${board.nodes.length} markers and ${
 					board.drawings.length
@@ -836,8 +922,9 @@ export default function Board() {
 				onPointerUp={(e) => finish(e, false)}
 				onPointerCancel={(e) => finish(e, true)}
 				onDoubleClick={onDoubleClick}
+				onContextMenu={onContextMenu}
 			>
-				<Pitch />
+				<Pitch pitch={board.pitch} />
 				<g className="board__drawings">
 					{underMarkers.map((d) => (
 						<DrawingShape key={d.id} drawing={d} />
@@ -889,7 +976,12 @@ export default function Board() {
 					selection.length === 1 &&
 					(() => {
 						const node = nodeById.get(selection[0]);
-						return isRotatable(node) ? <RotateHandle node={node} /> : null;
+						return isRotatable(node) ? (
+							<RotateHandle
+								node={node}
+								scale={markerScale(node, board.display)}
+							/>
+						) : null;
 					})()}
 				{viaFor.map(([x, y], index) => {
 					const u = toBoardUnits(x, y);
@@ -922,6 +1014,7 @@ export default function Board() {
 					onDone={finishTextEdit}
 				/>
 			)}
+			{menus.clearDialog}
 			<AnimationBar />
 			<FloatingActions
 				hidden={

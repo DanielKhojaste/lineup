@@ -37,12 +37,21 @@ export const ICONS = {
 		"M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z",
 	inbox: "M4 13l2-8h12l2 8M4 13v6h16v-6M4 13h5l1 2h4l1-2h5",
 	chevronLeft: "M15 5l-7 7 7 7",
+	chevronDown: "M6 9l6 6 6-6",
+	chevronRight: "M9 5l7 7-7 7",
 	download: "M12 4v11M7 10l5 5 5-5M5 20h14",
 	close: "M6 6l12 12M18 6L6 18",
 	check: "M5 12l5 5L20 7",
 	play: "M8 5.5v13l10-6.5z",
 	pause: "M8 5v14M16 5v14",
 	route: "M5 19a2 2 0 1 0 0.01 0M8 17c3-1 2-6 6-7s4-3 4-5M15 5h3v3",
+	grip: "M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01",
+	water: "M12 3.5c3 4 5.5 7 5.5 10a5.5 5.5 0 0 1-11 0c0-3 2.5-6 5.5-10z",
+	print: "M7 9V4h10v5M7 17H5a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2M7 14h10v6H7z",
+	clock: "M12 4a8 8 0 1 0 0.01 0M12 8v4l3 2",
+	session: "M5 5h14M5 10h14M5 15h9M5 20h6M17 15l3 2.5-3 2.5",
+	note: "M6 4h9l3 3v13H6zM9 10h6M9 14h6M9 18h3",
+	chevronUp: "M6 15l6-6 6 6",
 };
 
 export type IconName = keyof typeof ICONS;

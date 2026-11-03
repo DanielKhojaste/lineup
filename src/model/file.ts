@@ -1,7 +1,11 @@
+import { gunzipSync, gzipSync, strFromU8, strToU8 } from "fflate";
 import { createBoard, newId } from "./board";
+import { isSport } from "./sports";
 import {
 	Board,
+	BOARD_TYPES,
 	BoardNode,
+	BoardType,
 	Drawing,
 	Move,
 	Point,
@@ -15,15 +19,69 @@ export const FILE_EXTENSION = "lineup";
 
 export class BoardFileError extends Error {}
 
+/** A board as JSON text: how the library keeps boards in a browser. */
 export function serializeBoard(board: Board): string {
 	return JSON.stringify(board, null, "\t");
 }
 
-const isObject = (v: unknown): v is Record<string, unknown> =>
+/**
+ * Board files start with these bytes ("LNUP") and a format number, followed by
+ * the board as gzip-compressed JSON. That keeps files small and stops them
+ * reading as plain text; it isn't encryption.
+ */
+const MAGIC = [0x4c, 0x4e, 0x55, 0x50];
+const FILE_FORMAT = 1;
+
+/**
+ * Any Lineup document (a board, a session, a plan) as file bytes: the "LNUP"
+ * header, then gzip-compressed JSON.
+ */
+export function encodeDocument(doc: unknown): Uint8Array {
+	const body = gzipSync(strToU8(JSON.stringify(doc)), { level: 9, mtime: 0 });
+	const file = new Uint8Array(MAGIC.length + 1 + body.length);
+	file.set(MAGIC);
+	file[MAGIC.length] = FILE_FORMAT;
+	file.set(body, MAGIC.length + 1);
+	return file;
+}
+
+function isBoardFile(bytes: Uint8Array): boolean {
+	return MAGIC.every((b, i) => bytes[i] === b);
+}
+
+/**
+ * The JSON text inside a document file. Files saved before v0.7.0 are plain
+ * JSON text, and still open.
+ */
+export function decodeDocumentText(bytes: Uint8Array): string {
+	if (!isBoardFile(bytes)) return strFromU8(bytes);
+	if (bytes[MAGIC.length] > FILE_FORMAT) {
+		throw new BoardFileError(
+			"This file was made with a newer version of Lineup. Update the app to open it.",
+		);
+	}
+	try {
+		return strFromU8(gunzipSync(bytes.subarray(MAGIC.length + 1)));
+	} catch {
+		throw new BoardFileError("This file is damaged and can't be opened.");
+	}
+}
+
+/** A board as the bytes of a `.lineup` file. */
+export function encodeBoardFile(board: Board): Uint8Array {
+	return encodeDocument(board);
+}
+
+/** Read a `.lineup` file. */
+export function decodeBoardFile(bytes: Uint8Array): Board {
+	return parseBoard(decodeDocumentText(bytes));
+}
+
+export const isObject = (v: unknown): v is Record<string, unknown> =>
 	!!v && typeof v === "object" && !Array.isArray(v);
-const isNum = (v: unknown): v is number =>
+export const isNum = (v: unknown): v is number =>
 	typeof v === "number" && Number.isFinite(v);
-const isStr = (v: unknown): v is string => typeof v === "string";
+export const isStr = (v: unknown): v is string => typeof v === "string";
 const isPoint = (v: unknown): v is Point =>
 	Array.isArray(v) && v.length === 2 && isNum(v[0]) && isNum(v[1]);
 const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
@@ -149,6 +207,11 @@ function cleanDrawing(raw: unknown): Drawing | null {
 	}
 }
 
+/** A marker size from a file, kept within sensible limits (normal if missing). */
+function scaleOr1(value: unknown): number {
+	return isNum(value) ? Math.min(2, Math.max(0.5, value)) : 1;
+}
+
 /** Keeps a team's name and kit; anything else (like old keeper colours) is dropped. */
 function cleanTeam(raw: unknown, fallback: TeamStyle): TeamStyle {
 	const team = isObject(raw) ? raw : {};
@@ -218,6 +281,7 @@ export function parseBoard(text: string): Board {
 	const notes = isObject(raw.notes) ? raw.notes : {};
 	const teams = isObject(raw.teams) ? raw.teams : {};
 	const display = isObject(raw.display) ? raw.display : {};
+	const pitch = isObject(raw.pitch) ? raw.pitch : {};
 
 	const nodes = raw.nodes
 		.map(cleanNode)
@@ -231,6 +295,12 @@ export function parseBoard(text: string): Board {
 			...fresh.meta,
 			title:
 				isStr(meta.title) && meta.title.trim() ? meta.title : "Untitled board",
+			// Boards from before v0.8.0 have no type: animated ones are plays.
+			type: BOARD_TYPES.includes(meta.type as BoardType)
+				? (meta.type as BoardType)
+				: Array.isArray(raw.steps) && raw.steps.length > 0
+				  ? "play"
+				  : "drill",
 			tags: Array.isArray(meta.tags) ? meta.tags.filter(isStr) : [],
 			folder: isStr(meta.folder) ? meta.folder : "",
 			createdAt: isStr(meta.createdAt) ? meta.createdAt : fresh.meta.createdAt,
@@ -244,13 +314,27 @@ export function parseBoard(text: string): Board {
 			coachingPoints: Array.isArray(notes.coachingPoints)
 				? notes.coachingPoints.filter(isStr)
 				: [],
+			variations: Array.isArray(notes.variations)
+				? notes.variations.filter(isStr)
+				: [],
 		},
 		teams: {
 			home: cleanTeam(teams.home, fresh.teams.home),
 			away: cleanTeam(teams.away, fresh.teams.away),
 			neutral: cleanTeam(teams.neutral, fresh.teams.neutral),
 		},
-		display: { ...fresh.display, showLabels: display.showLabels !== false },
+		display: {
+			...fresh.display,
+			showLabels: display.showLabels !== false,
+			playerScale: scaleOr1(display.playerScale),
+			equipmentScale: scaleOr1(display.equipmentScale),
+		},
+		// Boards from before v0.7.0 are all soccer, full pitch. An unknown sport
+		// (from a newer version) falls back to soccer rather than failing.
+		pitch: {
+			sport: isSport(pitch.sport) ? pitch.sport : "soccer",
+			variant: pitch.variant === "half" ? "half" : "full",
+		},
 		nodes,
 		drawings: Array.isArray(raw.drawings)
 			? raw.drawings.map(cleanDrawing).filter((d): d is Drawing => d !== null)
@@ -263,7 +347,9 @@ export function parseBoard(text: string): Board {
 export function fileNameFor(title: string, extension: string): string {
 	const base = title
 		.trim()
-		.replace(/[<>:"/\\|?*\u0000-\u001f]/g, "")
+		// "U9/U10" becomes "U9-U10" rather than "U9U10".
+		.replace(/[/\\]/g, "-")
+		.replace(/[<>:"|?*\u0000-\u001f]/g, "")
 		.replace(/\s+/g, " ")
 		.slice(0, 80)
 		.trim();

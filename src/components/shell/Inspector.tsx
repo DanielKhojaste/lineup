@@ -1,4 +1,9 @@
-import { CONE_COLORS, playerKit, ROTATE_STEP } from "../../model/board";
+import {
+	CONE_COLORS,
+	MARKER_SCALES,
+	playerKit,
+	ROTATE_STEP,
+} from "../../model/board";
 import {
 	BoardItem,
 	BoardNode,
@@ -19,6 +24,7 @@ import { BoardInput, ColorField, Section, StripeField } from "../ui/fields";
 import { readableOn } from "../../theme/color";
 import { describeDrawing, DrawingFields, ToolOptions } from "./DrawingFields";
 import ObjectList, { kitBackground } from "./ObjectList";
+import PitchPicker from "./PitchPicker";
 
 const TEAMS: TeamId[] = ["home", "away", "neutral"];
 
@@ -413,9 +419,15 @@ function StepFields({ nodes }: { nodes: BoardNode[] }) {
 
 function BoardSettings() {
 	const { state, dispatch } = useEditor();
-	const { teams, display } = state.board;
+	const { teams, display, pitch } = state.board;
 	return (
 		<>
+			<Section title="Field">
+				<PitchPicker
+					value={pitch}
+					onChange={(next) => dispatch({ type: "updatePitch", patch: next })}
+				/>
+			</Section>
 			<Section title="Teams">
 				{TEAMS.map((team) => (
 					<div key={team} className="team-row">
@@ -459,6 +471,35 @@ function BoardSettings() {
 					/>
 					Show positions and names
 				</label>
+				<Segmented
+					label="Player size"
+					value={String(display.playerScale)}
+					options={MARKER_SCALES.map((o) => ({
+						value: String(o.value),
+						label: o.label,
+					}))}
+					onChange={(v) =>
+						dispatch({
+							type: "updateDisplay",
+							patch: { playerScale: Number(v) },
+						})
+					}
+				/>
+				<Segmented
+					label="Equipment size"
+					value={String(display.equipmentScale)}
+					options={MARKER_SCALES.map((o) => ({
+						value: String(o.value),
+						label: o.label,
+						title: "Cones, balls, mannequins and poles",
+					}))}
+					onChange={(v) =>
+						dispatch({
+							type: "updateDisplay",
+							patch: { equipmentScale: Number(v) },
+						})
+					}
+				/>
 			</Section>
 		</>
 	);
