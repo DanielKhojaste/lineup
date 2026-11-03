@@ -3,7 +3,9 @@ import { createBoard, newId } from "./board";
 import { isSport } from "./sports";
 import {
 	Board,
+	BOARD_TYPES,
 	BoardNode,
+	BoardType,
 	Drawing,
 	Move,
 	Point,
@@ -30,9 +32,12 @@ export function serializeBoard(board: Board): string {
 const MAGIC = [0x4c, 0x4e, 0x55, 0x50];
 const FILE_FORMAT = 1;
 
-/** A board as the bytes of a `.lineup` file. */
-export function encodeBoardFile(board: Board): Uint8Array {
-	const body = gzipSync(strToU8(JSON.stringify(board)), { level: 9, mtime: 0 });
+/**
+ * Any Lineup document (a board, a session, a plan) as file bytes: the "LNUP"
+ * header, then gzip-compressed JSON.
+ */
+export function encodeDocument(doc: unknown): Uint8Array {
+	const body = gzipSync(strToU8(JSON.stringify(doc)), { level: 9, mtime: 0 });
 	const file = new Uint8Array(MAGIC.length + 1 + body.length);
 	file.set(MAGIC);
 	file[MAGIC.length] = FILE_FORMAT;
@@ -45,30 +50,38 @@ function isBoardFile(bytes: Uint8Array): boolean {
 }
 
 /**
- * Read a `.lineup` file. Files saved before v0.7.0 are plain JSON text, and
- * still open.
+ * The JSON text inside a document file. Files saved before v0.7.0 are plain
+ * JSON text, and still open.
  */
-export function decodeBoardFile(bytes: Uint8Array): Board {
-	if (!isBoardFile(bytes)) return parseBoard(strFromU8(bytes));
+export function decodeDocumentText(bytes: Uint8Array): string {
+	if (!isBoardFile(bytes)) return strFromU8(bytes);
 	if (bytes[MAGIC.length] > FILE_FORMAT) {
 		throw new BoardFileError(
-			"This board was made with a newer version of Lineup. Update the app to open it.",
+			"This file was made with a newer version of Lineup. Update the app to open it.",
 		);
 	}
-	let text: string;
 	try {
-		text = strFromU8(gunzipSync(bytes.subarray(MAGIC.length + 1)));
+		return strFromU8(gunzipSync(bytes.subarray(MAGIC.length + 1)));
 	} catch {
-		throw new BoardFileError("This board file is damaged and can't be opened.");
+		throw new BoardFileError("This file is damaged and can't be opened.");
 	}
-	return parseBoard(text);
 }
 
-const isObject = (v: unknown): v is Record<string, unknown> =>
+/** A board as the bytes of a `.lineup` file. */
+export function encodeBoardFile(board: Board): Uint8Array {
+	return encodeDocument(board);
+}
+
+/** Read a `.lineup` file. */
+export function decodeBoardFile(bytes: Uint8Array): Board {
+	return parseBoard(decodeDocumentText(bytes));
+}
+
+export const isObject = (v: unknown): v is Record<string, unknown> =>
 	!!v && typeof v === "object" && !Array.isArray(v);
-const isNum = (v: unknown): v is number =>
+export const isNum = (v: unknown): v is number =>
 	typeof v === "number" && Number.isFinite(v);
-const isStr = (v: unknown): v is string => typeof v === "string";
+export const isStr = (v: unknown): v is string => typeof v === "string";
 const isPoint = (v: unknown): v is Point =>
 	Array.isArray(v) && v.length === 2 && isNum(v[0]) && isNum(v[1]);
 const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
@@ -282,6 +295,12 @@ export function parseBoard(text: string): Board {
 			...fresh.meta,
 			title:
 				isStr(meta.title) && meta.title.trim() ? meta.title : "Untitled board",
+			// Boards from before v0.8.0 have no type: animated ones are plays.
+			type: BOARD_TYPES.includes(meta.type as BoardType)
+				? (meta.type as BoardType)
+				: Array.isArray(raw.steps) && raw.steps.length > 0
+				  ? "play"
+				  : "drill",
 			tags: Array.isArray(meta.tags) ? meta.tags.filter(isStr) : [],
 			folder: isStr(meta.folder) ? meta.folder : "",
 			createdAt: isStr(meta.createdAt) ? meta.createdAt : fresh.meta.createdAt,
@@ -294,6 +313,9 @@ export function parseBoard(text: string): Board {
 			),
 			coachingPoints: Array.isArray(notes.coachingPoints)
 				? notes.coachingPoints.filter(isStr)
+				: [],
+			variations: Array.isArray(notes.variations)
+				? notes.variations.filter(isStr)
 				: [],
 		},
 		teams: {
@@ -325,7 +347,9 @@ export function parseBoard(text: string): Board {
 export function fileNameFor(title: string, extension: string): string {
 	const base = title
 		.trim()
-		.replace(/[<>:"/\\|?*\u0000-\u001f]/g, "")
+		// "U9/U10" becomes "U9-U10" rather than "U9U10".
+		.replace(/[/\\]/g, "-")
+		.replace(/[<>:"|?*\u0000-\u001f]/g, "")
 		.replace(/\s+/g, " ")
 		.slice(0, 80)
 		.trim();

@@ -70,6 +70,11 @@ export function EditorProvider({
 	);
 }
 
+/** The editor, or null outside one (fields used elsewhere, like the session editor). */
+export function useOptionalEditor(): EditorContextValue | null {
+	return useContext(EditorContext);
+}
+
 export function useEditor(): EditorContextValue {
 	const context = useContext(EditorContext);
 	if (!context)

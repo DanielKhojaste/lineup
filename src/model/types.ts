@@ -143,6 +143,11 @@ export type DrawingKind = Drawing["kind"];
 export type BoardItem = BoardNode | Drawing;
 
 export interface DrillNotes {
+	/**
+	 * What part of a session this drill is, e.g. "Warm-up", "Activity" or
+	 * "Small-sided game (SSG)". A session can set its own for each drill.
+	 */
+	stage: string;
 	category: string;
 	ageGroup: string;
 	duration: string;
@@ -151,10 +156,17 @@ export interface DrillNotes {
 	equipment: string;
 	description: string;
 	coachingPoints: string[];
+	/** Variations and progressions: other ways to run the same drill. */
+	variations: string[];
 }
+
+/** What a board is for. Separate from tags; sessions pick drills by it. */
+export const BOARD_TYPES = ["drill", "play", "lineup", "setpiece", "other"] as const;
+export type BoardType = (typeof BOARD_TYPES)[number];
 
 export interface BoardMeta {
 	title: string;
+	type: BoardType;
 	tags: string[];
 	/** Library folder name; empty when the board isn't in a folder. */
 	folder: string;

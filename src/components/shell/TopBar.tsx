@@ -11,6 +11,8 @@ interface TopBarProps {
 	saveStatus: SaveStatus;
 	onRetrySave: () => void;
 	onBack: () => void;
+	/** What the back button says ("Library", or "Session" when opened from one). */
+	backLabel?: string;
 	onOpenSettings: () => void;
 }
 
@@ -24,6 +26,7 @@ export default function TopBar({
 	saveStatus,
 	onRetrySave,
 	onBack,
+	backLabel = "Library",
 	onOpenSettings,
 }: TopBarProps) {
 	const { state, dispatch } = useEditor();
@@ -51,7 +54,7 @@ export default function TopBar({
 		<header className="topbar">
 			<button type="button" className="back-button" onClick={onBack}>
 				<Icon name="chevronLeft" size={16} />
-				Library
+				{backLabel}
 			</button>
 			<span className="topbar__divider" aria-hidden="true" />
 			<BoardInput

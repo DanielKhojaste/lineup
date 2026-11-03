@@ -47,6 +47,21 @@ export function exportBoardFile(board: Board) {
 	);
 }
 
+/** Save an exported session sheet (PDF or PNG), named after the session. */
+export function exportSessionFile(
+	title: string,
+	kind: "pdf" | "png",
+	bytes: Uint8Array,
+) {
+	return saveFile(
+		fileNameFor(title, kind),
+		kind,
+		kind === "pdf" ? "PDF document" : "PNG image",
+		bytes,
+		kind === "pdf" ? "application/pdf" : "image/png",
+	);
+}
+
 export function exportPng(board: Board, png: Uint8Array) {
 	return saveFile(
 		fileNameFor(board.meta.title, "png"),

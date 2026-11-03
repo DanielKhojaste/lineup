@@ -4,6 +4,7 @@ import { FieldVariant, Sport, SPORT_INFO, SPORTS } from "../../model/sports";
 import { PitchSettings } from "../../model/types";
 import { getPreferences, setPreferences } from "../../state/preferences";
 import BoardPreview from "../board/BoardPreview";
+import { Icon } from "../Icon";
 import { Modal } from "../ui/Dialog";
 
 /** Empty boards used as pictures of each field. */
@@ -146,15 +147,22 @@ export default function NewBoardDialog({
 				</div>
 
 				<div className="dialog__actions new-board__actions">
-					<label className="check">
-						<input
-							type="checkbox"
-							checked={makeDefault}
-							disabled={isDefault(pitch)}
-							onChange={(e) => setMakeDefault(e.target.checked)}
-						/>
-						Use this for new boards from now on
-					</label>
+					{isDefault(pitch) ? (
+						// Already the default: say so, rather than showing a box that can't be ticked.
+						<span className="check check--static">
+							<Icon name="check" size={16} />
+							Your default for new boards
+						</span>
+					) : (
+						<label className="check">
+							<input
+								type="checkbox"
+								checked={makeDefault}
+								onChange={(e) => setMakeDefault(e.target.checked)}
+							/>
+							Use this for new boards from now on
+						</label>
+					)}
 					<span className="topbar__spacer" />
 					<button type="button" className="button" onClick={onClose}>
 						Cancel

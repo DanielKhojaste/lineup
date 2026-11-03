@@ -8,10 +8,18 @@ import { PitchSettings } from "../model/types";
  */
 export interface Preferences {
 	defaultPitch: PitchSettings;
+	/**
+	 * Whether the coach has picked a default sport (in Settings or "Use this
+	 * for new boards"). Until then, new sessions ask which sport they're for.
+	 */
+	hasDefaultSport: boolean;
 }
 
 const STORAGE_KEY = "lineup.preferences";
-const DEFAULTS: Preferences = { defaultPitch: DEFAULT_PITCH };
+const DEFAULTS: Preferences = {
+	defaultPitch: DEFAULT_PITCH,
+	hasDefaultSport: false,
+};
 
 function read(): Preferences {
 	try {
@@ -22,6 +30,7 @@ function read(): Preferences {
 				sport: isSport(pitch.sport) ? pitch.sport : DEFAULTS.defaultPitch.sport,
 				variant: pitch.variant === "half" ? "half" : "full",
 			},
+			hasDefaultSport: !!raw?.defaultPitch,
 		};
 	} catch {
 		return DEFAULTS;
@@ -36,7 +45,12 @@ export function getPreferences(): Preferences {
 }
 
 export function setPreferences(patch: Partial<Preferences>) {
-	current = { ...current, ...patch };
+	current = {
+		...current,
+		...patch,
+		// Setting a default sport anywhere counts as having picked one.
+		...(patch.defaultPitch ? { hasDefaultSport: true } : {}),
+	};
 	try {
 		localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
 	} catch {

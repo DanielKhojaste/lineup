@@ -1,6 +1,7 @@
 import {
 	BallNode,
 	Board,
+	BoardType,
 	BoardNode,
 	ConeNode,
 	GoalNode,
@@ -31,6 +32,23 @@ export const DEFAULT_TEAMS: Board["teams"] = {
 	away: { name: "Away", color: "#F2F4F5" },
 	neutral: { name: "Neutral", color: "#2F80ED" },
 };
+
+export const BOARD_TYPE_LABELS: Record<BoardType, { one: string; many: string }> = {
+	drill: { one: "Drill", many: "Drills" },
+	play: { one: "Play", many: "Plays" },
+	lineup: { one: "Line-up", many: "Line-ups" },
+	setpiece: { one: "Set piece", many: "Set pieces" },
+	other: { one: "Other", many: "Other" },
+};
+
+/** Suggested names for the part of a session a drill is. Coaches can type their own. */
+export const DRILL_STAGES = [
+	"Warm-up",
+	"Activity",
+	"Small-sided game (SSG)",
+	"Scrimmage",
+	"Cool-down",
+];
 
 /** Marker sizes on offer, as a factor of the normal size. */
 export const MARKER_SCALES = [
@@ -69,8 +87,16 @@ export function createBoard(
 	return {
 		schemaVersion: SCHEMA_VERSION,
 		id: newId(),
-		meta: { title, tags: [], folder: "", createdAt: now, updatedAt: now },
+		meta: {
+			title,
+			type: "drill",
+			tags: [],
+			folder: "",
+			createdAt: now,
+			updatedAt: now,
+		},
 		notes: {
+			stage: "",
 			category: "",
 			ageGroup: "",
 			duration: "",
@@ -79,6 +105,7 @@ export function createBoard(
 			equipment: "",
 			description: "",
 			coachingPoints: [],
+			variations: [],
 		},
 		pitch: { ...pitch },
 		teams: structuredClone(DEFAULT_TEAMS),

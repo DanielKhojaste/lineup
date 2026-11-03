@@ -188,9 +188,30 @@ describe("board files", () => {
 
 describe("file names", () => {
 	it("strips characters Windows doesn't allow", () => {
-		expect(fileNameFor('Rondo: 4v2 / "switch"?', "lineup")).toBe(
+		expect(fileNameFor('Rondo: 4v2 "switch"?', "lineup")).toBe(
 			"Rondo 4v2 switch.lineup",
 		);
+		// Slashes become dashes, so "U9/U10" stays readable.
+		expect(fileNameFor("U9/U10 Session 1", "pdf")).toBe("U9-U10 Session 1.pdf");
 		expect(fileNameFor("   ", "png")).toBe("Untitled board.png");
+	});
+});
+
+describe("board types", () => {
+	it("keeps a board's type, and gives older boards one", async () => {
+		const { createBoard } = await import("./board");
+		const { parseBoard, serializeBoard } = await import("./file");
+		const board = createBoard("Corner");
+		board.meta.type = "setpiece";
+		expect(parseBoard(serializeBoard(board)).meta.type).toBe("setpiece");
+
+		// Before v0.8.0: no type. Animated boards become plays, the rest drills.
+		const old = JSON.parse(serializeBoard(createBoard("Old")));
+		delete old.meta.type;
+		expect(parseBoard(JSON.stringify(old)).meta.type).toBe("drill");
+		old.steps = [{ id: "s", duration: 1, moves: {} }];
+		expect(parseBoard(JSON.stringify(old)).meta.type).toBe("play");
+		old.meta.type = "nonsense";
+		expect(parseBoard(JSON.stringify(old)).meta.type).toBe("play");
 	});
 });
