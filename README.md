@@ -70,7 +70,7 @@ Everything is stored as files on your computer, and the app works without an acc
 
 ### Library and files
 
-![The library with folders and previews](screenshots/library.png)
+![The library: a session and boards for soccer, with folders and the Created and Imported views](screenshots/library.png)
 
 - Every board and session saves automatically to `Documents\Lineup`, as `.lineup` and `.lineup-session` files
 - Browse by sport or folder, search across titles, tags and notes, sort, duplicate and delete

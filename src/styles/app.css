@@ -2080,15 +2080,11 @@ button.save-status--error:hover {
 	min-width: 3px;
 }
 
-.session-card__segment--drill {
+.session-card__segment--active {
 	background: var(--accent);
 }
 
-.session-card__segment--break {
-	background: var(--secondary);
-}
-
-.session-card__segment--custom {
+.session-card__segment--rest {
 	background: var(--border-strong);
 }
 

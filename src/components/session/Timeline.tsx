@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { BOARD_TYPE_LABELS } from "../../model/board";
 import {
 	blockStages,
+	isRestBlock,
 	blockTimes,
 	createBreakBlock,
 	createCustomBlock,
@@ -98,15 +99,7 @@ function BlockRow({
 	const update = (patch: BlockPatch) =>
 		dispatch({ type: "updateBlock", id: block.id, patch });
 
-	// Training parts are in the accent colour; breaks, cool-downs and blocks
-	// without a part are neutral.
-	const part =
-		block.kind === "break"
-			? ""
-			: block.kind === "custom"
-			  ? block.stage.trim()
-			  : block.stage.trim() || board?.notes.stage.trim() || "Activity";
-	const resting = !part || part.toLowerCase() === "cool-down";
+	const resting = isRestBlock(block, () => board?.notes.stage ?? "");
 
 	const entries = menu(block, index);
 	const summary = board

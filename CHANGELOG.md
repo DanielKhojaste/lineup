@@ -19,7 +19,7 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Changed
 
-- The plan's colours follow the part of the session: warm-ups, activities, games and scrimmages in yellow, and water breaks and cool-downs in grey
+- The plan's colours follow the part of the session: warm-ups, activities, games and scrimmages in yellow, and water breaks and cool-downs in grey. The strip on session cards in the library uses the same colours
 
 ---
 

@@ -333,6 +333,24 @@ export function minutesFromText(text: string): number | null {
  * count as Activities). Breaks are numbered by name ("Water break 1"); other
  * blocks keep their own name.
  */
+/**
+ * Whether a block is a rest from training: a break, a cool-down, or a block
+ * without a part of the session. These are drawn in a neutral colour, and
+ * training parts in the accent colour.
+ */
+export function isRestBlock(
+	block: SessionBlock,
+	stageOf: (boardId: string) => string,
+): boolean {
+	const part =
+		block.kind === "break"
+			? ""
+			: block.kind === "custom"
+			  ? block.stage.trim()
+			  : block.stage.trim() || stageOf(block.boardId).trim() || "Activity";
+	return !part || part.toLowerCase() === "cool-down";
+}
+
 export function blockStages(
 	session: Session,
 	stageOf: (boardId: string) => string,

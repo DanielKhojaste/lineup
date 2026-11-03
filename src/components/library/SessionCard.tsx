@@ -1,5 +1,6 @@
 import {
 	formatMinutes,
+	isRestBlock,
 	Session,
 	sessionMinutes,
 	sessionTitle,
@@ -15,7 +16,8 @@ import CardMenuButton from "./CardMenuButton";
 
 /**
  * A session in the library: the first drills' pictures, a strip showing how
- * the time is split between drills and breaks, and its details.
+ * the time is split between training and rest (the same colours as the plan),
+ * and its details.
  */
 export default function SessionCard({
 	session,
@@ -76,7 +78,11 @@ export default function SessionCard({
 						{session.blocks.map((b) => (
 							<span
 								key={b.id}
-								className={`session-card__segment session-card__segment--${b.kind}`}
+								className={`session-card__segment session-card__segment--${
+									isRestBlock(b, (id) => getBoard(id)?.notes.stage ?? "")
+										? "rest"
+										: "active"
+								}`}
 								style={{ flexGrow: b.minutes || 0.0001 }}
 							/>
 						))}
