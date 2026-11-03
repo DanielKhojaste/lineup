@@ -22,8 +22,29 @@ This project adheres to semantic versioning (0.x during early development).
 - Topics you make up are remembered in the library and suggested in every session
 - **Variations and progressions** in a drill's Notes, shown in sessions and on the sheet
 - Sessions in the library: their own "Sessions" view, a Sessions chip next to the board types in folders and sports (which count sessions too), cards with the first drills' pictures and a strip showing how the time is split, and they show up in folders and sports next to boards
-- A "Desktop builds" workflow on GitHub that builds the Windows, macOS and Linux installers on demand (Actions tab, "Run workflow") and for every version tag, so the app can be tried on a Mac or Linux without building it there
 - **Board types:** Drill, Play, Line-up, Set piece or Other, set in the Notes tab. The library filters boards by type; boards from earlier versions become Plays if they're animated and Drills if not
+
+### Changed
+
+- Text fields no longer suggest things you typed before
+- **Library files are named after their board or session** ("Cool Board.lineup"); when two have the same name, the date and time they were made is added. Files named by id from earlier versions are renamed when the library opens, and renaming a board renames its file
+- Library cards: the ⋯ button opens the same menu as right-clicking, with **Rename…**, Move to folder › and Export › (Lineup file or PNG for boards, PDF or PNG for sessions)
+- The library remembers what it was showing (view, filters, search and sort) when you come back from a board or session
+- "All boards" is now "Boards", sorting by "Recent", and "Not in a folder" is at the top of the folders
+- Deleting a board says which sessions use it
+- Long names are cut short with an ellipsis in menus and tooltips
+- Text in windows (like New board) can't be highlighted; "Use this for new boards from now on" says when the pick is already your default
+
+### Fixed
+
+- Boards no longer pile up in the wrong library view when two files in the Lineup folder hold the same board (one copied in by hand, say): the copy gets its own id, and saving writes back to the file a board came from instead of making a second one
+
+---
+
+## [0.7.0] - 2026-11-03
+
+### Added
+
 - More sports: futsal, basketball, volleyball, handball and field hockey, as well as soccer, each with its own field or court drawn to scale with its markings (basketball keys, three-point lines and hoops; the volleyball net and attack lines; handball and futsal goal areas; the hockey shooting circles)
 - Full or half field for every sport; a half field is drawn with the goal (or hoop, or net) at the top, and goals placed on it face down the field
 - A New board window: pick the sport, then a full or half field, from pictures of each; it opens on your default sport (set in Settings, or tick "Use this for new boards from now on"), so Enter makes a board straight away
@@ -39,24 +60,14 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Changed
 
-- Text fields no longer suggest things you typed before
-- **Library files are named after their board or session** ("Cool Board.lineup"); when two have the same name, the date and time they were made is added. Files named by id from earlier versions are renamed when the library opens, and renaming a board renames its file
-- Library cards: the ⋯ button opens the same menu as right-clicking, with **Rename…**, Move to folder › and Export › (Lineup file or PNG for boards, PDF or PNG for sessions)
-- The library remembers what it was showing (view, filters, search and sort) when you come back from a board or session
-- "All boards" is now "Boards", sorting by "Recent", and "Not in a folder" is at the top of the folders
-- Deleting a board says which sessions use it
-- The version number lives in a `VERSION` file; `npm run version:sync` copies it into `package.json`, `tauri.conf.json` and `Cargo.toml`, and the Desktop builds workflow checks they match
-- Long names are cut short with an ellipsis in menus and tooltips
-- Text in windows (like New board) can't be highlighted; "Use this for new boards from now on" says when the pick is already your default
 - `.lineup` files are now saved compressed, so they no longer open as readable text (they're also about a third of the size); files from earlier versions still open and are converted the next time they're saved
 - The window opens at the size and position it was closed at, and maximised or full screen if it was
 - The goal tool is hidden for basketball and volleyball, which don't have goals
 - The README covers the new sports and the new plan: sessions, season plans and a calendar next, then sharing, then accounts and a premium cloud subscription
 - Text fields have Lineup's own Cut, Copy, Paste and Select all menu instead of the browser's, so "Inspect" and other browser items never show (Tauri clipboard plugin)
-
-### Fixed
-
-- Boards no longer pile up in the wrong library view when two files in the Lineup folder hold the same board (one copied in by hand, say): the copy gets its own id, and saving writes back to the file a board came from instead of making a second one
+- A "Desktop builds" workflow on GitHub builds the Windows, macOS and Linux installers on demand (Actions tab, "Run workflow") and for every version tag
+- The version number lives in a `VERSION` file; `npm run version:sync` copies it into `package.json`, `tauri.conf.json` and `Cargo.toml`, and the Desktop builds workflow checks they match
+- `.gitattributes`: `.lineup` files are binary, and `package-lock.json` stays at LF line endings
 
 ---
 
