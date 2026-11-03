@@ -9,6 +9,7 @@ import Timeline from "../components/session/Timeline";
 import { isTextField } from "../components/ui/ContextMenu";
 import { Menu } from "../components/ui/Menu";
 import { useSessionExport } from "../export/useSessionExport";
+import { exportSessionDocument } from "../storage/files";
 import { Session, sessionTitle } from "../model/session";
 import { useLibrary } from "../state/LibraryContext";
 import { SessionProvider, useSessionEditor } from "../state/SessionContext";
@@ -117,7 +118,7 @@ function SessionLayout() {
 					<Icon name="redo" size={18} />
 				</button>
 				<Menu
-					label="Export the session sheet"
+					label="Export the session"
 					buttonClassName="button"
 					button={
 						<>
@@ -128,6 +129,11 @@ function SessionLayout() {
 					items={[
 						{ label: "PDF document", onSelect: () => exporter.exportAs(session, "pdf") },
 						{ label: "Image (PNG)", onSelect: () => exporter.exportAs(session, "png") },
+						"separator",
+						{
+							label: "Session file (.lineup-session)",
+							onSelect: () => void exportSessionDocument(session).catch(console.error),
+						},
 					]}
 				/>
 				<button

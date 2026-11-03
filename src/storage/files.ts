@@ -1,9 +1,17 @@
 import {
-	decodeBoardFile,
+	decodeDocumentText,
 	encodeBoardFile,
 	FILE_EXTENSION,
 	fileNameFor,
+	parseBoard,
 } from "../model/file";
+import {
+	encodeSessionFile,
+	parseSession,
+	Session,
+	SESSION_EXTENSION,
+	sessionTitle,
+} from "../model/session";
 import { Board } from "../model/types";
 import { isTauri } from "./index";
 
@@ -47,6 +55,15 @@ export function exportBoardFile(board: Board) {
 	);
 }
 
+export function exportSessionDocument(session: Session) {
+	return saveFile(
+		fileNameFor(sessionTitle(session), SESSION_EXTENSION),
+		SESSION_EXTENSION,
+		"Lineup session",
+		encodeSessionFile(session),
+	);
+}
+
 /** Save an exported session sheet (PDF or PNG), named after the session. */
 export function exportSessionFile(
 	title: string,
@@ -72,19 +89,28 @@ export function exportPng(board: Board, png: Uint8Array) {
 	);
 }
 
-/** Let the user pick .lineup files and read them. Files that fail to open are reported, not thrown. */
-export async function pickBoardFiles(): Promise<{
+/**
+ * Let the user pick boards (`.lineup`) and sessions (`.lineup-session`) and
+ * read them. Files that fail to open are reported, not thrown.
+ */
+export async function pickLibraryFiles(): Promise<{
 	boards: Board[];
+	sessions: Session[];
 	problems: string[];
 }> {
 	const files: { name: string; bytes: Uint8Array }[] = [];
+	const extensions = [FILE_EXTENSION, SESSION_EXTENSION];
 
 	if (isTauri()) {
 		const { open } = await import("@tauri-apps/plugin-dialog");
 		const { readFile } = await import("@tauri-apps/plugin-fs");
 		const picked = await open({
 			multiple: true,
-			filters: [{ name: "Lineup board", extensions: [FILE_EXTENSION] }],
+			filters: [
+				{ name: "Lineup boards and sessions", extensions },
+				{ name: "Lineup board", extensions: [FILE_EXTENSION] },
+				{ name: "Lineup session", extensions: [SESSION_EXTENSION] },
+			],
 		});
 		const paths =
 			picked === null ? [] : Array.isArray(picked) ? picked : [picked];
@@ -98,7 +124,7 @@ export async function pickBoardFiles(): Promise<{
 			const input = document.createElement("input");
 			input.type = "file";
 			input.multiple = true;
-			input.accept = `.${FILE_EXTENSION}`;
+			input.accept = extensions.map((e) => `.${e}`).join(",");
 			input.onchange = () => resolve([...(input.files ?? [])]);
 			input.click();
 		});
@@ -110,13 +136,32 @@ export async function pickBoardFiles(): Promise<{
 	}
 
 	const boards: Board[] = [];
+	const sessions: Session[] = [];
 	const problems: string[] = [];
 	for (const { name, bytes } of files) {
 		try {
-			boards.push(decodeBoardFile(bytes));
+			const doc = readLibraryDocument(bytes);
+			if (doc.kind === "session") sessions.push(doc.session);
+			else boards.push(doc.board);
 		} catch (error) {
 			problems.push(`${name}: ${(error as Error).message}`);
 		}
 	}
-	return { boards, problems };
+	return { boards, sessions, problems };
+}
+
+/** A board or a session from a file's bytes, told apart by what's inside rather than the file name. */
+export function readLibraryDocument(
+	bytes: Uint8Array,
+): { kind: "board"; board: Board } | { kind: "session"; session: Session } {
+	const text = decodeDocumentText(bytes);
+	let docType: unknown;
+	try {
+		docType = (JSON.parse(text) as { docType?: unknown })?.docType;
+	} catch {
+		docType = undefined;
+	}
+	return docType === "session"
+		? { kind: "session", session: parseSession(text) }
+		: { kind: "board", board: parseBoard(text) };
 }

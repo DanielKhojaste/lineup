@@ -18,7 +18,12 @@ import { Session, sessionTitle } from "../model/session";
 import { pitchLabel, Sport, SPORT_INFO, SPORTS } from "../model/sports";
 import { Board, BOARD_TYPES, BoardType, PitchSettings } from "../model/types";
 import { allFolders, useLibrary } from "../state/LibraryContext";
-import { exportBoardFile, exportPng, pickBoardFiles } from "../storage/files";
+import {
+	exportBoardFile,
+	exportPng,
+	exportSessionDocument,
+	pickLibraryFiles,
+} from "../storage/files";
 import { useSessionExport } from "../export/useSessionExport";
 import { relativeTime } from "../utils/time";
 
@@ -375,6 +380,12 @@ export default function Library() {
 			submenu: [
 				{ label: "PDF document", onSelect: () => sessionExport.exportAs(session, "pdf") },
 				{ label: "Image (PNG)", onSelect: () => sessionExport.exportAs(session, "png") },
+				"separator",
+				{
+					label: "Session file (.lineup-session)",
+					onSelect: () =>
+						run(() => exportSessionDocument(session), "Couldn't export the session"),
+				},
 			],
 		},
 		"separator",
@@ -388,25 +399,56 @@ export default function Library() {
 			openBoard(board.id);
 		}, "Couldn't create the board");
 
-	const importBoards = () =>
+	/** Import boards and sessions; a session's drills can come in the same batch. */
+	const importFiles = () =>
 		run(async () => {
-			const { boards, problems } = await pickBoardFiles();
-			if (!boards.length && !problems.length) return;
-			const added = await library.addBoards(
-				boards.map((b) => ({
-					...b,
-					meta: { ...b.meta, folder: b.meta.folder || currentFolder },
-				})),
+			const { boards, sessions, problems } = await pickLibraryFiles();
+			if (!boards.length && !sessions.length && !problems.length) return;
+			const inFolder = <T extends { meta: { folder: string } }>(doc: T): T => ({
+				...doc,
+				meta: { ...doc.meta, folder: doc.meta.folder || currentFolder },
+			});
+			const addedBoards = await library.addBoards(boards.map(inFolder));
+			// A drill that needed a new id keeps its place in the sessions imported with it.
+			const boardIds = new Map(boards.map((b, i) => [b.id, addedBoards[i].id]));
+			const addedSessions = await library.addSessions(
+				sessions.map(inFolder),
+				boardIds,
 			);
+
+			const known = new Set([
+				...library.boards.map((b) => b.id),
+				...addedBoards.map((b) => b.id),
+			]);
+			const missing = addedSessions
+				.map((s) => ({
+					title: sessionTitle(s),
+					count: s.blocks.filter(
+						(b) => b.kind === "drill" && !known.has(b.boardId),
+					).length,
+				}))
+				.filter((m) => m.count > 0);
+
+			const plural = (n: number, word: string) =>
+				`${n} ${word}${n === 1 ? "" : "s"}`;
+			const imported = [
+				addedBoards.length && plural(addedBoards.length, "board"),
+				addedSessions.length && plural(addedSessions.length, "session"),
+			].filter(Boolean);
 			const parts = [];
-			if (added.length)
+			if (imported.length) parts.push(`Imported ${imported.join(" and ")}.`);
+			for (const m of missing)
 				parts.push(
-					`Imported ${added.length} board${added.length === 1 ? "" : "s"}.`,
+					`“${m.title}” uses ${plural(m.count, "drill")} that ${
+						m.count === 1 ? "isn't" : "aren't"
+					} in your library: import ${m.count === 1 ? "its board" : "their boards"} too and ${
+						m.count === 1 ? "it links" : "they link"
+					} up.`,
 				);
 			if (problems.length) parts.push(`Couldn't open: ${problems.join("; ")}`);
 			setNotice({
 				text: parts.join(" "),
-				tone: problems.length ? "error" : "info",
+				tone: problems.length || missing.length ? "error" : "info",
 			});
 		}, "Import failed");
 
@@ -479,7 +521,7 @@ export default function Library() {
 					/>
 				</label>
 				<span className="topbar__spacer" />
-				<button type="button" className="button" onClick={importBoards}>
+				<button type="button" className="button" onClick={importFiles}>
 					Import
 				</button>
 				<button
@@ -634,7 +676,7 @@ export default function Library() {
 						openMenu(e, [
 							{ label: "New board…", onSelect: () => setNewBoardOpen(true) },
 							{ label: "New session", onSelect: newSession },
-							{ label: "Import boards…", onSelect: importBoards },
+							{ label: "Import…", onSelect: importFiles },
 							"separator",
 							{ label: "New folder…", onSelect: () => setNewFolderOpen(true) },
 						]);

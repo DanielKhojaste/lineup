@@ -8,6 +8,11 @@ This project adheres to semantic versioning (0.x during early development).
 
 ## [Unreleased]
 
+### Added
+
+- Import sessions: the library's **Import** button takes `.lineup-session` files as well as boards. Import a session together with its drills and they link up; if any of its drills aren't in your library, Lineup says so
+- Export a session as a `.lineup-session` file, from the session's **Export** menu or its menu in the library
+
 ---
 
 ## [0.8.0] - 2026-11-03

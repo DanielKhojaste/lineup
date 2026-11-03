@@ -44,6 +44,14 @@ interface LibraryContextValue {
 	duplicateSession: (id: string) => Promise<Session | undefined>;
 	deleteSession: (id: string) => Promise<void>;
 	moveSessionToFolder: (id: string, folder: string) => Promise<void>;
+	/**
+	 * Add imported sessions. `boardIds` maps a drill's id in the file to the id
+	 * it got in this library (for drills imported with it that needed a new id).
+	 */
+	addSessions: (
+		sessions: Session[],
+		boardIds?: Map<string, string>,
+	) => Promise<Session[]>;
 	createFolder: (name: string) => Promise<void>;
 	renameFolder: (from: string, to: string) => Promise<void>;
 	deleteFolder: (name: string) => Promise<void>;
@@ -236,10 +244,11 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 					...new Set(
 						added
 							.map((b) => b.meta.folder)
-							.filter((f) => f && !folders.includes(f)),
+							.filter((f) => f && !indexRef.current.folders.includes(f)),
 					),
 				];
-				if (newFolders.length) await writeIndex([...folders, ...newFolders]);
+				if (newFolders.length)
+					await writeIndex([...indexRef.current.folders, ...newFolders]);
 				return added;
 			},
 
@@ -278,6 +287,35 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 			deleteSession: async (id) => {
 				setSessions((prev) => prev.filter((s) => s.id !== id));
 				await store().removeSession(id);
+			},
+
+			addSessions: async (incoming, boardIds) => {
+				const ids = new Set(sessionsRef.current.map((s) => s.id));
+				const added: Session[] = [];
+				for (const session of incoming) {
+					const copy: Session = {
+						...session,
+						id: ids.has(session.id) ? newId() : session.id,
+						blocks: session.blocks.map((block) =>
+							block.kind === "drill" && boardIds?.has(block.boardId)
+								? { ...block, boardId: boardIds.get(block.boardId)! }
+								: block,
+						),
+					};
+					ids.add(copy.id);
+					await saveSession(copy);
+					added.push(copy);
+				}
+				const newFolders = [
+					...new Set(
+						added
+							.map((s) => s.meta.folder)
+							.filter((f) => f && !indexRef.current.folders.includes(f)),
+					),
+				];
+				if (newFolders.length)
+					await writeIndex([...indexRef.current.folders, ...newFolders]);
+				return added;
 			},
 
 			moveSessionToFolder: async (id, folder) => {
