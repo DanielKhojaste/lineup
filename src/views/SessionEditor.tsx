@@ -7,6 +7,8 @@ import SessionHeaderForm from "../components/session/SessionHeaderForm";
 import SessionSheet from "../components/session/SessionSheet";
 import Timeline from "../components/session/Timeline";
 import { isTextField } from "../components/ui/ContextMenu";
+import { Menu } from "../components/ui/Menu";
+import { useSessionExport } from "../export/useSessionExport";
 import { Session, sessionTitle } from "../model/session";
 import { useLibrary } from "../state/LibraryContext";
 import { SessionProvider, useSessionEditor } from "../state/SessionContext";
@@ -23,6 +25,7 @@ function SessionLayout() {
 		useSessionEditor();
 	const library = useLibrary();
 	const navigate = useNavigate();
+	const exporter = useSessionExport();
 	const { status, flush } = useAutosave(state.session, library.saveSession);
 	const { session } = state;
 	const editing = !!state.gestureBase && state.gestureBase !== session;
@@ -113,16 +116,43 @@ function SessionLayout() {
 				>
 					<Icon name="redo" size={18} />
 				</button>
+				<Menu
+					label="Export the session sheet"
+					buttonClassName="button"
+					button={
+						<>
+							<Icon name="download" size={16} />
+							{exporter.busy ? "Exporting…" : "Export"}
+						</>
+					}
+					items={[
+						{ label: "PDF document", onSelect: () => exporter.exportAs(session, "pdf") },
+						{ label: "Image (PNG)", onSelect: () => exporter.exportAs(session, "png") },
+					]}
+				/>
 				<button
 					type="button"
 					className="button"
-					title="Print the session sheet, or save it as a PDF (Ctrl+P)"
+					title="Print the session sheet (Ctrl+P)"
 					onClick={() => window.print()}
 				>
 					<Icon name="print" size={16} />
-					Print or PDF
+					Print
 				</button>
 			</header>
+			{exporter.error && (
+				<div className="notice notice--error session-editor__notice" role="alert">
+					<span>{exporter.error}</span>
+					<button
+						type="button"
+						className="icon-button icon-button--small"
+						aria-label="Dismiss"
+						onClick={exporter.clearError}
+					>
+						<Icon name="close" size={14} />
+					</button>
+				</div>
+			)}
 			<div className="session-editor__body">
 				<main className="session-editor__main">
 					<SessionHeaderForm />

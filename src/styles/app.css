@@ -2569,16 +2569,184 @@ fieldset.field {
 	padding: 16px;
 }
 
-/* ------------------------------- Print sheet ------------------------------- */
+/* ------------------------------ Session sheet ------------------------------ */
 
+/*
+ * The session sheet is paper: fixed light colours whatever the app's theme.
+ * It's laid out for an A4 page 794 px wide (210 mm at 96 dpi), and used for
+ * printing and for PDF and image export.
+ */
+.sheet {
+	--sheet-ink: #1b1f23;
+	--sheet-muted: #5b6470;
+	--sheet-line: #b9c0c8;
+	--sheet-head: #1f2a36;
+	--sheet-band: #eef1f4;
+	width: 794px;
+	padding: 36px 40px;
+	background: #ffffff;
+	color: var(--sheet-ink);
+	font-family: var(--font-sans);
+	font-size: 12px;
+	line-height: 1.45;
+	user-select: none;
+}
+
+.sheet__part {
+	margin-bottom: 14px;
+}
+
+.sheet__title {
+	font-size: 22px;
+	font-weight: 700;
+	text-align: center;
+	margin-bottom: 12px;
+	letter-spacing: 0.2px;
+}
+
+.sheet__summary {
+	display: flex;
+	flex-wrap: wrap;
+	border: 1px solid var(--sheet-line);
+	border-radius: 6px;
+	overflow: hidden;
+	background: var(--sheet-band);
+}
+
+/* Cells fill each row; the borders between them come from a negative margin trick. */
+.sheet__cell {
+	flex: 1 1 150px;
+	padding: 8px 10px;
+	border-right: 1px solid var(--sheet-line);
+	border-bottom: 1px solid var(--sheet-line);
+	margin: 0 -1px -1px 0;
+}
+
+.sheet__cell--wide {
+	flex-basis: 45%;
+}
+
+.sheet__label {
+	display: block;
+	font-size: 9.5px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.6px;
+	color: var(--sheet-muted);
+	margin-bottom: 2px;
+}
+
+.sheet__description {
+	margin-top: 10px;
+	white-space: pre-line;
+}
+
+.sheet__activity {
+	width: 100%;
+	border-collapse: collapse;
+	table-layout: fixed;
+}
+
+.sheet__activity th,
+.sheet__activity td {
+	border: 1px solid var(--sheet-line);
+	padding: 7px 9px;
+	text-align: left;
+	vertical-align: top;
+}
+
+.sheet__activity th {
+	background: var(--sheet-head);
+	border-color: var(--sheet-head);
+	color: #ffffff;
+	font-size: 11px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.sheet__when {
+	font-weight: 500;
+	text-transform: none;
+	letter-spacing: 0;
+	opacity: 0.85;
+}
+
+.sheet__setup {
+	width: 250px;
+}
+
+.sheet__focus {
+	width: 190px;
+}
+
+.sheet__setup svg {
+	display: block;
+	width: 100%;
+	height: auto;
+	border-radius: 3px;
+}
+
+.sheet__name {
+	font-size: 13px;
+	font-weight: 700;
+	margin-bottom: 4px;
+}
+
+.sheet__type {
+	font-weight: 400;
+	color: var(--sheet-muted);
+	font-size: 11px;
+}
+
+.sheet p {
+	margin-top: 3px;
+}
+
+.sheet__text {
+	white-space: pre-line;
+}
+
+.sheet ul {
+	margin: 3px 0 0 16px;
+}
+
+.sheet__pause {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 4px 12px;
+	padding: 7px 10px;
+	border: 1px dashed var(--sheet-line);
+	border-radius: 6px;
+	background: var(--sheet-band);
+}
+
+.sheet__pause span {
+	color: var(--sheet-muted);
+}
+
+.sheet__pause p {
+	flex-basis: 100%;
+	margin: 0;
+}
+
+/* Printing (Ctrl+P): only the sheet, at the page's width. */
 .print-sheet {
 	display: none;
+}
+
+/* Export renders the sheet off screen, then takes a picture of it. */
+.sheet-export {
+	position: fixed;
+	left: -10000px;
+	top: 0;
 }
 
 @media print {
 	@page {
 		size: A4;
-		margin: 14mm;
+		margin: 10mm;
 	}
 
 	html,
@@ -2587,11 +2755,6 @@ fieldset.field {
 		height: auto;
 		overflow: visible;
 		background: #fff;
-	}
-
-	body {
-		color: #111;
-		font-size: 10.5pt;
 	}
 
 	#root > * > :not(.print-sheet),
@@ -2606,88 +2769,46 @@ fieldset.field {
 
 	.print-sheet {
 		display: block;
-		color: #111;
-		/* Keep table header shading and the fields' colours on paper. */
 		-webkit-print-color-adjust: exact;
 		print-color-adjust: exact;
 	}
 
-	.sheet__title {
-		font-size: 18pt;
-		margin-bottom: 8pt;
+	.print-sheet .sheet {
+		width: auto;
+		padding: 0;
 	}
 
-	.print-sheet table {
-		width: 100%;
-		border-collapse: collapse;
-		margin-bottom: 10pt;
-	}
-
-	.print-sheet th,
-	.print-sheet td {
-		border: 0.75pt solid #999;
-		padding: 5pt 6pt;
-		text-align: left;
-		vertical-align: top;
-	}
-
-	.sheet__header th {
-		width: 28mm;
-		background: #eee;
-		font-weight: 600;
-	}
-
-	.sheet__blocks thead th {
-		background: #222;
-		color: #fff;
-		border-color: #222;
-	}
-
-	.sheet__blocks tr {
+	.sheet__part {
 		break-inside: avoid;
 	}
+}
 
-	.sheet__time {
-		width: 24mm;
-		white-space: nowrap;
-	}
+/* ------------------------------ Stage picker ------------------------------- */
 
-	.sheet__diagram {
-		width: 72mm;
-	}
+.stage-picker__row {
+	display: flex;
+	gap: 6px;
+}
 
-	.sheet__diagram svg {
-		display: block;
-		width: 100%;
-		height: auto;
-	}
+.stage-picker__row > select {
+	flex: 1 1 50%;
+	min-width: 0;
+}
 
-	.sheet__activity {
-		font-weight: 600;
-		font-size: 11pt;
-	}
+.stage-picker__own {
+	flex: 1 1 50%;
+	min-width: 0;
+}
 
-	.sheet__type,
-	.sheet__facts {
-		color: #555;
-		font-weight: 400;
-		font-size: 9.5pt;
-	}
+.block__stage {
+	max-width: 360px;
+}
 
-	.print-sheet p,
-	.print-sheet ul {
-		margin-top: 3pt;
-	}
+.block__stage .field__input {
+	padding: 4px 8px;
+	font-size: 12px;
+}
 
-	.print-sheet ul {
-		margin-left: 12pt;
-	}
-
-	.sheet__notes {
-		font-style: italic;
-	}
-
-	.sheet__row--break td {
-		background: #f2f6fa;
-	}
+.session-editor__notice {
+	margin: 10px 24px 0;
 }

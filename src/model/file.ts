@@ -314,6 +314,9 @@ export function parseBoard(text: string): Board {
 			coachingPoints: Array.isArray(notes.coachingPoints)
 				? notes.coachingPoints.filter(isStr)
 				: [],
+			variations: Array.isArray(notes.variations)
+				? notes.variations.filter(isStr)
+				: [],
 		},
 		teams: {
 			home: cleanTeam(teams.home, fresh.teams.home),
@@ -344,7 +347,9 @@ export function parseBoard(text: string): Board {
 export function fileNameFor(title: string, extension: string): string {
 	const base = title
 		.trim()
-		.replace(/[<>:"/\\|?*\u0000-\u001f]/g, "")
+		// "U9/U10" becomes "U9-U10" rather than "U9U10".
+		.replace(/[/\\]/g, "-")
+		.replace(/[<>:"|?*\u0000-\u001f]/g, "")
 		.replace(/\s+/g, " ")
 		.slice(0, 80)
 		.trim();

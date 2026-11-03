@@ -188,9 +188,11 @@ describe("board files", () => {
 
 describe("file names", () => {
 	it("strips characters Windows doesn't allow", () => {
-		expect(fileNameFor('Rondo: 4v2 / "switch"?', "lineup")).toBe(
+		expect(fileNameFor('Rondo: 4v2 "switch"?', "lineup")).toBe(
 			"Rondo 4v2 switch.lineup",
 		);
+		// Slashes become dashes, so "U9/U10" stays readable.
+		expect(fileNameFor("U9/U10 Session 1", "pdf")).toBe("U9-U10 Session 1.pdf");
 		expect(fileNameFor("   ", "png")).toBe("Untitled board.png");
 	});
 });

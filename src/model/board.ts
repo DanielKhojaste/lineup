@@ -41,6 +41,15 @@ export const BOARD_TYPE_LABELS: Record<BoardType, { one: string; many: string }>
 	other: { one: "Other", many: "Other" },
 };
 
+/** Suggested names for the part of a session a drill is. Coaches can type their own. */
+export const DRILL_STAGES = [
+	"Warm-up",
+	"Activity",
+	"Small-sided game (SSG)",
+	"Game",
+	"Cool-down",
+];
+
 /** Marker sizes on offer, as a factor of the normal size. */
 export const MARKER_SCALES = [
 	{ value: 0.75, label: "S" },
@@ -87,6 +96,7 @@ export function createBoard(
 			updatedAt: now,
 		},
 		notes: {
+			stage: "",
 			category: "",
 			ageGroup: "",
 			duration: "",
@@ -95,6 +105,7 @@ export function createBoard(
 			equipment: "",
 			description: "",
 			coachingPoints: [],
+			variations: [],
 		},
 		pitch: { ...pitch },
 		teams: structuredClone(DEFAULT_TEAMS),

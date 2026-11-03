@@ -16,6 +16,7 @@ import { pitchLabel, Sport, SPORT_INFO, SPORTS } from "../model/sports";
 import { Board, BOARD_TYPES, BoardType, PitchSettings } from "../model/types";
 import { allFolders, useLibrary } from "../state/LibraryContext";
 import { exportBoardFile, exportPng, pickBoardFiles } from "../storage/files";
+import { useSessionExport } from "../export/useSessionExport";
 import { relativeTime } from "../utils/time";
 
 /** Which boards the main area shows: everything, the boards outside folders, or one folder. */
@@ -182,6 +183,7 @@ export default function Library() {
 	const library = useLibrary();
 	const navigate = useNavigate();
 	const { openMenu } = useContextMenu();
+	const sessionExport = useSessionExport();
 	// Coming back from a session opens the sessions view again.
 	const backTo = (useLocation().state as { view?: string } | null)?.view;
 	const [view, setView] = useState<View>(
@@ -324,6 +326,15 @@ export default function Library() {
 				),
 		},
 		{ label: "Move to folder…", onSelect: () => setMovingSession(session) },
+		"separator" as const,
+		{
+			label: "Export as PDF",
+			onSelect: () => sessionExport.exportAs(session, "pdf"),
+		},
+		{
+			label: "Export as image (PNG)",
+			onSelect: () => sessionExport.exportAs(session, "png"),
+		},
 		"separator" as const,
 		{
 			label: "Delete…",
@@ -640,6 +651,19 @@ export default function Library() {
 						</label>
 					</div>
 
+					{sessionExport.error && (
+						<div className="notice notice--error" role="alert">
+							<span>{sessionExport.error}</span>
+							<button
+								type="button"
+								className="icon-button icon-button--small"
+								aria-label="Dismiss"
+								onClick={sessionExport.clearError}
+							>
+								<Icon name="close" size={14} />
+							</button>
+						</div>
+					)}
 					{notice && (
 						<div
 							className={`notice notice--${notice.tone}`}

@@ -21,7 +21,11 @@ export interface SessionState {
 }
 
 export type BlockPatch = Partial<
-	Pick<SessionBlock, "minutes" | "notes"> & { label: string; boardId: string }
+	Pick<SessionBlock, "minutes" | "notes"> & {
+		label: string;
+		boardId: string;
+		stage: string;
+	}
 >;
 
 export type SessionAction =
@@ -106,7 +110,10 @@ export function sessionReducer(
 					patch.minutes = cleanMinutes(patch.minutes);
 				// Only drills have a board, only breaks and custom blocks a label.
 				if (b.kind === "drill") delete patch.label;
-				else delete patch.boardId;
+				else {
+					delete patch.boardId;
+					delete patch.stage;
+				}
 				const updated = { ...b, ...patch } as SessionBlock;
 				if (JSON.stringify(updated) === JSON.stringify(b)) return b;
 				changed = true;

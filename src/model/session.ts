@@ -57,6 +57,8 @@ interface BlockBase {
 export interface DrillBlock extends BlockBase {
 	kind: "drill";
 	boardId: string;
+	/** What this drill is in this session ("Warm-up"…); empty uses the drill's own. */
+	stage: string;
 }
 
 /** A water break, or any pause. */
@@ -117,7 +119,7 @@ export function createDrillBlock(
 	boardId: string,
 	minutes = DEFAULT_DRILL_MINUTES,
 ): DrillBlock {
-	return { id: newId(), kind: "drill", boardId, minutes, notes: "" };
+	return { id: newId(), kind: "drill", boardId, minutes, notes: "", stage: "" };
 }
 
 export function createBreakBlock(
@@ -206,7 +208,7 @@ function cleanBlock(raw: unknown): SessionBlock | null {
 	switch (raw.kind) {
 		case "drill":
 			return isStr(raw.boardId)
-				? { ...base, kind: "drill", boardId: raw.boardId }
+				? { ...base, kind: "drill", boardId: raw.boardId, stage: text(raw.stage, 60) }
 				: null;
 		case "break":
 			return { ...base, kind: "break", label: text(raw.label, 120) || "Break" };
@@ -279,4 +281,20 @@ export function minutesFromText(text: string): number | null {
 		(hours ? Number(hours[1].replace(",", ".")) * 60 : 0) +
 		(mins ? Number(mins[1]) : 0);
 	return total > 0 ? cleanMinutes(total) : null;
+}
+
+/**
+ * What each block is called on the session sheet: a drill's stage ("Warm-up"),
+ * from the session or the drill, or else "Activity 1", "Activity 2"…
+ */
+export function blockStages(
+	session: Session,
+	stageOf: (boardId: string) => string,
+): string[] {
+	let activity = 0;
+	return session.blocks.map((b) => {
+		if (b.kind !== "drill") return "";
+		activity += 1;
+		return b.stage.trim() || stageOf(b.boardId).trim() || `Activity ${activity}`;
+	});
 }

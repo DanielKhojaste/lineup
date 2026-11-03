@@ -6,6 +6,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { BOARD_TYPE_LABELS } from "../../model/board";
 import {
+	blockStages,
 	blockTimes,
 	createBreakBlock,
 	createCustomBlock,
@@ -21,6 +22,7 @@ import { Icon } from "../Icon";
 import { ContextMenuEntry, useContextMenu } from "../ui/ContextMenu";
 import { BoardInput, BoardTextarea } from "../ui/fields";
 import { Menu, MenuItem } from "../ui/Menu";
+import StagePicker from "../ui/StagePicker";
 
 function MinutesField({
 	block,
@@ -69,6 +71,7 @@ function BlockRow({
 	block,
 	index,
 	time,
+	stage,
 	dragging,
 	onHandleDown,
 	menu,
@@ -76,6 +79,8 @@ function BlockRow({
 	block: SessionBlock;
 	index: number;
 	time: string;
+	/** What it's called on the sheet ("Warm-up", "Activity 2"…). */
+	stage: string;
 	dragging: boolean;
 	onHandleDown: (e: ReactPointerEvent, id: string) => void;
 	menu: (block: SessionBlock, index: number) => ContextMenuEntry[];
@@ -161,6 +166,20 @@ function BlockRow({
 								<BoardPreview board={board} />
 							</button>
 							<div className="block__drill-text">
+								{block.kind === "drill" && (
+									<StagePicker
+										className="block__stage"
+										label="Part of the session"
+										hideLabel
+										value={block.stage}
+										emptyLabel={
+											board.notes.stage
+												? `${board.notes.stage} (from the drill)`
+												: `${stage} (not set)`
+										}
+										onChange={(value) => update({ stage: value })}
+									/>
+								)}
 								<button
 									type="button"
 									className="block__title link-button"
@@ -177,11 +196,21 @@ function BlockRow({
 									<p className="block__description">{board.notes.description}</p>
 								)}
 								{board.notes.coachingPoints.filter(Boolean).length > 0 && (
-									<ul className="block__points">
+									<ul className="block__points" aria-label="Coaching points">
 										{board.notes.coachingPoints.filter(Boolean).map((p, i) => (
 											<li key={i}>{p}</li>
 										))}
 									</ul>
+								)}
+								{board.notes.variations.filter(Boolean).length > 0 && (
+									<div className="block__variations">
+										<span className="muted small">Variations and progressions</span>
+										<ul className="block__points">
+											{board.notes.variations.filter(Boolean).map((p, i) => (
+												<li key={i}>{p}</li>
+											))}
+										</ul>
+									</div>
 								)}
 							</div>
 						</div>
@@ -261,6 +290,11 @@ export default function Timeline() {
 	const navigate = useNavigate();
 	const { session } = state;
 	const times = blockTimes(session);
+	const library = useLibrary();
+	const stages = blockStages(
+		session,
+		(id) => library.getBoard(id)?.notes.stage ?? "",
+	);
 	const total = totalMinutes(session);
 	const planned = session.header.plannedMinutes;
 	const listRef = useRef<HTMLOListElement>(null);
@@ -392,6 +426,7 @@ export default function Timeline() {
 								block={block}
 								index={index}
 								time={`${t.from}–${t.to}′`}
+								stage={stages[index]}
 								dragging={drag?.id === block.id}
 								onHandleDown={onHandleDown}
 								menu={menu}
