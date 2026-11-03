@@ -230,6 +230,13 @@ export default function SessionHeaderForm() {
 	const { header, meta } = state.session;
 	const [titleTouched, setTitleTouched] = useState(false);
 	const [pickingSport, setPickingSport] = useState(false);
+	const library = useLibrary();
+	// Drills left over from another sport (after the session's sport changed).
+	const otherSport = state.session.blocks.filter(
+		(b) =>
+			b.kind === "drill" &&
+			(library.getBoard(b.boardId)?.pitch.sport ?? header.sport) !== header.sport,
+	).length;
 	const update = (patch: Partial<SessionHeader>) =>
 		dispatch({ type: "updateHeader", patch });
 	const missingTitle = !meta.title.trim();
@@ -273,18 +280,21 @@ export default function SessionHeaderForm() {
 						title="Change the session's sport"
 						onClick={() => setPickingSport(true)}
 					>
-						{header.sport ? (
-							<span
-								className="sport-swatch"
-								style={{ background: SURFACES[header.sport].floor }}
-								aria-hidden="true"
-							/>
-						) : (
-							<Icon name="grid" size={14} />
-						)}
-						{header.sport ? SPORT_INFO[header.sport].name : "Any sport"}
+						<span
+							className="sport-swatch"
+							style={{ background: SURFACES[header.sport].floor }}
+							aria-hidden="true"
+						/>
+						{SPORT_INFO[header.sport].name}
 						<Icon name="chevronDown" size={14} />
 					</button>
+					{otherSport > 0 && (
+						<p className="field__error">
+							{otherSport === 1 ? "A drill" : `${otherSport} drills`} in the plan{" "}
+							{otherSport === 1 ? "is" : "are"} for another sport. Please swap{" "}
+							{otherSport === 1 ? "it" : "them"} for {SPORT_INFO[header.sport].name.toLowerCase()} drills.
+						</p>
+					)}
 					<SportPickerDialog
 						open={pickingSport}
 						title="Which sport is this session for?"

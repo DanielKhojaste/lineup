@@ -96,7 +96,7 @@ describe("session files", () => {
 		);
 		expect(session.meta.title).toBe("");
 		expect(session.header.plannedMinutes).toBe(90);
-		expect(session.header.sport).toBe("");
+		expect(session.header.sport).toBe("soccer");
 		// Early test sessions: notes become the description, topic and focus points become topics.
 		expect(session.header.description).toBe("Old notes");
 		expect(session.header.topics).toEqual(["Pressing", "Scanning"]);

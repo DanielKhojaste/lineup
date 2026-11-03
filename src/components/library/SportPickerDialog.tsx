@@ -8,7 +8,7 @@ import { Modal } from "../ui/Dialog";
 
 /**
  * Pick the sport a session is for: the same pictures as the New board window,
- * without full or half, plus "Any sport". Enter or double-click picks.
+ * without full or half. Enter or double-click picks.
  */
 export default function SportPickerDialog({
 	open,
@@ -21,16 +21,16 @@ export default function SportPickerDialog({
 	open: boolean;
 	title: string;
 	confirmLabel: string;
-	/** The sport picked when it opens ("" for any sport). */
-	initial: Sport | "";
+	/** The sport picked when it opens. */
+	initial: Sport;
 	onClose: () => void;
-	onPick: (sport: Sport | "") => void;
+	onPick: (sport: Sport) => void;
 }) {
 	const pictures = useMemo(
 		() => new Map(SPORTS.map((s) => [s, createBoard("", { sport: s, variant: "full" })])),
 		[],
 	);
-	const [sport, setSport] = useState<Sport | "">(initial);
+	const [sport, setSport] = useState<Sport>(initial);
 	const [makeDefault, setMakeDefault] = useState(false);
 
 	useEffect(() => {
@@ -43,7 +43,7 @@ export default function SportPickerDialog({
 	const isDefault = prefs.hasDefaultSport && sport === prefs.defaultPitch.sport;
 
 	const pick = (chosen = sport) => {
-		if (makeDefault && chosen)
+		if (makeDefault)
 			setPreferences({ defaultPitch: { ...prefs.defaultPitch, sport: chosen } });
 		onPick(chosen);
 		onClose();
@@ -77,25 +77,10 @@ export default function SportPickerDialog({
 							</button>
 						);
 					})}
-					<button
-						type="button"
-						role="radio"
-						aria-checked={sport === ""}
-						className={`new-board__sport sport-picker__any${sport === "" ? " is-active" : ""}`}
-						onClick={() => setSport("")}
-						onDoubleClick={() => pick("")}
-					>
-						<span className="new-board__thumb sport-picker__any-thumb" aria-hidden="true">
-							<Icon name="grid" size={22} />
-						</span>
-						<span>Any sport</span>
-					</button>
 				</div>
 
 				<div className="dialog__actions new-board__actions">
-					{sport === "" ? (
-						<span />
-					) : isDefault ? (
+					{isDefault ? (
 						<span className="check check--static">
 							<Icon name="check" size={16} />
 							Your default sport

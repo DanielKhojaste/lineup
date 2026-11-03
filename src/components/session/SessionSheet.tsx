@@ -35,7 +35,7 @@ export function SessionSheetContent({
 		[
 			["Age group or team", header.team, false],
 			["Players", playersText(header.playersMin, header.playersMax), false],
-			["Sport", header.sport ? SPORT_INFO[header.sport].name : "", false],
+			["Sport", SPORT_INFO[header.sport].name, false],
 			["Time", time, false],
 			["Area", header.area, false],
 			["Topics", header.topics.join(" · "), true],

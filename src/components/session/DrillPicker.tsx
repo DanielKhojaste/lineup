@@ -34,7 +34,6 @@ export default function DrillPicker() {
 	const [query, setQuery] = useState("");
 	const [type, setType] = useState<BoardType | "all">("all");
 	const sport = session.header.sport;
-	const [sportOnly, setSportOnly] = useState(true);
 
 	const used = useMemo(() => {
 		const counts = new Map<string, number>();
@@ -45,7 +44,8 @@ export default function DrillPicker() {
 
 	const shown = library.boards
 		.filter((b) => type === "all" || b.meta.type === type)
-		.filter((b) => !sport || !sportOnly || b.pitch.sport === sport)
+		// A session is for one sport: only its boards can go in.
+		.filter((b) => b.pitch.sport === sport)
 		.filter((b) => matches(b, query.trim()))
 		.sort((a, b) => a.meta.title.localeCompare(b.meta.title));
 
@@ -90,16 +90,6 @@ export default function DrillPicker() {
 						</button>
 					))}
 				</div>
-				{sport && (
-					<label className="check">
-						<input
-							type="checkbox"
-							checked={sportOnly}
-							onChange={(e) => setSportOnly(e.target.checked)}
-						/>
-						Only {SPORT_INFO[sport].name.toLowerCase()} boards
-					</label>
-				)}
 			</div>
 			<ul className="drill-picker__list">
 				{shown.map((board) => {
@@ -140,8 +130,8 @@ export default function DrillPicker() {
 			</ul>
 			{shown.length === 0 && (
 				<p className="muted small drill-picker__empty">
-					{library.boards.length === 0
-						? "Your library has no boards yet. Draw a drill first, then add it here."
+					{library.boards.every((b) => b.pitch.sport !== sport)
+						? `No ${SPORT_INFO[sport].name.toLowerCase()} boards yet. Draw a drill first, then add it here.`
 						: "No boards match."}
 				</p>
 			)}

@@ -13,7 +13,7 @@ import {
 	isObject,
 	isStr,
 } from "./file";
-import { isSport, Sport } from "./sports";
+import { DEFAULT_PITCH, isSport, Sport } from "./sports";
 
 export const SESSION_SCHEMA_VERSION = 1;
 export const SESSION_EXTENSION = "lineup-session";
@@ -34,8 +34,8 @@ export interface SessionMeta {
 export interface SessionHeader {
 	/** Age group or team, e.g. "U12" or "U12 Girls". */
 	team: string;
-	/** The session's sport: it picks the suggested topics and drills. Empty for any. */
-	sport: Sport | "";
+	/** The session's sport: every drill in it is for this sport. */
+	sport: Sport;
 	/** What the session is about and how it runs, for whoever coaches it. */
 	description: string;
 	/** Tags like "Passing" or "Pressing": suggested ones for the sport, or your own. */
@@ -109,7 +109,7 @@ export function createSession(title = ""): Session {
 		meta: { title, tags: [], folder: "", createdAt: now, updatedAt: now },
 		header: {
 			team: "",
-			sport: "",
+			sport: DEFAULT_PITCH.sport,
 			description: "",
 			topics: [],
 			plannedMinutes: null,
@@ -283,7 +283,8 @@ export function parseSession(source: string): Session {
 		},
 		header: {
 			team: text(header.team, 120),
-			sport: isSport(header.sport) ? header.sport : "",
+			// Early test sessions could be for "any sport"; they become soccer.
+			sport: isSport(header.sport) ? header.sport : DEFAULT_PITCH.sport,
 			// Early test versions had "notes", a single "topic" and "focus points".
 			description: text(header.description ?? header.notes),
 			topics: cleanTopics([

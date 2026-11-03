@@ -252,7 +252,7 @@ export default function Library() {
 	const openSession = (id: string) => navigate(`/session/${id}`);
 
 	const [askingSport, setAskingSport] = useState(false);
-	const createSessionFor = (sport: Sport | "") =>
+	const createSessionFor = (sport: Sport) =>
 		run(async () => {
 			const session = await library.createSession(currentFolder, sport);
 			openSession(session.id);
