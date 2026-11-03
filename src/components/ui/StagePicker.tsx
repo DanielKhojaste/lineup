@@ -10,7 +10,7 @@ export default function StagePicker({
 	value,
 	onChange,
 	label = "Part of the session",
-	emptyLabel = "Not set",
+	emptyLabel = "—",
 	hideLabel,
 	className,
 }: {

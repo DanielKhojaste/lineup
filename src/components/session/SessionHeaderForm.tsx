@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { SessionHeader, totalMinutes } from "../../model/session";
-import { SPORT_INFO, SPORTS } from "../../model/sports";
+import { SPORT_INFO } from "../../model/sports";
+import { SURFACES } from "../board/Pitch";
+import SportPickerDialog from "../library/SportPickerDialog";
 import { suggestedTopics } from "../../model/topics";
 import { useLibrary } from "../../state/LibraryContext";
 import { useSessionEditor } from "../../state/SessionContext";
@@ -227,6 +229,7 @@ export default function SessionHeaderForm() {
 	const { state, dispatch } = useSessionEditor();
 	const { header, meta } = state.session;
 	const [titleTouched, setTitleTouched] = useState(false);
+	const [pickingSport, setPickingSport] = useState(false);
 	const update = (patch: Partial<SessionHeader>) =>
 		dispatch({ type: "updateHeader", patch });
 	const missingTitle = !meta.title.trim();
@@ -260,22 +263,36 @@ export default function SessionHeaderForm() {
 					onValue={(team) => update({ team })}
 				/>
 				<div className="field">
-					<label className="field__label" htmlFor="session-sport">
+					<span className="field__label" id="session-sport-label">
 						Sport
-					</label>
-					<select
-						id="session-sport"
-						className="field__input"
-						value={header.sport}
-						onChange={(e) => update({ sport: e.target.value as SessionHeader["sport"] })}
+					</span>
+					<button
+						type="button"
+						className="sport-chip"
+						aria-labelledby="session-sport-label"
+						title="Change the session's sport"
+						onClick={() => setPickingSport(true)}
 					>
-						<option value="">Any sport</option>
-						{SPORTS.map((s) => (
-							<option key={s} value={s}>
-								{SPORT_INFO[s].name}
-							</option>
-						))}
-					</select>
+						{header.sport ? (
+							<span
+								className="sport-swatch"
+								style={{ background: SURFACES[header.sport].floor }}
+								aria-hidden="true"
+							/>
+						) : (
+							<Icon name="grid" size={14} />
+						)}
+						{header.sport ? SPORT_INFO[header.sport].name : "Any sport"}
+						<Icon name="chevronDown" size={14} />
+					</button>
+					<SportPickerDialog
+						open={pickingSport}
+						title="Which sport is this session for?"
+						confirmLabel="Use this sport"
+						initial={header.sport}
+						onClose={() => setPickingSport(false)}
+						onPick={(sport) => update({ sport })}
+					/>
 				</div>
 				<DurationField />
 				<div className="session-header__wide">

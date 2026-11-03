@@ -2907,3 +2907,65 @@ fieldset.field {
 .duration-field input:disabled {
 	opacity: 0.7;
 }
+
+.sport-picker__any-thumb {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--text-muted);
+	background: var(--sunken);
+}
+
+/* The session's sport: a chip that opens the sport picker. */
+.sport-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	height: 34px;
+	padding: 0 12px 0 8px;
+	border-radius: 999px;
+	border: 1px solid var(--border);
+	background: var(--sunken);
+	font-weight: 500;
+	align-self: flex-start;
+}
+
+.sport-chip:hover {
+	border-color: var(--accent);
+}
+
+.sport-chip .sport-swatch {
+	width: 18px;
+	height: 12px;
+}
+
+/* The sport picker: tiles in a grid, a picture above each name. */
+.sport-picker-form {
+	display: block;
+}
+
+.sport-picker-form .new-board__actions {
+	grid-column: auto;
+	margin-top: 14px;
+}
+
+.sport-picker {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+	gap: 10px;
+}
+
+.sport-picker .new-board__sport {
+	flex-direction: column;
+	align-items: stretch;
+	gap: 6px;
+	padding: 8px;
+	text-align: center;
+	border-color: var(--border);
+}
+
+.sport-picker .new-board__thumb {
+	width: 100%;
+	height: auto;
+	aspect-ratio: 3 / 2;
+}

@@ -10,6 +10,8 @@ import { SURFACES } from "../components/board/Pitch";
 import NewBoardDialog from "../components/library/NewBoardDialog";
 import CardMenuButton from "../components/library/CardMenuButton";
 import SessionCard from "../components/library/SessionCard";
+import SportPickerDialog from "../components/library/SportPickerDialog";
+import { getPreferences } from "../state/preferences";
 import { truncate } from "../utils/text";
 import { BOARD_TYPE_LABELS } from "../model/board";
 import { Session, sessionTitle } from "../model/session";
@@ -249,11 +251,23 @@ export default function Library() {
 	const openBoard = (id: string) => navigate(`/board/${id}`);
 	const openSession = (id: string) => navigate(`/session/${id}`);
 
-	const newSession = () =>
+	const [askingSport, setAskingSport] = useState(false);
+	const createSessionFor = (sport: Sport | "") =>
 		run(async () => {
-			const session = await library.createSession(currentFolder);
+			const session = await library.createSession(currentFolder, sport);
 			openSession(session.id);
 		}, "Couldn't create the session");
+
+	/**
+	 * A new session starts on the sport being shown, or the default sport;
+	 * without either, it asks which sport it's for first.
+	 */
+	const newSession = () => {
+		const prefs = getPreferences();
+		if (view.kind === "sport") createSessionFor(view.sport);
+		else if (prefs.hasDefaultSport) createSessionFor(prefs.defaultPitch.sport);
+		else setAskingSport(true);
+	};
 
 	/** The delete confirmation, saying which sessions use the board. */
 	const deleteBoardMessage = (board: Board | null) => {
@@ -928,6 +942,14 @@ export default function Library() {
 					)
 				}
 				onClose={() => setDeletingSession(null)}
+			/>
+			<SportPickerDialog
+				open={askingSport}
+				title="New session: which sport?"
+				confirmLabel="Create session"
+				initial={getPreferences().defaultPitch.sport}
+				onClose={() => setAskingSport(false)}
+				onPick={createSessionFor}
 			/>
 			<NewBoardDialog
 				open={newBoardOpen}

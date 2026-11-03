@@ -11,6 +11,7 @@ import {
 import { createBoard, newId } from "../model/board";
 import { parseBoard } from "../model/file";
 import { createSession, Session } from "../model/session";
+import { Sport } from "../model/sports";
 import { Board, PitchSettings } from "../model/types";
 import { getStore } from "../storage";
 import { getPreferences } from "./preferences";
@@ -38,7 +39,7 @@ interface LibraryContextValue {
 	topics: string[];
 	addTopics: (topics: string[]) => Promise<void>;
 	getSession: (id: string) => Session | undefined;
-	createSession: (folder?: string) => Promise<Session>;
+	createSession: (folder?: string, sport?: Sport | "") => Promise<Session>;
 	saveSession: (session: Session) => Promise<void>;
 	duplicateSession: (id: string) => Promise<Session | undefined>;
 	deleteSession: (id: string) => Promise<void>;
@@ -248,8 +249,9 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 			getSession: (id) => sessionsRef.current.find((s) => s.id === id),
 			saveSession,
 
-			createSession: async (folder = "") => {
+			createSession: async (folder = "", sport = "") => {
 				const session = createSession();
+				session.header.sport = sport;
 				session.meta.folder = folder;
 				await saveSession(session);
 				return session;

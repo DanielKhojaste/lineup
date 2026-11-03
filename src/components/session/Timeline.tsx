@@ -207,7 +207,7 @@ function BlockRow({
 										label="Part of the session"
 										hideLabel
 										value={block.stage}
-										emptyLabel="Not set"
+										emptyLabel="—"
 										onChange={(value) => update({ stage: value })}
 									/>
 								)}
