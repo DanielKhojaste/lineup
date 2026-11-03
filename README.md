@@ -6,7 +6,7 @@ A tactics board and session planner for coaches of any team sport: draw drills, 
 >
 > Lineup is under active development. Features, the interface and the file format may still change.
 
-![Barça's starting XI against Real Madrid, 19 November 2023, on the Lineup board](docs/screenshots/lineup.png)
+![Barça's starting XI against Real Madrid, 19 November 2023, on the Lineup board](screenshots/lineup.png)
 
 ## Overview
 
@@ -14,7 +14,7 @@ Lineup is a local-first desktop app for coaches of any team sport. It brings the
 
 - **Library**: every drill, line-up and play you've saved, organised by sport and in folders
 - **Editor**: players, equipment, arrows, zones and text on the field or court, with notes for the drill and step-by-step animation
-- **Sessions** _(coming)_: build a training session from your drills, with breaks and timings, and print the session sheet
+- **Sessions**: build a training session from your drills, with breaks and timings, and export or print the session sheet
 - **Plans** _(coming)_: season plans made of sessions grouped by topic (like "attacking transition"), not tied to dates, so you can reuse and share them
 - **Calendar** _(coming)_: put sessions or a whole plan on dates, and keep a log of the sessions you ran
 - **Sharing** _(coming)_: send a drill, session or plan to another coach as one file
@@ -40,7 +40,7 @@ Everything is stored as files on your computer, and the app works without an acc
 
 ### Drawing
 
-![A rondo drill with a zone, cones, passes and notes](docs/screenshots/drill.png)
+![A rondo drill with a zone, cones, passes and notes](screenshots/drill.png)
 
 - Run, pass and dribble arrows, lines, zones, freehand pen and highlighter, and text
 - Bend arrows, resize zones, snap angles with Shift, and attach arrows to players
@@ -48,20 +48,30 @@ Everything is stored as files on your computer, and the app works without an acc
 
 ### Animation
 
-![A third-man run playing out step by step](docs/screenshots/animation.gif)
+![A third-man run playing out step by step](screenshots/animation.gif)
 
 - Build a play in steps: each step moves some markers on from where the last one left them
 - Drag markers to move them, or use the **Route** tool to click the points a player runs through; Lineup draws a smooth curve through them
 - See each run as a dotted path with a faded marker where it started, and reshape it by dragging its waypoints
 - Play, pause and step through (Space, `,` and `.`), set how long each step takes, and play at half or double speed
 
-![Editing a step: dotted runs, waypoints and the step bar](docs/screenshots/animation.png)
+![Editing a step: dotted runs, waypoints and the step bar](screenshots/animation.png)
+
+### Sessions
+
+![A session plan: a warm-up rondo, water breaks and a third-man run, with the time adding up](screenshots/session.png)
+
+- Build a training session for one sport from the drills in your library, plus water breaks and other blocks like a game or a team talk
+- Give each block its minutes; Lineup numbers the parts (Warm-up 1, Activity 1, Water break 1) and adds up the time against what you planned
+- Reorder blocks by dragging or with the arrows, and set what each drill is in this session (warm-up, activity, small-sided game, scrimmage, cool-down)
+- Details so another coach can run it: age group or team, time, description, topic tags, players, equipment and area
+- Export the session sheet as a PDF or an image, or print it straight from the app
 
 ### Library and files
 
-![The library with folders and previews](docs/screenshots/library.png)
+![The library with folders and previews](screenshots/library.png)
 
-- Every board saves automatically to `Documents\Lineup` as a `.lineup` file
+- Every board and session saves automatically to `Documents\Lineup`, as `.lineup` and `.lineup-session` files
 - Browse by sport or folder, search across titles, tags and notes, sort, duplicate and delete
 - Import and export `.lineup` files, and export any board as a PNG image
 - Undo and redo for every change, and copy and paste between boards
