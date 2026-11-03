@@ -8,6 +8,10 @@ This project adheres to semantic versioning (0.x during early development).
 
 ## [Unreleased]
 
+---
+
+## [0.7.0] - 2026-11-03
+
 ### Added
 
 - More sports: futsal, basketball, volleyball, handball and field hockey, as well as soccer, each with its own field or court drawn to scale with its markings (basketball keys, three-point lines and hoops; the volleyball net and attack lines; handball and futsal goal areas; the hockey shooting circles)
@@ -30,6 +34,9 @@ This project adheres to semantic versioning (0.x during early development).
 - The goal tool is hidden for basketball and volleyball, which don't have goals
 - The README covers the new sports and the new plan: sessions, season plans and a calendar next, then sharing, then accounts and a premium cloud subscription
 - Text fields have Lineup's own Cut, Copy, Paste and Select all menu instead of the browser's, so "Inspect" and other browser items never show (Tauri clipboard plugin)
+- A "Desktop builds" workflow on GitHub builds the Windows, macOS and Linux installers on demand (Actions tab, "Run workflow") and for every version tag
+- The version number lives in a `VERSION` file; `npm run version:sync` copies it into `package.json`, `tauri.conf.json` and `Cargo.toml`, and the Desktop builds workflow checks they match
+- `.gitattributes`: `.lineup` files are binary, and `package-lock.json` stays at LF line endings
 
 ---
 

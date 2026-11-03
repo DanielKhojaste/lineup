@@ -85,8 +85,8 @@ The [`examples`](examples) folder has boards you can import from the library's *
 | v0.4.0 | Drawing tools: arrows, lines, zones, pen, text, equipment | ✅ |
 | v0.5.0 | Drills: library, saving and loading, notes, PNG export | ✅ |
 | v0.6.0 | Animation: steps, routes and playback; striped kits | ✅ |
-| v0.7.0 | Any team sport: soccer, futsal, basketball, volleyball, handball, hockey; right-click menus | Next |
-| v0.8.0 | Sessions: drills and breaks with timings, board types, a session sheet you can print | |
+| v0.7.0 | Any team sport: soccer, futsal, basketball, volleyball, handball, hockey; right-click menus | ✅ |
+| v0.8.0 | Sessions: drills and breaks with timings, board types, a session sheet you can print | Next |
 | v0.9.0 | Plans and calendar: season plans by topic, sessions on dates, a session log | |
 | v0.10.0 | Sharing: drills, sessions and plans as one file; GIF and video export of plays | |
 | v0.11.0 | Accounts, cloud sync and premium | |
