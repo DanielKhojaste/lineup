@@ -9,7 +9,9 @@
 		"build": "tsc && vite build",
 		"preview": "vite preview",
 		"tauri": "tauri",
-		"test": "vitest run"
+		"test": "vitest run",
+		"version:sync": "node scripts/sync-version.mjs",
+		"version:check": "node scripts/sync-version.mjs --check"
 	},
 	"dependencies": {
 		"@fontsource/ibm-plex-mono": "^5.1.1",

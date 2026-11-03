@@ -121,6 +121,10 @@ npm run tauri dev
 npm test
 ```
 
+### Version
+
+The version number lives in [`VERSION`](VERSION). To release, change it there and run `npm run version:sync`, which copies it into `package.json`, `package-lock.json`, `tauri.conf.json` and `Cargo.toml`.
+
 ## License
 
 Copyright (C) 2025-2026 Aref "Daniel" Khojaste
