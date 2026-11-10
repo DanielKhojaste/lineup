@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { setPreferences, usePreferences } from "../../state/preferences";
 import { SHORTCUTS } from "../../state/useShortcuts";
 import { isHexColor, normalizeHex } from "../../theme/color";
@@ -12,7 +13,8 @@ import { useTheme } from "../../theme/ThemeProvider";
 import { Icon } from "../Icon";
 import PitchPicker from "./PitchPicker";
 
-function ThemePreview({ settings }: { settings: ThemeSettings }) {
+/** A tiny picture of a theme: top bar, field, side panel. */
+export function ThemeSwatch({ settings }: { settings: ThemeSettings }) {
 	const t = themeTokens(settings);
 	return (
 		<span
@@ -88,6 +90,7 @@ export default function SettingsDialog({
 	const ref = useRef<HTMLDialogElement>(null);
 	const { theme, setTheme } = useTheme();
 	const preferences = usePreferences();
+	const navigate = useNavigate();
 
 	useEffect(() => {
 		const dialog = ref.current;
@@ -140,7 +143,7 @@ export default function SettingsDialog({
 				<section className="dialog__section">
 					<h3>Appearance</h3>
 					<div className="theme-picker">
-						<ThemePreview settings={theme} />
+						<ThemeSwatch settings={theme} />
 						<div className="field">
 							<label className="field__label" htmlFor="theme-select">
 								Theme
@@ -167,6 +170,17 @@ export default function SettingsDialog({
 							</select>
 						</div>
 					</div>
+
+					<button
+						type="button"
+						className="link-button"
+						onClick={() => {
+							onClose();
+							navigate("/themes");
+						}}
+					>
+						Preview themes: every component in each theme's colours
+					</button>
 
 					<details className="disclosure">
 						<summary>Customise colours</summary>

@@ -19,9 +19,12 @@ This project adheres to semantic versioning (0.x during early development).
 - **Change sport or field** from a button in the board's Field settings, or from the board's right-click menu. It opens the same pictures as New board, with the board's sport and field now in grey and your pick in the accent colour. Tick **Start with a blank board** to clear the board as well; there's no confirmation, because Ctrl+Z brings everything back
 - **Size of a single marker:** select players or equipment and pick S, M, L or XL under Size. It goes on top of the board's player and equipment sizes, and goals keep their real size
 - Shirt numbers **0 and 00** (basketball and hockey use them)
+- **Theme preview:** Settings › Appearance › Preview themes shows every component that uses a theme's primary and secondary colours (buttons, the tool rail, tabs, fields, the library, tags, the session plan, the step bar, selections on the board) and every colour the theme makes, for any theme, with dark and light side by side. Try a theme there before using it
+- **Theme files:** each theme is a file in `src/theme/presets/` that can be edited, with optional hand-set colours; a README there explains them
 
 ### Changed
 
+- In dark themes, a secondary colour too dark to see (like Amber Night's purple) is shown lighter, so tags and topics read on dark panels
 - The tool rail's ball is the board's sport's ball (a basketball, a volleyball, a hockey ball)
 - The basketball hoop is a softer burnt orange, so it no longer glares on the maple
 - "Use team kit" only shows when a player's kit is different from the team's

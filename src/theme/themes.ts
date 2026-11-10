@@ -12,47 +12,80 @@ export interface ThemeSettings {
 
 export interface ThemePreset extends ThemeSettings {
 	name: string;
+	/** Colours set by hand in the theme's file, replacing the ones made from it. */
+	tokens?: Record<string, string>;
 }
 
-export const THEME_PRESETS: ThemePreset[] = [
-	{
-		preset: "amber-night",
-		name: "Amber Night",
-		mode: "dark",
-		accent: "#FDB20B",
-		secondary: "#2C0055",
-	},
-	{
-		preset: "amber-day",
-		name: "Amber Day",
-		mode: "light",
-		accent: "#FDB20B",
-		secondary: "#2C0055",
-	},
-	{
-		preset: "lime-studio",
-		name: "Lime Studio",
-		mode: "dark",
-		accent: "#C6F432",
-		secondary: "#1E3A5F",
-	},
-	{
-		preset: "violet",
-		name: "Violet",
-		mode: "dark",
-		accent: "#7814FF",
-		secondary: "#FDB20B",
-	},
-	{
-		preset: "touchline",
-		name: "Touchline",
-		mode: "light",
-		accent: "#1F7A4D",
-		secondary: "#F28C28",
-	},
-];
+/** What a file in `src/theme/presets/` holds. */
+interface PresetFile {
+	name?: unknown;
+	order?: unknown;
+	mode?: unknown;
+	accent?: unknown;
+	secondary?: unknown;
+	tokens?: unknown;
+}
 
-export const DEFAULT_THEME: ThemeSettings = THEME_PRESETS[0];
+/** Turn the theme files into presets, in their `order`. A broken file is skipped. */
+export function presetsFromFiles(
+	files: Record<string, PresetFile | { default: PresetFile }>,
+): ThemePreset[] {
+	const presets: { order: number; preset: ThemePreset }[] = [];
+	for (const [path, module] of Object.entries(files)) {
+		const raw = ("default" in module ? module.default : module) as PresetFile;
+		const id = path.split("/").pop()!.replace(/\.json$/, "");
+		if (
+			typeof raw.name !== "string" ||
+			typeof raw.accent !== "string" ||
+			typeof raw.secondary !== "string" ||
+			!isHexColor(raw.accent) ||
+			!isHexColor(raw.secondary)
+		)
+			continue;
+		const tokens: Record<string, string> = {};
+		if (raw.tokens && typeof raw.tokens === "object")
+			for (const [key, value] of Object.entries(raw.tokens))
+				if (typeof value === "string" && value.trim()) tokens[key] = value.trim();
+		presets.push({
+			order: typeof raw.order === "number" ? raw.order : 999,
+			preset: {
+				preset: id,
+				name: raw.name,
+				mode: raw.mode === "light" ? "light" : "dark",
+				accent: normalizeHex(raw.accent),
+				secondary: normalizeHex(raw.secondary),
+				...(Object.keys(tokens).length ? { tokens } : {}),
+			},
+		});
+	}
+	return presets
+		.sort((a, b) => a.order - b.order || a.preset.name.localeCompare(b.preset.name))
+		.map((p) => p.preset);
+}
+
+/** The themes in `src/theme/presets/`, one file each. */
+export const THEME_PRESETS: ThemePreset[] = presetsFromFiles(
+	import.meta.glob<PresetFile>("./presets/*.json", { eager: true, import: "default" }),
+);
+
+/** The preset with this id, if there is one. */
+export function findPreset(id: string): ThemePreset | undefined {
+	return THEME_PRESETS.find((p) => p.preset === id);
+}
+
+const FALLBACK_THEME: ThemeSettings = {
+	preset: "amber-night",
+	mode: "dark",
+	accent: "#FDB20B",
+	secondary: "#2C0055",
+};
+
+export const DEFAULT_THEME: ThemeSettings = (() => {
+	const first = findPreset("amber-night") ?? THEME_PRESETS[0];
+	if (!first) return FALLBACK_THEME;
+	const { preset, mode, accent, secondary } = first;
+	return { preset, mode, accent, secondary };
+})();
 
 /** Neutral surfaces for each mode. Accent-derived tokens are added on top. */
 const BASE: Record<ThemeMode, Record<string, string>> = {
@@ -86,11 +119,35 @@ const BASE: Record<ThemeMode, Record<string, string>> = {
 	},
 };
 
-/** Turn theme settings into CSS custom properties (without the leading `--`). */
-export function themeTokens(settings: ThemeSettings): Record<string, string> {
+/**
+ * The secondary as it's shown. On a dark theme, a secondary too dark to see
+ * against the panels (like a deep purple) is mixed with white until it reads;
+ * light themes use it as it is.
+ */
+export function shownSecondary(secondary: string, mode: ThemeMode): string {
+	const color = normalizeHex(secondary);
+	if (mode !== "dark") return color;
+	const surface = BASE.dark.surface;
+	for (let amount = 0; amount <= 0.8; amount += 0.05) {
+		const lifted = amount === 0 ? color : mix(color, "#FFFFFF", amount);
+		if (contrast(lifted, surface) >= 3) return lifted;
+	}
+	return mix(color, "#FFFFFF", 0.8);
+}
+
+/**
+ * Turn theme settings into CSS custom properties (without the leading `--`).
+ * A preset's own `tokens` (from its file) replace the colours made here.
+ */
+export function themeTokens(
+	settings: ThemeSettings,
+	overrides: Record<string, string> | undefined = settings.preset === "custom"
+		? undefined
+		: findPreset(settings.preset)?.tokens,
+): Record<string, string> {
 	const base = BASE[settings.mode];
 	const accent = normalizeHex(settings.accent);
-	const secondary = normalizeHex(settings.secondary);
+	const secondary = shownSecondary(settings.secondary, settings.mode);
 	const surface = base.surface;
 
 	// Text drawn in the accent colour must stay readable on panels; when it
@@ -113,15 +170,14 @@ export function themeTokens(settings: ThemeSettings): Record<string, string> {
 		"secondary-soft": mix(
 			surface,
 			secondary,
-			settings.mode === "dark" ? 0.35 : 0.12,
+			settings.mode === "dark" ? 0.28 : 0.12,
 		),
 		"chip-bg":
 			settings.mode === "dark" ? secondary : mix(surface, secondary, 0.12),
 		"chip-text":
-			settings.mode === "dark"
-				? readableOn(secondary, "#F1E9FF")
-				: towardsText(secondary),
+			settings.mode === "dark" ? readableOn(secondary) : towardsText(secondary),
 		focus: accent,
+		...overrides,
 	};
 }
 
