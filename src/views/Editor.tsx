@@ -42,7 +42,10 @@ function EditorLayout() {
 				saveStatus={status}
 				onRetrySave={() => void flush()}
 				backLabel={from ? "Session" : "Library"}
-				onBack={() => navigate(from ?? "/")}
+				onBack={() =>
+					// Back to the session it came from, at the same place in it.
+					from ? navigate(from, { state: { back: true } }) : navigate("/")
+				}
 				onOpenSettings={() => setSettingsOpen(true)}
 			/>
 			<div className="editor__body">

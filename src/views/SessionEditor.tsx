@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import Loader from "../components/Loader";
 import DrillPicker from "../components/session/DrillPicker";
@@ -22,6 +22,9 @@ const STATUS_TEXT: Record<SaveStatus, string> = {
 	error: "Couldn't save",
 };
 
+/** Where each session's plan was scrolled to, while the app is open. */
+const scrollPositions = new Map<string, number>();
+
 function SessionLayout() {
 	const { state, dispatch, selectedBlock, setSelectedBlock } =
 		useSessionEditor();
@@ -30,6 +33,22 @@ function SessionLayout() {
 	const exporter = useSessionExport();
 	const { status, flush } = useAutosave(state.session, library.saveSession);
 	const { session } = state;
+	const mainRef = useRef<HTMLElement>(null);
+	// Back from a drill opened in this session: scroll to where the coach was.
+	const returning = !!(useLocation().state as { back?: boolean } | null)?.back;
+	useLayoutEffect(() => {
+		const top = scrollPositions.get(session.id);
+		const main = mainRef.current;
+		if (!returning || top === undefined || !main) return;
+		main.scrollTop = top;
+		// Drill pictures can still be settling; try again on the next frame.
+		const frame = requestAnimationFrame(() => {
+			main.scrollTop = top;
+		});
+		return () => cancelAnimationFrame(frame);
+		// Only when the session opens.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [session.id]);
 	const editing = !!state.gestureBase && state.gestureBase !== session;
 	const canUndo = state.past.length > 0 || editing;
 	const canRedo = state.future.length > 0 && !editing;
@@ -165,7 +184,11 @@ function SessionLayout() {
 				</div>
 			)}
 			<div className="session-editor__body">
-				<main className="session-editor__main">
+				<main
+					className="session-editor__main"
+					ref={mainRef}
+					onScroll={(e) => scrollPositions.set(session.id, e.currentTarget.scrollTop)}
+				>
 					<SessionHeaderForm />
 					<Timeline />
 				</main>

@@ -65,6 +65,9 @@ function docInView(
 	}
 }
 
+/** How long a message that isn't about a problem stays up. */
+const NOTICE_SECONDS = 7;
+
 const boardInView = (b: Board, view: View) =>
 	view.kind !== "sessions" && docInView(b.meta, b.pitch.sport, view);
 const sessionInView = (s: Session, view: View) =>
@@ -179,6 +182,13 @@ export default function Library() {
 		text: string;
 		tone: "info" | "error";
 	} | null>(null);
+	// Good news ("Imported 2 boards.") closes by itself after a few seconds;
+	// a message about a problem stays until it's closed.
+	useEffect(() => {
+		if (!notice || notice.tone === "error") return;
+		const timer = window.setTimeout(() => setNotice(null), NOTICE_SECONDS * 1000);
+		return () => window.clearTimeout(timer);
+	}, [notice]);
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	const [newFolderOpen, setNewFolderOpen] = useState(false);
 	const [renaming, setRenaming] = useState<string | null>(null);

@@ -24,6 +24,10 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Changed
 
+- Back from a drill opened in a session, the session is where you left it instead of at the top
+- Messages like "Imported 2 boards and 1 session." close by themselves after 7 seconds; messages about a problem stay until closed
+- Library file names work on every system: names Windows keeps for itself (CON, NUL, COM1…) get a _ added, dots and spaces at the end are dropped, and an untitled session's file is "Untitled session" rather than "Untitled board"
+- The time in file names uses hyphens ("Untitled session (2026-11-03 11-16)"); files named with dots are renamed when the library opens
 - In dark themes, a secondary colour too dark to see (like Amber Night's purple) is shown lighter, so tags and topics read on dark panels
 - The tool rail's ball is the board's sport's ball (a basketball, a volleyball, a hockey ball)
 - The basketball hoop is a softer burnt orange, so it no longer glares on the maple

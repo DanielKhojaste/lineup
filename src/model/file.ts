@@ -358,15 +358,33 @@ export function parseBoard(text: string): Board {
 	};
 }
 
-/** A safe file name for a board title. */
-export function fileNameFor(title: string, extension: string): string {
-	const base = title
+/** Names Windows keeps for devices, with or without an extension ("CON", "com1.txt"). */
+const WINDOWS_RESERVED = /^(con|prn|aux|nul|com[0-9¹²³]|lpt[0-9¹²³])(\..*)?$/i;
+
+/** Longest title part of a file name, so the whole path stays well under Windows' 260 characters. */
+export const FILE_NAME_MAX = 80;
+
+/**
+ * A file name for a title that works on Windows, macOS and Linux: / and \
+ * become -, characters Windows doesn't allow are taken out, and so are dots and
+ * spaces at the end. Names Windows keeps for itself (CON, NUL, COM1…) get a _
+ * added. A title with nothing usable left gets the fallback name.
+ */
+export function fileNameFor(
+	title: string,
+	extension: string,
+	fallback = "Untitled board",
+): string {
+	let base = title
 		.trim()
 		// "U9/U10" becomes "U9-U10" rather than "U9U10".
 		.replace(/[/\\]/g, "-")
-		.replace(/[<>:"|?*\u0000-\u001f]/g, "")
+		.replace(/[<>:"|?*\u0000-\u001f\u007f]/g, "")
 		.replace(/\s+/g, " ")
-		.slice(0, 80)
+		.slice(0, FILE_NAME_MAX)
+		// Windows drops dots and spaces at the end of a name.
+		.replace(/[. ]+$/, "")
 		.trim();
-	return `${base || "Untitled board"}.${extension}`;
+	if (WINDOWS_RESERVED.test(base)) base = `${base}_`;
+	return `${base || fallback}.${extension}`;
 }
