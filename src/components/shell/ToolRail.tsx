@@ -1,6 +1,6 @@
 import { PointerEvent as ReactPointerEvent, useRef, useState } from "react";
 import { MANNEQUIN_COLOR, POLE_COLOR } from "../../model/board";
-import { fieldBounds, SPORT_INFO } from "../../model/sports";
+import { fieldBounds, Sport, SPORT_INFO } from "../../model/sports";
 import { Board } from "../../model/types";
 import { useEditor } from "../../state/EditorContext";
 import { PlaceTool, Tool } from "../../state/editor";
@@ -91,6 +91,16 @@ export const DRAW_TOOLS: ToolDef[] = [
 	},
 ];
 
+/** The tool rail's ball for each sport. Futsal and handball use the soccer ball, as on the board. */
+const BALL_ICONS: Record<Sport, IconName> = {
+	soccer: "ball",
+	futsal: "ball",
+	handball: "ball",
+	basketball: "basketball",
+	volleyball: "volleyball",
+	hockey: "hockeyBall",
+};
+
 const PLACEABLE = new Set(PLACE_TOOLS.map((t) => t.tool));
 const DRAG_THRESHOLD = 5;
 
@@ -159,7 +169,10 @@ export default function ToolRail() {
 		}
 	};
 
-	const renderTool = (def: ToolDef) => {
+	const renderTool = (tool: ToolDef) => {
+		// The ball on the rail is the board's sport's ball.
+		const def =
+			tool.tool === "ball" ? { ...tool, icon: BALL_ICONS[state.board.pitch.sport] } : tool;
 		const active = state.tool === def.tool;
 		return (
 			<button

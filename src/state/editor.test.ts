@@ -5,6 +5,7 @@ import {
 	createGoal,
 	createPlayer,
 	nextShirtNumber,
+	parseShirtNumber,
 } from "../model/board";
 import {
 	createLine,
@@ -691,5 +692,81 @@ describe("copy and paste", () => {
 		expect(state.board.nodes).toHaveLength(1);
 		expect(state.board.drawings).toHaveLength(1);
 		expect(state.board.steps).toHaveLength(1);
+	});
+});
+
+describe("changing the sport or field", () => {
+	it("keeps the markers, or starts a blank board in one undo step", () => {
+		const board = {
+			...boardWith(createPlayer(0.5, 0.5, "home"), createCone(0.2, 0.2)),
+			drawings: [createText(0.5, 0.2, "Go", DEFAULT_TOOL_STYLES.text)],
+		};
+		const kept = run(createEditorState(board), {
+			type: "updatePitch",
+			patch: { sport: "basketball", variant: "half" },
+		});
+		expect(kept.board.pitch).toEqual({ sport: "basketball", variant: "half" });
+		expect(kept.board.nodes).toHaveLength(2);
+
+		const blank = run(
+			createEditorState(board),
+			{ type: "select", ids: [board.nodes[0].id] },
+			{ type: "updatePitch", patch: { sport: "volleyball" }, blank: true },
+		);
+		expect(blank.board.pitch.sport).toBe("volleyball");
+		expect(blank.board.nodes).toEqual([]);
+		expect(blank.board.drawings).toEqual([]);
+		expect(blank.selection).toEqual([]);
+
+		const undone = run(blank, { type: "undo" });
+		expect(undone.board.pitch.sport).toBe("soccer");
+		expect(undone.board.nodes).toHaveLength(2);
+		expect(undone.board.drawings).toHaveLength(1);
+	});
+
+	it("clears the board on the same field when asked, and does nothing when there's nothing to do", () => {
+		const board = boardWith(createPlayer(0.5, 0.5, "home"));
+		const cleared = run(createEditorState(board), {
+			type: "updatePitch",
+			patch: {},
+			blank: true,
+		});
+		expect(cleared.board.nodes).toEqual([]);
+		expect(cleared.past).toHaveLength(1);
+
+		const empty = createEditorState(boardWith());
+		expect(run(empty, { type: "updatePitch", patch: {}, blank: true })).toBe(empty);
+		expect(run(empty, { type: "updatePitch", patch: { variant: "full" } })).toBe(empty);
+	});
+});
+
+describe("a marker's own size", () => {
+	it("is stored on players and equipment, left out at normal, and never on goals", () => {
+		const player = createPlayer(0.5, 0.5, "home");
+		const goal = createGoal(0.5, 0.1);
+		let state = run(createEditorState(boardWith(player, goal)), {
+			type: "updateNodes",
+			ids: [player.id, goal.id],
+			patch: { scale: 1.6 },
+		});
+		expect(state.board.nodes[0].scale).toBe(1.6);
+		expect(state.board.nodes[1].scale).toBeUndefined();
+		state = run(state, {
+			type: "updateNodes",
+			ids: [player.id],
+			patch: { scale: 1 },
+		});
+		expect("scale" in state.board.nodes[0] && state.board.nodes[0].scale).toBeFalsy();
+	});
+});
+
+describe("shirt numbers", () => {
+	it("allows 0 and 00 but not 000, and drops other leading zeros", () => {
+		expect(parseShirtNumber("0")).toBe(0);
+		expect(parseShirtNumber("00")).toBe("00");
+		expect(parseShirtNumber("000")).toBe("00");
+		expect(parseShirtNumber("07")).toBe(7);
+		expect(parseShirtNumber("23a")).toBe(23);
+		expect(parseShirtNumber("")).toBeUndefined();
 	});
 });

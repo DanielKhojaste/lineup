@@ -11,6 +11,7 @@ import {
 	PlayerNode,
 	PoleNode,
 	SCHEMA_VERSION,
+	ShirtNumber,
 	TeamId,
 } from "./types";
 
@@ -63,9 +64,9 @@ export function markerScale(
 	node: BoardNode,
 	display: Board["display"],
 ): number {
-	if (node.kind === "player") return display.playerScale;
 	if (node.kind === "goal") return 1;
-	return display.equipmentScale;
+	const own = node.scale ?? 1;
+	return (node.kind === "player" ? display.playerScale : display.equipmentScale) * own;
 }
 
 /** Degrees the rotate buttons and Shift+R turn a goal or mannequin by. */
@@ -182,4 +183,16 @@ export function nextShirtNumber(nodes: BoardNode[], team: TeamId): number {
 
 export function clamp01(value: number): number {
 	return Math.min(1, Math.max(0, value));
+}
+
+/**
+ * A shirt number typed by the user: digits only, 0–999. "00" is kept (it's a
+ * real number in basketball and hockey); other leading zeros are dropped, so
+ * "07" is 7 and "000" is 00. Empty means no number.
+ */
+export function parseShirtNumber(text: string): ShirtNumber | undefined {
+	const digits = text.replace(/\D/g, "").slice(0, 3);
+	if (digits === "") return undefined;
+	if (/^00+$/.test(digits)) return "00";
+	return Number(digits);
 }

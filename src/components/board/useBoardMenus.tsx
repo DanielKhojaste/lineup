@@ -43,7 +43,7 @@ export function useBoardMenus({
 	/** Start editing a text drawing on the board (only the board itself can). */
 	editText?: (id: string) => void;
 } = {}) {
-	const { state, dispatch, focusInspector } = useEditor();
+	const { state, dispatch, focusInspector, setFieldDialogOpen } = useEditor();
 	const playback = usePlayback();
 	const copied = useCopiedItems();
 	const [clearing, setClearing] = useState(false);
@@ -283,6 +283,10 @@ export function useBoardMenus({
 						type: "updateDisplay",
 						patch: { showLabels: !board.display.showLabels },
 					}),
+			},
+			{
+				label: "Change sport or field…",
+				onSelect: () => setFieldDialogOpen(true),
 			},
 			{
 				label: "Field",

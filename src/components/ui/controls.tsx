@@ -5,6 +5,8 @@ interface SegmentedProps<T extends string> {
 	value: T | null;
 	options: { value: T; label: ReactNode; title?: string }[];
 	onChange: (value: T) => void;
+	/** A short line under the buttons. */
+	hint?: string;
 }
 
 /** A row of mutually exclusive buttons (a radio group). `value` is null when mixed. */
@@ -13,6 +15,7 @@ export function Segmented<T extends string>({
 	value,
 	options,
 	onChange,
+	hint,
 }: SegmentedProps<T>) {
 	const id = useId();
 	return (
@@ -37,6 +40,7 @@ export function Segmented<T extends string>({
 					</button>
 				))}
 			</div>
+			{hint && <span className="field__hint">{hint}</span>}
 		</div>
 	);
 }

@@ -247,8 +247,9 @@ function basketball({ L, W, lw, colors }: Draw) {
 						cx={hoop}
 						cy={cy}
 						r={0.225}
-						stroke="#FF7A1A"
-						strokeOpacity={1}
+						// A burnt orange: reads as the hoop without glaring on the maple.
+						stroke="#B4572E"
+						strokeOpacity={0.9}
 						strokeWidth={lw * 1.2}
 					/>
 				</>,

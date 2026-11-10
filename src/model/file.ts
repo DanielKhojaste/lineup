@@ -11,6 +11,7 @@ import {
 	Point,
 	SCHEMA_VERSION,
 	Step,
+	ShirtNumber,
 	TeamStyle,
 } from "./types";
 
@@ -106,6 +107,11 @@ function cleanNode(raw: unknown): BoardNode | null {
 		id: isStr(raw.id) ? raw.id : newId(),
 		x: clamp01(raw.x),
 		y: clamp01(raw.y),
+		// A marker's own size; normal (left out) when missing or 1.
+		scale:
+			raw.kind !== "goal" && isNum(raw.scale) && scaleOr1(raw.scale) !== 1
+				? scaleOr1(raw.scale)
+				: undefined,
 	};
 	switch (raw.kind) {
 		case "player":
@@ -114,7 +120,7 @@ function cleanNode(raw: unknown): BoardNode | null {
 				kind: "player",
 				team: raw.team === "away" || raw.team === "neutral" ? raw.team : "home",
 				keeper: raw.keeper === true,
-				number: isNum(raw.number) ? raw.number : undefined,
+				number: cleanShirtNumber(raw.number),
 				label: isStr(raw.label) ? raw.label : undefined,
 				name: isStr(raw.name) ? raw.name : undefined,
 				color: isStr(raw.color) ? raw.color : undefined,
@@ -205,6 +211,14 @@ function cleanDrawing(raw: unknown): Drawing | null {
 				background: raw.background !== false,
 			} as Drawing;
 	}
+}
+
+/** A whole shirt number from 0 to 999, or "00". */
+function cleanShirtNumber(value: unknown): ShirtNumber | undefined {
+	if (value === "00") return "00";
+	return isNum(value) && Number.isInteger(value) && value >= 0 && value <= 999
+		? value
+		: undefined;
 }
 
 /** A marker size from a file, kept within sensible limits (normal if missing). */
