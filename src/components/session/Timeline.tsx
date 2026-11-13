@@ -349,7 +349,7 @@ export default function Timeline() {
 		(id) => library.getBoard(id)?.notes.stage ?? "",
 	);
 	const total = totalMinutes(session);
-	// With "From the plan" ticked, the session's time is just the total.
+	// With "Auto" ticked, the session's time is just the total.
 	const planned = session.header.autoTime ? null : session.header.plannedMinutes;
 	const listRef = useRef<HTMLOListElement>(null);
 	const [drag, setDrag] = useState<{ id: string; to: number } | null>(null);
@@ -555,14 +555,23 @@ export default function Timeline() {
 								  : " · spot on"}
 						</span>
 					) : session.header.autoTime ? (
-						<span className="muted"> · the session's time, from the plan</span>
+						<span className="muted"> · the session's time (Auto)</span>
 					) : null}
 				</div>
 				{planned && total > planned ? (
-					<p className="timeline__hint">
-						Longer than the session's time. Shorten a block, or tick “From the plan”
-						next to the time to use the plan's total.
-					</p>
+					<div className="timeline__hint">
+						<span>Longer than the session's time. Shorten a block, or let the plan set the time:</span>
+						<label className="check">
+							<input
+								type="checkbox"
+								checked={false}
+								onChange={() =>
+									dispatch({ type: "updateHeader", patch: { autoTime: true } })
+								}
+							/>
+							Auto
+						</label>
+					</div>
 				) : null}
 				{planned ? (
 					<div className="timeline__meter" aria-hidden="true">

@@ -59,6 +59,32 @@ export const MARKER_SCALES = [
 	{ value: 1.6, label: "XL" },
 ] as const;
 
+/**
+ * How big players are drawn for each player size: since v0.8.1 each size is
+ * what the one below it used to be (XL is the old L, L the old M…), because
+ * big players looked unrealistic next to the field. Sizes in between (from
+ * older files) are worked out along the way.
+ */
+const PLAYER_DRAWN: [stored: number, drawn: number][] = [
+	[0.75, 0.6],
+	[1, 0.75],
+	[1.3, 1],
+	[1.6, 1.3],
+];
+
+export function playerDrawnSize(stored: number): number {
+	const [first] = PLAYER_DRAWN;
+	const last = PLAYER_DRAWN[PLAYER_DRAWN.length - 1];
+	if (stored <= first[0]) return (stored / first[0]) * first[1];
+	if (stored >= last[0]) return (stored / last[0]) * last[1];
+	for (let i = 1; i < PLAYER_DRAWN.length; i++) {
+		const [a, da] = PLAYER_DRAWN[i - 1];
+		const [b, db] = PLAYER_DRAWN[i];
+		if (stored <= b) return da + ((stored - a) / (b - a)) * (db - da);
+	}
+	return stored;
+}
+
 /** How much bigger (or smaller) than normal a marker is drawn on this board. */
 export function markerScale(
 	node: BoardNode,
@@ -66,7 +92,9 @@ export function markerScale(
 ): number {
 	if (node.kind === "goal") return 1;
 	const own = node.scale ?? 1;
-	return (node.kind === "player" ? display.playerScale : display.equipmentScale) * own;
+	return node.kind === "player"
+		? playerDrawnSize(display.playerScale) * own
+		: display.equipmentScale * own;
 }
 
 /** Degrees the rotate buttons and Shift+R turn a goal or mannequin by. */

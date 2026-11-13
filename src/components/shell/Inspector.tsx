@@ -1,5 +1,4 @@
 import {
-	createBoard,
 	CONE_COLORS,
 	MARKER_SCALES,
 	parseShirtNumber,
@@ -7,13 +6,11 @@ import {
 	ROTATE_STEP,
 } from "../../model/board";
 import {
-	Board,
 	BoardItem,
 	BoardNode,
 	GoalNode,
 	Kit,
 	MannequinNode,
-	PitchSettings,
 	PlayerNode,
 	PoleNode,
 	TeamId,
@@ -29,17 +26,10 @@ import { readableOn } from "../../theme/color";
 import { describeDrawing, DrawingFields, ToolOptions } from "./DrawingFields";
 import ObjectList, { kitBackground } from "./ObjectList";
 import { fieldName } from "./ChangeFieldDialog";
-import BoardPreview from "../board/BoardPreview";
 
 const TEAMS: TeamId[] = ["home", "away", "neutral"];
 
-/** Empty boards, one per field, for the picture in the Field section. */
-const fieldPictures = new Map<string, Board>();
-function fieldPicture(pitch: PitchSettings): Board {
-	const key = `${pitch.sport}-${pitch.variant}`;
-	if (!fieldPictures.has(key)) fieldPictures.set(key, createBoard("", pitch));
-	return fieldPictures.get(key)!;
-}
+
 
 /** A stripe colour that stands out on the given kit colour. */
 function suggestStripes(color: string): string {
@@ -222,8 +212,8 @@ function KitFields({ players }: { players: PlayerNode[] }) {
 			<Swatches
 				label="Colour"
 				value={common(kits, (k) => k.color)}
+				current={kits[0]?.color}
 				colors={palette}
-				custom
 				onChange={(c) =>
 					setKit({
 						color: c,
@@ -236,8 +226,8 @@ function KitFields({ players }: { players: PlayerNode[] }) {
 				<Swatches
 					label="Stripe colour"
 					value={stripes || null}
+					current={stripes || kits[0]?.color}
 					colors={palette}
-					custom
 					onChange={(c) => setKit({ color, stripes: c })}
 				/>
 			)}
@@ -320,6 +310,7 @@ function EquipmentFields({ nodes }: { nodes: BoardNode[] }) {
 				<Swatches
 					label="Colour"
 					value={common(coloured, (n) => n.color)}
+					current={coloured[0]?.color}
 					colors={EQUIPMENT_COLORS}
 					onChange={(color) =>
 						dispatch({
@@ -472,19 +463,13 @@ function BoardSettings() {
 	return (
 		<>
 			<Section title="Field">
-				<div className="field-summary">
-					<BoardPreview
-						board={fieldPicture(pitch)}
-						className="field-summary__thumb"
-					/>
-					<span className="field-summary__name">{fieldName(pitch)}</span>
-				</div>
 				<button
 					type="button"
 					className="button button--small"
+					title={`Now: ${fieldName(pitch)}`}
 					onClick={() => setFieldDialogOpen(true)}
 				>
-					Change sport or field…
+					Change sport / field…
 				</button>
 			</Section>
 			<Section title="Teams">

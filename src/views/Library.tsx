@@ -476,7 +476,9 @@ export default function Library() {
 			if (done.length) parts.push(`Imported ${done.join(" and ")}.`);
 			if (alreadyHad)
 				parts.push(
-					`${alreadyHad === 1 ? "One drill was" : `${alreadyHad} drills were`} already in your library, so the session uses ${alreadyHad === 1 ? "it" : "them"}.`,
+					alreadyHad === 1
+						? "1 drill was already in your library, so it wasn't added again."
+						: `${alreadyHad} drills were already in your library, so they weren't added again.`,
 				);
 			for (const m of missing)
 				parts.push(

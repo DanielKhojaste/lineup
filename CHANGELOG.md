@@ -16,9 +16,10 @@ This project adheres to semantic versioning (0.x during early development).
 - Click a block's name in the plan ("Activity 1") to pick its part of the session from a short menu, instead of a dropdown on every block
 - Other blocks in a session (a game, a team talk) can be a part of the session too, like **Scrimmage**, and are numbered with the rest
 - Hide the session editor's **Add from library** panel to give the plan more room; Lineup remembers it
-- **Change sport or field** from a button in the board's Field settings, or from the board's right-click menu. It opens the same pictures as New board, with the board's sport and field now in grey and your pick in the accent colour. Tick **Start with a blank board** to clear the board as well; there's no confirmation, because Ctrl+Z brings everything back
+- **Change sport / field** from a button in the board's Field settings, or from the board's right-click menu. It opens the same pictures as New board, with the board's sport and field now in grey and your pick in the accent colour. Tick **Start with a blank board** to clear the board as well; there's no confirmation, because Ctrl+Z brings everything back
 - **Size of a single marker:** select players or equipment and pick S, M, L or XL under Size. It goes on top of the board's player and equipment sizes, and goals keep their real size
 - Shirt numbers **0 and 00** (basketball and hockey use them)
+- A colour picker after the swatches everywhere you pick a colour, equipment included. It opens on the colour in use (a blue player's picker starts on that blue)
 - **Theme preview:** Settings › Appearance › Preview themes shows every component that uses a theme's primary and secondary colours (buttons, the tool rail, tabs, fields, the library, tags, the session plan, the step bar, selections on the board) and every colour the theme makes, for any theme, with dark and light side by side. Try a theme there before using it
 - **Theme files:** each theme is a file in `src/theme/presets/` that can be edited, with optional hand-set colours; a README there explains them
 - **Your own themes:** save custom colours as a theme with a name, **import** and **export** themes as `.lineup-theme` files (plain text you can share or edit), **rename** them and delete the ones you don't want, in Settings or in the Theme preview. They're listed under "Your themes" and kept as files in `Documents\Lineup\themes\`, next to your boards (themes saved before this are moved there). Deleting the theme in use goes back to the Lineup theme you used last
@@ -41,6 +42,10 @@ This project adheres to semantic versioning (0.x during early development).
 - The theme list in Settings is a dropdown with a swatch for each theme: a circle split into its primary and secondary, in a thin ring of its background. The Theme preview uses the same swatches
 - Settings: the default sport and default size are on one row, and the theme buttons say what they do (Preview all themes, Import…, Export…)
 - In dark themes, a secondary colour too dark to see (like Amber Night's purple) is shown lighter, so tags and topics read on dark panels
+- **Smaller players:** each player size is drawn as the one below it used to be (XL is the old L, M the old S), so players look realistic next to the field
+- A session's time can be set to **Auto** (it was "From the plan"), and the message about a plan that's longer than the session's time has the Auto tick in it
+- The message after importing a session says drills already in your library "weren't added again"
+- The Boards icon's squares no longer run into a thick cross in the middle
 - The tool rail's ball is the board's sport's ball (a basketball, a volleyball, a hockey ball)
 - The basketball hoop is a softer burnt orange, so it no longer glares on the maple
 - "Use team kit" only shows when a player's kit is different from the team's

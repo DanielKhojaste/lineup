@@ -2080,23 +2080,6 @@ button.save-status--error:hover {
 	color: var(--danger);
 }
 
-.field-summary {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-}
-
-.field-summary__thumb {
-	width: 54px;
-	height: 36px;
-	flex-shrink: 0;
-	border-radius: 4px;
-}
-
-.field-summary__name {
-	font-weight: 500;
-}
-
 .new-board__thumb {
 	width: 54px;
 	height: 36px;
@@ -3099,9 +3082,17 @@ fieldset.field {
 }
 
 .timeline__hint {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 4px 12px;
 	flex-basis: 100%;
 	font-size: 12px;
 	color: var(--danger);
+}
+
+.timeline__hint .check {
+	color: var(--text);
 }
 
 .duration-field__auto {
