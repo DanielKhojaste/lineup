@@ -12,6 +12,8 @@ import {
 	sessionTitle,
 } from "../model/session";
 import { Board } from "../model/types";
+import { ThemePreset } from "../theme/themes";
+import { THEME_EXTENSION, themeFileText } from "../theme/userThemes";
 import { isTauri } from "./index";
 
 /** Save a file somewhere the user picks (desktop) or download it (browser). Returns false if cancelled. */
@@ -77,6 +79,45 @@ export function exportSessionFile(
 		bytes,
 		kind === "pdf" ? "application/pdf" : "image/png",
 	);
+}
+
+/** Save a theme as a `.lineup-theme` file to share or keep. */
+export function exportThemeFile(theme: ThemePreset) {
+	return saveFile(
+		fileNameFor(theme.name, THEME_EXTENSION, "My theme"),
+		THEME_EXTENSION,
+		"Lineup theme",
+		themeFileText(theme),
+		"application/json",
+	);
+}
+
+/** Let the user pick `.lineup-theme` files; returns each one's name and text. */
+export async function pickThemeFiles(): Promise<{ name: string; text: string }[]> {
+	if (isTauri()) {
+		const { open } = await import("@tauri-apps/plugin-dialog");
+		const { readTextFile } = await import("@tauri-apps/plugin-fs");
+		const picked = await open({
+			multiple: true,
+			filters: [{ name: "Lineup theme", extensions: [THEME_EXTENSION, "json"] }],
+		});
+		const paths = picked === null ? [] : Array.isArray(picked) ? picked : [picked];
+		return Promise.all(
+			paths.map(async (path) => ({
+				name: path.split(/[\\/]/).pop() ?? path,
+				text: await readTextFile(path),
+			})),
+		);
+	}
+	const files = await new Promise<File[]>((resolve) => {
+		const input = document.createElement("input");
+		input.type = "file";
+		input.multiple = true;
+		input.accept = `.${THEME_EXTENSION},.json`;
+		input.onchange = () => resolve([...(input.files ?? [])]);
+		input.click();
+	});
+	return Promise.all(files.map(async (f) => ({ name: f.name, text: await f.text() })));
 }
 
 export function exportPng(board: Board, png: Uint8Array) {

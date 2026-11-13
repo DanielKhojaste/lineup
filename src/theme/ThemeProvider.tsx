@@ -8,11 +8,11 @@ import {
 } from "react";
 import {
 	DEFAULT_THEME,
-	findPreset,
 	sanitizeTheme,
 	ThemeSettings,
 	themeTokens,
 } from "./themes";
+import { findTheme, useUserThemes } from "./userThemes";
 
 const STORAGE_KEY = "lineup.theme";
 
@@ -26,7 +26,7 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 /** The saved theme. A preset's colours come from its file, so editing the file changes it. */
 export function resolveTheme(saved: ThemeSettings): ThemeSettings {
 	if (saved.preset === "custom") return saved;
-	const preset = findPreset(saved.preset);
+	const preset = findTheme(saved.preset);
 	if (!preset) return { ...saved, preset: "custom" };
 	const { mode, accent, secondary } = preset;
 	return { preset: saved.preset, mode, accent, secondary };
@@ -43,10 +43,21 @@ function loadTheme(): ThemeSettings {
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
 	const [theme, setThemeState] = useState<ThemeSettings>(loadTheme);
+	const userThemes = useUserThemes();
+
+	// The theme in use was deleted from "Your themes": keep its colours as Custom.
+	useEffect(() => {
+		if (theme.preset !== "custom" && !findTheme(theme.preset))
+			setThemeState({ ...theme, preset: "custom" });
+	}, [theme, userThemes]);
 
 	useEffect(() => {
 		const root = document.documentElement;
-		for (const [name, value] of Object.entries(themeTokens(theme))) {
+		const tokens =
+			theme.preset === "custom"
+				? themeTokens(theme, undefined)
+				: themeTokens(theme, findTheme(theme.preset));
+		for (const [name, value] of Object.entries(tokens)) {
 			root.style.setProperty(`--${name}`, value);
 		}
 		root.dataset.theme = theme.mode;

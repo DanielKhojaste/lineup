@@ -21,6 +21,10 @@ This project adheres to semantic versioning (0.x during early development).
 - Shirt numbers **0 and 00** (basketball and hockey use them)
 - **Theme preview:** Settings › Appearance › Preview themes shows every component that uses a theme's primary and secondary colours (buttons, the tool rail, tabs, fields, the library, tags, the session plan, the step bar, selections on the board) and every colour the theme makes, for any theme, with dark and light side by side. Try a theme there before using it
 - **Theme files:** each theme is a file in `src/theme/presets/` that can be edited, with optional hand-set colours; a README there explains them
+- **Your own themes:** save custom colours as a theme with a name, **import** and **export** themes as `.lineup-theme` files (plain text you can share or edit), and delete the ones you don't want. They're listed under "Your themes" in Settings and in the Theme preview
+- New themes: **Lagoon** (teal and coral, dark and light), **Touchline dark** and **Violet light**
+- The Theme preview's **Show both dark and light themes** shows a theme's dark and light versions side by side, with the one you picked on the left. It only shows for themes that come in both
+- Keyboard shortcuts in Settings are drawn as keyboard keys, in groups (Tools, Selecting and moving, Editing, Animation)
 
 ### Changed
 
@@ -28,6 +32,11 @@ This project adheres to semantic versioning (0.x during early development).
 - Messages like "Imported 2 boards and 1 session." close by themselves after 7 seconds; messages about a problem stay until closed
 - Library file names work on every system: names Windows keeps for itself (CON, NUL, COM1…) get a _ added, dots and spaces at the end are dropped, and an untitled session's file is "Untitled session" rather than "Untitled board"
 - The time in file names uses hyphens ("Untitled session (2026-11-03 11-16)"); files named with dots are renamed when the library opens
+- Violet's purple is a little darker and easier on the eyes; Touchline's secondary is a blue instead of orange
+- Text in a theme's colours (links, tabs, "Warm-up 1") is mixed towards the text colour until it's easy to read, in every theme
+- Amber Night's tags and topics are a soft purple wash with a purple border (a theme file can pick filled or outline chips)
+- Tags and topics have their text centred, with even space on both sides
+- Settings: the default sport takes less room, and the theme buttons say what they do (Preview all themes, Import…, Export…)
 - In dark themes, a secondary colour too dark to see (like Amber Night's purple) is shown lighter, so tags and topics read on dark panels
 - The tool rail's ball is the board's sport's ball (a basketball, a volleyball, a hockey ball)
 - The basketball hoop is a softer burnt orange, so it no longer glares on the maple

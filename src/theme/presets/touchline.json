@@ -1,8 +1,9 @@
 {
 	"name": "Touchline",
-	"order": 5,
+	"order": 6,
 	"mode": "light",
 	"accent": "#1F7A4D",
-	"secondary": "#F28C28",
+	"secondary": "#2E5FB8",
+	"pair": "touchline-dark",
 	"tokens": {}
 }

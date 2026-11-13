@@ -11,9 +11,19 @@ to add a theme. The file name is the theme's id, so keep it once people use it.
 	"mode": "dark",         // "dark" or "light"
 	"accent": "#FDB20B",    // the primary colour
 	"secondary": "#2C0055", // the secondary colour
+	"pair": "amber-day",    // optional: the same theme in the other mode
+	"chips": "outline",     // optional: tags and topics as a soft wash with a border ("filled" if left out)
 	"tokens": {}            // optional: set any colour below by hand
 }
 ```
+
+A theme with the same `name` in both modes (like Violet) is paired by itself;
+`pair` is only needed when the names differ (Amber Night and Amber Day). The
+Theme preview shows a paired theme's dark and light versions side by side.
+
+People can also save, import and export their own themes in Settings ›
+Appearance. Those are `.lineup-theme` files with the same fields (no `order`
+or `pair`).
 
 ## How the colours are made
 
@@ -40,7 +50,7 @@ keep the made one.
 | `danger` | Delete, errors, "over time" |
 | `accent`, `on-accent`, `accent-text`, `accent-soft` | The primary: fill, text on it, as text, a faint wash |
 | `secondary`, `on-secondary`, `secondary-text`, `secondary-soft` | The same for the secondary |
-| `chip-bg`, `chip-text` | Tags and topics |
+| `chip-bg`, `chip-text`, `chip-border` | Tags and topics |
 | `focus` | The keyboard focus outline |
 
 To see every component in a theme's colours, open the **Theme preview** (Settings ›

@@ -90,7 +90,11 @@ describe("theme files", () => {
 			"amber-day",
 			"lime-studio",
 			"violet",
+			"violet-light",
 			"touchline",
+			"touchline-dark",
+			"lagoon",
+			"lagoon-light",
 		]);
 	});
 
@@ -109,7 +113,7 @@ describe("theme files", () => {
 		});
 		expect(presets.map((p) => p.preset)).toEqual(["a", "b"]);
 		expect(presets[0]).toMatchObject({ accent: "#AABBCC", tokens: { surface: "#101010" } });
-		expect(themeTokens(presets[0], presets[0].tokens).surface).toBe("#101010");
+		expect(themeTokens(presets[0], presets[0]).surface).toBe("#101010");
 	});
 
 	it("lifts a secondary too dark to see in dark mode, and leaves light mode alone", () => {
@@ -120,5 +124,30 @@ describe("theme files", () => {
 		expect(shownSecondary("#2C0055", "light")).toBe("#2C0055");
 		// Already light enough: kept as it is.
 		expect(shownSecondary("#FDB20B", "dark")).toBe("#FDB20B");
+	});
+});
+
+describe("theme pairs, chips and readable text", () => {
+	it("pairs each theme with its other mode", async () => {
+		const { pairOf, findPreset } = await import("./themes");
+		expect(pairOf(findPreset("amber-night")!)?.preset).toBe("amber-day");
+		expect(pairOf(findPreset("violet-light")!)?.preset).toBe("violet");
+		expect(pairOf(findPreset("touchline")!)?.preset).toBe("touchline-dark");
+		expect(pairOf(findPreset("lime-studio")!)).toBeUndefined();
+	});
+
+	it("keeps text in theme colours easy to read in every theme", () => {
+		for (const preset of THEME_PRESETS) {
+			const t = themeTokens(preset);
+			expect(contrast(t["accent-text"], t.surface)).toBeGreaterThanOrEqual(4.5);
+			expect(contrast(t["chip-text"], t["chip-bg"])).toBeGreaterThanOrEqual(4.5);
+		}
+	});
+
+	it("outline chips get a border in the secondary and a soft wash", () => {
+		const t = themeTokens({ ...DEFAULT_THEME }, { chips: "outline" });
+		expect(t["chip-border"]).toBe(t.secondary);
+		expect(t["chip-text"]).toBe(t.text);
+		expect(themeTokens({ ...DEFAULT_THEME }, {})["chip-border"]).toBe("transparent");
 	});
 });

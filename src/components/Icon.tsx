@@ -43,6 +43,8 @@ export const ICONS = {
 	chevronDown: "M6 9l6 6 6-6",
 	chevronRight: "M9 5l7 7-7 7",
 	download: "M12 4v11M7 10l5 5 5-5M5 20h14",
+	upload: "M12 15V4M7 9l5-5 5 5M5 20h14",
+	eye: "M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12zM9 12a3 3 0 1 0 6 0a3 3 0 1 0-6 0",
 	close: "M6 6l12 12M18 6L6 18",
 	check: "M5 12l5 5L20 7",
 	play: "M8 5.5v13l10-6.5z",

@@ -4,17 +4,20 @@ import { Icon } from "../components/Icon";
 import { ThemeSwatch } from "../components/shell/SettingsDialog";
 import { Segmented, Swatches } from "../components/ui/controls";
 import {
+	pairOf,
 	THEME_PRESETS,
-	ThemeMode,
+	ThemePreset,
 	ThemeSettings,
 	themeTokens,
 } from "../theme/themes";
 import { useTheme } from "../theme/ThemeProvider";
+import { findTheme, useUserThemes } from "../theme/userThemes";
 
 /** CSS custom properties for a theme, scoped to one element. */
-function themeStyle(settings: ThemeSettings): CSSProperties {
+function themeStyle(theme: ThemePreset): CSSProperties {
+	const settings = theme;
 	const style: Record<string, string> = {};
-	for (const [name, value] of Object.entries(themeTokens(settings)))
+	for (const [name, value] of Object.entries(themeTokens(theme, theme)))
 		style[`--${name}`] = value;
 	style.colorScheme = settings.mode;
 	return style as CSSProperties;
@@ -66,15 +69,17 @@ const TOKEN_GROUPS: { label: string; tokens: string[] }[] = [
 ];
 
 /** Every component that uses the theme's colours, drawn in one theme. */
-function Specimen({ settings, title }: { settings: ThemeSettings; title: string }) {
-	const tokens = themeTokens(settings);
+function Specimen({ theme }: { theme: ThemePreset }) {
+	const settings = theme;
+	const title = theme.name;
+	const tokens = themeTokens(theme, theme);
 	const [kit, setKit] = useState("solid");
 	const [colour, setColour] = useState("#E53935");
 	const [tab, setTab] = useState("inspector");
 	const [ticked, setTicked] = useState(true);
 
 	return (
-		<div className="theme-spec" style={themeStyle(settings)}>
+		<div className="theme-spec" style={themeStyle(theme)}>
 			<h2 className="theme-spec__title">
 				{title}
 				<span className="muted"> · {settings.mode === "dark" ? "dark" : "light"}</span>
@@ -339,19 +344,23 @@ function Specimen({ settings, title }: { settings: ThemeSettings; title: string 
 export default function ThemePreview() {
 	const navigate = useNavigate();
 	const { theme, setTheme } = useTheme();
-	const [picked, setPicked] = useState<ThemeSettings>(theme);
+	const userThemes = useUserThemes();
+	const inUseTheme: ThemePreset = findTheme(theme.preset) ?? { ...theme, name: "Custom" };
+	const [pickedId, setPickedId] = useState(inUseTheme.preset);
 	const [both, setBoth] = useState(false);
 
-	const options: { settings: ThemeSettings; name: string }[] = [
-		...THEME_PRESETS.map((p) => ({
-			settings: { preset: p.preset, mode: p.mode, accent: p.accent, secondary: p.secondary },
-			name: p.name,
-		})),
-		...(theme.preset === "custom" ? [{ settings: theme, name: "Custom" }] : []),
+	const options: ThemePreset[] = [
+		...THEME_PRESETS,
+		...userThemes,
+		...(theme.preset === "custom" ? [inUseTheme] : []),
 	];
-	const name = options.find((o) => o.settings.preset === picked.preset)?.name ?? "Custom";
-	const modes: ThemeMode[] = both ? ["dark", "light"] : [picked.mode];
-	const inUse = picked.preset === theme.preset && picked.mode === theme.mode;
+	const picked = options.find((o) => o.preset === pickedId) ?? inUseTheme;
+	// Only Lineup's own themes come in both modes.
+	const pair = THEME_PRESETS.includes(picked) ? pairOf(picked) : undefined;
+	// The picked theme always comes first, on the left.
+	const shown = both && pair ? [picked, pair] : [picked];
+	const inUse = picked.preset === theme.preset;
+	const label = (t: ThemePreset) => (t.mode === "dark" ? "dark" : "light");
 
 	return (
 		<div className="theme-page">
@@ -363,10 +372,12 @@ export default function ThemePreview() {
 				<span className="topbar__divider" aria-hidden="true" />
 				<span className="topbar__heading">Theme preview</span>
 				<span className="topbar__spacer" />
-				<label className="check">
-					<input type="checkbox" checked={both} onChange={(e) => setBoth(e.target.checked)} />
-					Dark and light side by side
-				</label>
+				{pair && (
+					<label className="check">
+						<input type="checkbox" checked={both} onChange={(e) => setBoth(e.target.checked)} />
+						Show both dark and light themes
+					</label>
+				)}
 				<button
 					type="button"
 					className="button button--primary"
@@ -378,48 +389,43 @@ export default function ThemePreview() {
 			</header>
 			<div className="theme-page__body">
 				<nav className="theme-page__list" aria-label="Themes">
-					{options.map((o) => {
-						const active = o.settings.preset === picked.preset;
+					{options.map((o, i) => {
+						const active = o.preset === picked.preset;
+						const firstOfYours = o.preset.startsWith("user-") && !options[i - 1]?.preset.startsWith("user-");
 						return (
-							<button
-								key={o.settings.preset}
-								type="button"
-								className={`nav-item theme-page__item${active ? " is-active" : ""}`}
-								aria-pressed={active}
-								onClick={() => setPicked(o.settings)}
-							>
-								<ThemeSwatch settings={o.settings} />
-								<span className="nav-item__label">
-									{o.name}
-									<span className="muted">
-										{" "}
-										· {o.settings.mode === "dark" ? "dark" : "light"}
-									</span>
-								</span>
-								{o.settings.preset === theme.preset && (
-									<span className="nav-item__count">In use</span>
+							<div key={o.preset} className="theme-page__entry">
+								{firstOfYours && (
+									<div className="nav-group__head theme-page__heading">
+										<span>Your themes</span>
+									</div>
 								)}
-							</button>
+								<button
+									type="button"
+									className={`nav-item theme-page__item${active ? " is-active" : ""}`}
+									aria-pressed={active}
+									onClick={() => setPickedId(o.preset)}
+								>
+									<ThemeSwatch settings={o} />
+									<span className="nav-item__label">
+										{o.name}
+										<span className="muted"> · {label(o)}</span>
+									</span>
+									{o.preset === theme.preset && (
+										<span className="nav-item__count">In use</span>
+									)}
+								</button>
+							</div>
 						);
 					})}
 					<p className="muted small theme-page__note">
-						Themes are files in <span className="mono">src/theme/presets/</span>. Danger
+						Lineup's themes are files in <span className="mono">src/theme/presets/</span>. Danger
 						red, the fields, team kits and the printed session sheet stay the same in
 						every theme.
 					</p>
 				</nav>
 				<main className="theme-page__main">
-					{modes.map((mode) => (
-						<Specimen
-							key={mode}
-							title={name}
-							settings={{
-								...picked,
-								mode,
-								// A preset's hand-set colours are for its own mode.
-								preset: mode === picked.mode ? picked.preset : "custom",
-							}}
-						/>
+					{shown.map((t) => (
+						<Specimen key={t.preset} theme={t} />
 					))}
 				</main>
 			</div>
