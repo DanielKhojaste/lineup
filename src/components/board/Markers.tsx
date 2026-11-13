@@ -15,7 +15,7 @@ import {
 	PoleNode,
 } from "../../model/types";
 import { markerScale, playerKit } from "../../model/board";
-import { goalSize } from "../../model/sports";
+import { ballName, goalSize } from "../../model/sports";
 import { readableOn } from "../../theme/color";
 import { truncate } from "../../utils/text";
 
@@ -177,6 +177,14 @@ function BallShape({ sport }: { sport: Board["pitch"]["sport"] }) {
 						<line x1={0} y1={0} x2={-r * 0.87} y2={r * 0.5} />
 					</g>
 					<circle r={r} fill="none" stroke={ink} strokeWidth={1.6} />
+				</>
+			);
+		case "icehockey":
+			// A puck from above: a black disc with a faint ridged edge.
+			return (
+				<>
+					<circle r={r * 0.8} fill="#15181B" stroke="#FFFFFF" strokeOpacity={0.55} strokeWidth={1.2} />
+					<circle r={r * 0.55} fill="none" stroke="#FFFFFF" strokeOpacity={0.18} strokeWidth={1} />
 				</>
 			);
 		case "hockey":
@@ -345,7 +353,7 @@ function describe(node: BoardNode, board: Board): string {
 		case "cone":
 			return "Cone";
 		case "ball":
-			return "Ball";
+			return ballName(board.pitch.sport);
 		case "goal":
 			return node.size === "mini" ? "Mini goal" : "Goal";
 		case "mannequin":

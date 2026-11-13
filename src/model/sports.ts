@@ -7,6 +7,7 @@ export const SPORTS = [
 	"basketball",
 	"volleyball",
 	"handball",
+	"icehockey",
 	"hockey",
 ] as const;
 
@@ -79,6 +80,16 @@ export const SPORT_INFO: Record<Sport, SportInfo> = {
 		goal: { width: 3, depth: 1 },
 		players: 7,
 	},
+	// NHL rink: 200 × 85 ft. Goals are 6 ft wide and 44 in deep.
+	icehockey: {
+		name: "Ice hockey",
+		surface: "rink",
+		length: 60.96,
+		width: 25.91,
+		margin: { ends: 1.5, sides: 1.5 },
+		goal: { width: 1.83, depth: 1.12 },
+		players: 6,
+	},
 	hockey: {
 		name: "Field hockey",
 		surface: "field",
@@ -94,6 +105,11 @@ export const DEFAULT_PITCH: PitchSettings = {
 	sport: "soccer",
 	variant: "full",
 };
+
+/** What the ball is called in a sport: a puck in ice hockey. */
+export function ballName(sport: Sport): string {
+	return sport === "icehockey" ? "Puck" : "Ball";
+}
 
 export function isSport(value: unknown): value is Sport {
 	return (

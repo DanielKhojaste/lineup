@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ROTATE_STEP } from "../../model/board";
 import { LINE_TOOLS, LineTool } from "../../model/drawings";
-import { SPORT_INFO } from "../../model/sports";
+import { ballName, SPORT_INFO } from "../../model/sports";
 import { BoardNode, Drawing, Point, TeamId } from "../../model/types";
 import { useEditor } from "../../state/EditorContext";
 import { allItems, PlaceTool } from "../../state/editor";
@@ -251,7 +251,10 @@ export function useBoardMenus({
 					})),
 					"separator" as const,
 					...EQUIPMENT.filter((e) => e.tool !== "goal" || sport.goal).map(
-						(e) => ({ label: e.label, onSelect: () => place(e.tool) }),
+						(e) => ({
+							label: e.tool === "ball" ? ballName(board.pitch.sport) : e.label,
+							onSelect: () => place(e.tool),
+						}),
 					),
 				],
 			},

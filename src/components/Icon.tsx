@@ -12,6 +12,8 @@ export const ICONS = {
 	basketball: `${CIRCLE}M5 12h14M12 5v14M8.2 6.2c2.3 3.2 2.3 8.4 0 11.6M15.8 6.2c-2.3 3.2-2.3 8.4 0 11.6`,
 	volleyball: `${CIRCLE}M12 12V5M12 12l6.1 3.5M12 12l-6.1 3.5M8.5 6c1.5 3.5 4.5 5.5 9.9 5M18.6 15.2c-3.3-.3-6.4 1.2-8.6 4.3M6.4 14.9c1.6-3.2 1.4-6.4-.3-9`,
 	hockeyBall: "M7.5 12a4.5 4.5 0 1 0 9 0a4.5 4.5 0 1 0-9 0",
+	// A puck seen from the side: a short, wide cylinder.
+	puck: "M4 10c0-1.7 3.6-3 8-3s8 1.3 8 3v4c0 1.7-3.6 3-8 3s-8-1.3-8-3zM4 10c0 1.7 3.6 3 8 3s8-1.3 8-3",
 	undo: "M9 6L4 11l5 5M4 11h10a5 5 0 0 1 0 10h-3",
 	redo: "M15 6l5 5-5 5M20 11H10a5 5 0 0 0 0 10h3",
 	settings:
