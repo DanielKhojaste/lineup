@@ -63,6 +63,8 @@ export const SHORTCUTS: { keys: string; action: string }[] = [
 function isTyping(target: EventTarget | null): boolean {
 	if (!(target instanceof HTMLElement)) return false;
 	return (
+		// A dialog has the keyboard: Delete or Ctrl+Z there mustn't touch the board.
+		!!target.closest("dialog") ||
 		target.isContentEditable ||
 		target instanceof HTMLInputElement ||
 		target instanceof HTMLTextAreaElement ||

@@ -8,6 +8,7 @@ import {
 } from "react";
 import {
 	DEFAULT_THEME,
+	findPreset,
 	sanitizeTheme,
 	ThemeSettings,
 	themeTokens,
@@ -22,10 +23,19 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
+/** The saved theme. A preset's colours come from its file, so editing the file changes it. */
+export function resolveTheme(saved: ThemeSettings): ThemeSettings {
+	if (saved.preset === "custom") return saved;
+	const preset = findPreset(saved.preset);
+	if (!preset) return { ...saved, preset: "custom" };
+	const { mode, accent, secondary } = preset;
+	return { preset: saved.preset, mode, accent, secondary };
+}
+
 function loadTheme(): ThemeSettings {
 	try {
 		const raw = localStorage.getItem(STORAGE_KEY);
-		return raw ? sanitizeTheme(JSON.parse(raw)) : DEFAULT_THEME;
+		return raw ? resolveTheme(sanitizeTheme(JSON.parse(raw))) : DEFAULT_THEME;
 	} catch {
 		return DEFAULT_THEME;
 	}

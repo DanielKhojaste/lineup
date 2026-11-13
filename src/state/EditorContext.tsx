@@ -29,6 +29,9 @@ interface EditorContextValue {
 	/** Opens the inspector and focuses its first field (used on double-click). */
 	focusInspector: () => void;
 	inspectorFocusRef: MutableRefObject<HTMLInputElement | null>;
+	/** The "Change sport or field" window. */
+	fieldDialogOpen: boolean;
+	setFieldDialogOpen: (open: boolean) => void;
 }
 
 const EditorContext = createContext<EditorContextValue | null>(null);
@@ -42,6 +45,7 @@ export function EditorProvider({
 }) {
 	const [state, dispatch] = useReducer(editorReducer, board, createEditorState);
 	const [panelTab, setPanelTab] = useState<SidePanelTab>("inspector");
+	const [fieldDialogOpen, setFieldDialogOpen] = useState(false);
 	const boardRef = useRef<SVGSVGElement | null>(null);
 	const inspectorFocusRef = useRef<HTMLInputElement | null>(null);
 
@@ -53,6 +57,8 @@ export function EditorProvider({
 			panelTab,
 			setPanelTab,
 			inspectorFocusRef,
+			fieldDialogOpen,
+			setFieldDialogOpen,
 			focusInspector: () => {
 				setPanelTab("inspector");
 				// Wait for the inspector to render the selected node's fields.
@@ -62,7 +68,7 @@ export function EditorProvider({
 				});
 			},
 		}),
-		[state, panelTab],
+		[state, panelTab, fieldDialogOpen],
 	);
 
 	return (

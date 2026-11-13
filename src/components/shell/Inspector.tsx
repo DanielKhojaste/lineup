@@ -1,15 +1,19 @@
 import {
+	createBoard,
 	CONE_COLORS,
 	MARKER_SCALES,
+	parseShirtNumber,
 	playerKit,
 	ROTATE_STEP,
 } from "../../model/board";
 import {
+	Board,
 	BoardItem,
 	BoardNode,
 	GoalNode,
 	Kit,
 	MannequinNode,
+	PitchSettings,
 	PlayerNode,
 	PoleNode,
 	TeamId,
@@ -24,9 +28,18 @@ import { BoardInput, ColorField, Section, StripeField } from "../ui/fields";
 import { readableOn } from "../../theme/color";
 import { describeDrawing, DrawingFields, ToolOptions } from "./DrawingFields";
 import ObjectList, { kitBackground } from "./ObjectList";
-import PitchPicker from "./PitchPicker";
+import { fieldName } from "./ChangeFieldDialog";
+import BoardPreview from "../board/BoardPreview";
 
 const TEAMS: TeamId[] = ["home", "away", "neutral"];
+
+/** Empty boards, one per field, for the picture in the Field section. */
+const fieldPictures = new Map<string, Board>();
+function fieldPicture(pitch: PitchSettings): Board {
+	const key = `${pitch.sport}-${pitch.variant}`;
+	if (!fieldPictures.has(key)) fieldPictures.set(key, createBoard("", pitch));
+	return fieldPictures.get(key)!;
+}
 
 /** A stripe colour that stands out on the given kit colour. */
 function suggestStripes(color: string): string {
@@ -102,11 +115,9 @@ function PlayerFields({ players }: { players: PlayerNode[] }) {
 						label="Number"
 						inputMode="numeric"
 						maxLength={3}
+						title="0–999, or 00"
 						value={single.number !== undefined ? String(single.number) : ""}
-						onValue={(v) => {
-							const digits = v.replace(/\D/g, "");
-							update({ number: digits === "" ? undefined : Number(digits) });
-						}}
+						onValue={(v) => update({ number: parseShirtNumber(v) })}
 					/>
 					<BoardInput
 						label="Position"
@@ -230,7 +241,7 @@ function KitFields({ players }: { players: PlayerNode[] }) {
 					onChange={(c) => setKit({ color, stripes: c })}
 				/>
 			)}
-			{players.some((p) => p.color) && (
+			{players.some((p) => p.color && !matchesTeamKit(p, teams[p.team])) && (
 				<button
 					type="button"
 					className="link-button"
@@ -246,6 +257,44 @@ function KitFields({ players }: { players: PlayerNode[] }) {
 				</button>
 			)}
 		</>
+	);
+}
+
+/** True when a player's own kit looks exactly like the team's, so "Use team kit" would change nothing. */
+function matchesTeamKit(player: PlayerNode, team: Kit): boolean {
+	const same = (a?: string, b?: string) =>
+		(a ?? "").toLowerCase() === (b ?? "").toLowerCase();
+	return same(player.color, team.color) && same(player.stripes, team.stripes);
+}
+
+/**
+ * The selected markers' own size, on top of the board's player and equipment
+ * sizes (Board settings › Display). Goals keep their real size.
+ */
+function SizeField({ nodes }: { nodes: BoardNode[] }) {
+	const { dispatch } = useEditor();
+	const sized = nodes.filter((n) => n.kind !== "goal");
+	if (sized.length === 0) return null;
+	const allPlayers = sized.every((n) => n.kind === "player");
+	return (
+		<Segmented
+			label="Size"
+			hint={`On top of the board's ${
+				allPlayers ? "player" : sized.some((n) => n.kind === "player") ? "player and equipment" : "equipment"
+			} size`}
+			value={common(sized, (n) => String(n.scale ?? 1))}
+			options={MARKER_SCALES.map((o) => ({
+				value: String(o.value),
+				label: o.label,
+			}))}
+			onChange={(v) =>
+				dispatch({
+					type: "updateNodes",
+					ids: sized.map((n) => n.id),
+					patch: { scale: Number(v) },
+				})
+			}
+		/>
 	);
 }
 
@@ -418,15 +467,25 @@ function StepFields({ nodes }: { nodes: BoardNode[] }) {
 }
 
 function BoardSettings() {
-	const { state, dispatch } = useEditor();
+	const { state, dispatch, setFieldDialogOpen } = useEditor();
 	const { teams, display, pitch } = state.board;
 	return (
 		<>
 			<Section title="Field">
-				<PitchPicker
-					value={pitch}
-					onChange={(next) => dispatch({ type: "updatePitch", patch: next })}
-				/>
+				<div className="field-summary">
+					<BoardPreview
+						board={fieldPicture(pitch)}
+						className="field-summary__thumb"
+					/>
+					<span className="field-summary__name">{fieldName(pitch)}</span>
+				</div>
+				<button
+					type="button"
+					className="button button--small"
+					onClick={() => setFieldDialogOpen(true)}
+				>
+					Change sport or field…
+				</button>
 			</Section>
 			<Section title="Teams">
 				{TEAMS.map((team) => (
@@ -588,6 +647,7 @@ export default function Inspector() {
 			>
 				{players.length > 0 && <PlayerFields players={players} />}
 				{equipment.length > 0 && <EquipmentFields nodes={equipment} />}
+				{nodes.length > 0 && <SizeField nodes={nodes} />}
 				{drawings.length > 0 && <DrawingFields drawings={drawings} />}
 				<SelectionActions
 					ids={[...nodes, ...drawings].map((item) => item.id)}

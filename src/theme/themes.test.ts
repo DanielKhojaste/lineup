@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import { contrast, mix, normalizeHex, readableOn } from "./color";
 import {
 	DEFAULT_THEME,
+	presetsFromFiles,
 	sanitizeTheme,
+	shownSecondary,
 	THEME_PRESETS,
 	themeTokens,
 } from "./themes";
@@ -78,5 +80,45 @@ describe("themes", () => {
 			accent: DEFAULT_THEME.accent,
 			secondary: "#AABBCC",
 		});
+	});
+});
+
+describe("theme files", () => {
+	it("reads every preset file, in order", () => {
+		expect(THEME_PRESETS.map((p) => p.preset)).toEqual([
+			"amber-night",
+			"amber-day",
+			"lime-studio",
+			"violet",
+			"touchline",
+		]);
+	});
+
+	it("skips broken files and keeps hand-set tokens", () => {
+		const presets = presetsFromFiles({
+			"./presets/b.json": { name: "B", order: 2, mode: "light", accent: "#111111", secondary: "#222222" },
+			"./presets/a.json": {
+				name: "A",
+				order: 1,
+				mode: "dark",
+				accent: "#abc",
+				secondary: "#333333",
+				tokens: { surface: "#101010", nothing: 3 },
+			},
+			"./presets/broken.json": { name: "Broken", accent: "red", secondary: "#333333" },
+		});
+		expect(presets.map((p) => p.preset)).toEqual(["a", "b"]);
+		expect(presets[0]).toMatchObject({ accent: "#AABBCC", tokens: { surface: "#101010" } });
+		expect(themeTokens(presets[0], presets[0].tokens).surface).toBe("#101010");
+	});
+
+	it("lifts a secondary too dark to see in dark mode, and leaves light mode alone", () => {
+		const t = themeTokens({ ...DEFAULT_THEME, mode: "dark" });
+		expect(t.secondary).not.toBe("#2C0055");
+		expect(contrast(t.secondary, t.surface)).toBeGreaterThanOrEqual(3);
+		expect(contrast(t["chip-text"], t["chip-bg"])).toBeGreaterThanOrEqual(4.5);
+		expect(shownSecondary("#2C0055", "light")).toBe("#2C0055");
+		// Already light enough: kept as it is.
+		expect(shownSecondary("#FDB20B", "dark")).toBe("#FDB20B");
 	});
 });

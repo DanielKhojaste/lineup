@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import Board from "../components/board/Board";
+import ChangeFieldDialog from "../components/shell/ChangeFieldDialog";
 import Loader from "../components/Loader";
 import SettingsDialog from "../components/shell/SettingsDialog";
 import SidePanel from "../components/shell/SidePanel";
@@ -14,14 +15,14 @@ import { PlaybackProvider } from "../state/PlaybackContext";
 import { useShortcuts } from "../state/useShortcuts";
 
 function EditorLayout() {
-	const { state } = useEditor();
+	const { state, fieldDialogOpen, setFieldDialogOpen } = useEditor();
 	const library = useLibrary();
 	const navigate = useNavigate();
 	// Opened from a session: the back button goes back to it.
 	const from = (useLocation().state as { from?: string } | null)?.from;
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	const { status, flush } = useAutosave(state.board, library.saveBoard);
-	useShortcuts(!settingsOpen);
+	useShortcuts(!settingsOpen && !fieldDialogOpen);
 
 	// Ctrl+S saves straight away (it also works while typing in a field).
 	useEffect(() => {
@@ -41,7 +42,10 @@ function EditorLayout() {
 				saveStatus={status}
 				onRetrySave={() => void flush()}
 				backLabel={from ? "Session" : "Library"}
-				onBack={() => navigate(from ?? "/")}
+				onBack={() =>
+					// Back to the session it came from, at the same place in it.
+					from ? navigate(from, { state: { back: true } }) : navigate("/")
+				}
 				onOpenSettings={() => setSettingsOpen(true)}
 			/>
 			<div className="editor__body">
@@ -52,6 +56,10 @@ function EditorLayout() {
 			<SettingsDialog
 				open={settingsOpen}
 				onClose={() => setSettingsOpen(false)}
+			/>
+			<ChangeFieldDialog
+				open={fieldDialogOpen}
+				onClose={() => setFieldDialogOpen(false)}
 			/>
 		</div>
 	);

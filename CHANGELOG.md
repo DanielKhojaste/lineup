@@ -16,9 +16,23 @@ This project adheres to semantic versioning (0.x during early development).
 - Click a block's name in the plan ("Activity 1") to pick its part of the session from a short menu, instead of a dropdown on every block
 - Other blocks in a session (a game, a team talk) can be a part of the session too, like **Scrimmage**, and are numbered with the rest
 - Hide the session editor's **Add from library** panel to give the plan more room; Lineup remembers it
+- **Change sport or field** from a button in the board's Field settings, or from the board's right-click menu. It opens the same pictures as New board, with the board's sport and field now in grey and your pick in the accent colour. Tick **Start with a blank board** to clear the board as well; there's no confirmation, because Ctrl+Z brings everything back
+- **Size of a single marker:** select players or equipment and pick S, M, L or XL under Size. It goes on top of the board's player and equipment sizes, and goals keep their real size
+- Shirt numbers **0 and 00** (basketball and hockey use them)
+- **Theme preview:** Settings › Appearance › Preview themes shows every component that uses a theme's primary and secondary colours (buttons, the tool rail, tabs, fields, the library, tags, the session plan, the step bar, selections on the board) and every colour the theme makes, for any theme, with dark and light side by side. Try a theme there before using it
+- **Theme files:** each theme is a file in `src/theme/presets/` that can be edited, with optional hand-set colours; a README there explains them
 
 ### Changed
 
+- Back from a drill opened in a session, the session is where you left it instead of at the top
+- Messages like "Imported 2 boards and 1 session." close by themselves after 7 seconds; messages about a problem stay until closed
+- Library file names work on every system: names Windows keeps for itself (CON, NUL, COM1…) get a _ added, dots and spaces at the end are dropped, and an untitled session's file is "Untitled session" rather than "Untitled board"
+- The time in file names uses hyphens ("Untitled session (2026-11-03 11-16)"); files named with dots are renamed when the library opens
+- In dark themes, a secondary colour too dark to see (like Amber Night's purple) is shown lighter, so tags and topics read on dark panels
+- The tool rail's ball is the board's sport's ball (a basketball, a volleyball, a hockey ball)
+- The basketball hoop is a softer burnt orange, so it no longer glares on the maple
+- "Use team kit" only shows when a player's kit is different from the team's
+- Keyboard shortcuts for the board (like Delete and Ctrl+Z) no longer reach it while a window is open
 - The plan's colours follow the part of the session: warm-ups, activities, games and scrimmages in yellow, and water breaks and cool-downs in grey. The strip on session cards in the library uses the same colours
 
 ---
