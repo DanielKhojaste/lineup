@@ -62,7 +62,7 @@ export const SHORTCUTS: Shortcut[] = [
 	{ group: "Tools", keys: [["F"]], action: "Pen" },
 	{ group: "Tools", keys: [["T"]], action: "Text" },
 	{ group: "Tools", keys: [["E"]], action: "Eraser" },
-	{ group: "Tools", keys: [["Shift"]], note: "while drawing", action: "Snap the angle, or a square zone" },
+	{ group: "Tools", keys: [["Shift"]], action: "While drawing: snap the angle, or a square zone" },
 	{ group: "Tools", keys: [["Esc"]], action: "Back to Select, or clear the selection" },
 	{ group: "Selecting and moving", keys: [["Ctrl", "A"]], action: "Select everything" },
 	{ group: "Selecting and moving", keys: [["Shift", "click"], ["drag a box"]], join: "or", action: "Select several" },

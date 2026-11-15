@@ -26,7 +26,7 @@ This project adheres to semantic versioning (0.x during early development).
 - New dark themes inspired by Denis Villeneuve's Dune films, on warm Arrakis-night panels: **Dune** (spice orange and the vivid Fremen blue), **Dune Modified** (a stronger orange and lighter panels, less gloomy), **Dune Sand** (desert gold and spice), **Fremen** (the blue of the eyes of Ibad leading, with sand gold, on sietch-dark greys) and **Atreides** (Paul's world: spice orange with Caladan's sea green). Also **Touchline dark** and **Violet light**
 - Theme files can set their own backgrounds and text colours, and every other colour is made from them
 - The Theme preview's **Show both dark and light themes** shows a theme's dark and light versions side by side, with the one you picked on the left. It only shows for themes that come in both
-- Keyboard shortcuts in Settings are drawn as keyboard keys, one shortcut per row, in groups (Tools, Selecting and moving, Editing, Animation), under a **Keyboard shortcuts** dropdown
+- Keyboard shortcuts in Settings are drawn as keyboard keys, one shortcut per row, in groups (Tools, Selecting and moving, Editing, Animation), in two columns under a **Keyboard shortcuts** dropdown
 
 ### Changed
 
@@ -39,7 +39,7 @@ This project adheres to semantic versioning (0.x during early development).
 - Amber Night's tags and topics are see-through purple with a bright purple border (a theme file can set its own chip colours, or pick filled or outline chips)
 - Tags and topics have their text centred, with even space on both sides
 - The theme list in Settings is a dropdown with a swatch for each theme: a circle split into its primary and secondary, in a thin ring of its background. The Theme preview uses the same swatches
-- Settings: the default sport and its size are on one row, and the theme buttons say what they do (Preview all themes, Import…, Export…)
+- Settings: the default sport and default size are on one row, and the theme buttons say what they do (Preview all themes, Import…, Export…)
 - In dark themes, a secondary colour too dark to see (like Amber Night's purple) is shown lighter, so tags and topics read on dark panels
 - The tool rail's ball is the board's sport's ball (a basketball, a volleyball, a hockey ball)
 - The basketball hoop is a softer burnt orange, so it no longer glares on the maple

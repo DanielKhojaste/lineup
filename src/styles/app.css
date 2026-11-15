@@ -1195,10 +1195,15 @@ h3 {
 	min-width: 0;
 }
 
+/* Two columns, kept apart by space alone (no line between them). */
 .shortcuts {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-	gap: 18px 32px;
+	columns: 2 260px;
+	column-gap: 48px;
+}
+
+.shortcuts__group {
+	break-inside: avoid;
+	margin-bottom: 20px;
 }
 
 .shortcuts__group h4 {
@@ -1217,11 +1222,17 @@ h3 {
 }
 
 /* Keys in a column on the left, what they do right next to them. */
-.shortcuts__row {
+/* Keys in one column and what they do in the next, lined up within each group. */
+.shortcuts__group dl {
 	display: grid;
-	grid-template-columns: 190px 1fr;
+	/* The keys take what they need, up to about half; longer combinations wrap. */
+	grid-template-columns: fit-content(55%) minmax(100px, 1fr);
 	align-items: center;
-	gap: 12px;
+	gap: 8px 14px;
+}
+
+.shortcuts__row {
+	display: contents;
 }
 
 .shortcuts dd {

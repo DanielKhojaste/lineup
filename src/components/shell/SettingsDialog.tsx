@@ -132,6 +132,7 @@ export default function SettingsDialog({
 					<PitchPicker
 						row
 						label="Default sport"
+						sizeLabel="Default size"
 						value={preferences.defaultPitch}
 						onChange={(defaultPitch) => setPreferences({ defaultPitch })}
 					/>

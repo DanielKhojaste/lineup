@@ -7,6 +7,7 @@ export default function PitchPicker({
 	value,
 	onChange,
 	label = "Sport",
+	sizeLabel = "Size",
 	row = false,
 }: {
 	value: PitchSettings;
@@ -14,6 +15,7 @@ export default function PitchPicker({
 	label?: string;
 	/** Sport and size side by side on one row (Settings). */
 	row?: boolean;
+	sizeLabel?: string;
 }) {
 	const id = useId();
 	const surface = SPORT_INFO[value.sport].surface;
@@ -40,7 +42,7 @@ export default function PitchPicker({
 			</div>
 			<div className="field">
 				<span className="field__label" id={`${id}-variant`}>
-					Size
+					{sizeLabel}
 				</span>
 				<div
 					className="segmented"
