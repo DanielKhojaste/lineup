@@ -14,6 +14,8 @@ import {
 } from "../../theme/themes";
 import { addUserTheme, findTheme, useUserThemes } from "../../theme/userThemes";
 import ThemeEffectControls from "./ThemeEffectControls";
+import { INTERFACE_SCALES } from "../../config/sizes";
+import { scaleLabel } from "../../app/interfaceScale";
 import ThemeActions from "./ThemeActions";
 import ThemeDropdown from "./ThemeDropdown";
 import { Keys } from "../ui/Keys";
@@ -164,6 +166,29 @@ export default function SettingsDialog({
 					<h3>Appearance</h3>
 					<ThemeDropdown value={theme} userThemes={userThemes} onChange={setTheme} />
 					<ThemeEffectControls theme={current} />
+
+					<div className="field">
+						<span className="field__label" id="interface-size-label">
+							Interface size
+						</span>
+						<div className="segmented interface-size" role="radiogroup" aria-labelledby="interface-size-label">
+							{INTERFACE_SCALES.map((scale) => (
+								<button
+									key={scale}
+									type="button"
+									role="radio"
+									aria-checked={preferences.interfaceScale === scale}
+									className={`segmented__item${
+										preferences.interfaceScale === scale ? " is-active" : ""
+									}`}
+									onClick={() => setPreferences({ interfaceScale: scale })}
+								>
+									{scaleLabel(scale)}
+								</button>
+							))}
+						</div>
+						<span className="muted small">Text and controls, everywhere. Ctrl+= and Ctrl+- change it too.</span>
+					</div>
 
 					<ThemeActions
 						theme={current}

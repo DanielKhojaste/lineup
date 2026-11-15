@@ -32,3 +32,9 @@ export const DEFAULT_SIZES = {
 	players: 1,
 	equipment: 1,
 };
+
+/**
+ * Interface sizes in Settings › Appearance: everything (text, buttons,
+ * panels) drawn bigger or smaller, like a browser's zoom. 1 = 100%.
+ */
+export const INTERFACE_SCALES = [0.9, 1, 1.1, 1.25, 1.5] as const;

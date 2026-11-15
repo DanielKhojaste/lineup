@@ -1,4 +1,4 @@
-import { DEFAULT_SIZES, MARKER_SCALES } from "../config/sizes";
+import { DEFAULT_SIZES, INTERFACE_SCALES, MARKER_SCALES } from "../config/sizes";
 import { useSyncExternalStore } from "react";
 import { DEFAULT_PITCH, isSport } from "../model/sports";
 import { PitchSettings } from "../model/types";
@@ -25,6 +25,8 @@ export interface Preferences {
 	 * effect, or "off"). A theme left out shows its first.
 	 */
 	themeEffect: Record<string, string>;
+	/** How big the whole interface is drawn (1 = 100%). */
+	interfaceScale: number;
 	/** How Dune's spice looks: size, speed and amount, as multiples of normal. */
 	spice: { size: number; speed: number; amount: number };
 }
@@ -41,6 +43,7 @@ const DEFAULTS: Preferences = {
 	equipmentScale: DEFAULT_SIZES.equipment,
 	hasDefaultSport: false,
 	themeEffect: {},
+	interfaceScale: 1,
 	spice: { size: 1, speed: 1, amount: 1 },
 };
 
@@ -74,6 +77,9 @@ function read(): Preferences {
 			},
 			hasDefaultSport: !!raw?.defaultPitch,
 			themeEffect: effectChoices(raw),
+			interfaceScale: (INTERFACE_SCALES as readonly number[]).includes(raw?.interfaceScale)
+				? raw.interfaceScale
+				: 1,
 			spice: {
 				size: multiple(raw?.spice?.size, 0.4, 3),
 				speed: multiple(raw?.spice?.speed, 0.1, 4),

@@ -8,6 +8,10 @@ This project adheres to semantic versioning (0.x during early development).
 
 ## [Unreleased]
 
+### Added
+
+- **Interface size** in Settings › Appearance: 90%, 100%, 110%, 125% or 150%, for text and controls everywhere. **Ctrl+=**, **Ctrl+-** and **Ctrl+0** change it from anywhere, and Lineup remembers it
+
 ### Changed
 
 - A card's **Folders ›** menu stays open while you tick folders, so a board or session can go into several at once

@@ -3736,3 +3736,8 @@ fieldset.field {
 	gap: 12px;
 	margin-top: 12px;
 }
+
+/* Settings: the interface size choices, not the full width of the window. */
+.interface-size {
+	max-width: 420px;
+}
