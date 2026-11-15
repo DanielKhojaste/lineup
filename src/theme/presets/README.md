@@ -25,6 +25,9 @@ People can also save, import and export their own themes in Settings ›
 Appearance. Those are `.lineup-theme` files with the same fields (no `order`
 or `pair`).
 
+Themes kept for later (like Lagoon) live in `../extra-themes/`, where Lineup
+doesn't list them.
+
 ## How the colours are made
 
 The app makes every other colour from `mode`, `accent` and `secondary`
@@ -39,7 +42,9 @@ it as it is.
 ## Tokens you can set
 
 Anything in `tokens` replaces the colour the app would make. Leave it out to
-keep the made one.
+keep the made one. Backgrounds and text (`bg`, `surface`, `text`…) are read
+first, so the softer washes and readable text colours are made from them; Dune
+uses this for its sand.
 
 | Token | What it is |
 | --- | --- |

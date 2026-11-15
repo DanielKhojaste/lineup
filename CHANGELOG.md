@@ -22,7 +22,8 @@ This project adheres to semantic versioning (0.x during early development).
 - **Theme preview:** Settings › Appearance › Preview themes shows every component that uses a theme's primary and secondary colours (buttons, the tool rail, tabs, fields, the library, tags, the session plan, the step bar, selections on the board) and every colour the theme makes, for any theme, with dark and light side by side. Try a theme there before using it
 - **Theme files:** each theme is a file in `src/theme/presets/` that can be edited, with optional hand-set colours; a README there explains them
 - **Your own themes:** save custom colours as a theme with a name, **import** and **export** themes as `.lineup-theme` files (plain text you can share or edit), and delete the ones you don't want. They're listed under "Your themes" in Settings and in the Theme preview
-- New themes: **Lagoon** (teal and coral, dark and light), **Touchline dark** and **Violet light**
+- New themes: **Dune**, inspired by Denis Villeneuve's films (spice orange and Fremen blue on Arrakis sand at night and in daylight), with a second version to compare, **Dune Sand** (desert gold and spice); **Touchline dark** and **Violet light**
+- Theme files can set their own backgrounds and text colours, and every other colour is made from them
 - The Theme preview's **Show both dark and light themes** shows a theme's dark and light versions side by side, with the one you picked on the left. It only shows for themes that come in both
 - Keyboard shortcuts in Settings are drawn as keyboard keys, in groups (Tools, Selecting and moving, Editing, Animation)
 

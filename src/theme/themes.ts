@@ -159,10 +159,13 @@ const BASE: Record<ThemeMode, Record<string, string>> = {
  * against the panels (like a deep purple) is mixed with white until it reads;
  * light themes use it as it is.
  */
-export function shownSecondary(secondary: string, mode: ThemeMode): string {
+export function shownSecondary(
+	secondary: string,
+	mode: ThemeMode,
+	surface = BASE[mode].surface,
+): string {
 	const color = normalizeHex(secondary);
 	if (mode !== "dark") return color;
-	const surface = BASE.dark.surface;
 	for (let amount = 0; amount <= 0.8; amount += 0.05) {
 		const lifted = amount === 0 ? color : mix(color, "#FFFFFF", amount);
 		if (contrast(lifted, surface) >= 3) return lifted;
@@ -181,10 +184,15 @@ export function themeTokens(
 		? undefined
 		: findPreset(settings.preset),
 ): Record<string, string> {
-	const base = BASE[settings.mode];
+	// A theme file's own backgrounds and text (Dune's sand, say) come first, so
+	// every colour made below is made from them.
+	const base = { ...BASE[settings.mode] };
+	for (const key of Object.keys(base))
+		if (extras?.tokens?.[key] && isHexColor(extras.tokens[key]))
+			base[key] = normalizeHex(extras.tokens[key]);
 	const accent = normalizeHex(settings.accent);
-	const secondary = shownSecondary(settings.secondary, settings.mode);
 	const surface = base.surface;
+	const secondary = shownSecondary(settings.secondary, settings.mode, surface);
 	const dark = settings.mode === "dark";
 
 	// Text drawn in a theme colour (links, tabs, "Warm-up 1") must be easy to

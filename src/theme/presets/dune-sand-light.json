@@ -1,0 +1,21 @@
+{
+	"name": "Dune Sand",
+	"order": 6,
+	"mode": "light",
+	"accent": "#A8772F",
+	"secondary": "#B4471E",
+	"pair": "dune-sand",
+	"tokens": {
+		"bg": "#E9DDC8",
+		"surface": "#F5EDDF",
+		"sunken": "#EEE3D0",
+		"raised": "#EFE4D2",
+		"hover": "#E5D6BD",
+		"border": "#D9C8AA",
+		"border-strong": "#B8A07C",
+		"text": "#2B2118",
+		"text-muted": "#6B5944",
+		"board-bg": "#E3D4BA",
+		"danger": "#B3261E"
+	}
+}

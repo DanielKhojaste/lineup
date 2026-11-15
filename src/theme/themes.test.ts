@@ -88,13 +88,15 @@ describe("theme files", () => {
 		expect(THEME_PRESETS.map((p) => p.preset)).toEqual([
 			"amber-night",
 			"amber-day",
+			"dune",
+			"dune-light",
+			"dune-sand",
+			"dune-sand-light",
 			"lime-studio",
 			"violet",
 			"violet-light",
 			"touchline",
 			"touchline-dark",
-			"lagoon",
-			"lagoon-light",
 		]);
 	});
 
@@ -133,6 +135,7 @@ describe("theme pairs, chips and readable text", () => {
 		expect(pairOf(findPreset("amber-night")!)?.preset).toBe("amber-day");
 		expect(pairOf(findPreset("violet-light")!)?.preset).toBe("violet");
 		expect(pairOf(findPreset("touchline")!)?.preset).toBe("touchline-dark");
+		expect(pairOf(findPreset("dune")!)?.preset).toBe("dune-light");
 		expect(pairOf(findPreset("lime-studio")!)).toBeUndefined();
 	});
 
@@ -149,5 +152,21 @@ describe("theme pairs, chips and readable text", () => {
 		expect(t["chip-border"]).toBe(t.secondary);
 		expect(t["chip-text"]).toBe(t.text);
 		expect(themeTokens({ ...DEFAULT_THEME }, {})["chip-border"]).toBe("transparent");
+	});
+});
+
+describe("themes with their own backgrounds", () => {
+	it("makes every colour from the theme's own surface (Dune's sand)", async () => {
+		const { findPreset } = await import("./themes");
+		const dune = findPreset("dune-light")!;
+		const t = themeTokens(dune, dune);
+		expect(t.surface).toBe("#F5EDDF");
+		expect(t.bg).toBe("#E9DDC8");
+		expect(contrast(t["accent-text"], t.surface)).toBeGreaterThanOrEqual(4.5);
+		expect(contrast(t.text, t.surface)).toBeGreaterThanOrEqual(7);
+	});
+
+	it("keeps Lagoon out of the list", () => {
+		expect(THEME_PRESETS.some((p) => p.name === "Lagoon")).toBe(false);
 	});
 });
