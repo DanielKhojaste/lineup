@@ -12,6 +12,8 @@ export const ICONS = {
 	basketball: `${CIRCLE}M5 12h14M12 5v14M8.2 6.2c2.3 3.2 2.3 8.4 0 11.6M15.8 6.2c-2.3 3.2-2.3 8.4 0 11.6`,
 	volleyball: `${CIRCLE}M12 12V5M12 12l6.1 3.5M12 12l-6.1 3.5M8.5 6c1.5 3.5 4.5 5.5 9.9 5M18.6 15.2c-3.3-.3-6.4 1.2-8.6 4.3M6.4 14.9c1.6-3.2 1.4-6.4-.3-9`,
 	hockeyBall: "M7.5 12a4.5 4.5 0 1 0 9 0a4.5 4.5 0 1 0-9 0",
+	// A puck seen from the side: a short, wide cylinder.
+	puck: "M4 10c0-1.7 3.6-3 8-3s8 1.3 8 3v4c0 1.7-3.6 3-8 3s-8-1.3-8-3zM4 10c0 1.7 3.6 3 8 3s8-1.3 8-3",
 	undo: "M9 6L4 11l5 5M4 11h10a5 5 0 0 1 0 10h-3",
 	redo: "M15 6l5 5-5 5M20 11H10a5 5 0 0 0 0 10h3",
 	settings:
@@ -35,7 +37,8 @@ export const ICONS = {
 	rotate: "M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7",
 	more: "M3.8 12a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0-2.4 0zM10.8 12a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0-2.4 0zM17.8 12a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0-2.4 0z",
 	search: "M5 11a6 6 0 1 0 12 0a6 6 0 1 0-12 0M20 20l-4.5-4.5",
-	grid: "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z",
+	// Four squares with a clear gap, so the strokes don't run into a thick cross in the middle.
+	grid: "M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z",
 	folder:
 		"M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z",
 	inbox: "M4 13l2-8h12l2 8M4 13v6h16v-6M4 13h5l1 2h4l1-2h5",
@@ -43,8 +46,14 @@ export const ICONS = {
 	chevronDown: "M6 9l6 6 6-6",
 	chevronRight: "M9 5l7 7-7 7",
 	download: "M12 4v11M7 10l5 5 5-5M5 20h14",
+	upload: "M12 15V4M7 9l5-5 5 5M5 20h14",
+	// Two layers: everything in the library.
+	stack: "M12 4l8 4-8 4-8-4zM4 12l8 4 8-4M4 16l8 4 8-4",
+	pencil: "M15.5 5.5l3 3M4 20l1-4L16 5a2.1 2.1 0 0 1 3 3L8 19z",
+	eye: "M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12zM9 12a3 3 0 1 0 6 0a3 3 0 1 0-6 0",
 	close: "M6 6l12 12M18 6L6 18",
 	check: "M5 12l5 5L20 7",
+	minus: "M6 12h12",
 	play: "M8 5.5v13l10-6.5z",
 	pause: "M8 5v14M16 5v14",
 	route: "M5 19a2 2 0 1 0 0.01 0M8 17c3-1 2-6 6-7s4-3 4-5M15 5h3v3",

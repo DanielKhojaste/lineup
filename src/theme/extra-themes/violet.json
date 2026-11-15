@@ -1,8 +1,9 @@
 {
 	"name": "Violet",
-	"order": 4,
+	"order": 8,
 	"mode": "dark",
-	"accent": "#7814FF",
+	"accent": "#6D28D9",
 	"secondary": "#FDB20B",
+	"pair": "violet-light",
 	"tokens": {}
 }

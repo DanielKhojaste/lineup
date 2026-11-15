@@ -59,7 +59,7 @@ export default function ChangeFieldDialog({
 	return (
 		<Modal
 			open={open}
-			title="Change sport or field"
+			title="Change sport / field"
 			onClose={onClose}
 			className="dialog--wide"
 		>

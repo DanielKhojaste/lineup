@@ -1,6 +1,6 @@
 import { PointerEvent as ReactPointerEvent, useRef, useState } from "react";
 import { MANNEQUIN_COLOR, POLE_COLOR } from "../../model/board";
-import { fieldBounds, Sport, SPORT_INFO } from "../../model/sports";
+import { ballName, fieldBounds, Sport, SPORT_INFO } from "../../model/sports";
 import { Board } from "../../model/types";
 import { useEditor } from "../../state/EditorContext";
 import { PlaceTool, Tool } from "../../state/editor";
@@ -98,6 +98,7 @@ const BALL_ICONS: Record<Sport, IconName> = {
 	handball: "ball",
 	basketball: "basketball",
 	volleyball: "volleyball",
+	icehockey: "puck",
 	hockey: "hockeyBall",
 };
 
@@ -172,7 +173,13 @@ export default function ToolRail() {
 	const renderTool = (tool: ToolDef) => {
 		// The ball on the rail is the board's sport's ball.
 		const def =
-			tool.tool === "ball" ? { ...tool, icon: BALL_ICONS[state.board.pitch.sport] } : tool;
+			tool.tool === "ball"
+				? {
+						...tool,
+						icon: BALL_ICONS[state.board.pitch.sport],
+						label: ballName(state.board.pitch.sport),
+					}
+				: tool;
 		const active = state.tool === def.tool;
 		return (
 			<button

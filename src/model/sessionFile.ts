@@ -33,7 +33,7 @@ export function encodeSharedSession(session: Session, drills: Board[]): Uint8Arr
 	// Where the drills sit in this library means nothing to whoever gets them.
 	const shared = drills.map((d) => {
 		const { imported: _imported, ...meta } = d.meta;
-		return { ...d, meta: { ...meta, folder: "" } };
+		return { ...d, meta: { ...meta, folders: [] } };
 	});
 	const { imported: _imported, ...meta } = session.meta;
 	return encodeDocument({ ...session, meta, drills: shared });

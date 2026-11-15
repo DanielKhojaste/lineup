@@ -1,40 +1,25 @@
+import { Segmented } from "../ui/controls";
+import { MARKER_SCALES } from "../../config/sizes";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { setPreferences, usePreferences } from "../../state/preferences";
-import { SHORTCUTS } from "../../state/useShortcuts";
+import { Shortcut, SHORTCUTS } from "../../state/useShortcuts";
 import { isHexColor, normalizeHex } from "../../theme/color";
 import {
 	THEME_PRESETS,
 	ThemeMode,
+	ThemePreset,
 	ThemeSettings,
 	themeTokens,
 } from "../../theme/themes";
+import { addUserTheme, findTheme, useUserThemes } from "../../theme/userThemes";
+import ThemeEffectControls from "./ThemeEffectControls";
+import ThemeActions from "./ThemeActions";
+import ThemeDropdown from "./ThemeDropdown";
+import { Keys } from "../ui/Keys";
 import { useTheme } from "../../theme/ThemeProvider";
 import { Icon } from "../Icon";
 import PitchPicker from "./PitchPicker";
-
-/** A tiny picture of a theme: top bar, field, side panel. */
-export function ThemeSwatch({ settings }: { settings: ThemeSettings }) {
-	const t = themeTokens(settings);
-	return (
-		<span
-			className="theme-preview"
-			style={{ background: t.bg, borderColor: t.border }}
-			aria-hidden="true"
-		>
-			<span className="theme-preview__bar" style={{ background: t.surface }}>
-				<span style={{ background: t.accent }} />
-			</span>
-			<span className="theme-preview__body">
-				<span className="theme-preview__pitch" />
-				<span className="theme-preview__side" style={{ background: t.surface }}>
-					<span style={{ background: t["chip-bg"] }} />
-					<span style={{ background: t.accent }} />
-				</span>
-			</span>
-		</span>
-	);
-}
 
 function HexColorInput({
 	label,
@@ -99,6 +84,24 @@ export default function SettingsDialog({
 		if (!open && dialog.open) dialog.close();
 	}, [open]);
 
+	const userThemes = useUserThemes();
+	const [saveName, setSaveName] = useState("");
+	const current: ThemePreset = findTheme(theme.preset) ?? {
+		...theme,
+		name: "Custom",
+	};
+
+	const saveCustom = () => {
+		const saved = addUserTheme({ ...theme, name: saveName || "My theme" });
+		setTheme(saved);
+		setSaveName("");
+	};
+
+	const groups = SHORTCUTS.reduce<Map<Shortcut["group"], Shortcut[]>>((map, s) => {
+		map.set(s.group, [...(map.get(s.group) ?? []), s]);
+		return map;
+	}, new Map());
+
 	const custom = (patch: Partial<ThemeSettings>) =>
 		setTheme({ ...theme, ...patch, preset: "custom" });
 	const setMode = (mode: ThemeMode) => custom({ mode });
@@ -130,57 +133,55 @@ export default function SettingsDialog({
 				<section className="dialog__section">
 					<h3>New boards</h3>
 					<PitchPicker
+						row
 						label="Default sport"
+						sizeLabel="Default size"
 						value={preferences.defaultPitch}
 						onChange={(defaultPitch) => setPreferences({ defaultPitch })}
 					/>
+					<div className="settings__sizes">
+						<Segmented
+							label="Player size"
+							value={String(preferences.playerScale)}
+							options={MARKER_SCALES.map((o) => ({ value: String(o.value), label: o.label }))}
+							onChange={(v) => setPreferences({ playerScale: Number(v) })}
+						/>
+						<Segmented
+							label="Equipment size"
+							value={String(preferences.equipmentScale)}
+							options={MARKER_SCALES.map((o) => ({ value: String(o.value), label: o.label }))}
+							onChange={(v) => setPreferences({ equipmentScale: Number(v) })}
+						/>
+					</div>
 					<p className="muted small">
-						New boards start with this sport. You can pick another one in the
-						New board window, or change a board's sport in its settings.
+						New boards start with this sport and these sizes. You can pick another
+						sport in the New board window. Changing a board's sizes changes these
+						too, so new boards look like the last one you worked on.
 					</p>
 				</section>
 
 				<section className="dialog__section">
 					<h3>Appearance</h3>
-					<div className="theme-picker">
-						<ThemeSwatch settings={theme} />
-						<div className="field">
-							<label className="field__label" htmlFor="theme-select">
-								Theme
-							</label>
-							<select
-								id="theme-select"
-								className="field__input"
-								value={theme.preset}
-								onChange={(e) => {
-									const preset = THEME_PRESETS.find(
-										(p) => p.preset === e.target.value,
-									);
-									if (preset) setTheme(preset);
+					<ThemeDropdown value={theme} userThemes={userThemes} onChange={setTheme} />
+					<ThemeEffectControls theme={current} />
+
+					<ThemeActions
+						theme={current}
+						onImported={setTheme}
+						before={
+							<button
+								type="button"
+								className="button button--small"
+								onClick={() => {
+									onClose();
+									navigate("/themes");
 								}}
 							>
-								{THEME_PRESETS.map((preset) => (
-									<option key={preset.preset} value={preset.preset}>
-										{preset.name} ({preset.mode === "dark" ? "dark" : "light"})
-									</option>
-								))}
-								{theme.preset === "custom" && (
-									<option value="custom">Custom</option>
-								)}
-							</select>
-						</div>
-					</div>
-
-					<button
-						type="button"
-						className="link-button"
-						onClick={() => {
-							onClose();
-							navigate("/themes");
-						}}
-					>
-						Preview themes: every component in each theme's colours
-					</button>
+								<Icon name="eye" size={14} />
+								Preview all themes
+							</button>
+						}
+					/>
 
 					<details className="disclosure">
 						<summary>Customise colours</summary>
@@ -226,22 +227,55 @@ export default function SettingsDialog({
 								Changing a colour switches the theme to Custom. Text on your
 								colours turns light or dark automatically so it stays readable.
 							</p>
+							{theme.preset === "custom" && (
+								<form
+									className="settings__save"
+									onSubmit={(e) => {
+										e.preventDefault();
+										saveCustom();
+									}}
+								>
+									<input
+										className="field__input"
+										placeholder="Name, e.g. Club colours"
+										aria-label="Theme name"
+										maxLength={40}
+										value={saveName}
+										onChange={(e) => setSaveName(e.target.value)}
+									/>
+									<button type="submit" className="button button--small">
+										Save as a theme
+									</button>
+								</form>
+							)}
 						</div>
 					</details>
 				</section>
 
 				<section className="dialog__section">
-					<h3>Keyboard shortcuts</h3>
-					<dl className="shortcuts">
-						{SHORTCUTS.map((s) => (
-							<div key={s.keys} className="shortcuts__row">
-								<dt>
-									<kbd>{s.keys}</kbd>
-								</dt>
-								<dd>{s.action}</dd>
+					<details className="disclosure shortcuts-disclosure">
+						<summary>
+							<h3>Keyboard shortcuts</h3>
+							<span className="muted small">{SHORTCUTS.length} shortcuts</span>
+						</summary>
+					<div className="shortcuts">
+						{[...groups].map(([group, list]) => (
+							<div key={group} className="shortcuts__group">
+								<h4>{group}</h4>
+								<dl>
+									{list.map((s) => (
+										<div key={s.action} className="shortcuts__row">
+											<dt>
+												<Keys shortcut={s} />
+											</dt>
+											<dd>{s.action}</dd>
+										</div>
+									))}
+								</dl>
 							</div>
 						))}
-					</dl>
+					</div>
+					</details>
 				</section>
 			</div>
 		</dialog>

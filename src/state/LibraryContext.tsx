@@ -32,7 +32,8 @@ interface LibraryContextValue {
 	saveBoard: (board: Board) => Promise<void>;
 	duplicateBoard: (id: string) => Promise<Board | undefined>;
 	deleteBoard: (id: string) => Promise<void>;
-	moveToFolder: (id: string, folder: string) => Promise<void>;
+	/** Put a board in these folders (none, one or several). */
+	setBoardFolders: (id: string, folders: string[]) => Promise<void>;
 	addBoards: (boards: Board[]) => Promise<Board[]>;
 	sessions: Session[];
 	/** Session topics the coach made up (kept in library.json). */
@@ -43,7 +44,8 @@ interface LibraryContextValue {
 	saveSession: (session: Session) => Promise<void>;
 	duplicateSession: (id: string) => Promise<Session | undefined>;
 	deleteSession: (id: string) => Promise<void>;
-	moveSessionToFolder: (id: string, folder: string) => Promise<void>;
+	/** Put a session in these folders (none, one or several). */
+	setSessionFolders: (id: string, folders: string[]) => Promise<void>;
 	/**
 	 * Add imported sessions. `boardIds` maps a drill's id in the file to the id
 	 * it got in this library (for drills imported with it that needed a new id).
@@ -192,11 +194,15 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 
 			createBoard: async (folder = "", pitch) => {
 				// New boards use the default sport from Settings unless one is picked.
+				const preferences = getPreferences();
 				const board = createBoard(
 					"Untitled board",
-					pitch ?? getPreferences().defaultPitch,
+					pitch ?? preferences.defaultPitch,
 				);
-				board.meta.folder = folder;
+				board.meta.folders = folder ? [folder] : [];
+				// New boards start with the sizes the coach used last.
+				board.display.playerScale = preferences.playerScale;
+				board.display.equipmentScale = preferences.equipmentScale;
 				await saveBoard(board);
 				return board;
 			},
@@ -226,10 +232,10 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 				await store().remove(id);
 			},
 
-			moveToFolder: async (id, folder) => {
+			setBoardFolders: async (id, folders) => {
 				const board = boardsRef.current.find((b) => b.id === id);
 				if (board)
-					await saveBoard({ ...board, meta: { ...board.meta, folder } });
+					await saveBoard({ ...board, meta: { ...board.meta, folders: unique(folders) } });
 			},
 
 			/** Add imported boards. Boards whose id is already in the library get a new id. */
@@ -245,8 +251,8 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 				const newFolders = [
 					...new Set(
 						added
-							.map((b) => b.meta.folder)
-							.filter((f) => f && !indexRef.current.folders.includes(f)),
+							.flatMap((b) => b.meta.folders)
+							.filter((f) => !indexRef.current.folders.includes(f)),
 					),
 				];
 				if (newFolders.length)
@@ -263,8 +269,10 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 			createSession: async (folder, sport) => {
 				const session = createSession();
 				session.header.sport = sport;
-				session.meta.folder = folder;
-				await saveSession(session);
+				session.meta.folders = folder ? [folder] : [];
+				// Only in memory for now: it's written to disk once something is in it.
+				sessionsRef.current = [session, ...sessionsRef.current];
+				setSessions((prev) => [session, ...prev]);
 				return session;
 			},
 
@@ -313,8 +321,8 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 				const newFolders = [
 					...new Set(
 						added
-							.map((s) => s.meta.folder)
-							.filter((f) => f && !indexRef.current.folders.includes(f)),
+							.flatMap((s) => s.meta.folders)
+							.filter((f) => !indexRef.current.folders.includes(f)),
 					),
 				];
 				if (newFolders.length)
@@ -322,10 +330,10 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 				return added;
 			},
 
-			moveSessionToFolder: async (id, folder) => {
+			setSessionFolders: async (id, folders) => {
 				const session = sessionsRef.current.find((s) => s.id === id);
 				if (session)
-					await saveSession({ ...session, meta: { ...session.meta, folder } });
+					await saveSession({ ...session, meta: { ...session.meta, folders: unique(folders) } });
 			},
 
 			createFolder: async (name) => {
@@ -342,34 +350,27 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 						.map((f) => (f === from ? clean : f))
 						.filter((f, i, all) => all.indexOf(f) === i),
 				);
-				for (const board of boardsRef.current.filter(
-					(b) => b.meta.folder === from,
-				)) {
-					await saveBoard({ ...board, meta: { ...board.meta, folder: clean } });
-				}
-				for (const session of sessionsRef.current.filter(
-					(s) => s.meta.folder === from,
-				)) {
+				const renamed = (list: string[]) => unique(list.map((f) => (f === from ? clean : f)));
+				for (const board of boardsRef.current.filter((b) => b.meta.folders.includes(from)))
+					await saveBoard({ ...board, meta: { ...board.meta, folders: renamed(board.meta.folders) } });
+				for (const session of sessionsRef.current.filter((s) => s.meta.folders.includes(from)))
 					await saveSession({
 						...session,
-						meta: { ...session.meta, folder: clean },
+						meta: { ...session.meta, folders: renamed(session.meta.folders) },
 					});
-				}
 			},
 
-			/** Remove a folder; its boards stay in the library, just not in a folder. */
+			/** Remove a folder; its boards and sessions stay in the library (and in their other folders). */
 			deleteFolder: async (name) => {
 				await writeIndex(folders.filter((f) => f !== name));
-				for (const board of boardsRef.current.filter(
-					(b) => b.meta.folder === name,
-				)) {
-					await saveBoard({ ...board, meta: { ...board.meta, folder: "" } });
-				}
-				for (const session of sessionsRef.current.filter(
-					(s) => s.meta.folder === name,
-				)) {
-					await saveSession({ ...session, meta: { ...session.meta, folder: "" } });
-				}
+				const without = (list: string[]) => list.filter((f) => f !== name);
+				for (const board of boardsRef.current.filter((b) => b.meta.folders.includes(name)))
+					await saveBoard({ ...board, meta: { ...board.meta, folders: without(board.meta.folders) } });
+				for (const session of sessionsRef.current.filter((s) => s.meta.folders.includes(name)))
+					await saveSession({
+						...session,
+						meta: { ...session.meta, folders: without(session.meta.folders) },
+					});
 			},
 		}),
 		[
@@ -403,10 +404,13 @@ export function useLibrary(): LibraryContextValue {
 /** Folders in use: those in the index plus any a board or session mentions (e.g. after an import). */
 export function allFolders(
 	folders: string[],
-	docs: { meta: { folder: string } }[],
+	docs: { meta: { folders: string[] } }[],
 ): string[] {
-	const extra = docs
-		.map((b) => b.meta.folder)
-		.filter((f) => f && !folders.includes(f));
+	const extra = docs.flatMap((b) => b.meta.folders).filter((f) => !folders.includes(f));
 	return [...folders, ...new Set(extra)];
+}
+
+/** Folder names without blanks or repeats. */
+function unique(folders: string[]): string[] {
+	return [...new Set(folders.map((f) => f.trim()).filter(Boolean))];
 }

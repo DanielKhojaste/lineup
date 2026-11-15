@@ -19,6 +19,8 @@ export const SURFACES: Record<
 		lineOpacity?: number;
 		stripes?: boolean;
 		key?: string;
+		/** Rounded corners of the playing area, in metres (an ice rink's). */
+		corner?: number;
 	}
 > = {
 	soccer: {
@@ -28,6 +30,16 @@ export const SURFACES: Record<
 		stripes: true,
 	},
 	hockey: { floor: "#2F5E8C", outside: "#3A6B4D", line: "#FFFFFF" },
+	// Ice with a hint of blue (so white kits still show), and ice past the
+	// rounded corners too (no dark corners); the boards are the dark line
+	// around it. The red and blue lines are drawn in their own colours.
+	icehockey: {
+		floor: "#E3ECF1",
+		outside: "#E3ECF1",
+		line: "#36424E",
+		lineOpacity: 1,
+		corner: 8.53,
+	},
 	futsal: { floor: "#3C6B93", outside: "#2E5273", line: "#FFFFFF" },
 	handball: {
 		floor: "#3B6890",
@@ -309,12 +321,85 @@ function hockey({ L, W, lw, colors }: Draw) {
 	);
 }
 
+const ICE_RED = "#C8102E";
+const ICE_BLUE = "#2456A6";
+
+/**
+ * An NHL rink (200 × 85 ft, 28 ft corners): goal lines 11 ft from the boards,
+ * blue lines 75 ft from them, the red centre line, five faceoff circles and
+ * four neutral-zone dots, the goal creases and the trapezoids behind the goals.
+ */
+function icehockey({ L, W, lw }: Draw) {
+	const cy = W / 2;
+	const corner = SURFACES.icehockey.corner!;
+	const thick = Math.max(0.305, lw * 1.6);
+	const goalLine = 3.35;
+	const blueLine = 22.86;
+	const circleR = 4.57;
+	const dot = (cx: number, y: number, r = 0.3, fill = ICE_RED) => (
+		<circle key={`${cx}-${y}`} cx={cx} cy={y} r={r} fill={fill} stroke="none" />
+	);
+	const faceoff = (cx: number, y: number) => (
+		<g key={`f-${cx}-${y}`} stroke={ICE_RED}>
+			<circle cx={cx} cy={y} r={circleR} />
+			{/* Hash marks on the top and bottom of the circle. */}
+			{[-1, 1].map((side) =>
+				[-0.85, 0.85].map((dx) => (
+					<line
+						key={`${side}${dx}`}
+						x1={cx + dx}
+						y1={y + side * circleR}
+						x2={cx + dx}
+						y2={y + side * (circleR + 0.61)}
+					/>
+				)),
+			)}
+			{dot(cx, y)}
+		</g>
+	);
+	return (
+		<>
+			<clipPath id="ice-rink">
+				<rect x={0} y={0} width={L} height={W} rx={corner} />
+			</clipPath>
+			<g clipPath="url(#ice-rink)">
+				<line x1={L / 2} y1={0} x2={L / 2} y2={W} stroke={ICE_RED} strokeWidth={thick} />
+				<circle cx={L / 2} cy={cy} r={circleR} stroke={ICE_BLUE} />
+				{dot(L / 2, cy, 0.15, ICE_BLUE)}
+				{bothEnds(
+					L,
+					<>
+						<line x1={goalLine} y1={0} x2={goalLine} y2={W} stroke={ICE_RED} />
+						<line x1={blueLine} y1={0} x2={blueLine} y2={W} stroke={ICE_BLUE} strokeWidth={thick} />
+						{/* Goal crease: a 6 ft half circle, filled light blue. */}
+						<path
+							d={`M${goalLine} ${cy - 1.83}A1.83 1.83 0 0 1 ${goalLine} ${cy + 1.83}Z`}
+							fill="#9CCBEA"
+							stroke={ICE_RED}
+						/>
+						{/* The net, behind the goal line. */}
+						<rect x={goalLine - 1.12} y={cy - 0.915} width={1.12} height={1.83} stroke={ICE_RED} />
+						{/* Trapezoid behind the goal: where the goalie may play the puck. */}
+						<line x1={goalLine} y1={cy - 3.35} x2={0} y2={cy - 4.27} stroke={ICE_RED} />
+						<line x1={goalLine} y1={cy + 3.35} x2={0} y2={cy + 4.27} stroke={ICE_RED} />
+						{faceoff(goalLine + 6.1, cy - 6.71)}
+						{faceoff(goalLine + 6.1, cy + 6.71)}
+						{dot(blueLine + 1.52, cy - 6.71)}
+						{dot(blueLine + 1.52, cy + 6.71)}
+					</>,
+				)}
+			</g>
+		</>
+	);
+}
+
 const MARKINGS: Record<Sport, (d: Draw) => ReactNode> = {
 	soccer,
 	futsal,
 	basketball,
 	volleyball,
 	handball,
+	icehockey,
 	hockey,
 };
 
@@ -373,7 +458,14 @@ function Pitch({ pitch }: { pitch: PitchSettings }) {
 						height={shown.h}
 						fill={colors.outside}
 					/>
-					<rect x={0} y={0} width={L} height={W} fill={colors.floor} />
+					<rect
+						x={0}
+						y={0}
+						width={L}
+						height={W}
+						rx={colors.corner}
+						fill={colors.floor}
+					/>
 					{colors.stripes && (
 						<g fill="#000" fillOpacity={0.07}>
 							{Array.from({ length: STRIPE_COUNT / 2 }, (_, i) => (
@@ -394,7 +486,7 @@ function Pitch({ pitch }: { pitch: PitchSettings }) {
 						strokeOpacity={colors.lineOpacity ?? 0.85}
 						strokeWidth={lw}
 					>
-						<rect x={0} y={0} width={L} height={W} />
+						<rect x={0} y={0} width={L} height={W} rx={colors.corner} />
 						{MARKINGS[pitch.sport]({ L, W, lw, colors })}
 					</g>
 				</g>

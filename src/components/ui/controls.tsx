@@ -50,8 +50,19 @@ interface SwatchesProps {
 	value: string | null;
 	colors: readonly string[];
 	onChange: (color: string) => void;
-	/** Show a native colour picker after the swatches for any other colour. */
+	/** Show a colour picker after the swatches for any other colour (on unless turned off). */
 	custom?: boolean;
+	/** What the picker opens on when the selection has mixed colours. */
+	current?: string;
+}
+
+/** The picker only takes #RRGGBB: expand #RGB and drop any transparency. */
+function toHex6(color: string): string {
+	const hex = color.trim().replace(/^#/, "");
+	if (/^[0-9a-f]{3}$/i.test(hex))
+		return `#${[...hex].map((c) => c + c).join("")}`.toLowerCase();
+	if (/^[0-9a-f]{6}([0-9a-f]{2})?$/i.test(hex)) return `#${hex.slice(0, 6)}`.toLowerCase();
+	return "#ffffff";
 }
 
 export function Swatches({
@@ -59,7 +70,8 @@ export function Swatches({
 	value,
 	colors,
 	onChange,
-	custom = false,
+	custom = true,
+	current,
 }: SwatchesProps) {
 	const id = useId();
 	const isCustom =
@@ -94,7 +106,8 @@ export function Swatches({
 						<span className="visually-hidden">Other colour</span>
 						<input
 							type="color"
-							value={isCustom ? value! : "#ffffff"}
+							// The picker opens on the colour in use (e.g. the team's blue), not white.
+							value={toHex6(value ?? current ?? "#ffffff")}
 							onChange={(e) => onChange(e.target.value.toUpperCase())}
 						/>
 					</label>

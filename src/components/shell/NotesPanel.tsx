@@ -6,6 +6,7 @@ import { allFolders, useLibrary } from "../../state/LibraryContext";
 import { Icon } from "../Icon";
 import { BoardInput, BoardTextarea, Section } from "../ui/fields";
 import StagePicker from "../ui/StagePicker";
+import { truncate } from "../../utils/text";
 
 const DETAIL_FIELDS: {
 	key: keyof DrillNotes;
@@ -48,37 +49,48 @@ function TypeField() {
 	);
 }
 
+/** The folders a board is in: it can be in several, so each one is a chip to tick. */
 function FolderField() {
 	const { state, dispatch } = useEditor();
 	const library = useLibrary();
-	const folder = state.board.meta.folder;
+	const current = state.board.meta.folders;
 	const folders = allFolders(library.folders, [
 		...library.boards,
 		...library.sessions,
+		state.board,
 	]);
-	const options =
-		folder && !folders.includes(folder) ? [...folders, folder] : folders;
+	const toggle = (folder: string) =>
+		dispatch({
+			type: "updateMeta",
+			patch: {
+				folders: current.includes(folder)
+					? current.filter((f) => f !== folder)
+					: [...current, folder],
+			},
+		});
 
 	return (
 		<div className="field">
-			<label className="field__label" htmlFor="board-folder">
-				Folder
-			</label>
-			<select
-				id="board-folder"
-				className="field__input"
-				value={folder}
-				onChange={(e) =>
-					dispatch({ type: "updateMeta", patch: { folder: e.target.value } })
-				}
-			>
-				<option value="">No folder</option>
-				{options.map((f) => (
-					<option key={f} value={f}>
-						{f}
-					</option>
-				))}
-			</select>
+			<span className="field__label" id="board-folders">
+				Folders
+			</span>
+			{folders.length ? (
+				<div className="filter-chips" role="group" aria-labelledby="board-folders">
+					{folders.map((f) => (
+						<button
+							key={f}
+							type="button"
+							className={`filter-chip${current.includes(f) ? " is-active" : ""}`}
+							aria-pressed={current.includes(f)}
+							onClick={() => toggle(f)}
+						>
+							{truncate(f, 30)}
+						</button>
+					))}
+				</div>
+			) : (
+				<p className="muted small">No folders yet. Make one in the library.</p>
+			)}
 		</div>
 	);
 }

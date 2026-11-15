@@ -1,0 +1,21 @@
+{
+	"name": "Dune",
+	"order": 3,
+	"mode": "dark",
+	"accent": "#FF8A1F",
+	"secondary": "#2B8CFF",
+	"effects": ["spice"],
+	"tokens": {
+		"bg": "#1A110A",
+		"surface": "#23170E",
+		"sunken": "#130C07",
+		"raised": "#2E1F13",
+		"hover": "#38271A",
+		"border": "#3D2A1B",
+		"border-strong": "#5F452F",
+		"text": "#F6EAD8",
+		"text-muted": "#BDA184",
+		"board-bg": "#130C07",
+		"danger": "#FF6F5E"
+	}
+}

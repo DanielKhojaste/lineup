@@ -40,6 +40,7 @@ import {
 	ZoneDrawing,
 } from "../../model/types";
 import { useEditor } from "../../state/EditorContext";
+import { boxPicksDrawing, boxPicksMarker } from "./boxSelect";
 import { usePlayback } from "../../state/PlaybackContext";
 import AnimationBar from "./AnimationBar";
 import { PlaceTool, selectedDrawings } from "../../state/editor";
@@ -806,11 +807,14 @@ export default function Board() {
 				];
 				const inside = ([x, y]: Point) =>
 					x >= x1 && x <= x2 && y >= y1 && y <= y2;
+				const picked = { x1, y1, x2, y2 };
 				const ids = [
 					...board.drawings
-						.filter((d) => drawingPoints(d).every(inside))
+						.filter((d) => boxPicksDrawing(d, picked))
 						.map((d) => d.id),
-					...shownNodes.filter((n) => inside([n.x, n.y])).map((n) => n.id),
+					...shownNodes
+						.filter((n) => boxPicksMarker(n, picked, board))
+						.map((n) => n.id),
 				];
 				dispatch({
 					type: "select",

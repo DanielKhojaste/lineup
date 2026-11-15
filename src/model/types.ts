@@ -176,8 +176,8 @@ export interface BoardMeta {
 	title: string;
 	type: BoardType;
 	tags: string[];
-	/** Library folder name; empty when the board isn't in a folder. */
-	folder: string;
+	/** Library folders it's in (none, one or several). */
+	folders: string[];
 	/** True for a board that came from someone else's file (Import, or the drills inside a session file). */
 	imported?: boolean;
 	createdAt: string;

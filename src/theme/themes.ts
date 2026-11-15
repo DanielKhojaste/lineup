@@ -10,53 +10,110 @@ export interface ThemeSettings {
 	secondary: string;
 }
 
+/** How tags and topics look: filled with the secondary, or a soft wash with a border in it. */
+export type ChipStyle = "filled" | "outline";
+
 export interface ThemePreset extends ThemeSettings {
 	name: string;
 	/** Colours set by hand in the theme's file, replacing the ones made from it. */
 	tokens?: Record<string, string>;
+	/** The same theme in the other mode (e.g. Amber Night and Amber Day). */
+	pair?: string;
+	chips?: ChipStyle;
+	/**
+	 * Moving backgrounds the theme comes with (Dune's drifting spice, say).
+	 * The first is the one shown until the coach picks another.
+	 */
+	effects?: ThemeEffect[];
 }
 
-/** What a file in `src/theme/presets/` holds. */
-interface PresetFile {
+/** Every moving background there is; drawn by `effects/`. */
+export const THEME_EFFECTS = ["spice", "desert-night"] as const;
+export type ThemeEffect = (typeof THEME_EFFECTS)[number];
+
+export function isThemeEffect(value: unknown): value is ThemeEffect {
+	return THEME_EFFECTS.includes(value as ThemeEffect);
+}
+
+/**
+ * The moving background to show for a theme: the one picked for it in
+ * Settings, else its first. Null when it has none or it's turned off.
+ */
+export function chosenEffect(
+	theme: Pick<ThemePreset, "preset" | "effects"> | undefined,
+	choices: Record<string, string>,
+): ThemeEffect | null {
+	const effects = theme?.effects ?? [];
+	if (!theme || !effects.length) return null;
+	const choice = choices[theme.preset];
+	if (choice === "off") return null;
+	return effects.find((e) => e === choice) ?? effects[0];
+}
+
+/** What a theme file holds: a file in `src/theme/presets/`, or a `.lineup-theme` file. */
+export interface ThemeFile {
 	name?: unknown;
 	order?: unknown;
 	mode?: unknown;
 	accent?: unknown;
 	secondary?: unknown;
 	tokens?: unknown;
+	pair?: unknown;
+	chips?: unknown;
+	effects?: unknown;
+	/** The old way of naming one effect: `"effect": "spice"`. */
+	effect?: unknown;
+}
+
+function effectsFrom(raw: ThemeFile): { effects?: ThemeEffect[] } {
+	const list = Array.isArray(raw.effects) ? raw.effects : raw.effect ? [raw.effect] : [];
+	const effects = [...new Set(list.filter(isThemeEffect))];
+	return effects.length ? { effects } : {};
+}
+
+/** A theme from a file's contents, or null when the file doesn't hold one. */
+export function themeFromFile(raw: ThemeFile, id: string): ThemePreset | null {
+	if (
+		!raw ||
+		typeof raw !== "object" ||
+		typeof raw.name !== "string" ||
+		!raw.name.trim() ||
+		typeof raw.accent !== "string" ||
+		typeof raw.secondary !== "string" ||
+		!isHexColor(raw.accent) ||
+		!isHexColor(raw.secondary)
+	)
+		return null;
+	const tokens: Record<string, string> = {};
+	if (raw.tokens && typeof raw.tokens === "object")
+		for (const [key, value] of Object.entries(raw.tokens))
+			// Only plain colours: a theme file can't slip anything else into the CSS.
+			if (typeof value === "string" && /^(#[0-9a-f]{3,8}|rgba?\([\d\s.,%]+\)|transparent)$/i.test(value.trim()))
+				tokens[key] = value.trim();
+	return {
+		preset: id,
+		name: raw.name.trim().slice(0, 40),
+		mode: raw.mode === "light" ? "light" : "dark",
+		accent: normalizeHex(raw.accent),
+		secondary: normalizeHex(raw.secondary),
+		...(Object.keys(tokens).length ? { tokens } : {}),
+		...(typeof raw.pair === "string" ? { pair: raw.pair } : {}),
+		...(raw.chips === "outline" ? { chips: "outline" as const } : {}),
+		...effectsFrom(raw),
+	};
 }
 
 /** Turn the theme files into presets, in their `order`. A broken file is skipped. */
 export function presetsFromFiles(
-	files: Record<string, PresetFile | { default: PresetFile }>,
+	files: Record<string, ThemeFile | { default: ThemeFile }>,
 ): ThemePreset[] {
 	const presets: { order: number; preset: ThemePreset }[] = [];
 	for (const [path, module] of Object.entries(files)) {
-		const raw = ("default" in module ? module.default : module) as PresetFile;
+		const raw = ("default" in module ? module.default : module) as ThemeFile;
 		const id = path.split("/").pop()!.replace(/\.json$/, "");
-		if (
-			typeof raw.name !== "string" ||
-			typeof raw.accent !== "string" ||
-			typeof raw.secondary !== "string" ||
-			!isHexColor(raw.accent) ||
-			!isHexColor(raw.secondary)
-		)
-			continue;
-		const tokens: Record<string, string> = {};
-		if (raw.tokens && typeof raw.tokens === "object")
-			for (const [key, value] of Object.entries(raw.tokens))
-				if (typeof value === "string" && value.trim()) tokens[key] = value.trim();
-		presets.push({
-			order: typeof raw.order === "number" ? raw.order : 999,
-			preset: {
-				preset: id,
-				name: raw.name,
-				mode: raw.mode === "light" ? "light" : "dark",
-				accent: normalizeHex(raw.accent),
-				secondary: normalizeHex(raw.secondary),
-				...(Object.keys(tokens).length ? { tokens } : {}),
-			},
-		});
+		const preset = themeFromFile(raw, id);
+		if (preset)
+			presets.push({ order: typeof raw.order === "number" ? raw.order : 999, preset });
 	}
 	return presets
 		.sort((a, b) => a.order - b.order || a.preset.name.localeCompare(b.preset.name))
@@ -65,12 +122,28 @@ export function presetsFromFiles(
 
 /** The themes in `src/theme/presets/`, one file each. */
 export const THEME_PRESETS: ThemePreset[] = presetsFromFiles(
-	import.meta.glob<PresetFile>("./presets/*.json", { eager: true, import: "default" }),
+	import.meta.glob<ThemeFile>("./presets/*.json", { eager: true, import: "default" }),
 );
 
 /** The preset with this id, if there is one. */
 export function findPreset(id: string): ThemePreset | undefined {
 	return THEME_PRESETS.find((p) => p.preset === id);
+}
+
+/**
+ * The same theme in the other mode: the one its file names as `pair`, or one
+ * with the same name (Violet dark and Violet light).
+ */
+export function pairOf(
+	theme: ThemePreset,
+	themes: ThemePreset[] = THEME_PRESETS,
+): ThemePreset | undefined {
+	const other = (t: ThemePreset) => t.mode !== theme.mode;
+	return (
+		(theme.pair ? themes.find((t) => t.preset === theme.pair && other(t)) : undefined) ??
+		themes.find((t) => t.pair === theme.preset && other(t)) ??
+		themes.find((t) => t.name === theme.name && other(t) && t.preset !== theme.preset)
+	);
 }
 
 const FALLBACK_THEME: ThemeSettings = {
@@ -124,10 +197,13 @@ const BASE: Record<ThemeMode, Record<string, string>> = {
  * against the panels (like a deep purple) is mixed with white until it reads;
  * light themes use it as it is.
  */
-export function shownSecondary(secondary: string, mode: ThemeMode): string {
+export function shownSecondary(
+	secondary: string,
+	mode: ThemeMode,
+	surface = BASE[mode].surface,
+): string {
 	const color = normalizeHex(secondary);
 	if (mode !== "dark") return color;
-	const surface = BASE.dark.surface;
 	for (let amount = 0; amount <= 0.8; amount += 0.05) {
 		const lifted = amount === 0 ? color : mix(color, "#FFFFFF", amount);
 		if (contrast(lifted, surface) >= 3) return lifted;
@@ -137,47 +213,63 @@ export function shownSecondary(secondary: string, mode: ThemeMode): string {
 
 /**
  * Turn theme settings into CSS custom properties (without the leading `--`).
- * A preset's own `tokens` (from its file) replace the colours made here.
+ * `extras` are a theme file's own settings: hand-set `tokens` replace the
+ * colours made here, and `chips` picks how tags and topics look.
  */
 export function themeTokens(
 	settings: ThemeSettings,
-	overrides: Record<string, string> | undefined = settings.preset === "custom"
+	extras: Pick<ThemePreset, "tokens" | "chips"> | undefined = settings.preset === "custom"
 		? undefined
-		: findPreset(settings.preset)?.tokens,
+		: findPreset(settings.preset),
 ): Record<string, string> {
-	const base = BASE[settings.mode];
+	// A theme file's own backgrounds and text (Dune's sand, say) come first, so
+	// every colour made below is made from them.
+	const base = { ...BASE[settings.mode] };
+	for (const key of Object.keys(base))
+		if (extras?.tokens?.[key] && isHexColor(extras.tokens[key]))
+			base[key] = normalizeHex(extras.tokens[key]);
 	const accent = normalizeHex(settings.accent);
-	const secondary = shownSecondary(settings.secondary, settings.mode);
 	const surface = base.surface;
+	const secondary = shownSecondary(settings.secondary, settings.mode, surface);
+	const dark = settings.mode === "dark";
 
-	// Text drawn in the accent colour must stay readable on panels; when it
-	// would not be (e.g. amber on white), fall back to a darker/lighter mix.
-	const towardsText = (color: string) => {
-		if (contrast(color, surface) >= 3) return color;
-		const mixed = mix(color, base.text, 0.45);
-		return contrast(mixed, surface) >= 3 ? mixed : base.text;
+	// Text drawn in a theme colour (links, tabs, "Warm-up 1") must be easy to
+	// read on panels: when the colour itself isn't (amber on white, a deep green
+	// on dark), it's mixed towards the text colour until it is.
+	const towardsText = (color: string, on = surface) => {
+		for (let amount = 0; amount <= 1; amount += 0.1) {
+			const mixed = amount === 0 ? color : mix(color, base.text, amount);
+			if (contrast(mixed, on) >= 4.5) return mixed;
+		}
+		return base.text;
 	};
+
+	const outline = extras?.chips === "outline";
+	const chipBg = outline
+		? mix(surface, secondary, dark ? 0.22 : 0.1)
+		: dark
+			? secondary
+			: mix(surface, secondary, 0.12);
 
 	return {
 		...base,
 		accent,
 		"on-accent": readableOn(accent),
 		"accent-text": towardsText(accent),
-		"accent-soft": mix(surface, accent, settings.mode === "dark" ? 0.16 : 0.14),
+		"accent-soft": mix(surface, accent, dark ? 0.16 : 0.14),
 		secondary,
 		"on-secondary": readableOn(secondary),
 		"secondary-text": towardsText(secondary),
-		"secondary-soft": mix(
-			surface,
-			secondary,
-			settings.mode === "dark" ? 0.28 : 0.12,
-		),
-		"chip-bg":
-			settings.mode === "dark" ? secondary : mix(surface, secondary, 0.12),
-		"chip-text":
-			settings.mode === "dark" ? readableOn(secondary) : towardsText(secondary),
+		"secondary-soft": mix(surface, secondary, dark ? 0.28 : 0.12),
+		"chip-bg": chipBg,
+		"chip-text": outline
+			? base.text
+			: dark
+				? readableOn(secondary)
+				: towardsText(secondary, chipBg),
+		"chip-border": outline ? secondary : "transparent",
 		focus: accent,
-		...overrides,
+		...extras?.tokens,
 	};
 }
 

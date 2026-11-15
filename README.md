@@ -26,7 +26,7 @@ Everything is stored as files on your computer, and the app works without an acc
 
 ### Any team sport
 
-- Soccer, futsal, basketball, volleyball, handball and field hockey, each drawn to scale with its own markings
+- Soccer, futsal, basketball, volleyball, handball, ice hockey and field hockey, each drawn to scale with its own markings
 - A full or half field for every sport, picked in the **New board** window; set a default sport so new boards start on it
 - Change a board's sport or switch between full and half in its settings
 - The ball and goals match the sport, and players and equipment can be drawn smaller or bigger
@@ -133,6 +133,10 @@ npm run tauri dev
 ```bash
 npm test
 ```
+
+### Customizing
+
+[`docs/customizing.md`](docs/customizing.md) says where to tune marker sizes, the selection box, themes, text limits, sports and shortcuts.
 
 ### Version
 

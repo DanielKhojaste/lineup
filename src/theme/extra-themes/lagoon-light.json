@@ -1,0 +1,9 @@
+{
+	"name": "Lagoon",
+	"order": 9,
+	"mode": "light",
+	"accent": "#10BFA5",
+	"secondary": "#E8604C",
+	"pair": "lagoon",
+	"tokens": {}
+}

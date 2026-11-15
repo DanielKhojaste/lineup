@@ -1,0 +1,20 @@
+{
+	"name": "Giedi Prime",
+	"order": 6,
+	"mode": "dark",
+	"accent": "#ECECEC",
+	"secondary": "#B3261E",
+	"tokens": {
+		"bg": "#080808",
+		"surface": "#111111",
+		"sunken": "#050505",
+		"raised": "#1A1A1A",
+		"hover": "#232323",
+		"border": "#262626",
+		"border-strong": "#444444",
+		"text": "#F2F2F2",
+		"text-muted": "#9A9A9A",
+		"board-bg": "#050505",
+		"danger": "#FF5A4F"
+	}
+}
