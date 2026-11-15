@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
 	addDays,
-	layOutSessions,
+	layOutWeeks,
 	parseISODate,
 	startOfWeek,
 	toISODate,
@@ -30,7 +30,7 @@ export default function PlanToCalendarDialog({
 	plan: Plan;
 	open: boolean;
 	onClose: () => void;
-	onConfirm: (entries: ReturnType<typeof layOutSessions>, firstDate: string) => void;
+	onConfirm: (entries: ReturnType<typeof layOutWeeks>, firstDate: string) => void;
 }) {
 	// Next Monday by default.
 	const [start, setStart] = useState(() =>
@@ -40,7 +40,8 @@ export default function PlanToCalendarDialog({
 	const [time, setTime] = useState("");
 	const [team, setTeam] = useState(plan.team);
 	const sessionIds = planSessionIds(plan);
-	const entries = layOutSessions(sessionIds, start, days, {
+	// Week by week: each week's sessions on that week's training days.
+	const entries = layOutWeeks(plan.topics.map((week) => week.sessionIds), start, days, {
 		time: time || null,
 		team,
 		planId: plan.id,
@@ -50,7 +51,7 @@ export default function PlanToCalendarDialog({
 		entries.length > 0 && parseISODate(entries[entries.length - 1].date);
 
 	return (
-		<Modal open={open} title="Put the plan on the calendar" onClose={onClose}>
+		<Modal open={open} title="Add the plan to the calendar" onClose={onClose}>
 			<form
 				className="dialog__section"
 				onSubmit={(e) => {
@@ -62,7 +63,7 @@ export default function PlanToCalendarDialog({
 			>
 				<div className="field-grid">
 					<label className="field">
-						<span className="field__label">Starting from</span>
+						<span className="field__label">Week 1 starts</span>
 						<input
 							className="field__input"
 							type="date"
@@ -119,7 +120,7 @@ export default function PlanToCalendarDialog({
 						: days.length === 0
 						  ? "Pick at least one training day."
 						  : first && last
-						    ? `${sessionIds.length} session${sessionIds.length === 1 ? "" : "s"}, from ${first.toLocaleDateString(undefined, LONG_DATE)} to ${last.toLocaleDateString(undefined, LONG_DATE)}.`
+						    ? `${plan.topics.length} week${plan.topics.length === 1 ? "" : "s"}, ${sessionIds.length} session${sessionIds.length === 1 ? "" : "s"}, from ${first.toLocaleDateString(undefined, LONG_DATE)} to ${last.toLocaleDateString(undefined, LONG_DATE)}.`
 						    : "Pick a start date."}
 				</p>
 				<div className="dialog__actions">
@@ -131,7 +132,7 @@ export default function PlanToCalendarDialog({
 						className="button button--primary"
 						disabled={!entries.length}
 					>
-						Put on calendar
+						Add to calendar
 					</button>
 				</div>
 			</form>

@@ -3820,6 +3820,17 @@ fieldset.field {
 	gap: 10px;
 }
 
+.plan-topic__week {
+	flex-shrink: 0;
+	min-width: 64px;
+	font-weight: 700;
+	color: var(--accent-text);
+}
+
+.plan-topic__add-notes {
+	font-size: 12px;
+}
+
 .plan-topic__number {
 	display: grid;
 	place-items: center;
@@ -4055,7 +4066,17 @@ input.plan-topic__title {
 }
 
 .calendar__entry:hover {
-	background: var(--hover);
+	/* Tinted with the theme's colour, so it stands out from the day's own hover. */
+	background: var(--accent-soft);
+}
+
+/* Pointing at a session highlights the session, not the day around it. */
+.calendar__day:has(.calendar__entry:hover) {
+	background: var(--surface);
+}
+
+.calendar__day.is-outside:has(.calendar__entry:hover) {
+	background: var(--sunken);
 }
 
 .calendar__entry--done {
@@ -4381,4 +4402,14 @@ input.plan-topic__title {
 .session-preview__rest h2 {
 	margin: 0;
 	color: var(--text);
+}
+
+/* Native dropdown lists in the theme's colours, so every choice can be read. */
+option {
+	background: var(--surface);
+	color: var(--text);
+}
+
+option:disabled {
+	color: var(--text-muted);
 }

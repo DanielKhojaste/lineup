@@ -93,7 +93,7 @@ function EntryDialog({
 							});
 						}}
 					>
-						<option value="" disabled>
+						<option value="" disabled hidden>
 							Pick a session…
 						</option>
 						{sorted.map((s) => (
@@ -229,7 +229,7 @@ function PickPlanDialog({
 	onClose: () => void;
 }) {
 	return (
-		<Modal open title="Put a plan on the calendar" onClose={onClose}>
+		<Modal open title="Add a plan to the calendar" onClose={onClose}>
 			<div className="dialog__section">
 				{plans.length === 0 ? (
 					<p className="muted">No plans yet. Make one in the library under Plans.</p>
@@ -445,7 +445,7 @@ export default function Calendar() {
 				)}
 				<button type="button" className="button" onClick={() => setPickPlan(true)}>
 					<Icon name="plan" size={16} />
-					Put a plan on it
+					Add a plan
 				</button>
 				<button type="button" className="button button--primary" onClick={() => newEntry(today)}>
 					<Icon name="plus" size={16} />
@@ -512,7 +512,7 @@ export default function Calendar() {
 										if ((e.target as Element).closest(".calendar__entry")) return;
 										openMenu(e, [
 											{ label: "Add a session here…", onSelect: () => newEntry(iso) },
-											{ label: "Put a plan on the calendar…", onSelect: () => setPickPlan(true) },
+											{ label: "Add a plan…", onSelect: () => setPickPlan(true) },
 										]);
 									}}
 								>
@@ -555,7 +555,7 @@ export default function Calendar() {
 					{upcoming.length ? (
 						<ul>{upcoming.map(listItem)}</ul>
 					) : (
-						<p className="muted small">Nothing planned. Add a session, or put a plan on the calendar.</p>
+						<p className="muted small">Nothing planned. Add a session or a plan.</p>
 					)}
 					<h2>Recently run</h2>
 					{recent.length ? (

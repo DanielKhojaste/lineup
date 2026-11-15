@@ -130,6 +130,44 @@ export function layOutSessions(
 	return entries;
 }
 
+/**
+ * A plan's weeks on the calendar: week 1's sessions on the training days of
+ * the week the plan starts (from the start date on), week 2's on the next
+ * week's, and so on. An empty week leaves its week empty. A week with more
+ * sessions than training days puts the rest on its last training day.
+ */
+export function layOutWeeks(
+	weeks: string[][],
+	start: string,
+	weekdays: number[],
+	options: { time?: string | null; team?: string; planId?: string | null } = {},
+): CalendarEntry[] {
+	const from = parseISODate(start);
+	const days = [...new Set(weekdays)].sort((a, b) => a - b);
+	if (!from || days.length === 0) return [];
+	const firstMonday = startOfWeek(from);
+	const entries: CalendarEntry[] = [];
+	weeks.forEach((sessionIds, week) => {
+		const monday = addDays(firstMonday, week * 7);
+		const dates = days
+			.map((d) => addDays(monday, d))
+			// The first week starts on the start date, not before it.
+			.filter((date) => date >= from);
+		if (!dates.length) return;
+		sessionIds.forEach((sessionId, i) => {
+			const date = dates[Math.min(i, dates.length - 1)];
+			entries.push(
+				createEntry(sessionId, toISODate(date), {
+					time: options.time ?? null,
+					team: options.team ?? "",
+					planId: options.planId ?? null,
+				}),
+			);
+		});
+	});
+	return entries;
+}
+
 /** When each session was last run (the latest entry marked done), by session id. */
 export function lastRunBySession(entries: CalendarEntry[]): Map<string, string> {
 	const last = new Map<string, string>();

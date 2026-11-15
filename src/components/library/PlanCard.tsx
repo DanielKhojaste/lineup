@@ -6,8 +6,8 @@ import { ContextMenuEntry, useContextMenu } from "../ui/ContextMenu";
 import CardMenuButton from "./CardMenuButton";
 
 /**
- * A plan in the library: its topics in order (with how many sessions each
- * has) where a board card has its picture, then its title and details.
+ * A plan in the library: its weeks in order (with each one's topic and how
+ * many sessions it has) where a board card has its picture, then its title and details.
  */
 export default function PlanCard({
 	plan,
@@ -23,7 +23,7 @@ export default function PlanCard({
 	const details = [
 		plan.team,
 		plan.sport && SPORT_INFO[plan.sport].name,
-		`${plan.topics.length} topic${plan.topics.length === 1 ? "" : "s"}`,
+		`${plan.topics.length} week${plan.topics.length === 1 ? "" : "s"}`,
 		`${sessions} session${sessions === 1 ? "" : "s"}`,
 		`Edited ${relativeTime(plan.meta.updatedAt)}`,
 	].filter(Boolean);
@@ -42,12 +42,15 @@ export default function PlanCard({
 					{topics.map((topic, i) => (
 						<span key={topic.id} className="plan-card__topic">
 							<span className="plan-card__number">{i + 1}</span>
-							<span className="plan-card__name">{topic.title || "Untitled topic"}</span>
+							<span className="plan-card__name">
+								Week {i + 1}
+								{topic.title && <span className="muted"> · {topic.title}</span>}
+							</span>
 							<span className="plan-card__count">{topic.sessionIds.length}</span>
 						</span>
 					))}
 					{plan.topics.length > topics.length && (
-						<span className="plan-card__more">+{plan.topics.length - topics.length} more</span>
+						<span className="plan-card__more">+{plan.topics.length - topics.length} more weeks</span>
 					)}
 				</span>
 				<span className="board-card__title">

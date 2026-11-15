@@ -1265,9 +1265,9 @@ export default function Library() {
 							) : (
 								<>
 									<p>
-										No plans yet. A plan is a block of training (a season, a month)
-										as topics in order, each with its sessions. Lay it out on the
-										calendar on your training days.
+										No plans yet. A plan is a block of training, like a season,
+										week by week: each week has its sessions and can have a topic.
+										Add it to the calendar on your training days.
 									</p>
 									<button type="button" className="button button--primary" onClick={newPlan}>
 										<Icon name="plus" size={16} />

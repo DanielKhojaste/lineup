@@ -126,3 +126,20 @@ describe("describing days", () => {
 		expect(last.get("b")).toBe("2026-03-10");
 	});
 });
+
+describe("a plan's weeks on the calendar", () => {
+	it("puts each week's sessions on that week's training days", async () => {
+		const { layOutWeeks } = await import("./calendar");
+		// Starts Wednesday 4 March 2026; training on Tuesdays (1) and Thursdays (3).
+		const entries = layOutWeeks([["a", "b"], [], ["c", "d", "e"]], "2026-03-04", [1, 3]);
+		expect(entries.map((e) => [e.sessionId, e.date])).toEqual([
+			// Week 1: Tuesday 3 March is before the start, so both go on Thursday.
+			["a", "2026-03-05"],
+			["b", "2026-03-05"],
+			// Week 2 is empty. Week 3: Tuesday, Thursday, and the extra on Thursday.
+			["c", "2026-03-17"],
+			["d", "2026-03-19"],
+			["e", "2026-03-19"],
+		]);
+	});
+});

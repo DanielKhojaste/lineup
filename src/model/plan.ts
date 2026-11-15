@@ -19,9 +19,13 @@ import { isSport, Sport } from "./sports";
 export const PLAN_SCHEMA_VERSION = 1;
 export const PLAN_EXTENSION = "lineup-plan";
 
+/**
+ * One week of a plan, with its sessions in order. (Stored as a "topic": each
+ * week can have one, like "Attacking transition", but doesn't need it.)
+ */
 export interface PlanTopic {
 	id: string;
-	/** E.g. "Attacking transition". */
+	/** The week's topic, e.g. "Attacking transition"; empty when it has none. */
 	title: string;
 	notes: string;
 	/** Sessions in the order they're meant to run. The same session can appear more than once. */
@@ -65,7 +69,12 @@ export function createPlan(title = "Untitled plan"): Plan {
 	};
 }
 
-/** Every session of a plan in running order (topic by topic). */
+/** "Week 2", or "Week 2 · Pressing" when the week has a topic. */
+export function weekLabel(week: number, topic: string): string {
+	return topic.trim() ? `Week ${week} · ${topic.trim()}` : `Week ${week}`;
+}
+
+/** Every session of a plan in running order (week by week). */
 export function planSessionIds(plan: Plan): string[] {
 	return plan.topics.flatMap((t) => t.sessionIds);
 }

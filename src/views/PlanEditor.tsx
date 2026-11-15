@@ -15,7 +15,7 @@ import PlanToCalendarDialog from "../components/plan/PlanToCalendarDialog";
 import { ContextMenuEntry, isTextField, useContextMenu } from "../components/ui/ContextMenu";
 import { BoardInput, BoardTextarea, FieldGestureContext } from "../components/ui/fields";
 import { describeDay, lastRunBySession } from "../model/calendar";
-import { Plan, planSessionIds } from "../model/plan";
+import { Plan, planSessionIds, weekLabel } from "../model/plan";
 import { formatMinutes, Session, totalMinutes } from "../model/session";
 import { SPORT_INFO, SPORTS } from "../model/sports";
 import { canUndoRedo, createHistory } from "../state/history";
@@ -78,6 +78,7 @@ function dropTarget(clientX: number, clientY: number, dragged: Element | null) {
 
 function TopicCard({ topicIndex, number }: { topicIndex: number; number: number }) {
 	const { state, dispatch, activeTopic, setActiveTopic } = usePlan();
+	const [notesOpen, setNotesOpen] = useState(false);
 	const library = useLibrary();
 	const navigate = useNavigate();
 	const { openMenu } = useContextMenu();
@@ -155,12 +156,12 @@ function TopicCard({ topicIndex, number }: { topicIndex: number; number: number 
 				}),
 		},
 		{
-			label: "Move to topic",
+			label: "Move to week",
 			disabled: plan.topics.length < 2,
 			submenu: plan.topics
 				.filter((t) => t.id !== topic.id)
 				.map((t, i) => ({
-					label: t.title || `Topic ${plan.topics.indexOf(t) + 1 || i + 1}`,
+					label: weekLabel(plan.topics.indexOf(t) + 1 || i + 1, t.title),
 					onSelect: () =>
 						dispatch({
 							type: "moveSession",
@@ -179,18 +180,18 @@ function TopicCard({ topicIndex, number }: { topicIndex: number; number: number 
 
 	const topicMenu: ContextMenuEntry[] = [
 		{
-			label: "Move topic up",
+			label: "Move week up",
 			disabled: topicIndex === 0,
 			onSelect: () => dispatch({ type: "moveTopic", id: topic.id, index: topicIndex - 1 }),
 		},
 		{
-			label: "Move topic down",
+			label: "Move week down",
 			disabled: topicIndex === plan.topics.length - 1,
 			onSelect: () => dispatch({ type: "moveTopic", id: topic.id, index: topicIndex + 1 }),
 		},
 		"separator",
 		{
-			label: topic.sessionIds.length ? "Remove topic and its sessions from the plan" : "Remove topic",
+			label: topic.sessionIds.length ? "Remove week and its sessions from the plan" : "Remove week",
 			danger: true,
 			disabled: plan.topics.length === 1,
 			onSelect: () => dispatch({ type: "removeTopic", id: topic.id }),
@@ -202,7 +203,7 @@ function TopicCard({ topicIndex, number }: { topicIndex: number; number: number 
 			className={`plan-topic${activeTopic === topic.id ? " is-active" : ""}`}
 			onPointerDown={() => setActiveTopic(topic.id)}
 			onFocus={() => setActiveTopic(topic.id)}
-			aria-label={topic.title || `Topic ${topicIndex + 1}`}
+			aria-label={weekLabel(topicIndex + 1, topic.title)}
 		>
 			<div
 				className="plan-topic__head"
@@ -211,12 +212,12 @@ function TopicCard({ topicIndex, number }: { topicIndex: number; number: number 
 					openMenu(e, topicMenu);
 				}}
 			>
-				<span className="plan-topic__number mono">{topicIndex + 1}</span>
+				<span className="plan-topic__week">Week {topicIndex + 1}</span>
 				<BoardInput
 					className="plan-topic__title"
-					label={`Topic ${topicIndex + 1}`}
+					label={`Week ${topicIndex + 1} topic`}
 					hideLabel
-					placeholder="Topic, e.g. Attacking transition"
+					placeholder="Topic (optional), e.g. Pressing"
 					maxLength={120}
 					value={topic.title}
 					onValue={(title) => dispatch({ type: "updateTopic", id: topic.id, patch: { title } })}
@@ -224,7 +225,7 @@ function TopicCard({ topicIndex, number }: { topicIndex: number; number: number 
 				<button
 					type="button"
 					className="icon-button icon-button--small"
-					aria-label={`Actions for topic ${topicIndex + 1}`}
+					aria-label={`Actions for week ${topicIndex + 1}`}
 					onClick={(e) => {
 						const r = e.currentTarget.getBoundingClientRect();
 						openMenu({ x: r.right - 200, y: r.bottom + 4 }, topicMenu);
@@ -233,13 +234,19 @@ function TopicCard({ topicIndex, number }: { topicIndex: number; number: number 
 					<Icon name="more" size={16} />
 				</button>
 			</div>
+			{notesOpen || topic.notes ? (
 			<BoardTextarea
-				label="Notes"
-				rows={1}
-				placeholder="What this block works on, how it progresses…"
-				value={topic.notes}
-				onValue={(notes) => dispatch({ type: "updateTopic", id: topic.id, patch: { notes } })}
-			/>
+					label="Notes"
+					rows={1}
+					placeholder="What this block works on, how it progresses…"
+					value={topic.notes}
+					onValue={(notes) => dispatch({ type: "updateTopic", id: topic.id, patch: { notes } })}
+				/>
+			) : (
+				<button type="button" className="link-button plan-topic__add-notes" onClick={() => setNotesOpen(true)}>
+					+ Add notes
+				</button>
+			)}
 			<ol className="plan-topic__sessions" data-topic-list={topic.id}>
 				{topic.sessionIds.map((id, index) => {
 					const session = library.getSession(id);
@@ -254,7 +261,7 @@ function TopicCard({ topicIndex, number }: { topicIndex: number; number: number 
 							<button
 								type="button"
 								className="block__handle"
-								aria-label="Drag to reorder or move to another topic"
+								aria-label="Drag to reorder or move to another week"
 								onPointerDown={(e) => startDrag(e, index)}
 							>
 								<Icon name="grip" size={16} />
@@ -293,7 +300,7 @@ function TopicCard({ topicIndex, number }: { topicIndex: number; number: number 
 				})}
 				{topic.sessionIds.length === 0 && (
 					<li className="plan-topic__empty muted">
-						Add sessions from the panel on the right, or drag one here.
+						No sessions this week. Add them from the panel on the right, or drag one here.
 					</li>
 				)}
 			</ol>
@@ -328,8 +335,8 @@ function SessionPanel() {
 			<div className="drill-picker__head">
 				<h2>Add sessions</h2>
 				<p className="muted small">
-					To {topic?.title ? `“${topic.title}”` : `topic ${plan.topics.indexOf(topic!) + 1}`}. Click a
-					topic to add to it instead.
+					To {weekLabel(plan.topics.indexOf(topic!) + 1, topic?.title ?? "")}. Click another week to
+					add to it instead.
 				</p>
 				<label className="search search--small">
 					<Icon name="search" size={14} />
@@ -349,13 +356,16 @@ function SessionPanel() {
 							plan.meta.folders[0] ?? "",
 							plan.sport || getPreferences().defaultPitch.sport,
 						);
-						// Named after its topic ("Pressing 2"), so it's never an empty session.
+						// Named after its week and topic ("Week 2 Pressing 1"), so it's never an empty session.
 						const count = (topic?.sessionIds.length ?? 0) + 1;
+						const week = plan.topics.indexOf(topic!) + 1;
 						const titled = {
 							...session,
 							meta: {
 								...session.meta,
-								title: topic?.title ? `${topic.title} ${count}` : `Session ${count}`,
+								title: topic?.title
+									? `Week ${week} ${topic.title} ${count}`
+									: `Week ${week} session ${count}`,
 							},
 							header: {
 								...session.header,
@@ -369,7 +379,7 @@ function SessionPanel() {
 					}}
 				>
 					<Icon name="plus" size={14} />
-					New session in this topic
+					New session for this week
 				</button>
 			</div>
 			<ul className="drill-picker__list">
@@ -488,7 +498,7 @@ function PlanLayout() {
 					onClick={() => setCalendarOpen(true)}
 				>
 					<Icon name="calendar" size={16} />
-					Put on calendar
+					Add to calendar
 				</button>
 			</header>
 			<div className="session-editor__body">
@@ -536,9 +546,9 @@ function PlanLayout() {
 					</section>
 
 					<div className="timeline__head">
-						<h2>Topics</h2>
+						<h2>Weeks</h2>
 						<span className="muted">
-							{plan.topics.length} {plan.topics.length === 1 ? "topic" : "topics"} ·{" "}
+							{plan.topics.length} {plan.topics.length === 1 ? "week" : "weeks"} ·{" "}
 							{sessions.length} {sessions.length === 1 ? "session" : "sessions"}
 							{minutes ? ` · ${formatMinutes(minutes)}` : ""}
 						</span>
@@ -555,7 +565,7 @@ function PlanLayout() {
 							onClick={() => dispatch({ type: "addTopic" })}
 						>
 							<Icon name="plus" size={14} />
-							Add topic
+							Add week
 						</button>
 					</div>
 				</main>
