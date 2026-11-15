@@ -103,10 +103,13 @@ describe("theme files", () => {
 			"amber-night",
 			"amber-day",
 			"dune",
-			"dune-modified",
+			"dune-101",
 			"dune-sand",
 			"fremen",
-			"atreides",
+			"fremen-101",
+			"melange",
+			"shai-hulud",
+			"giedi-prime",
 			"lime-studio",
 			"violet",
 			"violet-light",
@@ -175,8 +178,8 @@ describe("themes with their own backgrounds", () => {
 		const { findPreset } = await import("./themes");
 		const dune = findPreset("dune")!;
 		const t = themeTokens(dune, dune);
-		expect(t.surface).toBe("#1A1612");
-		expect(t.bg).toBe("#13100D");
+		expect(t.surface).toBe("#211A13");
+		expect(t.bg).toBe("#18130E");
 		expect(contrast(t["accent-text"], t.surface)).toBeGreaterThanOrEqual(4.5);
 		expect(contrast(t.text, t.surface)).toBeGreaterThanOrEqual(7);
 	});
