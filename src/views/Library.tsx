@@ -546,6 +546,11 @@ export default function Library() {
 	const sessionMenu = (session: Session) => (): ContextMenuEntry[] => [
 		{ label: "Open", onSelect: () => openSession(session.id) },
 		{
+			label: "Preview",
+			disabled: session.blocks.length === 0,
+			onSelect: () => navigate(`/session/${session.id}/preview`),
+		},
+		{
 			label: "Rename…",
 			onSelect: () =>
 				setRenamingDoc({ kind: "session", id: session.id, title: session.meta.title }),

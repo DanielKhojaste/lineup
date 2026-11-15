@@ -147,6 +147,19 @@ function SessionLayout() {
 				<span className="topbar__spacer" />
 				<button
 					type="button"
+					className="button button--small"
+					title="Go through the session drill by drill"
+					disabled={session.blocks.length === 0}
+					onClick={async () => {
+						await flush();
+						navigate(`/session/${session.id}/preview`, { state: from ? { from } : undefined });
+					}}
+				>
+					<Icon name="eye" size={14} />
+					Preview
+				</button>
+				<button
+					type="button"
 					className="icon-button"
 					aria-label="Undo"
 					title="Undo (Ctrl+Z)"

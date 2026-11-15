@@ -6,6 +6,7 @@ const Editor = lazy(() => import("../views/Editor"));
 const SessionEditor = lazy(() => import("../views/SessionEditor"));
 const ThemePreview = lazy(() => import("../views/ThemePreview"));
 const PlanEditor = lazy(() => import("../views/PlanEditor"));
+const SessionPreview = lazy(() => import("../views/SessionPreview"));
 const Calendar = lazy(() => import("../views/Calendar"));
 const NotFound = lazy(() => import("../views/NotFound"));
 
@@ -13,6 +14,7 @@ export const routes: RouteObject[] = [
 	{ path: "/", element: <Library /> },
 	{ path: "/board/:id", element: <Editor /> },
 	{ path: "/session/:id", element: <SessionEditor /> },
+	{ path: "/session/:id/preview", element: <SessionPreview /> },
 	{ path: "/plan/:id", element: <PlanEditor /> },
 	{ path: "/calendar", element: <Calendar /> },
 	{ path: "/themes", element: <ThemePreview /> },
