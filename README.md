@@ -134,6 +134,10 @@ npm run tauri dev
 npm test
 ```
 
+### Customizing
+
+[`docs/customizing.md`](docs/customizing.md) says where to tune marker sizes, the selection box, themes, text limits, sports and shortcuts.
+
 ### Version
 
 The version number lives in [`VERSION`](VERSION). To release, change it there and run `npm run version:sync`, which copies it into `package.json`, `package-lock.json`, `tauri.conf.json` and `Cargo.toml`.
