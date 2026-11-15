@@ -3,8 +3,7 @@
 	"order": 3,
 	"mode": "dark",
 	"accent": "#E07A2E",
-	"secondary": "#3B8FE0",
-	"pair": "dune-light",
+	"secondary": "#2B8CFF",
 	"tokens": {
 		"bg": "#13100D",
 		"surface": "#1A1612",

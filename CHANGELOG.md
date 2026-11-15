@@ -23,7 +23,7 @@ This project adheres to semantic versioning (0.x during early development).
 - **Theme files:** each theme is a file in `src/theme/presets/` that can be edited, with optional hand-set colours; a README there explains them
 - **Your own themes:** save custom colours as a theme with a name, **import** and **export** themes as `.lineup-theme` files (plain text you can share or edit), **rename** them and delete the ones you don't want, in Settings or in the Theme preview. They're listed under "Your themes". Deleting the theme in use goes back to the Lineup theme you used last
 - Save and open windows for exports start in Documents, then wherever you saved that kind of file last (themes remember their own folder)
-- New themes: **Dune**, inspired by Denis Villeneuve's films (spice orange and Fremen blue on Arrakis sand at night and in daylight), with a second version to compare, **Dune Sand** (desert gold and spice); **Touchline dark** and **Violet light**
+- New dark themes inspired by Denis Villeneuve's Dune films, on warm Arrakis-night panels: **Dune** (spice orange and the vivid Fremen blue), **Dune Modified** (a stronger orange and lighter panels, less gloomy), **Dune Sand** (desert gold and spice), **Fremen** (the blue of the eyes of Ibad leading, with sand gold, on sietch-dark greys) and **Atreides** (Paul's world: spice orange with Caladan's sea green). Also **Touchline dark** and **Violet light**
 - Theme files can set their own backgrounds and text colours, and every other colour is made from them
 - The Theme preview's **Show both dark and light themes** shows a theme's dark and light versions side by side, with the one you picked on the left. It only shows for themes that come in both
 - Keyboard shortcuts in Settings are drawn as keyboard keys, one shortcut per row, in groups (Tools, Selecting and moving, Editing, Animation), under a **Keyboard shortcuts** dropdown
@@ -36,7 +36,7 @@ This project adheres to semantic versioning (0.x during early development).
 - The time in file names uses hyphens ("Untitled session (2026-11-03 11-16)"); files named with dots are renamed when the library opens
 - Violet's purple is a little darker and easier on the eyes; Touchline's secondary is a blue instead of orange
 - Text in a theme's colours (links, tabs, "Warm-up 1") is mixed towards the text colour until it's easy to read, in every theme
-- Amber Night's tags and topics are a soft purple wash with a purple border (a theme file can pick filled or outline chips)
+- Amber Night's tags and topics are see-through purple with a bright purple border (a theme file can set its own chip colours, or pick filled or outline chips)
 - Tags and topics have their text centred, with even space on both sides
 - The theme list in Settings is a dropdown with a swatch for each theme: a circle split into its primary and secondary, in a thin ring of its background. The Theme preview uses the same swatches
 - Settings: the default sport and its size are on one row, and the theme buttons say what they do (Preview all themes, Import…, Export…)

@@ -5,6 +5,9 @@
 	"accent": "#FDB20B",
 	"secondary": "#2C0055",
 	"pair": "amber-day",
-	"chips": "outline",
-	"tokens": {}
+	"tokens": {
+		"chip-bg": "rgba(118, 89, 145, 0.35)",
+		"chip-border": "#9E80C8",
+		"chip-text": "#F1EAFB"
+	}
 }

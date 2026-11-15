@@ -1,0 +1,20 @@
+{
+	"name": "Dune Modified",
+	"order": 4,
+	"mode": "dark",
+	"accent": "#FF8A1F",
+	"secondary": "#2B8CFF",
+	"tokens": {
+		"bg": "#18130E",
+		"surface": "#211A13",
+		"sunken": "#120E0A",
+		"raised": "#2B2219",
+		"hover": "#352A1F",
+		"border": "#3A2E22",
+		"border-strong": "#5A4733",
+		"text": "#F5EBDA",
+		"text-muted": "#B9A68B",
+		"board-bg": "#120E0A",
+		"danger": "#FF6F5E"
+	}
+}

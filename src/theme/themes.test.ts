@@ -9,6 +9,20 @@ import {
 	themeTokens,
 } from "./themes";
 
+
+/** A chip's background as it looks on a panel: see-through colours (rgba) are mixed over the surface. */
+function chipBg(t: Record<string, string>): string {
+	const m = t["chip-bg"].match(/^rgba\(\s*(\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\s*\)$/);
+	if (!m) return t["chip-bg"];
+	const [r, g, b, a] = [Number(m[1]), Number(m[2]), Number(m[3]), Number(m[4])];
+	const s = t.surface.replace("#", "");
+	const over = (c: number, i: number) =>
+		Math.round(c * a + parseInt(s.slice(i, i + 2), 16) * (1 - a))
+			.toString(16)
+			.padStart(2, "0");
+	return `#${over(r, 0)}${over(g, 2)}${over(b, 4)}`;
+}
+
 describe("colour helpers", () => {
 	it("normalises hex colours", () => {
 		expect(normalizeHex("fdb")).toBe("#FFDDBB");
@@ -47,7 +61,7 @@ describe("themes", () => {
 				preset.name,
 			).toBeGreaterThanOrEqual(3);
 			expect(
-				contrast(t["chip-text"], t["chip-bg"]),
+				contrast(t["chip-text"], chipBg(t)),
 				preset.name,
 			).toBeGreaterThanOrEqual(4.5);
 			expect(contrast(t.text, t.surface), preset.name).toBeGreaterThanOrEqual(
@@ -89,9 +103,10 @@ describe("theme files", () => {
 			"amber-night",
 			"amber-day",
 			"dune",
-			"dune-light",
+			"dune-modified",
 			"dune-sand",
-			"dune-sand-light",
+			"fremen",
+			"atreides",
 			"lime-studio",
 			"violet",
 			"violet-light",
@@ -122,7 +137,7 @@ describe("theme files", () => {
 		const t = themeTokens({ ...DEFAULT_THEME, mode: "dark" });
 		expect(t.secondary).not.toBe("#2C0055");
 		expect(contrast(t.secondary, t.surface)).toBeGreaterThanOrEqual(3);
-		expect(contrast(t["chip-text"], t["chip-bg"])).toBeGreaterThanOrEqual(4.5);
+		expect(contrast(t["chip-text"], chipBg(t))).toBeGreaterThanOrEqual(4.5);
 		expect(shownSecondary("#2C0055", "light")).toBe("#2C0055");
 		// Already light enough: kept as it is.
 		expect(shownSecondary("#FDB20B", "dark")).toBe("#FDB20B");
@@ -135,7 +150,7 @@ describe("theme pairs, chips and readable text", () => {
 		expect(pairOf(findPreset("amber-night")!)?.preset).toBe("amber-day");
 		expect(pairOf(findPreset("violet-light")!)?.preset).toBe("violet");
 		expect(pairOf(findPreset("touchline")!)?.preset).toBe("touchline-dark");
-		expect(pairOf(findPreset("dune")!)?.preset).toBe("dune-light");
+		expect(pairOf(findPreset("dune")!)).toBeUndefined();
 		expect(pairOf(findPreset("lime-studio")!)).toBeUndefined();
 	});
 
@@ -143,7 +158,7 @@ describe("theme pairs, chips and readable text", () => {
 		for (const preset of THEME_PRESETS) {
 			const t = themeTokens(preset);
 			expect(contrast(t["accent-text"], t.surface)).toBeGreaterThanOrEqual(4.5);
-			expect(contrast(t["chip-text"], t["chip-bg"])).toBeGreaterThanOrEqual(4.5);
+			expect(contrast(t["chip-text"], chipBg(t))).toBeGreaterThanOrEqual(4.5);
 		}
 	});
 
@@ -158,15 +173,26 @@ describe("theme pairs, chips and readable text", () => {
 describe("themes with their own backgrounds", () => {
 	it("makes every colour from the theme's own surface (Dune's sand)", async () => {
 		const { findPreset } = await import("./themes");
-		const dune = findPreset("dune-light")!;
+		const dune = findPreset("dune")!;
 		const t = themeTokens(dune, dune);
-		expect(t.surface).toBe("#F5EDDF");
-		expect(t.bg).toBe("#E9DDC8");
+		expect(t.surface).toBe("#1A1612");
+		expect(t.bg).toBe("#13100D");
 		expect(contrast(t["accent-text"], t.surface)).toBeGreaterThanOrEqual(4.5);
 		expect(contrast(t.text, t.surface)).toBeGreaterThanOrEqual(7);
 	});
 
 	it("keeps Lagoon out of the list", () => {
 		expect(THEME_PRESETS.some((p) => p.name === "Lagoon")).toBe(false);
+	});
+});
+
+describe("Amber Night's see-through topics", () => {
+	it("uses a see-through purple with a bright border, and only in Amber Night", async () => {
+		const { findPreset } = await import("./themes");
+		const night = themeTokens(findPreset("amber-night")!);
+		expect(night["chip-bg"]).toMatch(/^rgba\(/);
+		expect(night["chip-border"]).toBe("#9E80C8");
+		const day = themeTokens(findPreset("amber-day")!);
+		expect(day["chip-bg"]).toMatch(/^#/);
 	});
 });
