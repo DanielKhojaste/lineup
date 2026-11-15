@@ -12,6 +12,7 @@ import {
 } from "../theme/themes";
 import { useTheme } from "../theme/ThemeProvider";
 import { findTheme, useUserThemes } from "../theme/userThemes";
+import ThemeActions from "../components/shell/ThemeActions";
 
 /** CSS custom properties for a theme, scoped to one element. */
 function themeStyle(theme: ThemePreset): CSSProperties {
@@ -423,11 +424,20 @@ export default function ThemePreview() {
 						every theme.
 					</p>
 				</nav>
-				<main className="theme-page__main">
-					{shown.map((t) => (
-						<Specimen key={t.preset} theme={t} />
-					))}
-				</main>
+				<div className="theme-page__content">
+					<div className="theme-page__toolbar">
+						<span className="theme-page__picked">
+							{picked.name}
+							<span className="muted"> · {label(picked)}</span>
+						</span>
+						<ThemeActions theme={picked} onImported={(t) => setPickedId(t.preset)} />
+					</div>
+					<main className="theme-page__main">
+						{shown.map((t) => (
+							<Specimen key={t.preset} theme={t} />
+						))}
+					</main>
+				</div>
 			</div>
 		</div>
 	);

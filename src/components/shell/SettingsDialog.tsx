@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { setPreferences, usePreferences } from "../../state/preferences";
 import { Shortcut, SHORTCUTS } from "../../state/useShortcuts";
-import { exportThemeFile, pickThemeFiles } from "../../storage/files";
 import { isHexColor, normalizeHex } from "../../theme/color";
 import {
 	THEME_PRESETS,
@@ -11,13 +10,8 @@ import {
 	ThemeSettings,
 	themeTokens,
 } from "../../theme/themes";
-import {
-	addUserTheme,
-	findTheme,
-	parseThemeFile,
-	removeUserTheme,
-	useUserThemes,
-} from "../../theme/userThemes";
+import { addUserTheme, findTheme, useUserThemes } from "../../theme/userThemes";
+import ThemeActions from "./ThemeActions";
 import { Keys } from "../ui/Keys";
 import { useTheme } from "../../theme/ThemeProvider";
 import { Icon } from "../Icon";
@@ -113,50 +107,16 @@ export default function SettingsDialog({
 	}, [open]);
 
 	const userThemes = useUserThemes();
-	const [themeNotice, setThemeNotice] = useState<{ text: string; error?: boolean } | null>(
-		null,
-	);
 	const [saveName, setSaveName] = useState("");
 	const current: ThemePreset = findTheme(theme.preset) ?? {
 		...theme,
 		name: "Custom",
-	};
-	const isUserTheme = theme.preset.startsWith("user-");
-
-	const importThemes = async () => {
-		try {
-			const files = await pickThemeFiles();
-			if (!files.length) return;
-			const problems: string[] = [];
-			let last: ThemePreset | undefined;
-			for (const file of files) {
-				try {
-					last = addUserTheme(parseThemeFile(file.text));
-				} catch (error) {
-					problems.push(`${file.name}: ${(error as Error).message}`);
-				}
-			}
-			if (last) setTheme(last);
-			setThemeNotice(
-				problems.length
-					? { text: problems.join(" "), error: true }
-					: {
-							text:
-								files.length === 1
-									? `Added "${last!.name}" to your themes.`
-									: `Added ${files.length} themes to your themes.`,
-						},
-			);
-		} catch (error) {
-			setThemeNotice({ text: `Couldn't import: ${(error as Error).message}`, error: true });
-		}
 	};
 
 	const saveCustom = () => {
 		const saved = addUserTheme({ ...theme, name: saveName || "My theme" });
 		setTheme(saved);
 		setSaveName("");
-		setThemeNotice({ text: `Saved "${saved.name}" to your themes.` });
 	};
 
 	const groups = SHORTCUTS.reduce<Map<Shortcut["group"], Shortcut[]>>((map, s) => {
@@ -194,13 +154,12 @@ export default function SettingsDialog({
 
 				<section className="dialog__section">
 					<h3>New boards</h3>
-					<div className="settings__narrow">
-						<PitchPicker
-							label="Default sport"
-							value={preferences.defaultPitch}
-							onChange={(defaultPitch) => setPreferences({ defaultPitch })}
-						/>
-					</div>
+					<PitchPicker
+						row
+						label="Default sport"
+						value={preferences.defaultPitch}
+						onChange={(defaultPitch) => setPreferences({ defaultPitch })}
+					/>
 					<p className="muted small">
 						New boards start with this sport. You can pick another one in the
 						New board window, or change a board's sport in its settings.
@@ -222,7 +181,6 @@ export default function SettingsDialog({
 								onChange={(e) => {
 									const picked = findTheme(e.target.value);
 									if (picked) setTheme(picked);
-									setThemeNotice(null);
 								}}
 							>
 								<optgroup label="Lineup themes">
@@ -248,52 +206,23 @@ export default function SettingsDialog({
 						</div>
 					</div>
 
-					<div className="settings__actions">
-						<button
-							type="button"
-							className="button button--small"
-							onClick={() => {
-								onClose();
-								navigate("/themes");
-							}}
-						>
-							<Icon name="eye" size={14} />
-							Preview all themes
-						</button>
-						<button type="button" className="button button--small" onClick={importThemes}>
-							<Icon name="upload" size={14} />
-							Import…
-						</button>
-						<button
-							type="button"
-							className="button button--small"
-							title="Save this theme as a .lineup-theme file to share or keep"
-							onClick={() => void exportThemeFile(current).catch(console.error)}
-						>
-							<Icon name="download" size={14} />
-							Export…
-						</button>
-						{isUserTheme && (
+					<ThemeActions
+						theme={current}
+						onImported={setTheme}
+						before={
 							<button
 								type="button"
-								className="button button--small button--danger"
+								className="button button--small"
 								onClick={() => {
-									removeUserTheme(theme.preset);
-									setThemeNotice({ text: `Deleted "${current.name}" from your themes.` });
+									onClose();
+									navigate("/themes");
 								}}
 							>
-								Delete theme
+								<Icon name="eye" size={14} />
+								Preview all themes
 							</button>
-						)}
-					</div>
-					{themeNotice && (
-						<p
-							className={`small${themeNotice.error ? " settings__error" : " muted"}`}
-							role={themeNotice.error ? "alert" : "status"}
-						>
-							{themeNotice.text}
-						</p>
-					)}
+						}
+					/>
 
 					<details className="disclosure">
 						<summary>Customise colours</summary>
@@ -365,7 +294,11 @@ export default function SettingsDialog({
 				</section>
 
 				<section className="dialog__section">
-					<h3>Keyboard shortcuts</h3>
+					<details className="disclosure shortcuts-disclosure">
+						<summary>
+							<h3>Keyboard shortcuts</h3>
+							<span className="muted small">{SHORTCUTS.length} shortcuts</span>
+						</summary>
 					<div className="shortcuts">
 						{[...groups].map(([group, list]) => (
 							<div key={group} className="shortcuts__group">
@@ -383,6 +316,7 @@ export default function SettingsDialog({
 							</div>
 						))}
 					</div>
+					</details>
 				</section>
 			</div>
 		</dialog>

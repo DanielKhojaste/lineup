@@ -7,15 +7,18 @@ export default function PitchPicker({
 	value,
 	onChange,
 	label = "Sport",
+	row = false,
 }: {
 	value: PitchSettings;
 	onChange: (pitch: PitchSettings) => void;
 	label?: string;
+	/** Sport and size side by side on one row (Settings). */
+	row?: boolean;
 }) {
 	const id = useId();
 	const surface = SPORT_INFO[value.sport].surface;
 	return (
-		<div className="pitch-picker">
+		<div className={`pitch-picker${row ? " pitch-picker--row" : ""}`}>
 			<div className="field">
 				<label className="field__label" htmlFor={id}>
 					{label}

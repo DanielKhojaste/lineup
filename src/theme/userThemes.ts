@@ -54,9 +54,11 @@ export function useUserThemes(): ThemePreset[] {
 }
 
 /** A name that isn't taken yet: "My theme", "My theme 2"… */
-function freeName(name: string): string {
+function freeName(name: string, except?: string): string {
 	const taken = new Set(
-		[...THEME_PRESETS, ...current].map((t) => `${t.name.toLowerCase()}|`),
+		[...THEME_PRESETS, ...current]
+			.filter((t) => t.preset !== except)
+			.map((t) => `${t.name.toLowerCase()}|`),
 	);
 	const base = name.trim() || "My theme";
 	if (!taken.has(`${base.toLowerCase()}|`)) return base;
@@ -75,6 +77,15 @@ export function addUserTheme(theme: Omit<ThemePreset, "preset">): ThemePreset {
 	delete saved.pair;
 	write([...current, saved]);
 	return saved;
+}
+
+/** Give one of your themes a new name (made unique, like when saving). */
+export function renameUserTheme(id: string, name: string): ThemePreset | undefined {
+	const theme = current.find((t) => t.preset === id);
+	if (!theme || !name.trim()) return theme;
+	const renamed = { ...theme, name: freeName(name.trim().slice(0, 40), id) };
+	write(current.map((t) => (t.preset === id ? renamed : t)));
+	return renamed;
 }
 
 export function removeUserTheme(id: string) {

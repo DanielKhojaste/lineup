@@ -33,13 +33,13 @@ function Part({ text }: { text: string }) {
 	return <span className="keys__words">{text}</span>;
 }
 
-/** A shortcut drawn as keycaps: "+" between keys pressed together, "/" or "or" between choices. */
+/** A shortcut drawn as keycaps: "+" between keys pressed together, "or" between two ways of doing it. */
 export function Keys({ shortcut }: { shortcut: Shortcut }) {
 	return (
 		<span className="keys">
 			{shortcut.keys.map((combo, i) => (
 				<Fragment key={i}>
-					{i > 0 && <span className="keys__sep">{shortcut.join ?? "/"}</span>}
+					{i > 0 && <span className="keys__sep">{shortcut.join ?? "or"}</span>}
 					<span className="keys__combo">
 						{combo.map((part, j) => (
 							<Fragment key={j}>

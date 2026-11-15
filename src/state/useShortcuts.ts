@@ -38,27 +38,42 @@ const NUDGE = 0.005;
 export interface Shortcut {
 	group: "Tools" | "Selecting and moving" | "Editing" | "Animation";
 	keys: string[][];
-	join?: "/" | "or";
+	/** Between two ways of doing the same thing ("Ctrl+Y or Ctrl+Shift+Z"). */
+	join?: "or";
 	note?: string;
 	action: string;
 }
 
 export const SHORTCUTS: Shortcut[] = [
 	{ group: "Tools", keys: [["V"]], action: "Select" },
-	{ group: "Tools", keys: [["1"], ["2"], ["3"]], join: "/", action: "Home / away / neutral player" },
-	{ group: "Tools", keys: [["C"], ["B"]], join: "/", action: "Cone / ball" },
-	{ group: "Tools", keys: [["G"], ["M"], ["O"]], join: "/", action: "Goal / mannequin / pole" },
-	{ group: "Tools", keys: [["R"], ["P"], ["D"]], join: "/", action: "Run / pass / dribble arrow" },
-	{ group: "Tools", keys: [["L"], ["Z"]], join: "/", action: "Line / zone" },
-	{ group: "Tools", keys: [["F"], ["T"], ["E"]], join: "/", action: "Pen / text / eraser" },
+	{ group: "Tools", keys: [["1"]], action: "Home player" },
+	{ group: "Tools", keys: [["2"]], action: "Away player" },
+	{ group: "Tools", keys: [["3"]], action: "Neutral player" },
+	{ group: "Tools", keys: [["C"]], action: "Cone" },
+	{ group: "Tools", keys: [["B"]], action: "Ball" },
+	{ group: "Tools", keys: [["G"]], action: "Goal" },
+	{ group: "Tools", keys: [["M"]], action: "Mannequin" },
+	{ group: "Tools", keys: [["O"]], action: "Pole" },
+	{ group: "Tools", keys: [["R"]], action: "Run arrow" },
+	{ group: "Tools", keys: [["P"]], action: "Pass arrow" },
+	{ group: "Tools", keys: [["D"]], action: "Dribble arrow" },
+	{ group: "Tools", keys: [["L"]], action: "Line" },
+	{ group: "Tools", keys: [["Z"]], action: "Zone" },
+	{ group: "Tools", keys: [["F"]], action: "Pen" },
+	{ group: "Tools", keys: [["T"]], action: "Text" },
+	{ group: "Tools", keys: [["E"]], action: "Eraser" },
 	{ group: "Tools", keys: [["Shift"]], note: "while drawing", action: "Snap the angle, or a square zone" },
 	{ group: "Tools", keys: [["Esc"]], action: "Back to Select, or clear the selection" },
 	{ group: "Selecting and moving", keys: [["Ctrl", "A"]], action: "Select everything" },
 	{ group: "Selecting and moving", keys: [["Shift", "click"], ["drag a box"]], join: "or", action: "Select several" },
 	{ group: "Selecting and moving", keys: [["Arrow keys"]], action: "Nudge (hold Shift for more)" },
-	{ group: "Selecting and moving", keys: [["Shift", "R"], ["Alt", "Shift", "R"]], join: "/", action: "Turn a goal or mannequin 15° right / left" },
-	{ group: "Selecting and moving", keys: [["]"], ["["]], join: "/", action: "Bring to front / send to back" },
-	{ group: "Editing", keys: [["Ctrl", "C"], ["Ctrl", "X"], ["Ctrl", "V"]], join: "/", action: "Copy / cut / paste (also between boards)" },
+	{ group: "Selecting and moving", keys: [["Shift", "R"]], action: "Turn a goal or mannequin 15° right" },
+	{ group: "Selecting and moving", keys: [["Alt", "Shift", "R"]], action: "Turn a goal or mannequin 15° left" },
+	{ group: "Selecting and moving", keys: [["]"]], action: "Bring to front" },
+	{ group: "Selecting and moving", keys: [["["]], action: "Send to back" },
+	{ group: "Editing", keys: [["Ctrl", "C"]], action: "Copy (also between boards)" },
+	{ group: "Editing", keys: [["Ctrl", "X"]], action: "Cut" },
+	{ group: "Editing", keys: [["Ctrl", "V"]], action: "Paste" },
 	{ group: "Editing", keys: [["Ctrl", "D"]], action: "Duplicate" },
 	{ group: "Editing", keys: [["Delete"]], action: "Delete" },
 	{ group: "Editing", keys: [["Ctrl", "Z"]], action: "Undo" },
@@ -66,8 +81,9 @@ export const SHORTCUTS: Shortcut[] = [
 	{ group: "Editing", keys: [["double-click"]], action: "Edit a player or a text" },
 	{ group: "Editing", keys: [["right-click"], ["Menu key"]], join: "or", action: "Actions for what's under the pointer" },
 	{ group: "Animation", keys: [["W"]], action: "Route: click where a marker runs" },
-	{ group: "Animation", keys: [["Space"]], action: "Play / pause" },
-	{ group: "Animation", keys: [[","], ["."]], join: "/", action: "Previous / next step" },
+	{ group: "Animation", keys: [["Space"]], action: "Play or pause" },
+	{ group: "Animation", keys: [[","]], action: "Previous step" },
+	{ group: "Animation", keys: [["."]], action: "Next step" },
 ];
 
 function isTyping(target: EventTarget | null): boolean {

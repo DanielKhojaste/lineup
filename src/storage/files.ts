@@ -17,21 +17,60 @@ import { THEME_EXTENSION, themeFileText } from "../theme/userThemes";
 import { isTauri } from "./index";
 
 /** Save a file somewhere the user picks (desktop) or download it (browser). Returns false if cancelled. */
+/** Where save and open windows start: Documents, then wherever that kind of file went last. */
+type FolderKind = "exports" | "themes";
+const FOLDER_KEY = (kind: FolderKind) => `lineup.lastFolder.${kind}`;
+
+async function startFolder(kind: FolderKind): Promise<string | undefined> {
+	try {
+		const saved = localStorage.getItem(FOLDER_KEY(kind));
+		if (saved) return saved;
+	} catch {
+		// No storage: fall back to Documents.
+	}
+	try {
+		const { documentDir } = await import("@tauri-apps/api/path");
+		return await documentDir();
+	} catch {
+		return undefined;
+	}
+}
+
+async function rememberFolder(kind: FolderKind, filePath: string) {
+	try {
+		const { dirname } = await import("@tauri-apps/api/path");
+		localStorage.setItem(FOLDER_KEY(kind), await dirname(filePath));
+	} catch {
+		// Not worth failing the save over.
+	}
+}
+
+/** A path in the folder a save window should start in, or just the name. */
+async function startPath(kind: FolderKind, name?: string): Promise<string | undefined> {
+	const folder = await startFolder(kind);
+	if (!folder) return name;
+	if (!name) return folder;
+	const { join } = await import("@tauri-apps/api/path");
+	return join(folder, name);
+}
+
 async function saveFile(
 	name: string,
 	extension: string,
 	label: string,
 	data: string | Uint8Array,
 	mimeType = "application/octet-stream",
+	kind: FolderKind = "exports",
 ): Promise<boolean> {
 	if (isTauri()) {
 		const { save } = await import("@tauri-apps/plugin-dialog");
 		const { writeFile, writeTextFile } = await import("@tauri-apps/plugin-fs");
 		const path = await save({
-			defaultPath: name,
+			defaultPath: await startPath(kind, name),
 			filters: [{ name: label, extensions: [extension] }],
 		});
 		if (!path) return false;
+		await rememberFolder(kind, path);
 		if (typeof data === "string") await writeTextFile(path, data);
 		else await writeFile(path, data);
 		return true;
@@ -89,6 +128,7 @@ export function exportThemeFile(theme: ThemePreset) {
 		"Lineup theme",
 		themeFileText(theme),
 		"application/json",
+		"themes",
 	);
 }
 
@@ -99,9 +139,11 @@ export async function pickThemeFiles(): Promise<{ name: string; text: string }[]
 		const { readTextFile } = await import("@tauri-apps/plugin-fs");
 		const picked = await open({
 			multiple: true,
+			defaultPath: await startPath("themes"),
 			filters: [{ name: "Lineup theme", extensions: [THEME_EXTENSION, "json"] }],
 		});
 		const paths = picked === null ? [] : Array.isArray(picked) ? picked : [picked];
+		if (paths[0]) await rememberFolder("themes", paths[0]);
 		return Promise.all(
 			paths.map(async (path) => ({
 				name: path.split(/[\\/]/).pop() ?? path,

@@ -26,3 +26,15 @@ describe("your themes", () => {
 		expect(getUserThemes()).toEqual([]);
 	});
 });
+
+describe("renaming your themes", () => {
+	it("renames, keeping names unique", async () => {
+		const { renameUserTheme } = await import("./userThemes");
+		const a = addUserTheme({ name: "Club", mode: "dark", accent: "#111111", secondary: "#222222" });
+		const b = addUserTheme({ name: "Away kit", mode: "dark", accent: "#111111", secondary: "#222222" });
+		expect(renameUserTheme(b.preset, "Club")?.name).toBe("Club 2");
+		expect(renameUserTheme(a.preset, "Club")?.name).toBe("Club");
+		removeUserTheme(a.preset);
+		removeUserTheme(b.preset);
+	});
+});

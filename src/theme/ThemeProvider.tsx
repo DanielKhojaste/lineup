@@ -8,6 +8,7 @@ import {
 } from "react";
 import {
 	DEFAULT_THEME,
+	findPreset,
 	sanitizeTheme,
 	ThemeSettings,
 	themeTokens,
@@ -15,6 +16,21 @@ import {
 import { findTheme, useUserThemes } from "./userThemes";
 
 const STORAGE_KEY = "lineup.theme";
+/** The Lineup theme used most recently, to go back to when a theme of yours is deleted. */
+const LAST_PRESET_KEY = "lineup.lastPreset";
+
+function lastPreset(): ThemeSettings {
+	try {
+		const preset = findPreset(localStorage.getItem(LAST_PRESET_KEY) ?? "");
+		if (preset) {
+			const { mode, accent, secondary } = preset;
+			return { preset: preset.preset, mode, accent, secondary };
+		}
+	} catch {
+		// Fall through to the default.
+	}
+	return DEFAULT_THEME;
+}
 
 interface ThemeContextValue {
 	theme: ThemeSettings;
@@ -27,7 +43,8 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 export function resolveTheme(saved: ThemeSettings): ThemeSettings {
 	if (saved.preset === "custom") return saved;
 	const preset = findTheme(saved.preset);
-	if (!preset) return { ...saved, preset: "custom" };
+	// A theme of yours that's gone: back to the Lineup theme used last.
+	if (!preset) return lastPreset();
 	const { mode, accent, secondary } = preset;
 	return { preset: saved.preset, mode, accent, secondary };
 }
@@ -45,11 +62,20 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 	const [theme, setThemeState] = useState<ThemeSettings>(loadTheme);
 	const userThemes = useUserThemes();
 
-	// The theme in use was deleted from "Your themes": keep its colours as Custom.
+	// The theme in use was deleted from "Your themes": go back to the Lineup
+	// theme used most recently (a theme you saved isn't left behind as Custom).
 	useEffect(() => {
-		if (theme.preset !== "custom" && !findTheme(theme.preset))
-			setThemeState({ ...theme, preset: "custom" });
+		if (theme.preset !== "custom" && !findTheme(theme.preset)) setThemeState(lastPreset());
 	}, [theme, userThemes]);
+
+	useEffect(() => {
+		if (!findPreset(theme.preset)) return;
+		try {
+			localStorage.setItem(LAST_PRESET_KEY, theme.preset);
+		} catch {
+			// Storage can be unavailable.
+		}
+	}, [theme.preset]);
 
 	useEffect(() => {
 		const root = document.documentElement;
