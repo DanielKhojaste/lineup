@@ -47,7 +47,7 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 /** The saved theme. A preset's colours come from its file, so editing the file changes it. */
-export function resolveTheme(saved: ThemeSettings): ThemeSettings {
+function resolveTheme(saved: ThemeSettings): ThemeSettings {
 	if (saved.preset === "custom") return saved;
 	const preset = findTheme(saved.preset);
 	// A theme of yours that's gone: back to the Lineup theme used last.
