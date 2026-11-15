@@ -11,6 +11,7 @@ import {
 	themeTokens,
 } from "../../theme/themes";
 import { addUserTheme, findTheme, useUserThemes } from "../../theme/userThemes";
+import SpiceControls from "./SpiceControls";
 import ThemeActions from "./ThemeActions";
 import ThemeDropdown from "./ThemeDropdown";
 import { Keys } from "../ui/Keys";
@@ -145,53 +146,7 @@ export default function SettingsDialog({
 				<section className="dialog__section">
 					<h3>Appearance</h3>
 					<ThemeDropdown value={theme} userThemes={userThemes} onChange={setTheme} />
-					{current.effect && (
-						<label className="check">
-							<input
-								type="checkbox"
-								checked={preferences.themeEffects}
-								onChange={(e) => setPreferences({ themeEffects: e.target.checked })}
-							/>
-							Drifting spice in the background
-						</label>
-					)}
-					{current.effect === "spice" && preferences.themeEffects && (
-						<div className="spice-settings">
-							{(
-								[
-									["size", "Size", 0.4, 3],
-									["speed", "Speed", 0.1, 4],
-									["amount", "Amount", 0.1, 3],
-								] as const
-							).map(([key, label, min, max]) => (
-								<label key={key} className="spice-settings__row">
-									<span className="field__label">{label}</span>
-									<input
-										type="range"
-										min={min}
-										max={max}
-										step={0.05}
-										value={preferences.spice[key]}
-										onChange={(e) =>
-											setPreferences({
-												spice: { ...preferences.spice, [key]: Number(e.target.value) },
-											})
-										}
-									/>
-									<span className="spice-settings__value">
-										{preferences.spice[key].toFixed(2).replace(/\.?0+$/, "")}×
-									</span>
-								</label>
-							))}
-							<button
-								type="button"
-								className="link-button"
-								onClick={() => setPreferences({ spice: { size: 1, speed: 1, amount: 1 } })}
-							>
-								Back to normal
-							</button>
-						</div>
-					)}
+					<SpiceControls effect={current.effect} />
 
 					<ThemeActions
 						theme={current}

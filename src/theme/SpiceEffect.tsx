@@ -8,6 +8,8 @@ import { useEffect, useRef } from "react";
  * Kept light on purpose:
  * - a few dozen specks, drawn from small pictures made once (no blur filters)
  * - about 30 frames a second, and nothing at all while the window is hidden
+ * - drawn at the screen's normal resolution, never sharper (the cost is in the
+ *   pixels repainted, not the number of specks)
  * - off when the computer asks for reduced motion
  */
 
@@ -20,8 +22,10 @@ const MAX_SPECKS = 110;
  * red-orange flakes, cinnamon to ember, never white.
  */
 const COLOURS = ["226, 88, 40", "206, 66, 34", "240, 118, 50", "184, 56, 30"];
-/** Areas the spice stays out of: the board (the whole area around the field too), board pictures, open windows. */
-const AVOID = ".board, .board-card__preview, .session-card__preview, dialog[open]";
+/** Areas the spice stays out of: board pictures and open windows… */
+const AVOID = ".board-card__preview, .session-card__preview, dialog[open]";
+/** …and the board itself (the whole area around the field too). */
+const BOARD = ".board";
 
 interface Speck {
 	x: number;
@@ -76,11 +80,18 @@ export interface SpiceSettings {
 
 export const DEFAULT_SPICE: SpiceSettings = { size: 1, speed: 1, amount: 1 };
 
-export default function SpiceEffect({ settings }: { settings: SpiceSettings }) {
+export default function SpiceEffect({
+	settings,
+	overBoard = false,
+}: {
+	settings: SpiceSettings;
+	/** For testing only: drift over the board too. */
+	overBoard?: boolean;
+}) {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	// Read every frame, so moving a slider changes the spice straight away.
-	const live = useRef(settings);
-	live.current = settings;
+	const live = useRef({ ...settings, overBoard });
+	live.current = { ...settings, overBoard };
 
 	useEffect(() => {
 		const canvas = canvasRef.current;
@@ -99,7 +110,9 @@ export default function SpiceEffect({ settings }: { settings: SpiceSettings }) {
 		let last = 0;
 
 		const resize = () => {
-			const ratio = Math.min(window.devicePixelRatio || 1, 1.5);
+			// The specks are soft glows, so drawing them sharper than one pixel per
+			// screen pixel costs twice the work on 150% screens and looks the same.
+			const ratio = Math.min(window.devicePixelRatio || 1, 1);
 			width = window.innerWidth;
 			height = window.innerHeight;
 			canvas.width = Math.round(width * ratio);
@@ -119,7 +132,8 @@ export default function SpiceEffect({ settings }: { settings: SpiceSettings }) {
 		};
 
 		const measure = () => {
-			avoid = [...document.querySelectorAll(AVOID)].map((el) => el.getBoundingClientRect());
+			const selector = live.current.overBoard ? AVOID : `${BOARD}, ${AVOID}`;
+			avoid = [...document.querySelectorAll(selector)].map((el) => el.getBoundingClientRect());
 		};
 
 		const draw = (now: number) => {

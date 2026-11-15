@@ -215,8 +215,13 @@ h3 {
 	padding: 2px 0;
 }
 
-.link-button:hover {
+.link-button:hover:not(:disabled) {
 	text-decoration: underline;
+}
+
+.link-button:disabled {
+	color: var(--text-muted);
+	cursor: default;
 }
 
 .action-row {
@@ -3598,7 +3603,23 @@ fieldset.field {
 	pointer-events: none;
 }
 
-/* Settings: how Dune's spice looks. */
+/* Settings and Theme preview: how Dune's spice looks. */
+.spice-controls {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.theme-page__effect {
+	padding: 12px 16px 0;
+}
+
+.spice-settings__dev {
+	margin-top: 4px;
+	font-size: 12px;
+	color: var(--text-muted);
+}
+
 .spice-settings {
 	display: flex;
 	flex-direction: column;

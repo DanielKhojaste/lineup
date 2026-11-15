@@ -114,11 +114,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 	);
 
 	const effect = theme.preset === "custom" ? undefined : findTheme(theme.preset)?.effect;
-	const { themeEffects, spice } = usePreferences();
+	const { themeEffects, spice, spiceOverBoard } = usePreferences();
 	return (
 		<ThemeContext.Provider value={value}>
 			{children}
-			{effect === "spice" && themeEffects && <SpiceEffect settings={spice} />}
+			{effect === "spice" && themeEffects && <SpiceEffect settings={spice} overBoard={spiceOverBoard} />}
 		</ThemeContext.Provider>
 	);
 }
