@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 const store = new Map<string, string>();
 (globalThis as Record<string, unknown>).localStorage = {
@@ -16,8 +16,6 @@ async function load(saved?: unknown) {
 }
 
 describe("spice preferences", () => {
-	beforeEach(() => vi.unstubAllEnvs());
-
 	it("starts on, at the normal size, speed and amount", async () => {
 		const { getPreferences } = await load();
 		expect(getPreferences().themeEffect).toEqual({});
@@ -46,12 +44,8 @@ describe("spice preferences", () => {
 		expect(getPreferences().spice).toEqual({ size: 3, speed: 0.1, amount: 1 });
 	});
 
-	it("only drifts over the board in development builds", async () => {
-		vi.stubEnv("DEV", false);
-		const release = await load({ spiceOverBoard: true });
-		expect(release.getPreferences().spiceOverBoard).toBe(false);
-		vi.stubEnv("DEV", true);
-		const dev = await load({ spiceOverBoard: true });
-		expect(dev.getPreferences().spiceOverBoard).toBe(true);
+	it("can drift over the board, for testing", async () => {
+		const { getPreferences } = await load({ spiceOverBoard: true });
+		expect(getPreferences().spiceOverBoard).toBe(true);
 	});
 });

@@ -1,3 +1,4 @@
+import { TESTING_SWITCHES } from "../../testing";
 import { setPreferences, usePreferences } from "../../state/preferences";
 import { DEFAULT_SPICE, EFFECTS, SpiceSettings } from "../../theme/effects";
 import { chosenEffect, ThemePreset } from "../../theme/themes";
@@ -77,14 +78,14 @@ export default function ThemeEffectControls({ theme }: { theme: ThemePreset }) {
 					</button>
 				</div>
 			)}
-			{import.meta.env.DEV && chosen && (
+			{TESTING_SWITCHES && chosen && (
 				<label className="check effect-controls__dev">
 					<input
 						type="checkbox"
 						checked={spiceOverBoard}
 						onChange={(e) => setPreferences({ spiceOverBoard: e.target.checked })}
 					/>
-					Over the board too (testing only, not in the app)
+					Over the board too (for testing; goes before the release)
 				</label>
 			)}
 		</div>

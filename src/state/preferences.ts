@@ -1,3 +1,4 @@
+import { TESTING_SWITCHES } from "../testing";
 import { useSyncExternalStore } from "react";
 import { DEFAULT_PITCH, isSport } from "../model/sports";
 import { PitchSettings } from "../model/types";
@@ -68,7 +69,7 @@ function read(): Preferences {
 				speed: multiple(raw?.spice?.speed, 0.1, 4),
 				amount: multiple(raw?.spice?.amount, 0.1, 3),
 			},
-			spiceOverBoard: import.meta.env.DEV && raw?.spiceOverBoard === true,
+			spiceOverBoard: TESTING_SWITCHES && raw?.spiceOverBoard === true,
 		};
 	} catch {
 		return DEFAULTS;
