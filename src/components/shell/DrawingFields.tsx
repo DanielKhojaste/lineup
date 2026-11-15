@@ -1,3 +1,4 @@
+import { TEXT_LIMITS } from "../../utils/text";
 import { DRAW_COLORS, ToolStyles } from "../../model/drawings";
 import {
 	ArrowHeads,
@@ -162,6 +163,7 @@ export function DrawingFields({ drawings }: { drawings: Drawing[] }) {
 				<>
 					{single?.kind === "text" && (
 						<BoardTextarea
+							maxLength={TEXT_LIMITS.boardText}
 							label="Text"
 							rows={2}
 							value={single.text}

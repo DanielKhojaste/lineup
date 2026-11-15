@@ -1,3 +1,4 @@
+import { TEXT_LIMITS } from "../../utils/text";
 import { useMemo, useState } from "react";
 import { BOARD_TYPE_LABELS } from "../../model/board";
 import {
@@ -39,7 +40,7 @@ function matches(board: Board, query: string) {
 	if (!query) return true;
 	const q = query.toLowerCase();
 	const { meta, notes } = board;
-	return [meta.title, meta.folder, ...meta.tags, notes.category, notes.description]
+	return [meta.title, ...meta.folders, ...meta.tags, notes.category, notes.description]
 		.join(" ")
 		.toLowerCase()
 		.includes(q);
@@ -127,6 +128,7 @@ export default function DrillPicker() {
 					<span className="visually-hidden">Search boards</span>
 					<input
 						type="search"
+						maxLength={TEXT_LIMITS.search}
 						placeholder="Search drills"
 						value={query}
 						onChange={(e) => setQuery(e.target.value)}

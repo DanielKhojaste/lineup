@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BoardPreview from "../components/board/BoardPreview";
 import { Icon } from "../components/Icon";
@@ -10,17 +10,19 @@ import { SURFACES } from "../components/board/Pitch";
 import NewBoardDialog from "../components/library/NewBoardDialog";
 import CardMenuButton from "../components/library/CardMenuButton";
 import SessionCard from "../components/library/SessionCard";
+import { CardCheck, CardSelection } from "../components/library/CardSelection";
 import SportPickerDialog from "../components/library/SportPickerDialog";
 import { getPreferences } from "../state/preferences";
-import { truncate } from "../utils/text";
+import { TEXT_LIMITS, truncate } from "../utils/text";
 import { BOARD_TYPE_LABELS } from "../model/board";
 import { Session, sessionTitle } from "../model/session";
 import { drillsOf, sameDrill } from "../model/sessionFile";
-import { pitchLabel, Sport, SPORT_INFO, SPORTS } from "../model/sports";
+import { isSport, pitchLabel, Sport, SPORT_INFO, SPORTS } from "../model/sports";
 import { Board, BOARD_TYPES, BoardType, PitchSettings } from "../model/types";
 import { allFolders, useLibrary } from "../state/LibraryContext";
 import {
 	exportBoardFile,
+	exportManyToFolder,
 	exportPng,
 	exportSessionDocument,
 	pickLibraryFiles,
@@ -30,6 +32,7 @@ import { relativeTime } from "../utils/time";
 
 /** Which boards the main area shows: everything, the boards outside folders, or one folder. */
 type View =
+	| { kind: "everything" }
 	| { kind: "all" }
 	| { kind: "sessions" }
 	| { kind: "unfiled" }
@@ -44,16 +47,17 @@ type View =
  * imported things out so they don't clutter it.
  */
 function docInView(
-	meta: { folder: string; imported?: boolean },
+	meta: { folders: string[]; imported?: boolean },
 	sport: Sport,
 	view: View,
 ): boolean {
 	switch (view.kind) {
+		case "everything":
 		case "all":
 		case "sessions":
 			return true;
 		case "unfiled":
-			return !meta.folder && !meta.imported;
+			return !meta.folders.length && !meta.imported;
 		case "created":
 			return !meta.imported;
 		case "imported":
@@ -61,9 +65,12 @@ function docInView(
 		case "sport":
 			return sport === view.sport;
 		case "folder":
-			return meta.folder === view.name;
+			return meta.folders.includes(view.name);
 	}
 }
+
+/** How long a message that isn't about a problem stays up. */
+const NOTICE_SECONDS = 7;
 
 const boardInView = (b: Board, view: View) =>
 	view.kind !== "sessions" && docInView(b.meta, b.pitch.sport, view);
@@ -77,7 +84,7 @@ function matches(board: Board, query: string): boolean {
 	const { meta, notes } = board;
 	return [
 		meta.title,
-		meta.folder,
+		...meta.folders,
 		...meta.tags,
 		notes.category,
 		notes.ageGroup,
@@ -94,7 +101,7 @@ function sessionMatches(session: Session, query: string): boolean {
 	const { meta, header } = session;
 	return [
 		meta.title,
-		meta.folder,
+		...meta.folders,
 		...meta.tags,
 		header.team,
 		header.description,
@@ -109,16 +116,18 @@ function BoardCard({
 	board,
 	onOpen,
 	menu,
+	selection,
 }: {
 	board: Board;
 	onOpen: () => void;
 	/** The card's menu: the same from right-clicking and from its ⋯ button. */
 	menu: () => ContextMenuEntry[];
+	selection: CardSelection;
 }) {
 	const details = [
 		BOARD_TYPE_LABELS[board.meta.type].one,
 		pitchLabel(board.pitch),
-		board.meta.folder,
+		folderLabel(board.meta.folders),
 		board.notes.duration,
 		board.steps.length > 0 &&
 			`${board.steps.length} step${board.steps.length > 1 ? "s" : ""}`,
@@ -126,14 +135,19 @@ function BoardCard({
 	].filter(Boolean);
 	const { openMenu } = useContextMenu();
 	return (
-		<article className="board-card" onContextMenu={(e) => openMenu(e, menu())}>
+		<article
+			className={`board-card${selection.selected ? " is-selected" : ""}`}
+			onContextMenu={(e) => openMenu(e, menu())}
+		>
 			<button
 				type="button"
 				className="board-card__open"
-				onClick={onOpen}
-				aria-label={`Open ${truncate(board.meta.title, 60)}`}
+				onClick={(e) => (selection.handles(e) ? selection.toggle() : onOpen())}
+				aria-pressed={selection.selecting ? selection.selected : undefined}
+				aria-label={`${selection.selecting ? "Select" : "Open"} ${truncate(board.meta.title, 60)}`}
 				title={board.meta.title}
 			>
+				{selection.selecting && <CardCheck checked={selection.selected} />}
 				<BoardPreview board={board} className="board-card__preview" />
 				<span className="board-card__title">{board.meta.title}</span>
 				<span className="board-card__meta">{details.join(" · ")}</span>
@@ -143,16 +157,44 @@ function BoardCard({
 	);
 }
 
+/** One folder's name, or the first and how many more ("Drills +1"). */
+export function folderLabel(folders: string[]): string {
+	return folders.length > 1 ? `${folders[0]} +${folders.length - 1}` : (folders[0] ?? "");
+}
+
+const VIEW_KEY = "lineup.libraryView";
+
+/** The view (All, Boards, Sessions, a folder…) and sort picked last time Lineup was open. */
+function savedView(): { view: View; sort: Sort } {
+	try {
+		const raw = JSON.parse(localStorage.getItem(VIEW_KEY) ?? "{}");
+		const v = raw?.view;
+		const simple = ["everything", "all", "sessions", "unfiled", "created", "imported"];
+		const view: View =
+			v && simple.includes(v.kind)
+				? { kind: v.kind }
+				: v?.kind === "folder" && typeof v.name === "string"
+					? { kind: "folder", name: v.name }
+					: v?.kind === "sport" && isSport(v.sport)
+						? { kind: "sport", sport: v.sport }
+						: { kind: "everything" };
+		return { view, sort: raw?.sort === "title" ? "title" : "updated" };
+	} catch {
+		return { view: { kind: "everything" }, sort: "updated" };
+	}
+}
+
 /**
  * What the library was showing (view, filters, search, sort), so coming back
- * from a board or session shows the same thing. Kept while the app is open.
+ * from a board or session shows the same thing. The view and sort are also
+ * kept for next time Lineup opens.
  */
 const remembered: {
 	view: View;
 	type: BoardType | "all" | "sessions";
 	query: string;
 	sort: Sort;
-} = { view: { kind: "all" }, type: "all", query: "", sort: "updated" };
+} = { ...savedView(), type: "all", query: "" };
 
 export default function Library() {
 	const library = useLibrary();
@@ -168,19 +210,40 @@ export default function Library() {
 	const setView = (next: View) => {
 		setViewState(next);
 		setType("all");
+		stopSelecting();
 	};
 	const [query, setQuery] = useState(remembered.query);
 	const [sort, setSort] = useState<Sort>(remembered.sort);
 	useEffect(() => {
 		Object.assign(remembered, { view, type, query, sort });
 	}, [view, type, query, sort]);
+	useEffect(() => {
+		try {
+			localStorage.setItem(VIEW_KEY, JSON.stringify({ view, sort }));
+		} catch {
+			// Without storage it's only remembered while the app is open.
+		}
+	}, [view, sort]);
 	const [newBoardOpen, setNewBoardOpen] = useState(false);
 	const [notice, setNotice] = useState<{
 		text: string;
 		tone: "info" | "error";
 	} | null>(null);
+	// Good news ("Imported 2 boards.") closes by itself after a few seconds;
+	// a message about a problem stays until it's closed.
+	useEffect(() => {
+		if (!notice || notice.tone === "error") return;
+		const timer = window.setTimeout(() => setNotice(null), NOTICE_SECONDS * 1000);
+		return () => window.clearTimeout(timer);
+	}, [notice]);
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	const [newFolderOpen, setNewFolderOpen] = useState(false);
+	// What to do with a folder once it's made ("New folder…" in a Folders menu puts things in it).
+	const afterNewFolder = useRef<((name: string) => Promise<void>) | null>(null);
+	const newFolderThen = (then: (name: string) => Promise<void>) => {
+		afterNewFolder.current = then;
+		setNewFolderOpen(true);
+	};
 	const [renaming, setRenaming] = useState<string | null>(null);
 	const [deletingFolder, setDeletingFolder] = useState<string | null>(null);
 	const [deletingBoard, setDeletingBoard] = useState<Board | null>(null);
@@ -190,6 +253,40 @@ export default function Library() {
 		title: string;
 	} | null>(null);
 	const [deletingSession, setDeletingSession] = useState<Session | null>(null);
+
+	// Selecting several boards and sessions at once ("b:<id>" and "s:<id>").
+	const [selecting, setSelecting] = useState(false);
+	const [selected, setSelected] = useState<Set<string>>(new Set());
+	const [deletingSelected, setDeletingSelected] = useState(false);
+	const stopSelecting = () => {
+		setSelecting(false);
+		setSelected(new Set());
+	};
+	const selectionFor = (key: string): CardSelection => ({
+		selecting,
+		selected: selected.has(key),
+		toggle: () => {
+			setSelecting(true);
+			setSelected((prev) => {
+				const next = new Set(prev);
+				if (next.has(key)) next.delete(key);
+				else next.add(key);
+				return next;
+			});
+		},
+		handles: (e) => selecting || e.ctrlKey || e.metaKey,
+	});
+
+	// Esc leaves select mode.
+	useEffect(() => {
+		if (!selecting) return;
+		const onKey = (e: KeyboardEvent) => {
+			if (e.key === "Escape" && !document.querySelector("dialog[open]")) stopSelecting();
+		};
+		window.addEventListener("keydown", onKey);
+		return () => window.removeEventListener("keydown", onKey);
+	}, [selecting]);
+
 
 	const folders = allFolders(library.folders, [
 		...library.boards,
@@ -223,6 +320,28 @@ export default function Library() {
 					b.meta.updatedAt.localeCompare(a.meta.updatedAt),
 			  );
 	}, [library.sessions, view, query, sort, type]);
+
+	// Boards and sessions together in one grid, in the order picked in Sort
+	// (not sessions first and boards after).
+	const mixed = useMemo(() => {
+		const items = [
+			...shownSessions.map((session) => ({
+				kind: "session" as const,
+				session,
+				title: sessionTitle(session),
+				updatedAt: session.meta.updatedAt,
+			})),
+			...shown.map((board) => ({
+				kind: "board" as const,
+				board,
+				title: board.meta.title,
+				updatedAt: board.meta.updatedAt,
+			})),
+		];
+		return sort === "title"
+			? items.sort((a, b) => a.title.localeCompare(b.title))
+			: items.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+	}, [shown, shownSessions, sort]);
 
 	// How many sessions this view has, for the Sessions chip (folders, sports and "Not in a folder").
 	const sessionsInView =
@@ -311,26 +430,38 @@ export default function Library() {
 		{ label: "Delete folder…", danger: true, onSelect: () => setDeletingFolder(name) },
 	];
 
-	/** "Move to folder ›" for a board or session. */
+	/**
+	 * "Folders ›" for a board or session: it can be in several, so each folder
+	 * is ticked on or off. "New folder…" makes one and puts it in.
+	 */
 	const folderSubmenu = (
-		current: string,
-		move: (folder: string) => Promise<void>,
+		current: string[],
+		set: (folders: string[]) => Promise<void>,
 	): ContextMenuEntry => ({
-		label: "Move to folder",
+		label: "Folders",
 		submenu: [
-			{
-				label: "No folder",
-				checked: !current,
-				onSelect: () => run(() => move(""), "Couldn't move it"),
-			},
-			...(folders.length ? ["separator" as const] : []),
 			...folders.map((f) => ({
-				label: f,
-				checked: current === f,
-				onSelect: () => run(() => move(f), "Couldn't move it"),
+				label: truncate(f, 40),
+				checked: current.includes(f),
+				onSelect: () =>
+					run(
+						() => set(current.includes(f) ? current.filter((x) => x !== f) : [...current, f]),
+						"Couldn't change its folders",
+					),
 			})),
-			"separator" as const,
-			{ label: "New folder…", onSelect: () => setNewFolderOpen(true) },
+			...(folders.length ? ["separator" as const] : []),
+			{
+				label: "New folder…",
+				onSelect: () => newFolderThen((name) => set([...current, name])),
+			},
+			...(current.length
+				? [
+						{
+							label: "Remove from all folders",
+							onSelect: () => run(() => set([]), "Couldn't change its folders"),
+						},
+					]
+				: []),
 		],
 	});
 
@@ -343,7 +474,7 @@ export default function Library() {
 			onSelect: () =>
 				run(() => library.duplicateBoard(board.id), "Couldn't duplicate the board"),
 		},
-		folderSubmenu(board.meta.folder, (f) => library.moveToFolder(board.id, f)),
+		folderSubmenu(board.meta.folders, (f) => library.setBoardFolders(board.id, f)),
 		"separator",
 		{
 			label: "Export",
@@ -376,7 +507,7 @@ export default function Library() {
 			onSelect: () =>
 				run(() => library.duplicateSession(session.id), "Couldn't duplicate the session"),
 		},
-		folderSubmenu(session.meta.folder, (f) => library.moveSessionToFolder(session.id, f)),
+		folderSubmenu(session.meta.folders, (f) => library.setSessionFolders(session.id, f)),
 		"separator",
 		{
 			label: "Export",
@@ -398,6 +529,90 @@ export default function Library() {
 		{ label: "Delete…", danger: true, onSelect: () => setDeletingSession(session) },
 	];
 
+	// What's selected, as boards and sessions that still exist.
+	const selectedBoards = library.boards.filter((b) => selected.has(`b:${b.id}`));
+	const selectedSessions = library.sessions.filter((x) => selected.has(`s:${x.id}`));
+	const selectedCount = selectedBoards.length + selectedSessions.length;
+	const visibleKeys = [
+		...shownSessions.map((x) => `s:${x.id}`),
+		...shown.map((b) => `b:${b.id}`),
+	];
+	const allSelected = visibleKeys.length > 0 && visibleKeys.every((k) => selected.has(k));
+	const describeCount = (boards: number, sessions: number) =>
+		[
+			boards && `${boards} ${boards === 1 ? "board" : "boards"}`,
+			sessions && `${sessions} ${sessions === 1 ? "session" : "sessions"}`,
+		]
+			.filter(Boolean)
+			.join(" and ");
+
+	/** Change the folders of everything selected, then say what happened. */
+	const refolderSelected = (change: (folders: string[]) => string[], done: string) =>
+		run(async () => {
+			for (const b of selectedBoards) await library.setBoardFolders(b.id, change(b.meta.folders));
+			for (const x of selectedSessions)
+				await library.setSessionFolders(x.id, change(x.meta.folders));
+			setNotice({
+				text: `${done.replace("{n}", describeCount(selectedBoards.length, selectedSessions.length))}`,
+				tone: "info",
+			});
+			stopSelecting();
+		}, "Couldn't change their folders");
+	const addSelectedTo = (folder: string) =>
+		refolderSelected((f) => [...f, folder], `Added {n} to “${truncate(folder, 30)}”.`);
+
+	const exportSelected = () =>
+		run(async () => {
+			const written = await exportManyToFolder(
+				selectedBoards,
+				selectedSessions.map((session) => ({
+					session,
+					drills: drillsOf(session, library.getBoard),
+				})),
+			);
+			if (written)
+				setNotice({
+					text: `Exported ${written} ${written === 1 ? "file" : "files"}.`,
+					tone: "info",
+				});
+		}, "Export failed");
+
+	const deleteSelectedMessage = () => {
+		const ids = new Set(selectedBoards.map((b) => b.id));
+		const leaving = new Set(selectedSessions.map((x) => x.id));
+		const usedIn = library.sessions.filter(
+			(x) => !leaving.has(x.id) && x.blocks.some((bl) => bl.kind === "drill" && ids.has(bl.boardId)),
+		);
+		const sessions = usedIn.length
+			? ` Some of these boards are used in ${usedIn.length === 1 ? "a session" : `${usedIn.length} sessions`} you're keeping, which will show them as missing drills.`
+			: "";
+		return `Delete ${describeCount(selectedBoards.length, selectedSessions.length)}?${sessions} This can't be undone. Export them first if you might want them back.`;
+	};
+
+	/** "Add to folder" for what's selected: they keep the folders they're in already. */
+	const folderMenuForSelected = (): ContextMenuEntry[] => [
+		...folders.map((f) => ({ label: truncate(f, 40), onSelect: () => addSelectedTo(f) })),
+		...(folders.length ? ["separator" as const] : []),
+		{ label: "New folder…", onSelect: () => newFolderThen(async (name) => addSelectedTo(name)) },
+		...(view.kind === "folder"
+			? [
+					"separator" as const,
+					{
+						label: `Remove from “${truncate(view.name, 30)}”`,
+						onSelect: () =>
+							refolderSelected(
+								(f) => f.filter((x) => x !== view.name),
+								`Removed {n} from “${truncate(view.name, 30)}”.`,
+							),
+					},
+				]
+			: []),
+		{
+			label: "Remove from all folders",
+			onSelect: () => refolderSelected(() => [], "Removed {n} from all folders."),
+		},
+	];
+
 	/** A new board for the sport and field picked in the New board dialog. */
 	const newBoard = (pitch: PitchSettings) =>
 		run(async () => {
@@ -413,10 +628,14 @@ export default function Library() {
 			// Everything imported is marked, so it shows under "Imported" and not
 			// in "Not in a folder". Boards and sessions picked here land in the
 			// folder being viewed; the drills inside a session stay out of folders.
-			const imported = <T extends { meta: { folder: string; imported?: boolean } }>(
+			const imported = <T extends { meta: { folders: string[]; imported?: boolean } }>(
 				doc: T,
-				folder = doc.meta.folder || currentFolder,
-			): T => ({ ...doc, meta: { ...doc.meta, folder, imported: true } });
+				folders = doc.meta.folders.length
+					? doc.meta.folders
+					: currentFolder
+						? [currentFolder]
+						: [],
+			): T => ({ ...doc, meta: { ...doc.meta, folders, imported: true } });
 
 			const toAdd: Board[] = boards.map((b) => imported(b));
 			const sourceIds = boards.map((b) => b.id);
@@ -432,7 +651,7 @@ export default function Library() {
 						alreadyHad++;
 						continue;
 					}
-					toAdd.push(imported(drill, ""));
+					toAdd.push(imported(drill, []));
 					sourceIds.push(drill.id);
 				}
 			const addedBoards = await library.addBoards(toAdd);
@@ -466,7 +685,9 @@ export default function Library() {
 			if (done.length) parts.push(`Imported ${done.join(" and ")}.`);
 			if (alreadyHad)
 				parts.push(
-					`${alreadyHad === 1 ? "One drill was" : `${alreadyHad} drills were`} already in your library, so the session uses ${alreadyHad === 1 ? "it" : "them"}.`,
+					alreadyHad === 1
+						? "1 drill was already in your library, so it wasn't added again."
+						: `${alreadyHad} drills were already in your library, so they weren't added again.`,
 				);
 			for (const m of missing)
 				parts.push(
@@ -484,15 +705,17 @@ export default function Library() {
 		}, "Import failed");
 
 	const counts = (name: string) =>
-		library.boards.filter((b) => b.meta.folder === name).length +
-		library.sessions.filter((s) => s.meta.folder === name).length;
+		library.boards.filter((b) => b.meta.folders.includes(name)).length +
+		library.sessions.filter((s) => s.meta.folders.includes(name)).length;
 	const countIn = (v: View) =>
 		library.boards.filter((b) => boardInView(b, v)).length +
 		library.sessions.filter((s) => sessionInView(s, v)).length;
 	const heading =
 		view.kind === "all"
 			? "Boards"
-			: view.kind === "sessions"
+			: view.kind === "everything"
+			  ? "All"
+			  : view.kind === "sessions"
 			  ? "Sessions"
 			  : view.kind === "unfiled"
 			  ? "Not in a folder"
@@ -509,7 +732,7 @@ export default function Library() {
 		count: number,
 		active: boolean,
 		onClick: () => void,
-		icon: "grid" | "folder" | "inbox" | "session" | "pen" | "download",
+		icon: "grid" | "folder" | "inbox" | "session" | "pen" | "download" | "stack",
 	) => (
 		<button
 			type="button"
@@ -551,6 +774,7 @@ export default function Library() {
 					<input
 						type="search"
 						placeholder="Search titles, tags and notes"
+						maxLength={TEXT_LIMITS.search}
 						value={query}
 						onChange={(e) => setQuery(e.target.value)}
 					/>
@@ -591,6 +815,13 @@ export default function Library() {
 			<div className="library__body">
 				<nav className="library__nav" aria-label="Library">
 					<div className="nav-group">
+						{navItem(
+							"All",
+							library.boards.length + library.sessions.length,
+							view.kind === "everything",
+							() => setView({ kind: "everything" }),
+							"stack",
+						)}
 						{navItem(
 							"Boards",
 							library.boards.length,
@@ -746,6 +977,16 @@ export default function Library() {
 								.join(" · ") || "Nothing here yet"}
 						</span>
 						<span className="topbar__spacer" />
+						{!selecting && (shown.length > 0 || shownSessions.length > 0) && (
+							<button
+								type="button"
+								className="button button--small"
+								title="Select several boards and sessions (or Ctrl+click a card)"
+								onClick={() => setSelecting(true)}
+							>
+								Select
+							</button>
+						)}
 						<label className="sort">
 							<span className="muted">Sort</span>
 							<select
@@ -758,6 +999,76 @@ export default function Library() {
 							</select>
 						</label>
 					</div>
+
+					{selecting && (
+						<div className="select-bar" role="toolbar" aria-label="Selected boards and sessions">
+							{/* One box selects everything showing, or nothing; a dash when some are. */}
+							<button
+								type="button"
+								role="checkbox"
+								className="select-bar__all"
+								aria-checked={allSelected ? true : selectedCount ? "mixed" : false}
+								title={allSelected ? "Select none" : "Select all"}
+								onClick={() => setSelected(allSelected ? new Set() : new Set(visibleKeys))}
+							>
+								<span
+									className={`card-check select-bar__box${selectedCount ? " is-checked" : ""}`}
+									aria-hidden="true"
+								>
+									{allSelected ? (
+										<Icon name="check" size={14} />
+									) : selectedCount ? (
+										<Icon name="minus" size={14} />
+									) : null}
+								</span>
+								<span className="select-bar__count">
+									{selectedCount ? `${selectedCount} selected` : "Select all"}
+								</span>
+							</button>
+							{!selectedCount && (
+								<span className="muted small">or click cards to select them</span>
+							)}
+							<span className="topbar__spacer" />
+							<button
+								type="button"
+								className="button button--small"
+								disabled={!selectedCount}
+								onClick={(e) => {
+									const r = e.currentTarget.getBoundingClientRect();
+									openMenu({ clientX: r.left, clientY: r.bottom + 4 }, folderMenuForSelected());
+								}}
+							>
+								<Icon name="folder" size={14} />
+								Add to folder
+							</button>
+							<button
+								type="button"
+								className="button button--small"
+								disabled={!selectedCount}
+								onClick={exportSelected}
+							>
+								<Icon name="download" size={14} />
+								Export…
+							</button>
+							<button
+								type="button"
+								className="button button--small button--danger"
+								disabled={!selectedCount}
+								onClick={() => setDeletingSelected(true)}
+							>
+								Delete…
+							</button>
+							<button
+								type="button"
+								className="icon-button select-bar__done"
+								aria-label="Done"
+								title="Done (Esc)"
+								onClick={stopSelecting}
+							>
+								<Icon name="check" size={16} />
+							</button>
+						</div>
+					)}
 
 					{sessionExport.error && (
 						<div className="notice notice--error" role="alert">
@@ -848,7 +1159,7 @@ export default function Library() {
 						shownSessions.length === 0 && (
 							<div className="empty-state">
 								{query ? (
-									<p>No sessions match “{query}”.</p>
+									<p>No sessions match “{truncate(query.trim(), 40)}”.</p>
 								) : (
 									<>
 										<p>
@@ -868,39 +1179,23 @@ export default function Library() {
 							</div>
 						)}
 
-					{shownSessions.length > 0 && (
-						<>
-							{view.kind !== "sessions" && <h2 className="library__section">Sessions</h2>}
-							<div className="board-grid">
-								{shownSessions.map((session) => (
-									<SessionCard
-										key={session.id}
-										session={session}
-										getBoard={library.getBoard}
-										onOpen={() => openSession(session.id)}
-										menu={sessionMenu(session)}
-									/>
-								))}
-							</div>
-							{view.kind !== "sessions" && shown.length > 0 && (
-								<h2 className="library__section">Boards</h2>
-							)}
-						</>
-					)}
-
 					{library.status === "ready" &&
 						view.kind !== "sessions" &&
 						shown.length === 0 &&
 						shownSessions.length === 0 && (
 						<div className="empty-state">
 							{query ? (
-								<p>No boards match “{query}”.</p>
+								<p>
+									Nothing matches “{truncate(query.trim(), 40)}”.
+								</p>
 							) : (
 								<>
 									<p>
 										{view.kind === "all"
 											? "No boards yet."
-											: "Nothing in here yet."}
+											: view.kind === "everything"
+												? "Nothing here yet. Make a board or a session to start."
+												: "Nothing in here yet."}
 									</p>
 									<button
 										type="button"
@@ -916,14 +1211,26 @@ export default function Library() {
 					)}
 
 					<div className="board-grid">
-						{shown.map((board) => (
-							<BoardCard
-								key={board.id}
-								board={board}
-								onOpen={() => openBoard(board.id)}
-								menu={() => boardMenu(board)}
-							/>
-						))}
+						{mixed.map((item) =>
+							item.kind === "session" ? (
+								<SessionCard
+									key={`s:${item.session.id}`}
+									selection={selectionFor(`s:${item.session.id}`)}
+									session={item.session}
+									getBoard={library.getBoard}
+									onOpen={() => openSession(item.session.id)}
+									menu={sessionMenu(item.session)}
+								/>
+							) : (
+								<BoardCard
+									key={`b:${item.board.id}`}
+									selection={selectionFor(`b:${item.board.id}`)}
+									board={item.board}
+									onOpen={() => openBoard(item.board.id)}
+									menu={() => boardMenu(item.board)}
+								/>
+							),
+						)}
 					</div>
 				</main>
 			</div>
@@ -938,10 +1245,18 @@ export default function Library() {
 						? "There's already a folder with that name."
 						: null
 				}
-				onSubmit={(name) =>
-					run(() => library.createFolder(name), "Couldn't create the folder")
-				}
-				onClose={() => setNewFolderOpen(false)}
+				onSubmit={(name) => {
+					const then = afterNewFolder.current;
+					afterNewFolder.current = null;
+					run(async () => {
+						await library.createFolder(name);
+						await then?.(name.trim());
+					}, "Couldn't create the folder");
+				}}
+				onClose={() => {
+					afterNewFolder.current = null;
+					setNewFolderOpen(false);
+				}}
 			/>
 			<PromptDialog
 				open={renaming !== null}
@@ -978,6 +1293,25 @@ export default function Library() {
 						setView({ kind: "all" });
 				}}
 				onClose={() => setDeletingFolder(null)}
+			/>
+			<ConfirmDialog
+				open={deletingSelected}
+				title={`Delete ${selectedCount} ${selectedCount === 1 ? "item" : "items"}?`}
+				message={deletingSelected ? deleteSelectedMessage() : ""}
+				confirmLabel="Delete"
+				danger
+				onConfirm={() =>
+					run(async () => {
+						for (const x of selectedSessions) await library.deleteSession(x.id);
+						for (const b of selectedBoards) await library.deleteBoard(b.id);
+						setNotice({
+							text: `Deleted ${describeCount(selectedBoards.length, selectedSessions.length)}.`,
+							tone: "info",
+						});
+						stopSelecting();
+					}, "Couldn't delete them")
+				}
+				onClose={() => setDeletingSelected(false)}
 			/>
 			<ConfirmDialog
 				open={deletingBoard !== null}

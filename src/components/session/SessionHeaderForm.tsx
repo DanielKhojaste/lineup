@@ -103,7 +103,7 @@ function Topics() {
 
 /**
  * The session's length as two boxes, hours and minutes, or worked out from
- * the plan (the blocks added up) with "From the plan" ticked.
+ * the plan (the blocks added up) with "Auto" ticked.
  */
 function DurationField() {
 	const { state, dispatch } = useSessionEditor();
@@ -155,7 +155,10 @@ function DurationField() {
 					<span className="muted">min</span>
 				</label>
 			</div>
-			<label className="check duration-field__auto">
+			<label
+				className="check duration-field__auto"
+				title="Add up the blocks in the plan"
+			>
 				<input
 					type="checkbox"
 					checked={auto}
@@ -172,7 +175,7 @@ function DurationField() {
 						})
 					}
 				/>
-				From the plan
+				Auto
 			</label>
 		</fieldset>
 	);

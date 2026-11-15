@@ -23,7 +23,10 @@ export function kitBackground(kit: Kit): string {
 /** Keepers first, then by shirt number; players without a number go last. */
 function byShirt(a: PlayerNode, b: PlayerNode): number {
 	if (a.keeper !== b.keeper) return a.keeper ? -1 : 1;
-	return (a.number ?? Infinity) - (b.number ?? Infinity);
+	// "00" goes between 0 and 1.
+	const value = (n: PlayerNode) =>
+		n.number === "00" ? 0.5 : (n.number ?? Infinity);
+	return value(a) - value(b);
 }
 
 function selectMode(e: React.MouseEvent) {

@@ -114,6 +114,23 @@ describe("board files", () => {
 		});
 	});
 
+	it("keeps each marker's own size within limits, and shirt number 00", () => {
+		const board = createBoard("Sizes");
+		const raw = JSON.parse(serializeBoard(board));
+		raw.nodes = [
+			{ ...createPlayer(0.5, 0.5, "home"), number: "00", scale: 1.3 },
+			{ ...createPlayer(0.4, 0.5, "home"), number: 0, scale: 9 },
+			{ ...createPlayer(0.3, 0.5, "home"), number: "000", scale: 1 },
+			{ ...createPlayer(0.2, 0.5, "home"), number: 2.5 },
+			{ kind: "goal", x: 0.5, y: 0.1, size: "full", rotation: 0, scale: 1.6 },
+		];
+		const nodes = parseBoard(JSON.stringify(raw)).nodes as unknown as Array<
+			Record<string, unknown>
+		>;
+		expect(nodes.map((n) => n.number)).toEqual(["00", 0, undefined, undefined, undefined]);
+		expect(nodes.map((n) => n.scale)).toEqual([1.3, 2, undefined, undefined, undefined]);
+	});
+
 	it("saves files that don't read as text, and opens them again", () => {
 		const board = {
 			...createBoard("Cool Board"),
@@ -213,5 +230,28 @@ describe("board types", () => {
 		expect(parseBoard(JSON.stringify(old)).meta.type).toBe("play");
 		old.meta.type = "nonsense";
 		expect(parseBoard(JSON.stringify(old)).meta.type).toBe("play");
+	});
+});
+
+describe("folders", () => {
+	it("keeps a board in several folders", () => {
+		const board = createBoard("Rondo");
+		board.meta.folders = ["Warm-ups", "Rondos"];
+		expect(parseBoard(serializeBoard(board)).meta.folders).toEqual(["Warm-ups", "Rondos"]);
+	});
+
+	it("reads the one folder of files from before v0.8.1", () => {
+		const old = JSON.parse(serializeBoard(createBoard("Rondo")));
+		delete old.meta.folders;
+		old.meta.folder = "Warm-ups";
+		expect(parseBoard(JSON.stringify(old)).meta.folders).toEqual(["Warm-ups"]);
+		old.meta.folder = "";
+		expect(parseBoard(JSON.stringify(old)).meta.folders).toEqual([]);
+	});
+
+	it("drops blanks and repeats", () => {
+		const raw = JSON.parse(serializeBoard(createBoard("Rondo")));
+		raw.meta.folders = ["Drills", " ", "Drills", 4, " Rondos "];
+		expect(parseBoard(JSON.stringify(raw)).meta.folders).toEqual(["Drills", "Rondos"]);
 	});
 });

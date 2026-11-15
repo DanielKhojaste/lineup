@@ -30,39 +30,67 @@ const TOOL_KEYS: Record<string, Tool> = {
 /** Nudge distance in normalised board units (roughly half a metre). */
 const NUDGE = 0.005;
 
-export const SHORTCUTS: { keys: string; action: string }[] = [
-	{ keys: "V", action: "Select" },
-	{ keys: "1 / 2 / 3", action: "Home / away / neutral player" },
-	{ keys: "C, B", action: "Cone, ball" },
-	{ keys: "G, M, O", action: "Goal, mannequin, pole" },
-	{ keys: "R, P, D", action: "Run, pass, dribble arrow" },
-	{ keys: "L, Z", action: "Line, zone" },
-	{ keys: "F, T, E", action: "Pen, text, eraser" },
-	{ keys: "Shift (while drawing)", action: "Snap angle / square zone" },
-	{ keys: "W", action: "Route: click where a marker runs" },
-	{ keys: "Space", action: "Play / pause the animation" },
-	{ keys: ", / .", action: "Previous / next step" },
-	{ keys: "Esc", action: "Back to Select, or clear the selection" },
-	{ keys: "Ctrl+A", action: "Select everything" },
-	{ keys: "Shift+click, drag a box", action: "Select several" },
-	{ keys: "Arrow keys", action: "Nudge (hold Shift for more)" },
-	{
-		keys: "Shift+R, Alt+Shift+R",
-		action: "Turn a goal or mannequin 15° right / left",
-	},
-	{ keys: "Ctrl+C, Ctrl+X, Ctrl+V", action: "Copy, cut, paste (also between boards)" },
-	{ keys: "Ctrl+D", action: "Duplicate" },
-	{ keys: "Right-click, Menu key", action: "Actions for what's under the pointer" },
-	{ keys: "Delete", action: "Delete" },
-	{ keys: "] / [", action: "Bring to front / send to back" },
-	{ keys: "Ctrl+Z", action: "Undo" },
-	{ keys: "Ctrl+Y, Ctrl+Shift+Z", action: "Redo" },
-	{ keys: "Double-click", action: "Edit a player or a text" },
+/**
+ * The shortcuts listed in Settings. Each entry in `keys` is one combination
+ * (keys pressed together); `join` is shown between combinations. Words that
+ * aren't keys ("click", "drag a box") are written as they are.
+ */
+export interface Shortcut {
+	group: "Tools" | "Selecting and moving" | "Editing" | "Animation";
+	keys: string[][];
+	/** Between two ways of doing the same thing ("Ctrl+Y or Ctrl+Shift+Z"). */
+	join?: "or";
+	note?: string;
+	action: string;
+}
+
+export const SHORTCUTS: Shortcut[] = [
+	{ group: "Tools", keys: [["V"]], action: "Select" },
+	{ group: "Tools", keys: [["1"]], action: "Home player" },
+	{ group: "Tools", keys: [["2"]], action: "Away player" },
+	{ group: "Tools", keys: [["3"]], action: "Neutral player" },
+	{ group: "Tools", keys: [["C"]], action: "Cone" },
+	{ group: "Tools", keys: [["B"]], action: "Ball" },
+	{ group: "Tools", keys: [["G"]], action: "Goal" },
+	{ group: "Tools", keys: [["M"]], action: "Mannequin" },
+	{ group: "Tools", keys: [["O"]], action: "Pole" },
+	{ group: "Tools", keys: [["R"]], action: "Run arrow" },
+	{ group: "Tools", keys: [["P"]], action: "Pass arrow" },
+	{ group: "Tools", keys: [["D"]], action: "Dribble arrow" },
+	{ group: "Tools", keys: [["L"]], action: "Line" },
+	{ group: "Tools", keys: [["Z"]], action: "Zone" },
+	{ group: "Tools", keys: [["F"]], action: "Pen" },
+	{ group: "Tools", keys: [["T"]], action: "Text" },
+	{ group: "Tools", keys: [["E"]], action: "Eraser" },
+	{ group: "Tools", keys: [["Shift"]], action: "While drawing: snap the angle, or a square zone" },
+	{ group: "Tools", keys: [["Esc"]], action: "Back to Select, or clear the selection" },
+	{ group: "Selecting and moving", keys: [["Ctrl", "A"]], action: "Select everything" },
+	{ group: "Selecting and moving", keys: [["Shift", "click"], ["drag a box"]], join: "or", action: "Select several" },
+	{ group: "Selecting and moving", keys: [["Arrow keys"]], action: "Nudge (hold Shift for more)" },
+	{ group: "Selecting and moving", keys: [["Shift", "R"]], action: "Turn a goal or mannequin 15° right" },
+	{ group: "Selecting and moving", keys: [["Alt", "Shift", "R"]], action: "Turn a goal or mannequin 15° left" },
+	{ group: "Selecting and moving", keys: [["]"]], action: "Bring to front" },
+	{ group: "Selecting and moving", keys: [["["]], action: "Send to back" },
+	{ group: "Editing", keys: [["Ctrl", "C"]], action: "Copy (also between boards)" },
+	{ group: "Editing", keys: [["Ctrl", "X"]], action: "Cut" },
+	{ group: "Editing", keys: [["Ctrl", "V"]], action: "Paste" },
+	{ group: "Editing", keys: [["Ctrl", "D"]], action: "Duplicate" },
+	{ group: "Editing", keys: [["Delete"]], action: "Delete" },
+	{ group: "Editing", keys: [["Ctrl", "Z"]], action: "Undo" },
+	{ group: "Editing", keys: [["Ctrl", "Y"], ["Ctrl", "Shift", "Z"]], join: "or", action: "Redo" },
+	{ group: "Editing", keys: [["double-click"]], action: "Edit a player or a text" },
+	{ group: "Editing", keys: [["right-click"], ["Menu key"]], join: "or", action: "Actions for what's under the pointer" },
+	{ group: "Animation", keys: [["W"]], action: "Route: click where a marker runs" },
+	{ group: "Animation", keys: [["Space"]], action: "Play or pause" },
+	{ group: "Animation", keys: [[","]], action: "Previous step" },
+	{ group: "Animation", keys: [["."]], action: "Next step" },
 ];
 
 function isTyping(target: EventTarget | null): boolean {
 	if (!(target instanceof HTMLElement)) return false;
 	return (
+		// A dialog has the keyboard: Delete or Ctrl+Z there mustn't touch the board.
+		!!target.closest("dialog") ||
 		target.isContentEditable ||
 		target instanceof HTMLInputElement ||
 		target instanceof HTMLTextAreaElement ||

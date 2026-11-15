@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import Loader from "../components/Loader";
 import DrillPicker from "../components/session/DrillPicker";
@@ -10,7 +10,7 @@ import { isTextField } from "../components/ui/ContextMenu";
 import { Menu } from "../components/ui/Menu";
 import { useSessionExport } from "../export/useSessionExport";
 import { exportSessionDocument } from "../storage/files";
-import { Session, sessionTitle } from "../model/session";
+import { isEmptySession, Session, sessionTitle } from "../model/session";
 import { drillsOf } from "../model/sessionFile";
 import { useLibrary } from "../state/LibraryContext";
 import { SessionProvider, useSessionEditor } from "../state/SessionContext";
@@ -22,14 +22,47 @@ const STATUS_TEXT: Record<SaveStatus, string> = {
 	error: "Couldn't save",
 };
 
+/** Where each session's plan was scrolled to, while the app is open. */
+const scrollPositions = new Map<string, number>();
+
 function SessionLayout() {
 	const { state, dispatch, selectedBlock, setSelectedBlock } =
 		useSessionEditor();
 	const library = useLibrary();
 	const navigate = useNavigate();
 	const exporter = useSessionExport();
-	const { status, flush } = useAutosave(state.session, library.saveSession);
+	// An empty new session isn't saved; leaving it empty drops it from the library.
+	const { status, flush } = useAutosave(state.session, (s) =>
+		isEmptySession(s) ? Promise.resolve() : library.saveSession(s),
+	);
+	const latestSession = useRef(state.session);
+	latestSession.current = state.session;
+	useEffect(
+		() => () => {
+			const left = latestSession.current;
+			if (isEmptySession(left)) void library.deleteSession(left.id);
+		},
+		// Only when the editor closes.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[],
+	);
 	const { session } = state;
+	const mainRef = useRef<HTMLElement>(null);
+	// Back from a drill opened in this session: scroll to where the coach was.
+	const returning = !!(useLocation().state as { back?: boolean } | null)?.back;
+	useLayoutEffect(() => {
+		const top = scrollPositions.get(session.id);
+		const main = mainRef.current;
+		if (!returning || top === undefined || !main) return;
+		main.scrollTop = top;
+		// Drill pictures can still be settling; try again on the next frame.
+		const frame = requestAnimationFrame(() => {
+			main.scrollTop = top;
+		});
+		return () => cancelAnimationFrame(frame);
+		// Only when the session opens.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [session.id]);
 	const editing = !!state.gestureBase && state.gestureBase !== session;
 	const canUndo = state.past.length > 0 || editing;
 	const canRedo = state.future.length > 0 && !editing;
@@ -165,7 +198,11 @@ function SessionLayout() {
 				</div>
 			)}
 			<div className="session-editor__body">
-				<main className="session-editor__main">
+				<main
+					className="session-editor__main"
+					ref={mainRef}
+					onScroll={(e) => scrollPositions.set(session.id, e.currentTarget.scrollTop)}
+				>
 					<SessionHeaderForm />
 					<Timeline />
 				</main>

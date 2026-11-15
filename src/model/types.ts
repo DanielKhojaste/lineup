@@ -27,13 +27,21 @@ interface NodeBase {
 	x: number;
 	/** Vertical centre, normalised to the board height (0 = top edge, 1 = bottom edge). */
 	y: number;
+	/**
+	 * This marker's own size, on top of the board's player or equipment size
+	 * (1 or missing = the same as the rest). Goals keep their real size.
+	 */
+	scale?: number;
 }
+
+/** A shirt number: 0–999, or "00" (used in basketball and hockey). */
+export type ShirtNumber = number | "00";
 
 export interface PlayerNode extends NodeBase {
 	kind: "player";
 	team: TeamId;
 	keeper: boolean;
-	number?: number;
+	number?: ShirtNumber;
 	/** Short position label shown under the marker, e.g. "RW". */
 	label?: string;
 	name?: string;
@@ -168,8 +176,8 @@ export interface BoardMeta {
 	title: string;
 	type: BoardType;
 	tags: string[];
-	/** Library folder name; empty when the board isn't in a folder. */
-	folder: string;
+	/** Library folders it's in (none, one or several). */
+	folders: string[];
 	/** True for a board that came from someone else's file (Import, or the drills inside a session file). */
 	imported?: boolean;
 	createdAt: string;

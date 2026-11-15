@@ -1,25 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
-import { createBoard } from "../../model/board";
-import { FieldVariant, Sport, SPORT_INFO, SPORTS } from "../../model/sports";
+import { useEffect, useState } from "react";
+import { Sport } from "../../model/sports";
 import { PitchSettings } from "../../model/types";
 import { getPreferences, setPreferences } from "../../state/preferences";
-import BoardPreview from "../board/BoardPreview";
 import { Icon } from "../Icon";
 import { Modal } from "../ui/Dialog";
-
-/** Empty boards used as pictures of each field. */
-function useFieldPictures() {
-	return useMemo(() => {
-		const pictures = new Map<string, ReturnType<typeof createBoard>>();
-		for (const sport of SPORTS)
-			for (const variant of ["full", "half"] as FieldVariant[])
-				pictures.set(
-					`${sport}-${variant}`,
-					createBoard("", { sport, variant }),
-				);
-		return pictures;
-	}, []);
-}
+import FieldChoices from "./FieldChoices";
 
 /**
  * Pick a sport, then a full or half field, for a new board. Opens on the
@@ -37,7 +22,6 @@ export default function NewBoardDialog({
 	onClose: () => void;
 	onCreate: (pitch: PitchSettings) => void;
 }) {
-	const pictures = useFieldPictures();
 	const [pitch, setPitch] = useState<PitchSettings>(
 		() => getPreferences().defaultPitch,
 	);
@@ -66,8 +50,6 @@ export default function NewBoardDialog({
 		onClose();
 	};
 
-	const info = SPORT_INFO[pitch.sport];
-
 	return (
 		<Modal
 			open={open}
@@ -82,69 +64,14 @@ export default function NewBoardDialog({
 					create();
 				}}
 			>
-				<div className="new-board__sports" role="radiogroup" aria-label="Sport">
-					{SPORTS.map((sport) => {
-						const active = pitch.sport === sport;
-						return (
-							<button
-								key={sport}
-								type="button"
-								role="radio"
-								aria-checked={active}
-								className={`new-board__sport${active ? " is-active" : ""}`}
-								onClick={() => setPitch({ ...pitch, sport })}
-								{...(active ? { "data-autofocus": true } : {})}
-							>
-								<BoardPreview
-									board={pictures.get(`${sport}-full`)!}
-									className="new-board__thumb"
-								/>
-								<span>{SPORT_INFO[sport].name}</span>
-							</button>
-						);
-					})}
-				</div>
-
-				<div className="new-board__fields">
-					<span className="field__label" id="new-board-size">
-						{info.name}: full or half {info.surface}?
-					</span>
-					<div
-						className="new-board__variants"
-						role="radiogroup"
-						aria-labelledby="new-board-size"
-					>
-						{(["full", "half"] as FieldVariant[]).map((variant) => {
-							const option = { sport: pitch.sport as Sport, variant };
-							const active = pitch.variant === variant;
-							return (
-								<button
-									key={variant}
-									type="button"
-									role="radio"
-									aria-checked={active}
-									className={`new-board__variant${active ? " is-active" : ""}`}
-									onClick={() => setPitch(option)}
-									onDoubleClick={() => create(option)}
-									title="Double-click to make the board"
-								>
-									<BoardPreview
-										board={pictures.get(`${pitch.sport}-${variant}`)!}
-										className="new-board__preview"
-									/>
-									<span>
-										{variant === "full"
-											? `Full ${info.surface}`
-											: `Half ${info.surface}`}
-										{isDefault(option) && (
-											<span className="muted"> · default</span>
-										)}
-									</span>
-								</button>
-							);
-						})}
-					</div>
-				</div>
+				<FieldChoices
+					pitch={pitch}
+					onPick={setPitch}
+					onConfirm={create}
+					note={(option) =>
+						isDefault(option) && <span className="muted"> · default</span>
+					}
+				/>
 
 				<div className="dialog__actions new-board__actions">
 					{isDefault(pitch) ? (

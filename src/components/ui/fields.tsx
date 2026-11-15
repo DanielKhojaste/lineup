@@ -10,6 +10,7 @@ import {
 	useRef,
 } from "react";
 import { useOptionalEditor } from "../../state/EditorContext";
+import { TEXT_LIMITS } from "../../utils/text";
 
 /**
  * Where a field's edits are grouped into one undo step. The board editor is
@@ -97,6 +98,8 @@ export const BoardInput = forwardRef<HTMLInputElement, InputProps>(
 					onKeyDown={(e) => {
 						if (e.key === "Enter") e.currentTarget.blur();
 					}}
+					// Every field has a limit; fields can ask for a shorter one.
+					maxLength={TEXT_LIMITS.line}
 					{...gesture}
 					{...rest}
 				/>
@@ -132,6 +135,7 @@ export function BoardTextarea({
 				className="field__input field__input--area"
 				value={value}
 				onChange={(e) => onValue(e.target.value)}
+				maxLength={TEXT_LIMITS.long}
 				{...gesture}
 				{...rest}
 			/>

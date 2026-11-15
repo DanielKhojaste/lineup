@@ -1,3 +1,4 @@
+import { DEFAULT_SIZES, PLAYER_DRAWN_SIZES } from "../config/sizes";
 import {
 	BallNode,
 	Board,
@@ -11,6 +12,7 @@ import {
 	PlayerNode,
 	PoleNode,
 	SCHEMA_VERSION,
+	ShirtNumber,
 	TeamId,
 } from "./types";
 
@@ -51,21 +53,39 @@ export const DRILL_STAGES = [
 ];
 
 /** Marker sizes on offer, as a factor of the normal size. */
-export const MARKER_SCALES = [
-	{ value: 0.75, label: "S" },
-	{ value: 1, label: "M" },
-	{ value: 1.3, label: "L" },
-	{ value: 1.6, label: "XL" },
-] as const;
+export { MARKER_SCALES } from "../config/sizes";
+
+/**
+ * How big players are drawn for each player size: since v0.8.1 each size is
+ * what the one below it used to be (XL is the old L, L the old M…), because
+ * big players looked unrealistic next to the field. Sizes in between (from
+ * older files) are worked out along the way.
+ */
+const PLAYER_DRAWN = PLAYER_DRAWN_SIZES;
+
+export function playerDrawnSize(stored: number): number {
+	const [first] = PLAYER_DRAWN;
+	const last = PLAYER_DRAWN[PLAYER_DRAWN.length - 1];
+	if (stored <= first[0]) return (stored / first[0]) * first[1];
+	if (stored >= last[0]) return (stored / last[0]) * last[1];
+	for (let i = 1; i < PLAYER_DRAWN.length; i++) {
+		const [a, da] = PLAYER_DRAWN[i - 1];
+		const [b, db] = PLAYER_DRAWN[i];
+		if (stored <= b) return da + ((stored - a) / (b - a)) * (db - da);
+	}
+	return stored;
+}
 
 /** How much bigger (or smaller) than normal a marker is drawn on this board. */
 export function markerScale(
 	node: BoardNode,
 	display: Board["display"],
 ): number {
-	if (node.kind === "player") return display.playerScale;
 	if (node.kind === "goal") return 1;
-	return display.equipmentScale;
+	const own = node.scale ?? 1;
+	return node.kind === "player"
+		? playerDrawnSize(display.playerScale) * own
+		: display.equipmentScale * own;
 }
 
 /** Degrees the rotate buttons and Shift+R turn a goal or mannequin by. */
@@ -91,7 +111,7 @@ export function createBoard(
 			title,
 			type: "drill",
 			tags: [],
-			folder: "",
+			folders: [],
 			createdAt: now,
 			updatedAt: now,
 		},
@@ -109,7 +129,11 @@ export function createBoard(
 		},
 		pitch: { ...pitch },
 		teams: structuredClone(DEFAULT_TEAMS),
-		display: { showLabels: true, playerScale: 1, equipmentScale: 1 },
+		display: {
+			showLabels: true,
+			playerScale: DEFAULT_SIZES.players,
+			equipmentScale: DEFAULT_SIZES.equipment,
+		},
 		nodes: [],
 		drawings: [],
 		steps: [],
@@ -182,4 +206,16 @@ export function nextShirtNumber(nodes: BoardNode[], team: TeamId): number {
 
 export function clamp01(value: number): number {
 	return Math.min(1, Math.max(0, value));
+}
+
+/**
+ * A shirt number typed by the user: digits only, 0–999. "00" is kept (it's a
+ * real number in basketball and hockey); other leading zeros are dropped, so
+ * "07" is 7 and "000" is 00. Empty means no number.
+ */
+export function parseShirtNumber(text: string): ShirtNumber | undefined {
+	const digits = text.replace(/\D/g, "").slice(0, 3);
+	if (digits === "") return undefined;
+	if (/^00+$/.test(digits)) return "00";
+	return Number(digits);
 }

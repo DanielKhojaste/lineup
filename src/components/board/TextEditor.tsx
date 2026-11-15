@@ -1,3 +1,4 @@
+import { TEXT_LIMITS } from "../../utils/text";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { TextDrawing } from "../../model/types";
 import { useEditor } from "../../state/EditorContext";
@@ -57,6 +58,7 @@ export default function TextEditor({
 
 	return (
 		<textarea
+			maxLength={TEXT_LIMITS.boardText}
 			ref={ref}
 			className="text-editor"
 			aria-label="Text on the board"

@@ -52,7 +52,8 @@ const baseName = (path: string) => path.slice(path.lastIndexOf("/") + 1);
 
 const pathOf = (c: Collection, id: string) => `${c.dir}/${id}.${c.extension}`;
 
-async function chooseBase(): Promise<{
+/** Where the library lives: Documents/Lineup, or the app's data folder when there's no Documents. */
+export async function chooseBase(): Promise<{
 	baseDir: BaseDirectory;
 	location: string;
 }> {

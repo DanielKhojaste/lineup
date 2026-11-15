@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ROTATE_STEP } from "../../model/board";
 import { LINE_TOOLS, LineTool } from "../../model/drawings";
-import { SPORT_INFO } from "../../model/sports";
+import { ballName, SPORT_INFO } from "../../model/sports";
 import { BoardNode, Drawing, Point, TeamId } from "../../model/types";
 import { useEditor } from "../../state/EditorContext";
 import { allItems, PlaceTool } from "../../state/editor";
@@ -43,7 +43,7 @@ export function useBoardMenus({
 	/** Start editing a text drawing on the board (only the board itself can). */
 	editText?: (id: string) => void;
 } = {}) {
-	const { state, dispatch, focusInspector } = useEditor();
+	const { state, dispatch, focusInspector, setFieldDialogOpen } = useEditor();
 	const playback = usePlayback();
 	const copied = useCopiedItems();
 	const [clearing, setClearing] = useState(false);
@@ -251,7 +251,10 @@ export function useBoardMenus({
 					})),
 					"separator" as const,
 					...EQUIPMENT.filter((e) => e.tool !== "goal" || sport.goal).map(
-						(e) => ({ label: e.label, onSelect: () => place(e.tool) }),
+						(e) => ({
+							label: e.tool === "ball" ? ballName(board.pitch.sport) : e.label,
+							onSelect: () => place(e.tool),
+						}),
 					),
 				],
 			},
@@ -283,6 +286,10 @@ export function useBoardMenus({
 						type: "updateDisplay",
 						patch: { showLabels: !board.display.showLabels },
 					}),
+			},
+			{
+				label: "Change sport / field",
+				onSelect: () => setFieldDialogOpen(true),
 			},
 			{
 				label: "Field",

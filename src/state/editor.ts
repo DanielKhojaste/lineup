@@ -34,6 +34,7 @@ import {
 	PitchSettings,
 	PlayerNode,
 	Point,
+	ShirtNumber,
 	StrokeWidth,
 	TeamId,
 	TeamStyle,
@@ -82,7 +83,7 @@ export interface NodePatch {
 	y?: number;
 	team?: TeamId;
 	keeper?: boolean;
-	number?: number;
+	number?: ShirtNumber;
 	label?: string;
 	name?: string;
 	color?: string;
@@ -90,6 +91,8 @@ export interface NodePatch {
 	stripes?: string;
 	size?: "full" | "mini";
 	rotation?: number;
+	/** The marker's own size (1 = the same as the rest). Not for goals. */
+	scale?: number;
 }
 
 /** Style changes that can be applied to several drawings at once. */
@@ -137,8 +140,11 @@ export type EditorAction =
 	| { type: "updateNotes"; patch: Partial<DrillNotes> }
 	| { type: "updateTeam"; team: TeamId; patch: Partial<TeamStyle> }
 	| { type: "updateDisplay"; patch: Partial<BoardDisplay> }
-	/** Change the board's sport or switch between a full and a half field. */
-	| { type: "updatePitch"; patch: Partial<PitchSettings> }
+	/**
+	 * Change the board's sport or switch between a full and a half field.
+	 * With `blank`, every marker, drawing and step goes too (one undo step).
+	 */
+	| { type: "updatePitch"; patch: Partial<PitchSettings>; blank?: boolean }
 	| { type: "beginGesture" }
 	| { type: "endGesture" }
 	| { type: "cancelGesture" }
@@ -202,6 +208,8 @@ function applyNodePatch(node: BoardNode, patch: NodePatch): BoardNode {
 		set({ color: patch.color });
 	}
 	if (node.kind === "goal" && has(patch, "size")) set({ size: patch.size });
+	if (node.kind !== "goal" && has(patch, "scale"))
+		set({ scale: patch.scale === 1 ? undefined : patch.scale });
 	if (
 		(node.kind === "goal" || node.kind === "mannequin") &&
 		has(patch, "rotation")
@@ -720,11 +728,23 @@ function reduce(state: EditorState, action: EditorAction): EditorState {
 
 		case "updatePitch": {
 			const pitch = { ...board.pitch, ...action.patch };
-			if (
+			const samePitch =
 				pitch.sport === board.pitch.sport &&
-				pitch.variant === board.pitch.variant
-			)
-				return state;
+				pitch.variant === board.pitch.variant;
+			if (action.blank) {
+				const empty =
+					!board.nodes.length && !board.drawings.length && !board.steps.length;
+				if (samePitch && empty) return state;
+				const next = commit(state, {
+					...board,
+					pitch,
+					nodes: [],
+					drawings: [],
+					steps: [],
+				});
+				return { ...next, selection: [], step: 0 };
+			}
+			if (samePitch) return state;
 			// Markers that would be off the new field's area are brought onto it.
 			const bounds = fieldBounds(pitch);
 			const nodes = board.nodes.map((n) => {

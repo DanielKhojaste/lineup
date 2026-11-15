@@ -8,6 +8,10 @@ This project adheres to semantic versioning (0.x during early development).
 
 ## [Unreleased]
 
+---
+
+## [0.8.1] - 2026-11-15
+
 ### Added
 
 - Share sessions: export a session as a `.lineup-session` file with every drill it uses inside, from the session's **Export** menu or its menu in the library
@@ -16,9 +20,48 @@ This project adheres to semantic versioning (0.x during early development).
 - Click a block's name in the plan ("Activity 1") to pick its part of the session from a short menu, instead of a dropdown on every block
 - Other blocks in a session (a game, a team talk) can be a part of the session too, like **Scrimmage**, and are numbered with the rest
 - Hide the session editor's **Add from library** panel to give the plan more room; Lineup remembers it
+- **Change sport / field** from a button in the board's Field settings, or from the board's right-click menu. It opens the same pictures as New board, with the board's sport and field now in grey and your pick in the accent colour. Tick **Start with a blank board** to clear the board as well; there's no confirmation, because Ctrl+Z brings everything back
+- **Size of a single marker:** select players or equipment and pick S, M, L or XL under Size. It goes on top of the board's player and equipment sizes, and goals keep their real size
+- Shirt numbers **0 and 00** (basketball and hockey use them)
+- **All** in the library: boards and sessions together in one grid, in the order picked in Sort, first in the sidebar and where the library opens. Folders and sports mix them the same way. The library opens on the view and sort you picked last, even after a restart
+- **Select several** boards and sessions with the **Select** button (or Ctrl+click a card), then add them to a folder (or a new one), export them to a folder you pick, or delete them. One box selects all or none, with a dash when some are selected; the tick closes select mode
+- **A board or session can be in several folders:** tick them in its **Folders ›** menu (with **New folder…**), or in the board's Notes. Removing it from a folder or deleting a folder keeps it in its others, and files from earlier versions keep their one folder
+- **Ice hockey:** a full or half NHL rink (200 × 85 ft) with rounded boards on plain ice (no dark corners) and no empty room around it, the red and blue lines, faceoff circles and dots, goal creases and the trapezoids behind the goals. The ball is a puck (and is called one), the goals are ice hockey size, and sessions suggest ice hockey topics (power play, breakouts, forechecking…)
+- A colour picker after the swatches everywhere you pick a colour, equipment included. It opens on the colour in use (a blue player's picker starts on that blue)
+- **Theme preview:** Settings › Appearance › Preview themes shows every component that uses a theme's primary and secondary colours (buttons, the tool rail, tabs, fields, the library, tags, the session plan, the step bar, selections on the board) and every colour the theme makes, for any theme, with dark and light side by side. Try a theme there before using it
+- **Theme files:** each theme is a file in `src/theme/presets/` that can be edited, with optional hand-set colours; a README there explains them
+- **Your own themes:** save custom colours as a theme with a name, **import** and **export** themes as `.lineup-theme` files (plain text you can share or edit), **rename** them and delete the ones you don't want, in Settings or in the Theme preview. They're listed under "Your themes" and kept as files in `Documents\Lineup\themes\`, next to your boards (themes saved before this are moved there). Deleting the theme in use goes back to the Lineup theme you used last
+- Save and open windows for exports start in Documents, then wherever you saved that kind of file last (themes remember their own folder)
+- New dark themes inspired by Denis Villeneuve's Dune films, each with its own backgrounds to set the mood: **Dune** (a strong spice orange and the vivid Fremen blue on warm, cinnamon-tinged Arrakis panels, with **drifting spice**: glowing red-orange flakes like the spice in the films' air, carried across the panels by the wind, never over the board; its size, speed and amount can be changed in Settings › Appearance or on the Theme preview page), **Dune Sand** (desert gold and spice), **Fremen** (the blue of the eyes of Ibad and sand gold, on the blue-black of a desert night, with see-through topics and a **desert night** of twinkling, sparkling stars and comets) and **Giedi Prime** (the Harkonnen world in black and white, with the red of the arena). The spice and the desert night can be turned off in Settings › Appearance or on the Theme preview page, and Lineup remembers it. They never cover the board, and they're off when the computer asks for reduced motion.
+- Theme files can set their own backgrounds and text colours, and every other colour is made from them
+- The Theme preview's **Show both dark and light themes** shows a theme's dark and light versions side by side, with the one you picked on the left. It only shows for themes that come in both
+- Keyboard shortcuts in Settings are drawn as keyboard keys, one shortcut per row, in groups (Tools, Selecting and moving, Editing, Animation), in two columns under a **Keyboard shortcuts** dropdown
 
 ### Changed
 
+- Back from a drill opened in a session, the session is where you left it instead of at the top
+- Messages like "Imported 2 boards and 1 session." close by themselves after 7 seconds; messages about a problem stay until closed
+- Library file names work on every system: names Windows keeps for itself (CON, NUL, COM1…) get a _ added, dots and spaces at the end are dropped, and an untitled session's file is "Untitled session" rather than "Untitled board"
+- The time in file names uses hyphens ("Untitled session (2026-11-03 11-16)"); files named with dots are renamed when the library opens
+- Touchline's secondary is a blue instead of orange. Violet, Violet light and Touchline dark are kept in `src/theme/extra-themes/`, out of the list, with Lagoon
+- Text in a theme's colours (links, tabs, "Warm-up 1") is mixed towards the text colour until it's easy to read, in every theme
+- Amber Night's tags and topics are see-through purple with a bright purple border (a theme file can set its own chip colours, or pick filled or outline chips)
+- Tags and topics have their text centred, with even space on both sides
+- The theme list in Settings is a dropdown with a swatch for each theme: a circle split into its primary and secondary, in a thin ring of its background. The Theme preview uses the same swatches
+- Settings: the default sport and default size are on one row, and the theme buttons say what they do (Preview all themes, Import…, Export…)
+- In dark themes, a secondary colour too dark to see (like Amber Night's purple) is shown lighter, so tags and topics read on dark panels
+- **Smaller players:** XL is drawn as the old L and L as the old M, with M and S a little bigger than the old S, so players look realistic next to the field. The sizes are set in `src/config/sizes.ts`
+- **New boards start with the sizes you used last** (player and equipment sizes), also set in Settings › New boards
+- A session's time can be set to **Auto** (it was "From the plan"), and the message about a plan that's longer than the session's time has the Auto tick in it
+- The message after importing a session says drills already in your library "weren't added again"
+- The Boards icon's squares no longer run into a thick cross in the middle
+- **Selection box:** lines, zones and text are picked when half or more of them is in the box, and players and equipment when the box touches any part of them (before, the box had to go around the whole drawing, and a marker's centre had to be in it)
+- Every text field has a sensible limit (titles 100 characters, search 80, names 40…), and long text shown elsewhere ends with an ellipsis, so a very long search no longer makes the library scroll sideways
+- A new session isn't saved until something is in it, so opening one and going straight back no longer leaves an empty "Untitled session"
+- The tool rail's ball is the board's sport's ball (a basketball, a volleyball, a hockey ball)
+- The basketball hoop is a softer burnt orange, so it no longer glares on the maple
+- "Use team kit" only shows when a player's kit is different from the team's
+- Keyboard shortcuts for the board (like Delete and Ctrl+Z) no longer reach it while a window is open
 - The plan's colours follow the part of the session: warm-ups, activities, games and scrimmages in yellow, and water breaks and cool-downs in grey. The strip on session cards in the library uses the same colours
 
 ---
