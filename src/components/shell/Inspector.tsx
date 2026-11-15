@@ -1,3 +1,4 @@
+import { setPreferences } from "../../state/preferences";
 import {
 	CONE_COLORS,
 	MARKER_SCALES,
@@ -469,7 +470,7 @@ function BoardSettings() {
 					title={`Now: ${fieldName(pitch)}`}
 					onClick={() => setFieldDialogOpen(true)}
 				>
-					Change sport / field…
+					Change sport / field
 				</button>
 			</Section>
 			<Section title="Teams">
@@ -522,12 +523,14 @@ function BoardSettings() {
 						value: String(o.value),
 						label: o.label,
 					}))}
-					onChange={(v) =>
+					onChange={(v) => {
 						dispatch({
 							type: "updateDisplay",
 							patch: { playerScale: Number(v) },
-						})
-					}
+						});
+						// New boards start with the size picked last.
+						setPreferences({ playerScale: Number(v) });
+					}}
 				/>
 				<Segmented
 					label="Equipment size"
@@ -537,12 +540,14 @@ function BoardSettings() {
 						label: o.label,
 						title: "Cones, balls, mannequins and poles",
 					}))}
-					onChange={(v) =>
+					onChange={(v) => {
 						dispatch({
 							type: "updateDisplay",
 							patch: { equipmentScale: Number(v) },
-						})
-					}
+						});
+						// New boards start with the size picked last.
+						setPreferences({ equipmentScale: Number(v) });
+					}}
 				/>
 			</Section>
 		</>

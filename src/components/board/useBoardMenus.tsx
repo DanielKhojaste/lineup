@@ -285,7 +285,7 @@ export function useBoardMenus({
 					}),
 			},
 			{
-				label: "Change sport / field…",
+				label: "Change sport / field",
 				onSelect: () => setFieldDialogOpen(true),
 			},
 			{

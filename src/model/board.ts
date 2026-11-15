@@ -1,3 +1,4 @@
+import { DEFAULT_SIZES, PLAYER_DRAWN_SIZES } from "../config/sizes";
 import {
 	BallNode,
 	Board,
@@ -52,12 +53,7 @@ export const DRILL_STAGES = [
 ];
 
 /** Marker sizes on offer, as a factor of the normal size. */
-export const MARKER_SCALES = [
-	{ value: 0.75, label: "S" },
-	{ value: 1, label: "M" },
-	{ value: 1.3, label: "L" },
-	{ value: 1.6, label: "XL" },
-] as const;
+export { MARKER_SCALES } from "../config/sizes";
 
 /**
  * How big players are drawn for each player size: since v0.8.1 each size is
@@ -65,12 +61,7 @@ export const MARKER_SCALES = [
  * big players looked unrealistic next to the field. Sizes in between (from
  * older files) are worked out along the way.
  */
-const PLAYER_DRAWN: [stored: number, drawn: number][] = [
-	[0.75, 0.6],
-	[1, 0.75],
-	[1.3, 1],
-	[1.6, 1.3],
-];
+const PLAYER_DRAWN = PLAYER_DRAWN_SIZES;
 
 export function playerDrawnSize(stored: number): number {
 	const [first] = PLAYER_DRAWN;
@@ -138,7 +129,11 @@ export function createBoard(
 		},
 		pitch: { ...pitch },
 		teams: structuredClone(DEFAULT_TEAMS),
-		display: { showLabels: true, playerScale: 1, equipmentScale: 1 },
+		display: {
+			showLabels: true,
+			playerScale: DEFAULT_SIZES.players,
+			equipmentScale: DEFAULT_SIZES.equipment,
+		},
 		nodes: [],
 		drawings: [],
 		steps: [],

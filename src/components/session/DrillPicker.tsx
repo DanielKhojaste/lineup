@@ -1,3 +1,4 @@
+import { TEXT_LIMITS } from "../../utils/text";
 import { useMemo, useState } from "react";
 import { BOARD_TYPE_LABELS } from "../../model/board";
 import {
@@ -127,6 +128,7 @@ export default function DrillPicker() {
 					<span className="visually-hidden">Search boards</span>
 					<input
 						type="search"
+						maxLength={TEXT_LIMITS.search}
 						placeholder="Search drills"
 						value={query}
 						onChange={(e) => setQuery(e.target.value)}

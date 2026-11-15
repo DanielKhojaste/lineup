@@ -13,6 +13,7 @@ import BoardPreview from "../board/BoardPreview";
 import { Icon } from "../Icon";
 import { ContextMenuEntry, useContextMenu } from "../ui/ContextMenu";
 import CardMenuButton from "./CardMenuButton";
+import { CardCheck, CardSelection } from "./CardSelection";
 
 /**
  * A session in the library: the first drills' pictures, a strip showing how
@@ -24,11 +25,13 @@ export default function SessionCard({
 	getBoard,
 	onOpen,
 	menu,
+	selection,
 }: {
 	session: Session;
 	getBoard: (id: string) => Board | undefined;
 	onOpen: () => void;
 	menu: () => ContextMenuEntry[];
+	selection?: CardSelection;
 }) {
 	const { openMenu } = useContextMenu();
 	const total = totalMinutes(session);
@@ -48,15 +51,17 @@ export default function SessionCard({
 
 	return (
 		<article
-			className="board-card session-card"
+			className={`board-card session-card${selection?.selected ? " is-selected" : ""}`}
 			onContextMenu={(e) => openMenu(e, menu())}
 		>
 			<button
 				type="button"
 				className="board-card__open"
-				onClick={onOpen}
-				aria-label={`Open session ${sessionTitle(session)}`}
+				onClick={(e) => (selection?.handles(e) ? selection.toggle() : onOpen())}
+				aria-pressed={selection?.selecting ? selection.selected : undefined}
+				aria-label={`${selection?.selecting ? "Select" : "Open"} session ${sessionTitle(session)}`}
 			>
+				{selection?.selecting && <CardCheck checked={selection.selected} />}
 				<div className="session-card__preview">
 					{boards.length === 0 ? (
 						<span className="session-card__empty">

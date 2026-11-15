@@ -192,11 +192,15 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 
 			createBoard: async (folder = "", pitch) => {
 				// New boards use the default sport from Settings unless one is picked.
+				const preferences = getPreferences();
 				const board = createBoard(
 					"Untitled board",
-					pitch ?? getPreferences().defaultPitch,
+					pitch ?? preferences.defaultPitch,
 				);
 				board.meta.folder = folder;
+				// New boards start with the sizes the coach used last.
+				board.display.playerScale = preferences.playerScale;
+				board.display.equipmentScale = preferences.equipmentScale;
 				await saveBoard(board);
 				return board;
 			},
@@ -264,7 +268,9 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 				const session = createSession();
 				session.header.sport = sport;
 				session.meta.folder = folder;
-				await saveSession(session);
+				// Only in memory for now: it's written to disk once something is in it.
+				sessionsRef.current = [session, ...sessionsRef.current];
+				setSessions((prev) => [session, ...prev]);
 				return session;
 			},
 

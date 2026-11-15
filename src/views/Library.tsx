@@ -10,9 +10,10 @@ import { SURFACES } from "../components/board/Pitch";
 import NewBoardDialog from "../components/library/NewBoardDialog";
 import CardMenuButton from "../components/library/CardMenuButton";
 import SessionCard from "../components/library/SessionCard";
+import { CardCheck, CardSelection } from "../components/library/CardSelection";
 import SportPickerDialog from "../components/library/SportPickerDialog";
 import { getPreferences } from "../state/preferences";
-import { truncate } from "../utils/text";
+import { TEXT_LIMITS, truncate } from "../utils/text";
 import { BOARD_TYPE_LABELS } from "../model/board";
 import { Session, sessionTitle } from "../model/session";
 import { drillsOf, sameDrill } from "../model/sessionFile";
@@ -21,6 +22,7 @@ import { Board, BOARD_TYPES, BoardType, PitchSettings } from "../model/types";
 import { allFolders, useLibrary } from "../state/LibraryContext";
 import {
 	exportBoardFile,
+	exportManyToFolder,
 	exportPng,
 	exportSessionDocument,
 	pickLibraryFiles,
@@ -30,6 +32,7 @@ import { relativeTime } from "../utils/time";
 
 /** Which boards the main area shows: everything, the boards outside folders, or one folder. */
 type View =
+	| { kind: "everything" }
 	| { kind: "all" }
 	| { kind: "sessions" }
 	| { kind: "unfiled" }
@@ -49,6 +52,7 @@ function docInView(
 	view: View,
 ): boolean {
 	switch (view.kind) {
+		case "everything":
 		case "all":
 		case "sessions":
 			return true;
@@ -112,11 +116,13 @@ function BoardCard({
 	board,
 	onOpen,
 	menu,
+	selection,
 }: {
 	board: Board;
 	onOpen: () => void;
 	/** The card's menu: the same from right-clicking and from its ⋯ button. */
 	menu: () => ContextMenuEntry[];
+	selection: CardSelection;
 }) {
 	const details = [
 		BOARD_TYPE_LABELS[board.meta.type].one,
@@ -129,14 +135,19 @@ function BoardCard({
 	].filter(Boolean);
 	const { openMenu } = useContextMenu();
 	return (
-		<article className="board-card" onContextMenu={(e) => openMenu(e, menu())}>
+		<article
+			className={`board-card${selection.selected ? " is-selected" : ""}`}
+			onContextMenu={(e) => openMenu(e, menu())}
+		>
 			<button
 				type="button"
 				className="board-card__open"
-				onClick={onOpen}
-				aria-label={`Open ${truncate(board.meta.title, 60)}`}
+				onClick={(e) => (selection.handles(e) ? selection.toggle() : onOpen())}
+				aria-pressed={selection.selecting ? selection.selected : undefined}
+				aria-label={`${selection.selecting ? "Select" : "Open"} ${truncate(board.meta.title, 60)}`}
 				title={board.meta.title}
 			>
+				{selection.selecting && <CardCheck checked={selection.selected} />}
 				<BoardPreview board={board} className="board-card__preview" />
 				<span className="board-card__title">{board.meta.title}</span>
 				<span className="board-card__meta">{details.join(" · ")}</span>
@@ -155,7 +166,7 @@ const remembered: {
 	type: BoardType | "all" | "sessions";
 	query: string;
 	sort: Sort;
-} = { view: { kind: "all" }, type: "all", query: "", sort: "updated" };
+} = { view: { kind: "everything" }, type: "all", query: "", sort: "updated" };
 
 export default function Library() {
 	const library = useLibrary();
@@ -171,6 +182,7 @@ export default function Library() {
 	const setView = (next: View) => {
 		setViewState(next);
 		setType("all");
+		stopSelecting();
 	};
 	const [query, setQuery] = useState(remembered.query);
 	const [sort, setSort] = useState<Sort>(remembered.sort);
@@ -200,6 +212,40 @@ export default function Library() {
 		title: string;
 	} | null>(null);
 	const [deletingSession, setDeletingSession] = useState<Session | null>(null);
+
+	// Selecting several boards and sessions at once ("b:<id>" and "s:<id>").
+	const [selecting, setSelecting] = useState(false);
+	const [selected, setSelected] = useState<Set<string>>(new Set());
+	const [deletingSelected, setDeletingSelected] = useState(false);
+	const stopSelecting = () => {
+		setSelecting(false);
+		setSelected(new Set());
+	};
+	const selectionFor = (key: string): CardSelection => ({
+		selecting,
+		selected: selected.has(key),
+		toggle: () => {
+			setSelecting(true);
+			setSelected((prev) => {
+				const next = new Set(prev);
+				if (next.has(key)) next.delete(key);
+				else next.add(key);
+				return next;
+			});
+		},
+		handles: (e) => selecting || e.ctrlKey || e.metaKey,
+	});
+
+	// Esc leaves select mode.
+	useEffect(() => {
+		if (!selecting) return;
+		const onKey = (e: KeyboardEvent) => {
+			if (e.key === "Escape" && !document.querySelector("dialog[open]")) stopSelecting();
+		};
+		window.addEventListener("keydown", onKey);
+		return () => window.removeEventListener("keydown", onKey);
+	}, [selecting]);
+
 
 	const folders = allFolders(library.folders, [
 		...library.boards,
@@ -408,6 +454,69 @@ export default function Library() {
 		{ label: "Delete…", danger: true, onSelect: () => setDeletingSession(session) },
 	];
 
+	// What's selected, as boards and sessions that still exist.
+	const selectedBoards = library.boards.filter((b) => selected.has(`b:${b.id}`));
+	const selectedSessions = library.sessions.filter((x) => selected.has(`s:${x.id}`));
+	const selectedCount = selectedBoards.length + selectedSessions.length;
+	const visibleKeys = [
+		...shownSessions.map((x) => `s:${x.id}`),
+		...shown.map((b) => `b:${b.id}`),
+	];
+	const describeCount = (boards: number, sessions: number) =>
+		[
+			boards && `${boards} ${boards === 1 ? "board" : "boards"}`,
+			sessions && `${sessions} ${sessions === 1 ? "session" : "sessions"}`,
+		]
+			.filter(Boolean)
+			.join(" and ");
+
+	const moveSelected = (folder: string) =>
+		run(async () => {
+			for (const b of selectedBoards) await library.moveToFolder(b.id, folder);
+			for (const x of selectedSessions) await library.moveSessionToFolder(x.id, folder);
+			setNotice({
+				text: `Moved ${describeCount(selectedBoards.length, selectedSessions.length)} to ${
+					folder ? `“${truncate(folder, 30)}”` : "no folder"
+				}.`,
+				tone: "info",
+			});
+			stopSelecting();
+		}, "Couldn't move them");
+
+	const exportSelected = () =>
+		run(async () => {
+			const written = await exportManyToFolder(
+				selectedBoards,
+				selectedSessions.map((session) => ({
+					session,
+					drills: drillsOf(session, library.getBoard),
+				})),
+			);
+			if (written)
+				setNotice({
+					text: `Exported ${written} ${written === 1 ? "file" : "files"}.`,
+					tone: "info",
+				});
+		}, "Export failed");
+
+	const deleteSelectedMessage = () => {
+		const ids = new Set(selectedBoards.map((b) => b.id));
+		const leaving = new Set(selectedSessions.map((x) => x.id));
+		const usedIn = library.sessions.filter(
+			(x) => !leaving.has(x.id) && x.blocks.some((bl) => bl.kind === "drill" && ids.has(bl.boardId)),
+		);
+		const sessions = usedIn.length
+			? ` Some of these boards are used in ${usedIn.length === 1 ? "a session" : `${usedIn.length} sessions`} you're keeping, which will show them as missing drills.`
+			: "";
+		return `Delete ${describeCount(selectedBoards.length, selectedSessions.length)}?${sessions} This can't be undone. Export them first if you might want them back.`;
+	};
+
+	const moveMenu = (): ContextMenuEntry[] => [
+		{ label: "No folder", onSelect: () => moveSelected("") },
+		...(folders.length ? ["separator" as const] : []),
+		...folders.map((f) => ({ label: truncate(f, 40), onSelect: () => moveSelected(f) })),
+	];
+
 	/** A new board for the sport and field picked in the New board dialog. */
 	const newBoard = (pitch: PitchSettings) =>
 		run(async () => {
@@ -504,7 +613,9 @@ export default function Library() {
 	const heading =
 		view.kind === "all"
 			? "Boards"
-			: view.kind === "sessions"
+			: view.kind === "everything"
+			  ? "All"
+			  : view.kind === "sessions"
 			  ? "Sessions"
 			  : view.kind === "unfiled"
 			  ? "Not in a folder"
@@ -521,7 +632,7 @@ export default function Library() {
 		count: number,
 		active: boolean,
 		onClick: () => void,
-		icon: "grid" | "folder" | "inbox" | "session" | "pen" | "download",
+		icon: "grid" | "folder" | "inbox" | "session" | "pen" | "download" | "stack",
 	) => (
 		<button
 			type="button"
@@ -563,6 +674,7 @@ export default function Library() {
 					<input
 						type="search"
 						placeholder="Search titles, tags and notes"
+						maxLength={TEXT_LIMITS.search}
 						value={query}
 						onChange={(e) => setQuery(e.target.value)}
 					/>
@@ -603,6 +715,13 @@ export default function Library() {
 			<div className="library__body">
 				<nav className="library__nav" aria-label="Library">
 					<div className="nav-group">
+						{navItem(
+							"All",
+							library.boards.length + library.sessions.length,
+							view.kind === "everything",
+							() => setView({ kind: "everything" }),
+							"stack",
+						)}
 						{navItem(
 							"Boards",
 							library.boards.length,
@@ -758,6 +877,17 @@ export default function Library() {
 								.join(" · ") || "Nothing here yet"}
 						</span>
 						<span className="topbar__spacer" />
+						{!selecting && (shown.length > 0 || shownSessions.length > 0) && (
+							<button
+								type="button"
+								className="button button--small"
+								title="Select several boards and sessions (or Ctrl+click a card)"
+								onClick={() => setSelecting(true)}
+							>
+								<Icon name="check" size={14} />
+								Select
+							</button>
+						)}
 						<label className="sort">
 							<span className="muted">Sort</span>
 							<select
@@ -770,6 +900,62 @@ export default function Library() {
 							</select>
 						</label>
 					</div>
+
+					{selecting && (
+						<div className="select-bar" role="toolbar" aria-label="Selected boards and sessions">
+							<span className="select-bar__count">
+								{selectedCount ? `${selectedCount} selected` : "Click cards to select them"}
+							</span>
+							<button
+								type="button"
+								className="link-button"
+								onClick={() =>
+									setSelected(
+										visibleKeys.every((k) => selected.has(k))
+											? new Set()
+											: new Set(visibleKeys),
+									)
+								}
+							>
+								{visibleKeys.length && visibleKeys.every((k) => selected.has(k))
+									? "Select none"
+									: "Select all"}
+							</button>
+							<span className="topbar__spacer" />
+							<button
+								type="button"
+								className="button button--small"
+								disabled={!selectedCount}
+								onClick={(e) => {
+									const r = e.currentTarget.getBoundingClientRect();
+									openMenu({ clientX: r.left, clientY: r.bottom + 4 }, moveMenu());
+								}}
+							>
+								<Icon name="folder" size={14} />
+								Move to folder
+							</button>
+							<button
+								type="button"
+								className="button button--small"
+								disabled={!selectedCount}
+								onClick={exportSelected}
+							>
+								<Icon name="download" size={14} />
+								Export…
+							</button>
+							<button
+								type="button"
+								className="button button--small button--danger"
+								disabled={!selectedCount}
+								onClick={() => setDeletingSelected(true)}
+							>
+								Delete…
+							</button>
+							<button type="button" className="button button--small" onClick={stopSelecting}>
+								Done
+							</button>
+						</div>
+					)}
 
 					{sessionExport.error && (
 						<div className="notice notice--error" role="alert">
@@ -860,7 +1046,7 @@ export default function Library() {
 						shownSessions.length === 0 && (
 							<div className="empty-state">
 								{query ? (
-									<p>No sessions match “{query}”.</p>
+									<p>No sessions match “{truncate(query.trim(), 40)}”.</p>
 								) : (
 									<>
 										<p>
@@ -887,6 +1073,7 @@ export default function Library() {
 								{shownSessions.map((session) => (
 									<SessionCard
 										key={session.id}
+										selection={selectionFor(`s:${session.id}`)}
 										session={session}
 										getBoard={library.getBoard}
 										onOpen={() => openSession(session.id)}
@@ -906,13 +1093,17 @@ export default function Library() {
 						shownSessions.length === 0 && (
 						<div className="empty-state">
 							{query ? (
-								<p>No boards match “{query}”.</p>
+								<p>
+									Nothing matches “{truncate(query.trim(), 40)}”.
+								</p>
 							) : (
 								<>
 									<p>
 										{view.kind === "all"
 											? "No boards yet."
-											: "Nothing in here yet."}
+											: view.kind === "everything"
+												? "Nothing here yet. Make a board or a session to start."
+												: "Nothing in here yet."}
 									</p>
 									<button
 										type="button"
@@ -931,6 +1122,7 @@ export default function Library() {
 						{shown.map((board) => (
 							<BoardCard
 								key={board.id}
+								selection={selectionFor(`b:${board.id}`)}
 								board={board}
 								onOpen={() => openBoard(board.id)}
 								menu={() => boardMenu(board)}
@@ -990,6 +1182,25 @@ export default function Library() {
 						setView({ kind: "all" });
 				}}
 				onClose={() => setDeletingFolder(null)}
+			/>
+			<ConfirmDialog
+				open={deletingSelected}
+				title={`Delete ${selectedCount} ${selectedCount === 1 ? "item" : "items"}?`}
+				message={deletingSelected ? deleteSelectedMessage() : ""}
+				confirmLabel="Delete"
+				danger
+				onConfirm={() =>
+					run(async () => {
+						for (const x of selectedSessions) await library.deleteSession(x.id);
+						for (const b of selectedBoards) await library.deleteBoard(b.id);
+						setNotice({
+							text: `Deleted ${describeCount(selectedBoards.length, selectedSessions.length)}.`,
+							tone: "info",
+						});
+						stopSelecting();
+					}, "Couldn't delete them")
+				}
+				onClose={() => setDeletingSelected(false)}
 			/>
 			<ConfirmDialog
 				open={deletingBoard !== null}

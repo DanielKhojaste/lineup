@@ -105,6 +105,75 @@ export function exportSessionDocument(session: Session, drills: Board[]) {
 	);
 }
 
+/**
+ * Export several boards and sessions at once: pick a folder, and each one is
+ * saved there as its own file (sessions with their drills inside). Names that
+ * clash get " (2)", " (3)"… Returns how many files were written, or 0 when the
+ * coach closed the window.
+ */
+export async function exportManyToFolder(
+	boards: Board[],
+	sessions: { session: Session; drills: Board[] }[],
+): Promise<number> {
+	const files: { name: string; data: Uint8Array | string }[] = [
+		...boards.map((b) => ({
+			name: fileNameFor(b.meta.title, FILE_EXTENSION),
+			data: encodeBoardFile(b),
+		})),
+		...sessions.map(({ session, drills }) => ({
+			name: fileNameFor(sessionTitle(session), SESSION_EXTENSION, "Untitled session"),
+			data: encodeSharedSession(session, drills),
+		})),
+	];
+	// The same name twice in one export: number them.
+	const used = new Set<string>();
+	for (const file of files) {
+		const dot = file.name.lastIndexOf(".");
+		const base = file.name.slice(0, dot);
+		const ext = file.name.slice(dot);
+		let name = file.name;
+		for (let n = 2; used.has(name.toLowerCase()); n++) name = `${base} (${n})${ext}`;
+		used.add(name.toLowerCase());
+		file.name = name;
+	}
+
+	if (isTauri()) {
+		const { open } = await import("@tauri-apps/plugin-dialog");
+		const { exists, writeFile, writeTextFile } = await import("@tauri-apps/plugin-fs");
+		const { join } = await import("@tauri-apps/api/path");
+		const folder = await open({
+			directory: true,
+			recursive: true,
+			defaultPath: await startPath("exports"),
+			title: `Export ${files.length} files to…`,
+		});
+		if (!folder || Array.isArray(folder)) return 0;
+		localStorage.setItem(FOLDER_KEY("exports"), folder);
+		for (const file of files) {
+			// Never overwrite a file that's already in the folder.
+			const dot = file.name.lastIndexOf(".");
+			let path = await join(folder, file.name);
+			for (let n = 2; await exists(path); n++)
+				path = await join(folder, `${file.name.slice(0, dot)} (${n})${file.name.slice(dot)}`);
+			if (typeof file.data === "string") await writeTextFile(path, file.data);
+			else await writeFile(path, file.data);
+		}
+		return files.length;
+	}
+
+	// In a browser: one download each.
+	for (const file of files) {
+		const blob = new Blob([file.data as BlobPart], { type: "application/octet-stream" });
+		const url = URL.createObjectURL(blob);
+		const link = document.createElement("a");
+		link.href = url;
+		link.download = file.name;
+		link.click();
+		setTimeout(() => URL.revokeObjectURL(url), 1000);
+	}
+	return files.length;
+}
+
 /** Save an exported session sheet (PDF or PNG), named after the session. */
 export function exportSessionFile(
 	title: string,

@@ -19,6 +19,8 @@ This project adheres to semantic versioning (0.x during early development).
 - **Change sport / field** from a button in the board's Field settings, or from the board's right-click menu. It opens the same pictures as New board, with the board's sport and field now in grey and your pick in the accent colour. Tick **Start with a blank board** to clear the board as well; there's no confirmation, because Ctrl+Z brings everything back
 - **Size of a single marker:** select players or equipment and pick S, M, L or XL under Size. It goes on top of the board's player and equipment sizes, and goals keep their real size
 - Shirt numbers **0 and 00** (basketball and hockey use them)
+- **All** in the library: boards and sessions together, first in the sidebar and where the library opens
+- **Select several** boards and sessions with the **Select** button (or Ctrl+click a card), then move them to a folder, export them to a folder you pick, or delete them
 - A colour picker after the swatches everywhere you pick a colour, equipment included. It opens on the colour in use (a blue player's picker starts on that blue)
 - **Theme preview:** Settings › Appearance › Preview themes shows every component that uses a theme's primary and secondary colours (buttons, the tool rail, tabs, fields, the library, tags, the session plan, the step bar, selections on the board) and every colour the theme makes, for any theme, with dark and light side by side. Try a theme there before using it
 - **Theme files:** each theme is a file in `src/theme/presets/` that can be edited, with optional hand-set colours; a README there explains them
@@ -42,11 +44,14 @@ This project adheres to semantic versioning (0.x during early development).
 - The theme list in Settings is a dropdown with a swatch for each theme: a circle split into its primary and secondary, in a thin ring of its background. The Theme preview uses the same swatches
 - Settings: the default sport and default size are on one row, and the theme buttons say what they do (Preview all themes, Import…, Export…)
 - In dark themes, a secondary colour too dark to see (like Amber Night's purple) is shown lighter, so tags and topics read on dark panels
-- **Smaller players:** each player size is drawn as the one below it used to be (XL is the old L, M the old S), so players look realistic next to the field
+- **Smaller players:** XL is drawn as the old L and L as the old M, with M and S a little bigger than the old S, so players look realistic next to the field. The sizes are set in `src/config/sizes.ts`
+- **New boards start with the sizes you used last** (player and equipment sizes), also set in Settings › New boards
 - A session's time can be set to **Auto** (it was "From the plan"), and the message about a plan that's longer than the session's time has the Auto tick in it
 - The message after importing a session says drills already in your library "weren't added again"
 - The Boards icon's squares no longer run into a thick cross in the middle
 - **Selection box:** lines, zones and text are picked when half or more of them is in the box, and players and equipment when the box touches any part of them (before, the box had to go around the whole drawing, and a marker's centre had to be in it)
+- Every text field has a sensible limit (titles 100 characters, search 80, names 40…), and long text shown elsewhere ends with an ellipsis, so a very long search no longer makes the library scroll sideways
+- A new session isn't saved until something is in it, so opening one and going straight back no longer leaves an empty "Untitled session"
 - The tool rail's ball is the board's sport's ball (a basketball, a volleyball, a hockey ball)
 - The basketball hoop is a softer burnt orange, so it no longer glares on the maple
 - "Use team kit" only shows when a player's kit is different from the team's

@@ -1,3 +1,5 @@
+import { Segmented } from "../ui/controls";
+import { MARKER_SCALES } from "../../config/sizes";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { setPreferences, usePreferences } from "../../state/preferences";
@@ -137,9 +139,24 @@ export default function SettingsDialog({
 						value={preferences.defaultPitch}
 						onChange={(defaultPitch) => setPreferences({ defaultPitch })}
 					/>
+					<div className="settings__sizes">
+						<Segmented
+							label="Player size"
+							value={String(preferences.playerScale)}
+							options={MARKER_SCALES.map((o) => ({ value: String(o.value), label: o.label }))}
+							onChange={(v) => setPreferences({ playerScale: Number(v) })}
+						/>
+						<Segmented
+							label="Equipment size"
+							value={String(preferences.equipmentScale)}
+							options={MARKER_SCALES.map((o) => ({ value: String(o.value), label: o.label }))}
+							onChange={(v) => setPreferences({ equipmentScale: Number(v) })}
+						/>
+					</div>
 					<p className="muted small">
-						New boards start with this sport. You can pick another one in the
-						New board window, or change a board's sport in its settings.
+						New boards start with this sport and these sizes. You can pick another
+						sport in the New board window. Changing a board's sizes changes these
+						too, so new boards look like the last one you worked on.
 					</p>
 				</section>
 

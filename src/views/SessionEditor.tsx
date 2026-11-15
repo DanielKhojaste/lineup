@@ -10,7 +10,7 @@ import { isTextField } from "../components/ui/ContextMenu";
 import { Menu } from "../components/ui/Menu";
 import { useSessionExport } from "../export/useSessionExport";
 import { exportSessionDocument } from "../storage/files";
-import { Session, sessionTitle } from "../model/session";
+import { isEmptySession, Session, sessionTitle } from "../model/session";
 import { drillsOf } from "../model/sessionFile";
 import { useLibrary } from "../state/LibraryContext";
 import { SessionProvider, useSessionEditor } from "../state/SessionContext";
@@ -31,7 +31,21 @@ function SessionLayout() {
 	const library = useLibrary();
 	const navigate = useNavigate();
 	const exporter = useSessionExport();
-	const { status, flush } = useAutosave(state.session, library.saveSession);
+	// An empty new session isn't saved; leaving it empty drops it from the library.
+	const { status, flush } = useAutosave(state.session, (s) =>
+		isEmptySession(s) ? Promise.resolve() : library.saveSession(s),
+	);
+	const latestSession = useRef(state.session);
+	latestSession.current = state.session;
+	useEffect(
+		() => () => {
+			const left = latestSession.current;
+			if (isEmptySession(left)) void library.deleteSession(left.id);
+		},
+		// Only when the editor closes.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[],
+	);
 	const { session } = state;
 	const mainRef = useRef<HTMLElement>(null);
 	// Back from a drill opened in this session: scroll to where the coach was.

@@ -3646,3 +3646,70 @@ fieldset.field {
 	text-align: right;
 	font-variant-numeric: tabular-nums;
 }
+
+/* Long folder names in the library heading end with an ellipsis. */
+.library__head h1 {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* ---------------------------- Selecting cards ----------------------------- */
+
+.board-card.is-selected {
+	border-color: var(--accent);
+	box-shadow: 0 0 0 1px var(--accent);
+}
+
+.board-card__open {
+	position: relative;
+}
+
+.card-check {
+	position: absolute;
+	z-index: 1;
+	top: 16px;
+	left: 16px;
+	display: grid;
+	place-items: center;
+	width: 22px;
+	height: 22px;
+	border: 1.5px solid var(--border-strong);
+	border-radius: 6px;
+	background: var(--surface);
+	color: var(--on-accent);
+	box-shadow: 0 1px 3px var(--shadow);
+}
+
+.card-check.is-checked {
+	border-color: var(--accent);
+	background: var(--accent);
+}
+
+.select-bar {
+	position: sticky;
+	top: 0;
+	z-index: 5;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 12px;
+	margin-bottom: 12px;
+	padding: 8px 12px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--surface);
+	box-shadow: 0 4px 14px var(--shadow);
+}
+
+.select-bar__count {
+	font-weight: 600;
+}
+
+.settings__sizes {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 220px));
+	gap: 12px;
+	margin-top: 12px;
+}

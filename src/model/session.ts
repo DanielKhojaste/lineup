@@ -369,3 +369,26 @@ export function blockStages(
 		return b.stage.trim() ? next(b.stage.trim()) : b.label.trim() || "Block";
 	});
 }
+
+/**
+ * A session nobody has written anything in yet: no title, no blocks and no
+ * details. New sessions aren't saved until they stop being empty, so going
+ * straight back to the library doesn't leave an "Untitled session" behind.
+ */
+export function isEmptySession(session: Session): boolean {
+	const h = session.header;
+	return (
+		!session.meta.title.trim() &&
+		session.meta.tags.length === 0 &&
+		session.blocks.length === 0 &&
+		!h.team.trim() &&
+		!h.description.trim() &&
+		h.topics.length === 0 &&
+		h.plannedMinutes === null &&
+		!h.autoTime &&
+		h.playersMin === null &&
+		h.playersMax === null &&
+		!h.equipment.trim() &&
+		!h.area.trim()
+	);
+}

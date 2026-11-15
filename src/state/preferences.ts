@@ -1,3 +1,4 @@
+import { DEFAULT_SIZES, MARKER_SCALES } from "../config/sizes";
 import { useSyncExternalStore } from "react";
 import { DEFAULT_PITCH, isSport } from "../model/sports";
 import { PitchSettings } from "../model/types";
@@ -8,6 +9,12 @@ import { PitchSettings } from "../model/types";
  */
 export interface Preferences {
 	defaultPitch: PitchSettings;
+	/**
+	 * The player and equipment sizes new boards start with: the last ones the
+	 * coach picked on a board (or in Settings).
+	 */
+	playerScale: number;
+	equipmentScale: number;
 	/**
 	 * Whether the coach has picked a default sport (in Settings or "Use this
 	 * for new boards"). Until then, new sessions ask which sport they're for.
@@ -23,8 +30,15 @@ export interface Preferences {
 }
 
 const STORAGE_KEY = "lineup.preferences";
+
+/** One of the sizes boards use (S, M, L, XL), or the fallback. */
+function sizeOr(value: unknown, fallback: number): number {
+	return MARKER_SCALES.some((s) => s.value === value) ? (value as number) : fallback;
+}
 const DEFAULTS: Preferences = {
 	defaultPitch: DEFAULT_PITCH,
+	playerScale: DEFAULT_SIZES.players,
+	equipmentScale: DEFAULT_SIZES.equipment,
 	hasDefaultSport: false,
 	themeEffect: {},
 	spice: { size: 1, speed: 1, amount: 1 },
@@ -65,6 +79,8 @@ function read(): Preferences {
 				speed: multiple(raw?.spice?.speed, 0.1, 4),
 				amount: multiple(raw?.spice?.amount, 0.1, 3),
 			},
+			playerScale: sizeOr(raw?.playerScale, DEFAULTS.playerScale),
+			equipmentScale: sizeOr(raw?.equipmentScale, DEFAULTS.equipmentScale),
 		};
 	} catch {
 		return DEFAULTS;
