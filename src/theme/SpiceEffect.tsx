@@ -15,10 +15,13 @@ const FPS = 30;
 /** Specks per 100 000 pixels of window, with a ceiling. */
 const DENSITY = 6;
 const MAX_SPECKS = 110;
-/** The spice's colours: bright orange, gold and a pale ember. */
-const COLOURS = ["255, 150, 60", "240, 180, 90", "255, 205, 140"];
-/** Areas the spice stays out of. */
-const AVOID = ".board__svg, .board-card__preview, .session-card__preview, dialog[open]";
+/**
+ * The spice's colours. In Villeneuve's films the spice in the air is glowing
+ * red-orange flakes, cinnamon to ember, never white.
+ */
+const COLOURS = ["226, 88, 40", "206, 66, 34", "240, 118, 50", "184, 56, 30"];
+/** Areas the spice stays out of: the board (the whole area around the field too), board pictures, open windows. */
+const AVOID = ".board, .board-card__preview, .session-card__preview, dialog[open]";
 
 interface Speck {
 	x: number;
@@ -40,8 +43,9 @@ function makeSprite(rgb: string): HTMLCanvasElement {
 	canvas.width = canvas.height = size;
 	const ctx = canvas.getContext("2d")!;
 	const glow = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+	// A coloured core with no white in it, fading out.
 	glow.addColorStop(0, `rgba(${rgb}, 1)`);
-	glow.addColorStop(0.25, `rgba(${rgb}, 0.6)`);
+	glow.addColorStop(0.35, `rgba(${rgb}, 0.55)`);
 	glow.addColorStop(1, `rgba(${rgb}, 0)`);
 	ctx.fillStyle = glow;
 	ctx.fillRect(0, 0, size, size);
@@ -63,8 +67,20 @@ function newSpeck(width: number, height: number, anywhere: boolean): Speck {
 	};
 }
 
-export default function SpiceEffect() {
+/** How the spice looks, as multiples of the normal amount: set in Settings › Appearance. */
+export interface SpiceSettings {
+	size: number;
+	speed: number;
+	amount: number;
+}
+
+export const DEFAULT_SPICE: SpiceSettings = { size: 1, speed: 1, amount: 1 };
+
+export default function SpiceEffect({ settings }: { settings: SpiceSettings }) {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
+	// Read every frame, so moving a slider changes the spice straight away.
+	const live = useRef(settings);
+	live.current = settings;
 
 	useEffect(() => {
 		const canvas = canvasRef.current;
@@ -89,8 +105,17 @@ export default function SpiceEffect() {
 			canvas.width = Math.round(width * ratio);
 			canvas.height = Math.round(height * ratio);
 			ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-			const count = Math.min(MAX_SPECKS, Math.round(((width * height) / 100_000) * DENSITY));
-			specks = Array.from({ length: count }, () => newSpeck(width, height, true));
+			fill();
+		};
+
+		/** As many specks as the window and the Amount setting call for. */
+		const fill = () => {
+			const count = Math.min(
+				MAX_SPECKS * 3,
+				Math.round(((width * height) / 100_000) * DENSITY * live.current.amount),
+			);
+			if (specks.length > count) specks.length = count;
+			while (specks.length < count) specks.push(newSpeck(width, height, true));
 		};
 
 		const measure = () => {
@@ -102,8 +127,12 @@ export default function SpiceEffect() {
 			if (now - last < 1000 / FPS) return;
 			const dt = Math.min(0.1, (now - last) / 1000);
 			last = now;
-			// The board can move or open; look again every second or so.
-			if (frame++ % FPS === 0) measure();
+			// The board can move or open, and the Amount can change; look again every second or so.
+			if (frame++ % FPS === 0) {
+				measure();
+				fill();
+			}
+			const { size, speed } = live.current;
 
 			ctx.clearRect(0, 0, width, height);
 			ctx.save();
@@ -119,14 +148,15 @@ export default function SpiceEffect() {
 				const s = specks[i];
 				// A slow gust: the wind rises and falls, and each speck sways a little.
 				const gust = 0.75 + 0.35 * Math.sin(t * 0.35 + s.phase * 0.3);
-				s.x += s.vx * gust * dt;
-				s.y += (s.vy + Math.sin(t * 0.8 + s.phase) * 6) * dt;
+				s.x += s.vx * gust * speed * dt;
+				s.y += (s.vy + Math.sin(t * 0.8 * speed + s.phase) * 6) * speed * dt;
 				if (s.x > width + 20 || s.y < -20 || s.y > height + 20) {
 					specks[i] = newSpeck(width, height, false);
 					continue;
 				}
 				ctx.globalAlpha = s.alpha * (0.7 + 0.3 * Math.sin(t * 1.6 + s.phase));
-				ctx.drawImage(sprites[s.sprite], s.x - s.size / 2, s.y - s.size / 2, s.size, s.size);
+				const d = s.size * size;
+				ctx.drawImage(sprites[s.sprite], s.x - d / 2, s.y - d / 2, d, d);
 			}
 			ctx.restore();
 		};
@@ -147,6 +177,7 @@ export default function SpiceEffect() {
 		window.addEventListener("resize", resize);
 		document.addEventListener("visibilitychange", start);
 		reduced.addEventListener("change", start);
+		// The settings can change while it runs: the Amount is picked up within a second.
 		return () => {
 			cancelAnimationFrame(raf);
 			window.removeEventListener("resize", resize);

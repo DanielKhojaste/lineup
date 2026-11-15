@@ -15,6 +15,8 @@ export interface Preferences {
 	hasDefaultSport: boolean;
 	/** Themes with moving backgrounds (Dune's spice) show them. */
 	themeEffects: boolean;
+	/** How Dune's spice looks: size, speed and amount, as multiples of normal. */
+	spice: { size: number; speed: number; amount: number };
 }
 
 const STORAGE_KEY = "lineup.preferences";
@@ -22,7 +24,15 @@ const DEFAULTS: Preferences = {
 	defaultPitch: DEFAULT_PITCH,
 	hasDefaultSport: false,
 	themeEffects: true,
+	spice: { size: 1, speed: 1, amount: 1 },
 };
+
+/** A multiple between min and max (1 when missing). */
+function multiple(value: unknown, min: number, max: number): number {
+	return typeof value === "number" && Number.isFinite(value)
+		? Math.min(max, Math.max(min, value))
+		: 1;
+}
 
 function read(): Preferences {
 	try {
@@ -35,6 +45,11 @@ function read(): Preferences {
 			},
 			hasDefaultSport: !!raw?.defaultPitch,
 			themeEffects: raw?.themeEffects !== false,
+			spice: {
+				size: multiple(raw?.spice?.size, 0.4, 3),
+				speed: multiple(raw?.spice?.speed, 0.1, 4),
+				amount: multiple(raw?.spice?.amount, 0.1, 3),
+			},
 		};
 	} catch {
 		return DEFAULTS;

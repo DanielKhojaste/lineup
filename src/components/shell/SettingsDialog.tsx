@@ -155,6 +155,43 @@ export default function SettingsDialog({
 							Drifting spice in the background
 						</label>
 					)}
+					{current.effect === "spice" && preferences.themeEffects && (
+						<div className="spice-settings">
+							{(
+								[
+									["size", "Size", 0.4, 3],
+									["speed", "Speed", 0.1, 4],
+									["amount", "Amount", 0.1, 3],
+								] as const
+							).map(([key, label, min, max]) => (
+								<label key={key} className="spice-settings__row">
+									<span className="field__label">{label}</span>
+									<input
+										type="range"
+										min={min}
+										max={max}
+										step={0.05}
+										value={preferences.spice[key]}
+										onChange={(e) =>
+											setPreferences({
+												spice: { ...preferences.spice, [key]: Number(e.target.value) },
+											})
+										}
+									/>
+									<span className="spice-settings__value">
+										{preferences.spice[key].toFixed(2).replace(/\.?0+$/, "")}×
+									</span>
+								</label>
+							))}
+							<button
+								type="button"
+								className="link-button"
+								onClick={() => setPreferences({ spice: { size: 1, speed: 1, amount: 1 } })}
+							>
+								Back to normal
+							</button>
+						</div>
+					)}
 
 					<ThemeActions
 						theme={current}
