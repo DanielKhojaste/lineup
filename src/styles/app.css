@@ -3696,6 +3696,12 @@ fieldset.field {
 	box-shadow: 0 4px 14px var(--shadow);
 }
 
+/* The library's Select button: the text at the size of the other buttons (13px). */
+.library__select {
+	font-size: 13px;
+	gap: 6px;
+}
+
 .select-bar__count {
 	font-weight: 600;
 }

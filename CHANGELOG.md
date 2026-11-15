@@ -11,8 +11,12 @@ This project adheres to semantic versioning (0.x during early development).
 ### Changed
 
 - A card's **Folders ›** menu stays open while you tick folders, so a board or session can go into several at once
-- The **Select** button has an empty tick box, like the boxes on the cards
+- The **Select** button has an empty tick box, like the boxes on the cards, and its text is the size of the other buttons
 - Version tags put the Windows, macOS and Linux installers on a draft GitHub release, ready for its notes
+
+### Developers
+
+- Development builds keep a log of errors, warnings and library events: in the console, `__lineupLog()` in the dev tools, and a file per day in `Documents\Lineup\logs\` in the desktop app. Release builds keep nothing
 
 ### Fixed
 

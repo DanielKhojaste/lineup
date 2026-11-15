@@ -29,6 +29,9 @@ import {
 } from "../storage/files";
 import { useSessionExport } from "../export/useSessionExport";
 import { relativeTime } from "../utils/time";
+import { logger } from "../utils/log";
+
+const log = logger("library");
 
 /** Which boards the main area shows: everything, the boards outside folders, or one folder. */
 type View =
@@ -368,6 +371,7 @@ export default function Library() {
 		try {
 			await task();
 		} catch (error) {
+			log.error(failure, error);
 			setNotice({
 				text: `${failure}: ${(error as Error).message || error}`,
 				tone: "error",
@@ -986,11 +990,11 @@ export default function Library() {
 						{!selecting && (shown.length > 0 || shownSessions.length > 0) && (
 							<button
 								type="button"
-								className="button button--small"
+								className="button button--small library__select"
 								title="Select several boards and sessions (or Ctrl+click a card)"
 								onClick={() => setSelecting(true)}
 							>
-								<Icon name="box" size={14} />
+								<Icon name="box" size={16} />
 								Select
 							</button>
 						)}

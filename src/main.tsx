@@ -7,6 +7,10 @@ import "@fontsource/ibm-plex-mono/500.css";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./styles/app.css";
+import { startDevLog } from "./utils/log";
+
+// Development builds keep a log for finding bugs (none in release builds).
+startDevLog();
 
 // Don't offer things typed into fields before (the webview remembers them).
 // Turned off everywhere for now; see "Suggestions in fields" in the to-do list.

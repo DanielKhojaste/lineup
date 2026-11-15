@@ -16,6 +16,9 @@ import { Board, PitchSettings } from "../model/types";
 import { getStore } from "../storage";
 import { getPreferences } from "./preferences";
 import { LibraryIndex, LibraryStore } from "../storage/types";
+import { logger } from "../utils/log";
+
+const log = logger("library");
 
 export type LibraryStatus = "loading" | "ready" | "error";
 
@@ -120,8 +123,11 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 				setTopics(index.topics);
 				setProblems(problems);
 				setStatus("ready");
+				log.info(`Loaded ${loaded.length} boards and ${sessions.length} sessions from ${store.location}`);
+				for (const problem of problems) log.warn("Couldn't read:", problem);
 			} catch (e) {
 				if (cancelled) return;
+				log.error("The library didn't load", e);
 				setError((e as Error).message || String(e));
 				setStatus("error");
 			}
