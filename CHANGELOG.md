@@ -8,6 +8,10 @@ This project adheres to semantic versioning (0.x during early development).
 
 ## [Unreleased]
 
+---
+
+## [0.8.1] - 2026-11-15
+
 ### Added
 
 - Share sessions: export a session as a `.lineup-session` file with every drill it uses inside, from the session's **Export** menu or its menu in the library
