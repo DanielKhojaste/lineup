@@ -284,7 +284,7 @@ export default function SessionPreview() {
 										<strong>{block.minutes} min</strong> in this session
 									</span>
 									<span>{BOARD_TYPE_LABELS[board.meta.type].one}</span>
-									{board.notes.players && <span>{board.notes.players} players</span>}
+									{board.notes.players && <span>Players: {board.notes.players}</span>}
 									{board.meta.tags.length > 0 && <span>Tags: {board.meta.tags.join(", ")}</span>}
 									<span className="topbar__spacer" />
 									<button
