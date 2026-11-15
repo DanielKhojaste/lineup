@@ -19,6 +19,7 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Changed
 
+- The calendar's week view shows each session's team, minutes, first three drills (with pictures) and topics
 - Adding a session to the calendar opens a picker with the library's session cards, a search and the sports, instead of a long dropdown
 - Keyboard shortcuts are drawn as keys everywhere they're shown: menus, tool hints, Settings and the session preview
 - A card's **Folders ›** menu stays open while you tick folders, so a board or session can go into several at once

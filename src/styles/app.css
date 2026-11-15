@@ -4269,6 +4269,73 @@ input.plan-topic__title {
 	white-space: normal;
 }
 
+/* Design A: what each session is, with its first three drills' pictures. */
+.calendar__grid--week .calendar__entry {
+	gap: 5px;
+	padding: 7px 8px;
+}
+
+.calendar__grid--week .calendar__entry-title {
+	font-weight: 600;
+	line-height: 1.25;
+}
+
+.calendar__entry-meta {
+	color: var(--text-muted);
+	font-size: 11px;
+}
+
+.calendar__drills {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	width: 100%;
+}
+
+.calendar__drill {
+	display: grid;
+	grid-template-columns: 40px 1fr;
+	gap: 6px;
+	align-items: center;
+	font-size: 11px;
+	min-width: 0;
+}
+
+.calendar__drill-thumb {
+	display: block;
+	width: 40px;
+	height: 27px;
+	border-radius: 3px;
+	background: var(--sunken);
+}
+
+.calendar__drill-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	text-align: left;
+}
+
+.calendar__more {
+	color: var(--text-muted);
+	font-size: 11px;
+}
+
+.calendar__topics {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 3px;
+}
+
+.calendar__topic {
+	padding: 1px 6px;
+	border-radius: 999px;
+	background: var(--accent-soft);
+	color: var(--accent-text);
+	font-size: 10px;
+	font-weight: 600;
+}
+
 /* ----------------------------- Session preview ----------------------------- */
 
 .session-preview {
@@ -4647,4 +4714,17 @@ option:disabled {
 	justify-content: center;
 	padding: 14px;
 	border-style: dashed;
+}
+
+.calendar__grid--week .calendar__entry {
+	position: relative;
+	padding-right: 22px;
+}
+
+/* The done tick goes in the corner, not on a line of its own. */
+.calendar__grid--week .calendar__entry > svg:first-child {
+	position: absolute;
+	top: 8px;
+	right: 7px;
+	color: var(--accent-text);
 }

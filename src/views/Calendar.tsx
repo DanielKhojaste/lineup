@@ -296,6 +296,51 @@ const MODE_KEY = "lineup.calendarMode";
 
 
 /** "16 – 22 Nov 2026", or "30 Nov – 6 Dec 2026" across two months. */
+/**
+ * In the week view there's room to show what a session is: its team and
+ * minutes, its first three drills with their pictures, and its topics.
+ */
+function WeekEntryDetails({ entry }: { entry: CalendarEntry }) {
+	const library = useLibrary();
+	const session = library.getSession(entry.sessionId);
+	if (!session) return null;
+	const drills = session.blocks.filter((b): b is Extract<typeof b, { kind: "drill" }> => b.kind === "drill");
+	const minutes = totalMinutes(session);
+	const meta = [entry.team || session.header.team, minutes ? formatMinutes(minutes) : ""].filter(Boolean).join(" · ");
+	return (
+		<>
+			{meta && <span className="calendar__entry-meta">{meta}</span>}
+			{drills.length > 0 && (
+				<span className="calendar__drills">
+					{drills.slice(0, 3).map((d) => {
+						const board = library.getBoard(d.boardId);
+						return (
+							<span key={d.id} className="calendar__drill">
+								{board ? (
+									<BoardPreview board={board} className="calendar__drill-thumb" />
+								) : (
+									<span className="calendar__drill-thumb" />
+								)}
+								<span className="calendar__drill-name">{board?.meta.title ?? "Deleted board"}</span>
+							</span>
+						);
+					})}
+					{drills.length > 3 && <span className="calendar__more">+{drills.length - 3} more</span>}
+				</span>
+			)}
+			{session.header.topics.length > 0 && (
+				<span className="calendar__topics">
+					{session.header.topics.map((t) => (
+						<span key={t} className="calendar__topic">
+							{t}
+						</span>
+					))}
+				</span>
+			)}
+		</>
+	);
+}
+
 function weekTitle(first: Date, last: Date): string {
 	const mon = (d: Date) => d.toLocaleDateString(undefined, { month: "short" });
 	const start = first.getMonth() === last.getMonth() ? `${first.getDate()}` : `${first.getDate()} ${mon(first)}`;
@@ -585,6 +630,7 @@ export default function Calendar() {
 											)}
 											{e.time && <span className="calendar__time mono">{e.time}</span>}
 											<span className="calendar__entry-title">{sessionTitle(e.sessionId)}</span>
+											{mode === "week" && <WeekEntryDetails entry={e} />}
 										</button>
 									))}
 								</div>
