@@ -5,7 +5,7 @@ import { EffectColours, EffectFactory } from "./types";
 
 /** Every moving background: its name in Settings, and how it's drawn. */
 export const EFFECTS: Record<ThemeEffect, { label: string; make: EffectFactory }> = {
-	spice: { label: "Drifting spice", make: spice },
+	spice: { label: "Spice particles", make: spice },
 	"desert-night": { label: "Desert night", make: desertNight },
 };
 

@@ -109,10 +109,7 @@ describe("theme files", () => {
 			"fremen",
 			"giedi-prime",
 			"lime-studio",
-			"violet",
-			"violet-light",
 			"touchline",
-			"touchline-dark",
 		]);
 	});
 
@@ -149,8 +146,7 @@ describe("theme pairs, chips and readable text", () => {
 	it("pairs each theme with its other mode", async () => {
 		const { pairOf, findPreset } = await import("./themes");
 		expect(pairOf(findPreset("amber-night")!)?.preset).toBe("amber-day");
-		expect(pairOf(findPreset("violet-light")!)?.preset).toBe("violet");
-		expect(pairOf(findPreset("touchline")!)?.preset).toBe("touchline-dark");
+		expect(pairOf(findPreset("touchline")!)).toBeUndefined();
 		expect(pairOf(findPreset("dune")!)).toBeUndefined();
 		expect(pairOf(findPreset("lime-studio")!)).toBeUndefined();
 	});
