@@ -19,6 +19,7 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Changed
 
+- A plan's weeks can be laid out three ways to compare: **List**, **Table** (one row per week, sessions as chips with a picture) or **Outline** (the weeks on the left, the picked week large beside it). Sessions drag between weeks in all three
 - The calendar's week view shows each session's team, minutes, first three drills (with pictures) and topics
 - Adding a session to the calendar opens a picker with the library's session cards, a search and the sports, instead of a long dropdown
 - Keyboard shortcuts are drawn as keys everywhere they're shown: menus, tool hints, Settings and the session preview

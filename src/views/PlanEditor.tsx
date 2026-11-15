@@ -15,8 +15,10 @@ import PlanToCalendarDialog from "../components/plan/PlanToCalendarDialog";
 import { ContextMenuEntry, isTextField, useContextMenu } from "../components/ui/ContextMenu";
 import { BoardInput, BoardTextarea, FieldGestureContext } from "../components/ui/fields";
 import { describeDay, lastRunBySession } from "../model/calendar";
-import { Plan, planSessionIds, weekLabel } from "../model/plan";
-import { formatMinutes, Session, totalMinutes } from "../model/session";
+import { createTopic, Plan, planSessionIds, weekLabel } from "../model/plan";
+import { formatMinutes, Session, sessionBoardIds, totalMinutes } from "../model/session";
+import { Board } from "../model/types";
+import BoardPreview from "../components/board/BoardPreview";
 import { SPORT_INFO, SPORTS } from "../model/sports";
 import { canUndoRedo, createHistory } from "../state/history";
 import { useLibrary } from "../state/LibraryContext";
@@ -29,6 +31,15 @@ const STATUS_TEXT: Record<SaveStatus, string> = {
 	saving: "Saving…",
 	error: "Couldn't save",
 };
+
+/** Three ways to lay out the weeks, to compare (updates-205). Lineup remembers the pick. */
+type PlanView = "list" | "table" | "outline";
+const PLAN_VIEWS: { id: PlanView; label: string }[] = [
+	{ id: "list", label: "List" },
+	{ id: "table", label: "Table" },
+	{ id: "outline", label: "Outline" },
+];
+const LAYOUT_KEY = "lineup.planLayout";
 
 const PlanContext = createContext<{
 	state: PlanState;
@@ -56,29 +67,75 @@ const sessionSummary = (s: Session) => {
 		.join(" · ");
 };
 
-/** Where a dragged session would land: the topic under the pointer and the index in it. */
+/**
+ * Where a dragged session would land: the week under the pointer and the
+ * index in it. Lists run down (rows) or across (chips that wrap); a week in
+ * the outline takes the session at its end.
+ */
 function dropTarget(clientX: number, clientY: number, dragged: Element | null) {
 	const list = document
 		.elementFromPoint(clientX, clientY)
 		?.closest<HTMLElement>("[data-topic-list]");
 	if (!list) return null;
+	if (list.dataset.append !== undefined)
+		return { topicId: list.dataset.topicList!, index: Number(list.dataset.append), list, rows: [] as HTMLElement[] };
 	const rows = [...list.querySelectorAll<HTMLElement>("[data-session-row]")].filter(
 		(r) => r !== dragged,
 	);
+	const across = list.dataset.axis === "x";
 	let index = rows.length;
 	for (let i = 0; i < rows.length; i++) {
 		const r = rows[i].getBoundingClientRect();
-		if (clientY < r.top + r.height / 2) {
+		const before = across
+			? clientY < r.top || (clientY <= r.bottom && clientX < r.left + r.width / 2)
+			: clientY < r.top + r.height / 2;
+		if (before) {
 			index = i;
 			break;
 		}
 	}
-	return { topicId: list.dataset.topicList!, index };
+	return { topicId: list.dataset.topicList!, index, list, rows };
 }
 
-function TopicCard({ topicIndex, number }: { topicIndex: number; number: number }) {
-	const { state, dispatch, activeTopic, setActiveTopic } = usePlan();
-	const [notesOpen, setNotesOpen] = useState(false);
+/** Puts the drop line where a dragged session would land. */
+function placeDropLine(line: HTMLElement, t: NonNullable<ReturnType<typeof dropTarget>>) {
+	const { list, rows, index } = t;
+	const area = list.getBoundingClientRect();
+	if (list.dataset.append !== undefined) {
+		// Onto a week in the outline: the week lights up instead.
+		line.style.display = "none";
+		return;
+	}
+	if (list.dataset.axis === "x") {
+		const r = index < rows.length ? rows[index].getBoundingClientRect() : rows[rows.length - 1]?.getBoundingClientRect();
+		const x = !r ? area.left + 4 : index < rows.length ? r.left - 3 : r.right + 1;
+		Object.assign(line.style, {
+			display: "block",
+			left: `${x}px`,
+			top: `${r ? r.top : area.top + 4}px`,
+			width: "2px",
+			height: `${r ? r.height : 24}px`,
+		});
+		return;
+	}
+	const y =
+		index < rows.length
+			? rows[index].getBoundingClientRect().top - 3
+			: rows.length
+				? rows[rows.length - 1].getBoundingClientRect().bottom + 1
+				: area.top + 4;
+	Object.assign(line.style, {
+		display: "block",
+		left: `${area.left}px`,
+		width: `${area.width}px`,
+		top: `${y}px`,
+		height: "",
+	});
+}
+
+/** A week's drag and menus, shared by the list, the table and the outline. */
+function useWeek(topicIndex: number) {
+	const { state, dispatch } = usePlan();
 	const library = useLibrary();
 	const navigate = useNavigate();
 	const { openMenu } = useContextMenu();
@@ -109,32 +166,18 @@ function TopicCard({ topicIndex, number }: { topicIndex: number; number: number 
 		place(e.clientX, e.clientY);
 		const clear = () =>
 			document
-				.querySelectorAll(".plan-topic__sessions.is-drop")
+				.querySelectorAll("[data-topic-list].is-drop")
 				.forEach((el) => el.classList.remove("is-drop"));
 		const move = (ev: PointerEvent) => {
 			place(ev.clientX, ev.clientY);
 			clear();
 			const t = dropTarget(ev.clientX, ev.clientY, row);
-			const list = t && document.querySelector<HTMLElement>(`[data-topic-list="${t.topicId}"]`);
-			if (!t || !list) {
+			if (!t) {
 				line.style.display = "none";
 				return;
 			}
-			list.classList.add("is-drop");
-			const rows = [...list.querySelectorAll<HTMLElement>("[data-session-row]")].filter((r) => r !== row);
-			const area = list.getBoundingClientRect();
-			const y =
-				t.index < rows.length
-					? rows[t.index].getBoundingClientRect().top - 3
-					: rows.length
-						? rows[rows.length - 1].getBoundingClientRect().bottom + 1
-						: area.top + 4;
-			Object.assign(line.style, {
-				display: "block",
-				left: `${area.left}px`,
-				width: `${area.width}px`,
-				top: `${y}px`,
-			});
+			t.list.classList.add("is-drop");
+			placeDropLine(line, t);
 		};
 		const up = (ev: PointerEvent) => {
 			window.removeEventListener("pointermove", move);
@@ -150,7 +193,7 @@ function TopicCard({ topicIndex, number }: { topicIndex: number; number: number 
 				dispatch({
 					type: "moveSession",
 					from: { topicId: topic.id, index },
-					to: t,
+					to: { topicId: t.topicId, index: t.index },
 				});
 		};
 		window.addEventListener("pointermove", move);
@@ -232,9 +275,27 @@ function TopicCard({ topicIndex, number }: { topicIndex: number; number: number 
 		},
 	];
 
+	return { plan, topic, startDrag, sessionMenu, topicMenu, lastRun, navigate, openMenu };
+}
+
+function TopicCard({
+	topicIndex,
+	number,
+	large = false,
+}: {
+	topicIndex: number;
+	number: number;
+	/** In the outline: the one week, big, with its sessions' drills. */
+	large?: boolean;
+}) {
+	const { dispatch, activeTopic, setActiveTopic } = usePlan();
+	const [notesOpen, setNotesOpen] = useState(false);
+	const library = useLibrary();
+	const { plan, topic, startDrag, sessionMenu, topicMenu, lastRun, navigate, openMenu } = useWeek(topicIndex);
+
 	return (
 		<section
-			className={`plan-topic${activeTopic === topic.id ? " is-active" : ""}`}
+			className={`plan-topic${large ? " plan-topic--large" : ""}${activeTopic === topic.id && !large ? " is-active" : ""}`}
 			onPointerDown={() => setActiveTopic(topic.id)}
 			onFocus={() => setActiveTopic(topic.id)}
 			aria-label={weekLabel(topicIndex + 1, topic.title)}
@@ -301,6 +362,7 @@ function TopicCard({ topicIndex, number }: { topicIndex: number; number: number 
 								<Icon name="grip" size={16} />
 							</button>
 							<span className="plan-session__number mono">{number + index}</span>
+							{large && session && <SessionThumbs session={session} count={3} />}
 							{session ? (
 								<button
 									type="button"
@@ -339,6 +401,164 @@ function TopicCard({ topicIndex, number }: { topicIndex: number; number: number 
 				)}
 			</ol>
 		</section>
+	);
+}
+
+/** The first drills of a session, as small pictures. */
+function SessionThumbs({ session, count }: { session: Session; count: number }) {
+	const library = useLibrary();
+	const boards = sessionBoardIds(session)
+		.map(library.getBoard)
+		.filter((b): b is Board => !!b)
+		.slice(0, count);
+	return (
+		<span className="plan-thumbs" aria-hidden="true">
+			{boards.length ? (
+				boards.map((b) => <BoardPreview key={b.id} board={b} className="plan-thumbs__item" />)
+			) : (
+				<span className="plan-thumbs__item" />
+			)}
+		</span>
+	);
+}
+
+const weekMinutes = (ids: string[], getSession: (id: string) => Session | undefined) =>
+	ids.reduce((sum, id) => sum + (getSession(id) ? totalMinutes(getSession(id)!) : 0), 0);
+
+/** Design B: one row per week, its sessions as chips with a picture. */
+function WeekRow({ topicIndex }: { topicIndex: number }) {
+	const { dispatch, activeTopic, setActiveTopic } = usePlan();
+	const library = useLibrary();
+	const { plan, topic, startDrag, sessionMenu, topicMenu, navigate, openMenu } = useWeek(topicIndex);
+	const minutes = weekMinutes(topic.sessionIds, library.getSession);
+	return (
+		<tr
+			className={activeTopic === topic.id ? "is-active" : undefined}
+			onPointerDown={() => setActiveTopic(topic.id)}
+			onFocus={() => setActiveTopic(topic.id)}
+			onContextMenu={(e) => {
+				if (isTextField(e.target) || (e.target as Element).closest("[data-session-row]")) return;
+				openMenu(e, topicMenu);
+			}}
+		>
+			<td className="plan-table__week">Week {topicIndex + 1}</td>
+			<td className="plan-table__topic">
+				<BoardInput
+					label={`Week ${topicIndex + 1} topic`}
+					hideLabel
+					placeholder="Topic (optional)"
+					maxLength={120}
+					value={topic.title}
+					onValue={(title) => dispatch({ type: "updateTopic", id: topic.id, patch: { title } })}
+				/>
+			</td>
+			<td>
+				<div className="plan-table__sessions" data-topic-list={topic.id} data-axis="x">
+					{topic.sessionIds.map((id, index) => {
+						const session = library.getSession(id);
+						return (
+							<button
+								key={`${id}-${index}`}
+								type="button"
+								className={`plan-chip${session ? "" : " plan-chip--missing"}`}
+								data-session-row
+								title={session ? sessionSummary(session) : "This session was deleted."}
+								onPointerDown={(e) => startDrag(e, index)}
+								onDoubleClick={() =>
+									session && navigate(`/session/${session.id}`, { state: { from: `/plan/${plan.id}` } })
+								}
+								onContextMenu={(e) => {
+									e.stopPropagation();
+									openMenu(e, sessionMenu(index, session));
+								}}
+							>
+								{session && <SessionThumbs session={session} count={1} />}
+								{session?.meta.title ?? "Deleted session"}
+							</button>
+						);
+					})}
+					{topic.sessionIds.length === 0 && <span className="muted small">No sessions yet</span>}
+				</div>
+			</td>
+			<td className="plan-table__time muted">{minutes ? formatMinutes(minutes) : "–"}</td>
+			<td className="plan-table__more">
+				<button
+					type="button"
+					className="icon-button icon-button--small"
+					aria-label={`Actions for week ${topicIndex + 1}`}
+					onClick={(e) => {
+						const r = e.currentTarget.getBoundingClientRect();
+						openMenu({ x: r.right - 200, y: r.bottom + 4 }, topicMenu);
+					}}
+				>
+					<Icon name="more" size={16} />
+				</button>
+			</td>
+		</tr>
+	);
+}
+
+function WeekTable() {
+	const { state } = usePlan();
+	return (
+		<table className="plan-table">
+			<thead>
+				<tr>
+					<th>Week</th>
+					<th>Topic</th>
+					<th>Sessions</th>
+					<th>Time</th>
+					<th aria-label="Actions" />
+				</tr>
+			</thead>
+			<tbody>
+				{state.present.topics.map((t, i) => (
+					<WeekRow key={t.id} topicIndex={i} />
+				))}
+			</tbody>
+		</table>
+	);
+}
+
+/** Design C: the weeks as an outline, and the picked week large beside it. */
+function WeekOutline({ numbers, onAddWeek }: { numbers: number[]; onAddWeek: () => void }) {
+	const { state, activeTopic, setActiveTopic } = usePlan();
+	const plan = state.present;
+	const index = Math.max(0, plan.topics.findIndex((t) => t.id === activeTopic));
+	const count = plan.topics.reduce((n, t) => n + t.sessionIds.length, 0);
+	return (
+		<div className="plan-outline">
+			<nav className="plan-outline__weeks" aria-label="Weeks">
+				<span className="plan-outline__count">
+					{plan.topics.length} {plan.topics.length === 1 ? "week" : "weeks"} · {count}{" "}
+					{count === 1 ? "session" : "sessions"}
+				</span>
+				{plan.topics.map((t, i) => (
+					<button
+						key={t.id}
+						type="button"
+						className={`plan-outline__week${i === index ? " is-active" : ""}`}
+						aria-current={i === index ? "true" : undefined}
+						// Drop a session here to move it to the end of this week.
+						data-topic-list={t.id}
+						data-append={t.sessionIds.length}
+						onClick={() => setActiveTopic(t.id)}
+					>
+						<span>
+							<b>Week {i + 1}</b>
+							{t.title.trim() && ` · ${t.title.trim()}`}
+						</span>
+						<span className="muted">{t.sessionIds.length}</span>
+					</button>
+				))}
+				<button type="button" className="plan-outline__week plan-outline__add" onClick={onAddWeek}>
+					+ Add week
+				</button>
+			</nav>
+			{plan.topics[index] && (
+				<TopicCard key={plan.topics[index].id} topicIndex={index} number={numbers[index]} large />
+			)}
+		</div>
 	);
 }
 
@@ -456,6 +676,28 @@ function PlanLayout() {
 	const { status, flush } = useAutosave(plan, library.savePlan);
 	const { canUndo, canRedo } = canUndoRedo(state);
 	const [calendarOpen, setCalendarOpen] = useState(false);
+	const [layout, setLayout] = useState<PlanView>(() => {
+		try {
+			const saved = localStorage.getItem(LAYOUT_KEY);
+			return PLAN_VIEWS.some((v) => v.id === saved) ? (saved as PlanView) : "list";
+		} catch {
+			return "list";
+		}
+	});
+	const pickLayout = (v: PlanView) => {
+		setLayout(v);
+		try {
+			localStorage.setItem(LAYOUT_KEY, v);
+		} catch {
+			// Not remembered; fine.
+		}
+	};
+	const { setActiveTopic } = usePlan();
+	const addWeek = () => {
+		const topic = createTopic();
+		dispatch({ type: "addTopic", topic });
+		setActiveTopic(topic.id);
+	};
 	const sessions = planSessionIds(plan)
 		.map(library.getSession)
 		.filter((s): s is Session => !!s);
@@ -485,9 +727,13 @@ function PlanLayout() {
 		dispatch({ type });
 	};
 
-	let number = 1;
+	// Sessions are numbered through the plan, not per week.
+	const numbers = plan.topics.reduce<number[]>(
+		(acc, t, i) => [...acc, i === 0 ? 1 : acc[i - 1] + plan.topics[i - 1].sessionIds.length],
+		[],
+	);
 	return (
-		<div className="session-editor plan-editor">
+		<div className={`session-editor plan-editor plan-editor--${layout}`}>
 			<header className="topbar">
 				<button
 					type="button"
@@ -581,27 +827,43 @@ function PlanLayout() {
 
 					<div className="timeline__head">
 						<h2>Weeks</h2>
+						<div className="segmented segmented--small" role="radiogroup" aria-label="Layout">
+							{PLAN_VIEWS.map((v) => (
+								<button
+									key={v.id}
+									type="button"
+									role="radio"
+									aria-checked={layout === v.id}
+									className={`segmented__item${layout === v.id ? " is-active" : ""}`}
+									onClick={() => pickLayout(v.id)}
+								>
+									{v.label}
+								</button>
+							))}
+						</div>
 						<span className="muted">
 							{plan.topics.length} {plan.topics.length === 1 ? "week" : "weeks"} ·{" "}
 							{sessions.length} {sessions.length === 1 ? "session" : "sessions"}
 							{minutes ? ` · ${formatMinutes(minutes)}` : ""}
 						</span>
 					</div>
-					{plan.topics.map((topic, i) => {
-						const start = number;
-						number += topic.sessionIds.length;
-						return <TopicCard key={topic.id} topicIndex={i} number={start} />;
-					})}
-					<div className="timeline__add">
-						<button
-							type="button"
-							className="button button--small"
-							onClick={() => dispatch({ type: "addTopic" })}
-						>
-							<Icon name="plus" size={14} />
-							Add week
-						</button>
-					</div>
+					{layout === "list" && (
+						<>
+							{plan.topics.map((topic, i) => (
+								<TopicCard key={topic.id} topicIndex={i} number={numbers[i]} />
+							))}
+						</>
+					)}
+					{layout === "table" && <WeekTable />}
+					{layout === "outline" && <WeekOutline numbers={numbers} onAddWeek={addWeek} />}
+					{layout !== "outline" && (
+						<div className="timeline__add">
+							<button type="button" className="button button--small" onClick={addWeek}>
+								<Icon name="plus" size={14} />
+								Add week
+							</button>
+						</div>
+					)}
 				</main>
 				<SessionPanel />
 			</div>
