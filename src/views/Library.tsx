@@ -367,7 +367,7 @@ export default function Library() {
 		if (view.kind !== "plans") return [];
 		const q = query.trim().toLowerCase();
 		const found = library.plans.filter((p) =>
-			[p.meta.title, p.team, ...p.meta.folders, ...p.topics.map((t) => t.title)]
+			[p.meta.title, p.team, ...p.meta.folders, ...p.topics.flatMap((t) => t.topics)]
 				.join(" ")
 				.toLowerCase()
 				.includes(q),

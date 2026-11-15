@@ -20,6 +20,11 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Changed
 
+- Plans: each week can have several **topics** (chips, with the sport's topics and your own suggested); a week's single topic from before becomes its first
+- Plans: weeks have a drag handle in every layout, to put them in a different order
+- Plans: selecting a session opens its preview (Back returns to the plan); **Edit session** is in its menu. Sessions are numbered within their week
+- Plans: the Outline has **All weeks** at the top, and remembers which week (or all) was showing for each plan
+- Plans: the description gets the whole width and grows with its text
 - Calendar hover is softer: a light sweep in the theme's colour that stays readable in light themes, and the day keeps its own hover
 - The week view shows a session's first two topics
 - Dragging a session in a plan barely tilts it

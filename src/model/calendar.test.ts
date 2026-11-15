@@ -99,8 +99,8 @@ describe("plans", () => {
 	it("lists sessions topic by topic and survives a round trip", () => {
 		const plan = createPlan("Autumn");
 		plan.topics = [
-			{ ...createTopic("Attacking transition"), sessionIds: ["a", "b"] },
-			{ ...createTopic("Pressing"), sessionIds: ["c", "a"] },
+			{ ...createTopic(["Attacking transition"]), sessionIds: ["a", "b"] },
+			{ ...createTopic(["Pressing"]), sessionIds: ["c", "a"] },
 		];
 		expect(planSessionIds(plan)).toEqual(["a", "b", "c", "a"]);
 		expect(parsePlan(JSON.stringify(plan))).toEqual(plan);

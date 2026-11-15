@@ -170,7 +170,7 @@ export default function SessionPreview() {
 			<header className="topbar">
 				<button type="button" className="back-button" onClick={goBack}>
 					<Icon name="chevronLeft" size={16} />
-					{back === "/" ? "Library" : "Session"}
+					{back === "/" ? "Library" : back?.startsWith("/plan/") ? "Plan" : "Session"}
 				</button>
 				<span className="topbar__divider" aria-hidden="true" />
 				<span className="badge">Session</span>
@@ -212,7 +212,7 @@ export default function SessionPreview() {
 					<button
 						type="button"
 						className="button button--small"
-						onClick={() => navigate(`/session/${session.id}`)}
+						onClick={() => navigate(`/session/${session.id}`, { state: back ? { from: back } : undefined })}
 					>
 						Edit session
 					</button>

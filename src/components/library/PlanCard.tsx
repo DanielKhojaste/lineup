@@ -44,7 +44,7 @@ export default function PlanCard({
 							<span className="plan-card__number">{i + 1}</span>
 							<span className="plan-card__name">
 								Week {i + 1}
-								{topic.title && <span className="muted"> · {topic.title}</span>}
+								{topic.topics.length > 0 && <span className="muted"> · {topic.topics.join(", ")}</span>}
 							</span>
 							<span className="plan-card__count">{topic.sessionIds.length}</span>
 						</span>

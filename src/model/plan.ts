@@ -20,13 +20,13 @@ export const PLAN_SCHEMA_VERSION = 1;
 export const PLAN_EXTENSION = "lineup-plan";
 
 /**
- * One week of a plan, with its sessions in order. (Stored as a "topic": each
- * week can have one, like "Attacking transition", but doesn't need it.)
+ * One week of a plan, with its sessions in order. (Stored in `topics` for
+ * history: a plan's weeks were first called topics.)
  */
 export interface PlanTopic {
 	id: string;
-	/** The week's topic, e.g. "Attacking transition"; empty when it has none. */
-	title: string;
+	/** What the week works on, e.g. "Pressing", "Transition"; none is fine. */
+	topics: string[];
 	notes: string;
 	/** Sessions in the order they're meant to run. The same session can appear more than once. */
 	sessionIds: string[];
@@ -51,8 +51,8 @@ export interface Plan {
 	topics: PlanTopic[];
 }
 
-export function createTopic(title = ""): PlanTopic {
-	return { id: newId(), title, notes: "", sessionIds: [] };
+export function createTopic(topics: string[] = []): PlanTopic {
+	return { id: newId(), topics, notes: "", sessionIds: [] };
 }
 
 export function createPlan(title = "Untitled plan"): Plan {
@@ -65,13 +65,22 @@ export function createPlan(title = "Untitled plan"): Plan {
 		team: "",
 		sport: "",
 		description: "",
-		topics: [createTopic("")],
+		topics: [createTopic()],
 	};
 }
 
-/** "Week 2", or "Week 2 · Pressing" when the week has a topic. */
-export function weekLabel(week: number, topic: string): string {
-	return topic.trim() ? `Week ${week} · ${topic.trim()}` : `Week ${week}`;
+/** "Week 2", or "Week 2 · Pressing, Transition" when the week has topics. */
+export function weekLabel(week: number, topics: string[]): string {
+	return topics.length ? `Week ${week} · ${topics.join(", ")}` : `Week ${week}`;
+}
+
+/** A week's topics from a file: the list, or the one topic plans had before. */
+function weekTopics(t: Record<string, unknown>): string[] {
+	const list = Array.isArray(t.topics)
+		? t.topics.filter(isStr).map((x) => x.trim().slice(0, 40)).filter(Boolean)
+		: [];
+	const old = isStr(t.title) ? t.title.trim().slice(0, 40) : "";
+	return [...new Set(old && !list.includes(old) ? [old, ...list] : list)].slice(0, 12);
 }
 
 /** Every session of a plan in running order (week by week). */
@@ -111,7 +120,7 @@ export function parsePlan(source: string): Plan {
 		? raw.topics.filter(isObject).map(
 				(t): PlanTopic => ({
 					id: isStr(t.id) ? t.id : newId(),
-					title: text(t.title, 120),
+					topics: weekTopics(t),
 					notes: text(t.notes),
 					sessionIds: Array.isArray(t.sessionIds)
 						? t.sessionIds.filter(isStr)

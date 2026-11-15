@@ -17,6 +17,7 @@ import { BoardInput, BoardTextarea, FieldGestureContext } from "../components/ui
 import { describeDay, lastRunBySession } from "../model/calendar";
 import { createTopic, Plan, planSessionIds, weekLabel } from "../model/plan";
 import { formatMinutes, Session, sessionBoardIds, totalMinutes } from "../model/session";
+import { suggestedTopics } from "../model/topics";
 import { Board } from "../model/types";
 import BoardPreview from "../components/board/BoardPreview";
 import { SPORT_INFO, SPORTS } from "../model/sports";
@@ -66,6 +67,173 @@ const sessionSummary = (s: Session) => {
 		.filter(Boolean)
 		.join(" · ");
 };
+
+/** A week's topics: chips, and a box that suggests the sport's topics and your own. */
+function WeekTopics({ topicIndex }: { topicIndex: number }) {
+	const { state, dispatch } = usePlan();
+	const library = useLibrary();
+	const plan = state.present;
+	const week = plan.topics[topicIndex];
+	const [draft, setDraft] = useState("");
+	const listId = `week-topics-${week.id}`;
+	const has = (t: string) => week.topics.some((x) => x.toLowerCase() === t.toLowerCase());
+	const set = (topics: string[]) => dispatch({ type: "updateTopic", id: week.id, patch: { topics } });
+	const suggestions = useMemo(
+		() =>
+			suggestedTopics(plan.sport, [
+				...library.topics,
+				...library.sessions.flatMap((x) => x.header.topics),
+			]),
+		[plan.sport, library.topics, library.sessions],
+	);
+	const add = (value: string) => {
+		const t = value.trim().slice(0, 40);
+		setDraft("");
+		if (t && !has(t)) set([...week.topics, t]);
+	};
+	return (
+		<div className="week-topics">
+			{week.topics.map((t) => (
+				<span key={t} className="chip chip--small">
+					{t}
+					<button
+						type="button"
+						className="chip__remove"
+						aria-label={`Remove topic ${t}`}
+						onClick={() => set(week.topics.filter((x) => x !== t))}
+					>
+						<Icon name="close" size={11} />
+					</button>
+				</span>
+			))}
+			<input
+				className="chip-input week-topics__input"
+				aria-label={`Week ${topicIndex + 1} topics`}
+				placeholder={week.topics.length ? "+ Topic" : "+ Add topics, e.g. Pressing"}
+				list={listId}
+				value={draft}
+				maxLength={40}
+				onChange={(e) => {
+					const v = e.target.value;
+					// Picking from the list adds it straight away.
+					if (suggestions.includes(v) && !has(v)) add(v);
+					else setDraft(v);
+				}}
+				onKeyDown={(e) => {
+					if (e.key === "Enter" || e.key === ",") {
+						e.preventDefault();
+						add(draft);
+					} else if (e.key === "Backspace" && !draft && week.topics.length) {
+						set(week.topics.slice(0, -1));
+					}
+				}}
+				onBlur={() => add(draft)}
+			/>
+			<datalist id={listId}>
+				{suggestions.filter((t) => !has(t)).map((t) => (
+					<option key={t} value={t} />
+				))}
+			</datalist>
+		</div>
+	);
+}
+
+/**
+ * Dragging a week by its handle, in any layout: a label follows the pointer
+ * and a line shows where the week will go among the others.
+ */
+function useWeekDrag() {
+	const { state, dispatch } = usePlan();
+	return (e: ReactPointerEvent, topicIndex: number) => {
+		if (e.button !== 0) return;
+		e.preventDefault();
+		e.stopPropagation();
+		(document.activeElement as HTMLElement | null)?.blur?.();
+		const week = state.present.topics[topicIndex];
+		const row = (e.currentTarget as HTMLElement).closest<HTMLElement>("[data-week-row]");
+		const list = row?.closest<HTMLElement>("[data-week-list]");
+		if (!row || !list) return;
+		row.classList.add("is-dragging");
+		const ghost = document.createElement("div");
+		ghost.className = "plan-week-ghost";
+		ghost.textContent = weekLabel(topicIndex + 1, week.topics);
+		const line = document.createElement("div");
+		line.className = "plan-drop-line";
+		document.body.append(ghost, line);
+		const others = () =>
+			[...list.querySelectorAll<HTMLElement>("[data-week-row]")].filter((r) => r !== row);
+		const indexAt = (y: number) => {
+			const rows = others();
+			const i = rows.findIndex((r) => {
+				const b = r.getBoundingClientRect();
+				return y < b.top + b.height / 2;
+			});
+			return i === -1 ? rows.length : i;
+		};
+		const move = (ev: PointerEvent) => {
+			ghost.style.transform = `translate(${ev.clientX + 12}px, ${ev.clientY - 14}px)`;
+			const rows = others();
+			const i = indexAt(ev.clientY);
+			const area = list.getBoundingClientRect();
+			const y =
+				i < rows.length
+					? rows[i].getBoundingClientRect().top - 3
+					: (rows[rows.length - 1]?.getBoundingClientRect().bottom ?? area.top) + 1;
+			Object.assign(line.style, {
+				display: "block",
+				left: `${area.left}px`,
+				width: `${area.width}px`,
+				top: `${y}px`,
+				height: "",
+			});
+		};
+		move(e.nativeEvent);
+		const up = (ev: PointerEvent) => {
+			window.removeEventListener("pointermove", move);
+			window.removeEventListener("pointerup", up);
+			window.removeEventListener("pointercancel", up);
+			row.classList.remove("is-dragging");
+			ghost.remove();
+			line.remove();
+			if (ev.type === "pointerup") dispatch({ type: "moveTopic", id: week.id, index: indexAt(ev.clientY) });
+		};
+		window.addEventListener("pointermove", move);
+		window.addEventListener("pointerup", up);
+		window.addEventListener("pointercancel", up);
+	};
+}
+
+function WeekHandle({ topicIndex }: { topicIndex: number }) {
+	const startDrag = useWeekDrag();
+	return (
+		<button
+			type="button"
+			className="block__handle plan-week-handle"
+			aria-label={`Drag week ${topicIndex + 1} to move it`}
+			title="Drag to move the week"
+			onPointerDown={(e) => startDrag(e, topicIndex)}
+		>
+			<Icon name="grip" size={16} />
+		</button>
+	);
+}
+
+/**
+ * Opening a session from a plan shows its preview (editing is in its menu).
+ * A session with no drills yet has nothing to preview, so it opens to edit.
+ */
+function useOpenSession() {
+	const navigate = useNavigate();
+	const { state } = usePlan();
+	const here = `/plan/${state.present.id}`;
+	return {
+		preview: (session: Session) =>
+			session.blocks.some((b) => b.kind === "drill")
+				? navigate(`/session/${session.id}/preview`, { state: { back: here, from: here } })
+				: navigate(`/session/${session.id}`, { state: { from: here } }),
+		edit: (session: Session) => navigate(`/session/${session.id}`, { state: { from: here } }),
+	};
+}
 
 /**
  * Where a dragged session would land: the week under the pointer and the
@@ -136,6 +304,7 @@ function placeDropLine(line: HTMLElement, t: NonNullable<ReturnType<typeof dropT
 /** A week's drag and menus, shared by the list, the table and the outline. */
 function useWeek(topicIndex: number) {
 	const { state, dispatch } = usePlan();
+	const open = useOpenSession();
 	const library = useLibrary();
 	const navigate = useNavigate();
 	const { openMenu } = useContextMenu();
@@ -143,51 +312,65 @@ function useWeek(topicIndex: number) {
 	const topic = plan.topics[topicIndex];
 	const lastRun = useMemo(() => lastRunBySession(library.calendar), [library.calendar]);
 
-	const startDrag = (e: ReactPointerEvent, index: number) => {
+	/**
+	 * Dragging a session: a copy follows the pointer and a line shows where it
+	 * will land. Nothing happens until the pointer moves a few pixels, so a
+	 * plain click can do something else (`onClick`: a chip opens its preview).
+	 */
+	const startDrag = (e: ReactPointerEvent, index: number, onClick?: () => void) => {
 		if (e.button !== 0) return;
 		e.preventDefault();
 		(document.activeElement as HTMLElement | null)?.blur?.();
 		const row = (e.currentTarget as HTMLElement).closest<HTMLElement>("[data-session-row]");
 		if (!row) return;
-		row.classList.add("is-dragging");
-		// A copy of the session follows the pointer, and a line shows where it will land.
+		const start = { x: e.clientX, y: e.clientY };
 		const box = row.getBoundingClientRect();
 		const grab = { x: e.clientX - box.left, y: e.clientY - box.top };
-		const ghost = row.cloneNode(true) as HTMLElement;
-		ghost.classList.remove("is-dragging");
-		ghost.classList.add("plan-drag-ghost");
-		ghost.style.width = `${box.width}px`;
-		const line = document.createElement("div");
-		line.className = "plan-drop-line";
-		document.body.append(ghost, line);
-		const place = (x: number, y: number) => {
-			ghost.style.transform = `translate(${x - grab.x}px, ${y - grab.y}px) rotate(-0.3deg)`;
-		};
-		place(e.clientX, e.clientY);
+		let ghost: HTMLElement | null = null;
+		let line: HTMLElement | null = null;
 		const clear = () =>
 			document
 				.querySelectorAll("[data-topic-list].is-drop")
 				.forEach((el) => el.classList.remove("is-drop"));
+		const begin = () => {
+			row.classList.add("is-dragging");
+			ghost = row.cloneNode(true) as HTMLElement;
+			ghost.classList.remove("is-dragging");
+			ghost.classList.add("plan-drag-ghost");
+			ghost.style.width = `${box.width}px`;
+			line = document.createElement("div");
+			line.className = "plan-drop-line";
+			document.body.append(ghost, line);
+		};
 		const move = (ev: PointerEvent) => {
-			place(ev.clientX, ev.clientY);
+			if (!ghost) {
+				if (Math.hypot(ev.clientX - start.x, ev.clientY - start.y) < 4) return;
+				begin();
+			}
+			ghost!.style.transform = `translate(${ev.clientX - grab.x}px, ${ev.clientY - grab.y}px) rotate(-0.3deg)`;
 			clear();
 			const t = dropTarget(ev.clientX, ev.clientY, row);
 			if (!t) {
-				line.style.display = "none";
+				line!.style.display = "none";
 				return;
 			}
 			t.list.classList.add("is-drop");
-			placeDropLine(line, t);
+			placeDropLine(line!, t);
 		};
 		const up = (ev: PointerEvent) => {
 			window.removeEventListener("pointermove", move);
 			window.removeEventListener("pointerup", up);
 			window.removeEventListener("pointercancel", up);
+			const dragged = !!ghost;
 			row.classList.remove("is-dragging");
-			ghost.remove();
-			line.remove();
+			ghost?.remove();
+			line?.remove();
 			clear();
 			if (ev.type !== "pointerup") return;
+			if (!dragged) {
+				onClick?.();
+				return;
+			}
 			const t = dropTarget(ev.clientX, ev.clientY, row);
 			if (t)
 				dispatch({
@@ -204,11 +387,8 @@ function useWeek(topicIndex: number) {
 	const sessionMenu = (index: number, session?: Session): ContextMenuEntry[] => [
 		...(session
 			? [
-					{
-						label: "Open session",
-						onSelect: () =>
-							navigate(`/session/${session.id}`, { state: { from: `/plan/${plan.id}` } }),
-					},
+					{ label: "Preview", onSelect: () => open.preview(session) },
+					{ label: "Edit session", onSelect: () => open.edit(session) },
 					"separator" as const,
 				]
 			: []),
@@ -238,7 +418,7 @@ function useWeek(topicIndex: number) {
 			submenu: plan.topics
 				.filter((t) => t.id !== topic.id)
 				.map((t, i) => ({
-					label: weekLabel(plan.topics.indexOf(t) + 1 || i + 1, t.title),
+					label: weekLabel(plan.topics.indexOf(t) + 1 || i + 1, t.topics),
 					onSelect: () =>
 						dispatch({
 							type: "moveSession",
@@ -275,30 +455,29 @@ function useWeek(topicIndex: number) {
 		},
 	];
 
-	return { plan, topic, startDrag, sessionMenu, topicMenu, lastRun, navigate, openMenu };
+	return { plan, topic, startDrag, sessionMenu, topicMenu, lastRun, navigate, openMenu, open };
 }
 
 function TopicCard({
 	topicIndex,
-	number,
 	large = false,
 }: {
 	topicIndex: number;
-	number: number;
-	/** In the outline: the one week, big, with its sessions' drills. */
+	/** In the outline: big, with its sessions' drills. */
 	large?: boolean;
 }) {
 	const { dispatch, activeTopic, setActiveTopic } = usePlan();
 	const [notesOpen, setNotesOpen] = useState(false);
 	const library = useLibrary();
-	const { plan, topic, startDrag, sessionMenu, topicMenu, lastRun, navigate, openMenu } = useWeek(topicIndex);
+	const { topic, startDrag, sessionMenu, topicMenu, lastRun, openMenu, open } = useWeek(topicIndex);
 
 	return (
 		<section
 			className={`plan-topic${large ? " plan-topic--large" : ""}${activeTopic === topic.id && !large ? " is-active" : ""}`}
 			onPointerDown={() => setActiveTopic(topic.id)}
 			onFocus={() => setActiveTopic(topic.id)}
-			aria-label={weekLabel(topicIndex + 1, topic.title)}
+			aria-label={weekLabel(topicIndex + 1, topic.topics)}
+			data-week-row={topic.id}
 		>
 			<div
 				className="plan-topic__head"
@@ -307,16 +486,9 @@ function TopicCard({
 					openMenu(e, topicMenu);
 				}}
 			>
+				<WeekHandle topicIndex={topicIndex} />
 				<span className="plan-topic__week">Week {topicIndex + 1}</span>
-				<BoardInput
-					className="plan-topic__title"
-					label={`Week ${topicIndex + 1} topic`}
-					hideLabel
-					placeholder="Topic (optional), e.g. Pressing"
-					maxLength={120}
-					value={topic.title}
-					onValue={(title) => dispatch({ type: "updateTopic", id: topic.id, patch: { title } })}
-				/>
+				<WeekTopics topicIndex={topicIndex} />
 				<button
 					type="button"
 					className="icon-button icon-button--small"
@@ -361,17 +533,15 @@ function TopicCard({
 							>
 								<Icon name="grip" size={16} />
 							</button>
-							<span className="plan-session__number mono">{number + index}</span>
+							{/* Counted within the week. */}
+							<span className="plan-session__number mono">{index + 1}</span>
 							{large && session && <SessionThumbs session={session} count={3} />}
 							{session ? (
 								<button
 									type="button"
 									className="plan-session__open"
-									onClick={() =>
-										navigate(`/session/${session.id}`, {
-											state: { from: `/plan/${plan.id}` },
-										})
-									}
+									title="Preview the session"
+									onClick={() => open.preview(session)}
 								>
 									<span className="plan-session__title">{session.meta.title}</span>
 									<span className="plan-session__meta">
@@ -429,10 +599,11 @@ const weekMinutes = (ids: string[], getSession: (id: string) => Session | undefi
 function WeekRow({ topicIndex }: { topicIndex: number }) {
 	const { dispatch, activeTopic, setActiveTopic } = usePlan();
 	const library = useLibrary();
-	const { plan, topic, startDrag, sessionMenu, topicMenu, navigate, openMenu } = useWeek(topicIndex);
+	const { topic, startDrag, sessionMenu, topicMenu, openMenu, open } = useWeek(topicIndex);
 	const minutes = weekMinutes(topic.sessionIds, library.getSession);
 	return (
 		<tr
+			data-week-row={topic.id}
 			className={activeTopic === topic.id ? "is-active" : undefined}
 			onPointerDown={() => setActiveTopic(topic.id)}
 			onFocus={() => setActiveTopic(topic.id)}
@@ -441,16 +612,14 @@ function WeekRow({ topicIndex }: { topicIndex: number }) {
 				openMenu(e, topicMenu);
 			}}
 		>
-			<td className="plan-table__week">Week {topicIndex + 1}</td>
+			<td className="plan-table__week">
+				<span className="plan-table__week-inner">
+					<WeekHandle topicIndex={topicIndex} />
+					Week {topicIndex + 1}
+				</span>
+			</td>
 			<td className="plan-table__topic">
-				<BoardInput
-					label={`Week ${topicIndex + 1} topic`}
-					hideLabel
-					placeholder="Topic (optional)"
-					maxLength={120}
-					value={topic.title}
-					onValue={(title) => dispatch({ type: "updateTopic", id: topic.id, patch: { title } })}
-				/>
+				<WeekTopics topicIndex={topicIndex} />
 			</td>
 			<td>
 				<div className="plan-table__sessions" data-topic-list={topic.id} data-axis="x">
@@ -462,11 +631,8 @@ function WeekRow({ topicIndex }: { topicIndex: number }) {
 								type="button"
 								className={`plan-chip${session ? "" : " plan-chip--missing"}`}
 								data-session-row
-								title={session ? sessionSummary(session) : "This session was deleted."}
-								onPointerDown={(e) => startDrag(e, index)}
-								onDoubleClick={() =>
-									session && navigate(`/session/${session.id}`, { state: { from: `/plan/${plan.id}` } })
-								}
+								title={session ? `${sessionSummary(session)}. Click to preview, drag to move.` : "This session was deleted."}
+								onPointerDown={(e) => startDrag(e, index, session && (() => open.preview(session)))}
 								onContextMenu={(e) => {
 									e.stopPropagation();
 									openMenu(e, sessionMenu(index, session));
@@ -505,13 +671,13 @@ function WeekTable() {
 			<thead>
 				<tr>
 					<th>Week</th>
-					<th>Topic</th>
+					<th>Topics</th>
 					<th>Sessions</th>
 					<th>Time</th>
 					<th aria-label="Actions" />
 				</tr>
 			</thead>
-			<tbody>
+			<tbody data-week-list>
 				{state.present.topics.map((t, i) => (
 					<WeekRow key={t.id} topicIndex={i} />
 				))}
@@ -520,43 +686,111 @@ function WeekTable() {
 	);
 }
 
-/** Design C: the weeks as an outline, and the picked week large beside it. */
-function WeekOutline({ numbers, onAddWeek }: { numbers: number[]; onAddWeek: () => void }) {
+/** Which week the outline shows, or all of them; remembered for each plan. */
+function useOutlinePick(planId: string): [string, (pick: string) => void] {
+	const key = `lineup.planOutline.${planId}`;
+	const [pick, setPick] = useState(() => {
+		try {
+			return localStorage.getItem(key) ?? "";
+		} catch {
+			return "";
+		}
+	});
+	return [
+		pick,
+		(next) => {
+			setPick(next);
+			try {
+				localStorage.setItem(key, next);
+			} catch {
+				// Not remembered; fine.
+			}
+		},
+	];
+}
+
+/** Design C: the weeks as an outline, and the picked week (or all of them) beside it. */
+function WeekOutline({ onAddWeek }: { onAddWeek: () => string }) {
 	const { state, activeTopic, setActiveTopic } = usePlan();
 	const plan = state.present;
-	const index = Math.max(0, plan.topics.findIndex((t) => t.id === activeTopic));
+	const [pick, setPick] = useOutlinePick(plan.id);
+	const all = pick === "all";
+	const index = Math.max(
+		0,
+		plan.topics.findIndex((t) => t.id === (all ? activeTopic : pick || activeTopic)),
+	);
 	const count = plan.topics.reduce((n, t) => n + t.sessionIds.length, 0);
+	const choose = (id: string) => {
+		setPick(id);
+		if (id !== "all") setActiveTopic(id);
+	};
+	// The remembered week is also the one the sessions panel adds to.
+	useEffect(() => {
+		if (pick && pick !== "all" && plan.topics.some((t) => t.id === pick)) setActiveTopic(pick);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 	return (
 		<div className="plan-outline">
-			<nav className="plan-outline__weeks" aria-label="Weeks">
+			<nav className="plan-outline__weeks" aria-label="Weeks" data-week-list>
 				<span className="plan-outline__count">
 					{plan.topics.length} {plan.topics.length === 1 ? "week" : "weeks"} · {count}{" "}
 					{count === 1 ? "session" : "sessions"}
 				</span>
-				{plan.topics.map((t, i) => (
-					<button
-						key={t.id}
-						type="button"
-						className={`plan-outline__week${i === index ? " is-active" : ""}`}
-						aria-current={i === index ? "true" : undefined}
-						// Drop a session here to move it to the end of this week.
-						data-topic-list={t.id}
-						data-append={t.sessionIds.length}
-						onClick={() => setActiveTopic(t.id)}
-					>
-						<span>
-							<b>Week {i + 1}</b>
-							{t.title.trim() && ` · ${t.title.trim()}`}
-						</span>
-						<span className="muted">{t.sessionIds.length}</span>
-					</button>
-				))}
-				<button type="button" className="plan-outline__week plan-outline__add" onClick={onAddWeek}>
+				<button
+					type="button"
+					className={`plan-outline__week plan-outline__all${all ? " is-active" : ""}`}
+					aria-current={all ? "true" : undefined}
+					onClick={() => choose("all")}
+				>
+					<span>All weeks</span>
+					<span className="muted">{count}</span>
+				</button>
+				{plan.topics.map((t, i) => {
+					const on = !all && i === index;
+					return (
+						<div
+							key={t.id}
+							className={`plan-outline__week${on ? " is-active" : ""}`}
+							data-week-row={t.id}
+							// Drop a session here to move it to the end of this week.
+							data-topic-list={t.id}
+							data-append={t.sessionIds.length}
+						>
+							<WeekHandle topicIndex={i} />
+							<button
+								type="button"
+								className="plan-outline__pick"
+								aria-current={on ? "true" : undefined}
+								onClick={() => choose(t.id)}
+							>
+								<span className="plan-outline__name">
+									<span className="plan-outline__label">Week {i + 1}</span>
+									{t.topics.length > 0 && ` · ${t.topics.join(", ")}`}
+								</span>
+								<span className="muted">{t.sessionIds.length}</span>
+							</button>
+						</div>
+					);
+				})}
+				<button
+					type="button"
+					className="plan-outline__week plan-outline__add"
+					onClick={() => {
+						const id = onAddWeek();
+						if (!all) choose(id);
+					}}
+				>
 					+ Add week
 				</button>
 			</nav>
-			{plan.topics[index] && (
-				<TopicCard key={plan.topics[index].id} topicIndex={index} number={numbers[index]} large />
+			{all ? (
+				<div className="plan-outline__all-weeks" data-week-list>
+					{plan.topics.map((t, i) => (
+						<TopicCard key={t.id} topicIndex={i} large />
+					))}
+				</div>
+			) : (
+				plan.topics[index] && <TopicCard key={plan.topics[index].id} topicIndex={index} large />
 			)}
 		</div>
 	);
@@ -589,7 +823,7 @@ function SessionPanel() {
 			<div className="drill-picker__head">
 				<h2>Add sessions</h2>
 				<p className="muted small">
-					To {weekLabel(plan.topics.indexOf(topic!) + 1, topic?.title ?? "")}. Click another week to
+					To {weekLabel(plan.topics.indexOf(topic!) + 1, topic?.topics ?? [])}. Click another week to
 					add to it instead.
 				</p>
 				<label className="search search--small">
@@ -617,14 +851,14 @@ function SessionPanel() {
 							...session,
 							meta: {
 								...session.meta,
-								title: topic?.title
-									? `Week ${week} ${topic.title} ${count}`
+								title: topic?.topics.length
+									? `Week ${week} ${topic.topics[0]} ${count}`
 									: `Week ${week} session ${count}`,
 							},
 							header: {
 								...session.header,
 								team: plan.team,
-								topics: topic?.title ? [topic.title] : [],
+								topics: topic?.topics ?? [],
 							},
 						};
 						await library.saveSession(titled);
@@ -697,6 +931,7 @@ function PlanLayout() {
 		const topic = createTopic();
 		dispatch({ type: "addTopic", topic });
 		setActiveTopic(topic.id);
+		return topic.id;
 	};
 	const sessions = planSessionIds(plan)
 		.map(library.getSession)
@@ -727,11 +962,6 @@ function PlanLayout() {
 		dispatch({ type });
 	};
 
-	// Sessions are numbered through the plan, not per week.
-	const numbers = plan.topics.reduce<number[]>(
-		(acc, t, i) => [...acc, i === 0 ? 1 : acc[i - 1] + plan.topics[i - 1].sessionIds.length],
-		[],
-	);
 	return (
 		<div className={`session-editor plan-editor plan-editor--${layout}`}>
 			<header className="topbar">
@@ -784,7 +1014,7 @@ function PlanLayout() {
 			<div className="session-editor__body">
 				<main className="session-editor__main">
 					<section className="session-header" aria-label="Plan details">
-						<div className="session-header__grid">
+						<div className="session-header__grid plan-header__grid">
 							<BoardInput
 								label="Team or age group"
 								placeholder="U12 Girls"
@@ -817,7 +1047,7 @@ function PlanLayout() {
 							</div>
 							<BoardTextarea
 								label="Description"
-								rows={2}
+								rows={3}
 								placeholder="What the plan is for: the season's goals, the block's theme…"
 								value={plan.description}
 								onValue={(description) => dispatch({ type: "updatePlan", patch: { description } })}
@@ -847,15 +1077,21 @@ function PlanLayout() {
 							{minutes ? ` · ${formatMinutes(minutes)}` : ""}
 						</span>
 					</div>
+					<p className="plan-hint">
+						Selecting a session opens its preview. To edit a session, right-click it and choose{" "}
+						<b>Edit session</b>.
+					</p>
 					{layout === "list" && (
 						<>
-							{plan.topics.map((topic, i) => (
-								<TopicCard key={topic.id} topicIndex={i} number={numbers[i]} />
-							))}
+							<div className="plan-weeks" data-week-list>
+								{plan.topics.map((topic, i) => (
+									<TopicCard key={topic.id} topicIndex={i} />
+								))}
+							</div>
 						</>
 					)}
 					{layout === "table" && <WeekTable />}
-					{layout === "outline" && <WeekOutline numbers={numbers} onAddWeek={addWeek} />}
+					{layout === "outline" && <WeekOutline onAddWeek={addWeek} />}
 					{layout !== "outline" && (
 						<div className="timeline__add">
 							<button type="button" className="button button--small" onClick={addWeek}>

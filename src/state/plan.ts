@@ -12,7 +12,7 @@ export type PlanAction =
 			};
 	  }
 	| { type: "addTopic"; topic?: PlanTopic; index?: number }
-	| { type: "updateTopic"; id: string; patch: Partial<Pick<PlanTopic, "title" | "notes">> }
+	| { type: "updateTopic"; id: string; patch: Partial<Pick<PlanTopic, "topics" | "notes">> }
 	| { type: "removeTopic"; id: string }
 	| { type: "moveTopic"; id: string; index: number }
 	/** Add sessions to a topic at `index` (the end when missing). */

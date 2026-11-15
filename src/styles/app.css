@@ -4935,10 +4935,6 @@ option:disabled {
 	color: var(--text-muted);
 }
 
-.plan-topic--large .plan-topic__title {
-	font-size: 20px;
-	font-weight: 700;
-}
 
 .plan-topic--large .plan-session {
 	padding-top: 8px;
@@ -5063,4 +5059,162 @@ option:disabled {
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 6px;
+}
+
+
+/* ------------------------- Plan page (updates-206) ------------------------- */
+
+/* Team and sport side by side; the description gets the whole width and grows with its text. */
+.plan-header__grid {
+	grid-template-columns: minmax(200px, 2fr) minmax(160px, 1fr);
+}
+
+.plan-header__grid > .field:last-child {
+	grid-column: 1 / -1;
+}
+
+.plan-header__grid textarea {
+	field-sizing: content;
+	min-height: 4.5em;
+	max-height: 16em;
+	resize: vertical;
+}
+
+.plan-hint {
+	margin: -4px 0 12px;
+	color: var(--text-muted);
+	font-size: 12px;
+}
+
+.plan-hint b {
+	font-weight: 600;
+	color: var(--text);
+}
+
+/* A week's topics: chips and a small box to add more. */
+.week-topics {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 5px;
+}
+
+.chip--small {
+	min-height: 22px;
+	padding: 1px 4px 1px 9px;
+	font-size: 12px;
+}
+
+.week-topics__input {
+	flex: 0 1 180px;
+	min-width: 80px;
+	padding: 2px 9px;
+}
+
+.plan-week-handle {
+	flex-shrink: 0;
+	cursor: grab;
+	touch-action: none;
+}
+
+[data-week-row].is-dragging {
+	opacity: 0.4;
+}
+
+.plan-week-ghost {
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: 1000;
+	pointer-events: none;
+	padding: 6px 12px;
+	border: 1px solid var(--accent);
+	border-radius: 8px;
+	background: var(--raised);
+	box-shadow: var(--shadow-lg, 0 8px 24px rgb(0 0 0 / 0.3));
+	font-size: 13px;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.plan-weeks,
+.plan-outline__all-weeks {
+	display: flex;
+	flex-direction: column;
+}
+
+.plan-outline__all-weeks {
+	gap: 0;
+}
+
+/* The table's week cell: the handle and the week. */
+.plan-table__week-inner {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.plan-table__week {
+	font-weight: 600;
+}
+
+.plan-table__topic {
+	width: 30%;
+}
+
+/* The outline: each week is its handle and a button; same weights as the table. */
+.plan-outline__week {
+	align-items: center;
+	padding: 3px 4px 3px 2px;
+}
+
+.plan-outline__all,
+.plan-outline__add {
+	padding: 7px 9px;
+}
+
+.plan-outline__week .plan-week-handle {
+	opacity: 0;
+}
+
+.plan-outline__week:hover .plan-week-handle,
+.plan-outline__week .plan-week-handle:focus-visible {
+	opacity: 1;
+}
+
+.plan-outline__pick {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	justify-content: space-between;
+	gap: 8px;
+	padding: 4px 5px 4px 2px;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+
+.plan-outline__name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.plan-outline__label {
+	font-weight: 600;
+	color: var(--accent-text);
+}
+
+.plan-outline__all {
+	font-weight: 600;
+}
+
+div.plan-outline__week {
+	gap: 0;
+	cursor: default;
 }
