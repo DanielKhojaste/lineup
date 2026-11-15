@@ -1,6 +1,6 @@
 {
 	"name": "Fremen",
-	"order": 6,
+	"order": 7,
 	"mode": "dark",
 	"accent": "#3A97FF",
 	"secondary": "#D9A75F",
@@ -15,6 +15,9 @@
 		"text": "#EEE6D8",
 		"text-muted": "#A4A7AE",
 		"board-bg": "#070A10",
-		"danger": "#FF6F5E"
+		"danger": "#FF6F5E",
+		"chip-bg": "rgba(217, 167, 95, 0.24)",
+		"chip-border": "#D9A75F",
+		"chip-text": "#F6EBD8"
 	}
 }

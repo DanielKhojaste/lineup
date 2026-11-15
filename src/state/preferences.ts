@@ -13,12 +13,15 @@ export interface Preferences {
 	 * for new boards"). Until then, new sessions ask which sport they're for.
 	 */
 	hasDefaultSport: boolean;
+	/** Themes with moving backgrounds (Dune's spice) show them. */
+	themeEffects: boolean;
 }
 
 const STORAGE_KEY = "lineup.preferences";
 const DEFAULTS: Preferences = {
 	defaultPitch: DEFAULT_PITCH,
 	hasDefaultSport: false,
+	themeEffects: true,
 };
 
 function read(): Preferences {
@@ -31,6 +34,7 @@ function read(): Preferences {
 				variant: pitch.variant === "half" ? "half" : "full",
 			},
 			hasDefaultSport: !!raw?.defaultPitch,
+			themeEffects: raw?.themeEffects !== false,
 		};
 	} catch {
 		return DEFAULTS;

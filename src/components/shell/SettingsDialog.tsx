@@ -145,6 +145,16 @@ export default function SettingsDialog({
 				<section className="dialog__section">
 					<h3>Appearance</h3>
 					<ThemeDropdown value={theme} userThemes={userThemes} onChange={setTheme} />
+					{current.effect && (
+						<label className="check">
+							<input
+								type="checkbox"
+								checked={preferences.themeEffects}
+								onChange={(e) => setPreferences({ themeEffects: e.target.checked })}
+							/>
+							Drifting spice in the background
+						</label>
+					)}
 
 					<ThemeActions
 						theme={current}

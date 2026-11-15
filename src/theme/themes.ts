@@ -20,7 +20,12 @@ export interface ThemePreset extends ThemeSettings {
 	/** The same theme in the other mode (e.g. Amber Night and Amber Day). */
 	pair?: string;
 	chips?: ChipStyle;
+	/** Something that moves behind the interface: "spice" is Dune's drifting spice. */
+	effect?: ThemeEffect;
 }
+
+/** Effects a theme can have. */
+export type ThemeEffect = "spice";
 
 /** What a theme file holds: a file in `src/theme/presets/`, or a `.lineup-theme` file. */
 export interface ThemeFile {
@@ -32,6 +37,7 @@ export interface ThemeFile {
 	tokens?: unknown;
 	pair?: unknown;
 	chips?: unknown;
+	effect?: unknown;
 }
 
 /** A theme from a file's contents, or null when the file doesn't hold one. */
@@ -62,6 +68,7 @@ export function themeFromFile(raw: ThemeFile, id: string): ThemePreset | null {
 		...(Object.keys(tokens).length ? { tokens } : {}),
 		...(typeof raw.pair === "string" ? { pair: raw.pair } : {}),
 		...(raw.chips === "outline" ? { chips: "outline" as const } : {}),
+		...(raw.effect === "spice" ? { effect: "spice" as const } : {}),
 	};
 }
 

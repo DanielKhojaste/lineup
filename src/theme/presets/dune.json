@@ -4,17 +4,18 @@
 	"mode": "dark",
 	"accent": "#FF8A1F",
 	"secondary": "#2B8CFF",
+	"effect": "spice",
 	"tokens": {
-		"bg": "#18130E",
-		"surface": "#211A13",
-		"sunken": "#120E0A",
-		"raised": "#2B2219",
-		"hover": "#352A1F",
-		"border": "#3A2E22",
-		"border-strong": "#5A4733",
-		"text": "#F5EBDA",
-		"text-muted": "#B9A68B",
-		"board-bg": "#120E0A",
+		"bg": "#1A110A",
+		"surface": "#23170E",
+		"sunken": "#130C07",
+		"raised": "#2E1F13",
+		"hover": "#38271A",
+		"border": "#3D2A1B",
+		"border-strong": "#5F452F",
+		"text": "#F6EAD8",
+		"text-muted": "#BDA184",
+		"board-bg": "#130C07",
 		"danger": "#FF6F5E"
 	}
 }

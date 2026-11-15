@@ -14,6 +14,8 @@ import {
 	themeTokens,
 } from "./themes";
 import { findTheme, loadUserThemeFiles, useUserThemes } from "./userThemes";
+import { usePreferences } from "../state/preferences";
+import SpiceEffect from "./SpiceEffect";
 
 const STORAGE_KEY = "lineup.theme";
 /** The Lineup theme used most recently, to go back to when a theme of yours is deleted. */
@@ -111,8 +113,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 		[theme],
 	);
 
+	const effect = theme.preset === "custom" ? undefined : findTheme(theme.preset)?.effect;
+	const { themeEffects } = usePreferences();
 	return (
-		<ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
+		<ThemeContext.Provider value={value}>
+			{children}
+			{effect === "spice" && themeEffects && <SpiceEffect />}
+		</ThemeContext.Provider>
 	);
 }
 
