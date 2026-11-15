@@ -8,6 +8,16 @@ This project adheres to semantic versioning (0.x during early development).
 
 ## [Unreleased]
 
+### Changed
+
+- A card's **Folders ›** menu stays open while you tick folders, so a board or session can go into several at once
+- The **Select** button has an empty tick box, like the boxes on the cards
+- Version tags put the Windows, macOS and Linux installers on a draft GitHub release, ready for its notes
+
+### Fixed
+
+- A card's ⋯ button no longer sits on top of the end of its details line
+
 ---
 
 ## [0.8.1] - 2026-11-15

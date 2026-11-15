@@ -54,6 +54,7 @@ export const ICONS = {
 	close: "M6 6l12 12M18 6L6 18",
 	check: "M5 12l5 5L20 7",
 	minus: "M6 12h12",
+	box: "M7 5h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z",
 	play: "M8 5.5v13l10-6.5z",
 	pause: "M8 5v14M16 5v14",
 	route: "M5 19a2 2 0 1 0 0.01 0M8 17c3-1 2-6 6-7s4-3 4-5M15 5h3v3",

@@ -437,22 +437,27 @@ export default function Library() {
 	const folderSubmenu = (
 		current: string[],
 		set: (folders: string[]) => Promise<void>,
-	): ContextMenuEntry => ({
+	): ContextMenuEntry => {
+		// The menu stays open while folders are ticked, so it keeps its own list
+		// (each tick saves the whole list, including the ticks before it).
+		let ticked = [...current];
+		return {
 		label: "Folders",
 		submenu: [
 			...folders.map((f) => ({
 				label: truncate(f, 40),
 				checked: current.includes(f),
-				onSelect: () =>
-					run(
-						() => set(current.includes(f) ? current.filter((x) => x !== f) : [...current, f]),
-						"Couldn't change its folders",
-					),
+				keepOpen: true,
+				onSelect: () => {
+					ticked = ticked.includes(f) ? ticked.filter((x) => x !== f) : [...ticked, f];
+					const next = ticked;
+					run(() => set(next), "Couldn't change its folders");
+				},
 			})),
 			...(folders.length ? ["separator" as const] : []),
 			{
 				label: "New folder…",
-				onSelect: () => newFolderThen((name) => set([...current, name])),
+				onSelect: () => newFolderThen((name) => set([...ticked, name])),
 			},
 			...(current.length
 				? [
@@ -463,7 +468,8 @@ export default function Library() {
 					]
 				: []),
 		],
-	});
+		};
+	};
 
 	/** A board card's menu, from right-clicking it or its ⋯ button. */
 	const boardMenu = (board: Board): ContextMenuEntry[] => [
@@ -984,6 +990,7 @@ export default function Library() {
 								title="Select several boards and sessions (or Ctrl+click a card)"
 								onClick={() => setSelecting(true)}
 							>
+								<Icon name="box" size={14} />
 								Select
 							</button>
 						)}
