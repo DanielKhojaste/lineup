@@ -1,4 +1,4 @@
-import { SPORT_INFO, SPORTS } from "../model/sports";
+import { isSport, SPORT_INFO, SPORTS } from "../model/sports";
 import { SURFACES } from "../components/board/Pitch";
 import { PointerEvent as ReactPointerEvent, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -50,7 +50,10 @@ function EntryDialog({
 	onRemove,
 	onOpenSession,
 	onClose,
+	sportFilter,
 }: {
+	/** The calendar's sport filter: the picker starts on it. */
+	sportFilter: string;
 	/** A new entry (not on the calendar yet) or an existing one. */
 	entry: CalendarEntry & { isNew?: boolean };
 	sessions: Session[];
@@ -72,6 +75,7 @@ function EntryDialog({
 	if (picking)
 		return (
 			<SessionPicker
+				initialSport={isSport(sportFilter) ? sportFilter : "all"}
 				onPick={(picked) => {
 					set({
 						sessionId: picked.id,
@@ -658,6 +662,7 @@ export default function Calendar() {
 			{editing && (
 				<EntryDialog
 					key={editing.id}
+					sportFilter={sport}
 					entry={editing}
 					sessions={library.sessions}
 					onClose={() => setEditing(null)}

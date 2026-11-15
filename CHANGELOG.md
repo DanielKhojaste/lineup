@@ -20,6 +20,7 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Changed
 
+- The calendar's session picker always shows every sport with its number of sessions, and starts on the calendar's sport filter
 - Plans: each week can have several **topics** (chips, with the sport's topics and your own suggested); a week's single topic from before becomes its first
 - Plans: weeks have a drag handle in every layout, to put them in a different order
 - Plans: selecting a session opens its preview (Back returns to the plan); **Edit session** is in its menu. Sessions are numbered within their week

@@ -5218,3 +5218,8 @@ div.plan-outline__week {
 	gap: 0;
 	cursor: default;
 }
+
+.session-picker .filter-chip:disabled {
+	opacity: 0.4;
+	cursor: default;
+}

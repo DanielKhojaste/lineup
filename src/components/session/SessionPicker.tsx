@@ -13,18 +13,20 @@ import { Modal } from "../ui/Dialog";
  */
 export default function SessionPicker({
 	title = "Choose a session",
+	initialSport = "all",
 	onPick,
 	onClose,
 }: {
 	title?: string;
+	/** Start filtered to this sport (e.g. the calendar's sport filter). */
+	initialSport?: Sport | "all";
 	onPick: (session: Session) => void;
 	onClose: () => void;
 }) {
 	const library = useLibrary();
 	const [query, setQuery] = useState("");
-	const [sport, setSport] = useState<Sport | "all">("all");
-
-	const sports = SPORTS.filter((s) => library.sessions.some((x) => x.header.sport === s));
+	const [sport, setSport] = useState<Sport | "all">(initialSport);
+	const countOf = (s: Sport) => library.sessions.filter((x) => x.header.sport === s).length;
 	const shown = useMemo(() => {
 		const q = query.trim().toLowerCase();
 		return library.sessions
@@ -52,21 +54,30 @@ export default function SessionPicker({
 							onChange={(e) => setQuery(e.target.value)}
 						/>
 					</label>
-					{sports.length > 1 && (
-						<div className="filter-chips" role="group" aria-label="Sport">
-							{(["all", ...sports] as const).map((s) => (
-								<button
-									key={s}
-									type="button"
-									className={`filter-chip${sport === s ? " is-active" : ""}`}
-									aria-pressed={sport === s}
-									onClick={() => setSport(s)}
-								>
-									{s === "all" ? "All sports" : SPORT_INFO[s].name}
-								</button>
-							))}
-						</div>
-					)}
+					<div className="filter-chips" role="group" aria-label="Sport">
+						<button
+							type="button"
+							className={`filter-chip${sport === "all" ? " is-active" : ""}`}
+							aria-pressed={sport === "all"}
+							onClick={() => setSport("all")}
+						>
+							All sports
+							<span className="filter-chip__count">{library.sessions.length}</span>
+						</button>
+						{SPORTS.map((s) => (
+							<button
+								key={s}
+								type="button"
+								className={`filter-chip${sport === s ? " is-active" : ""}`}
+								aria-pressed={sport === s}
+								disabled={!countOf(s) && sport !== s}
+								onClick={() => setSport(s)}
+							>
+								{SPORT_INFO[s].name}
+								<span className="filter-chip__count">{countOf(s)}</span>
+							</button>
+						))}
+					</div>
 				</div>
 				{shown.length ? (
 					<div className="board-grid session-picker__grid">
