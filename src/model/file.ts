@@ -83,6 +83,19 @@ export const isObject = (v: unknown): v is Record<string, unknown> =>
 export const isNum = (v: unknown): v is number =>
 	typeof v === "number" && Number.isFinite(v);
 export const isStr = (v: unknown): v is string => typeof v === "string";
+
+/**
+ * The folders a board or session is in: its `folders` list, or the single
+ * `folder` that files from before v0.8.1 have.
+ */
+export function foldersFrom(meta: Record<string, unknown>): string[] {
+	const list: unknown[] = Array.isArray(meta.folders)
+		? meta.folders
+		: isStr(meta.folder)
+			? [meta.folder]
+			: [];
+	return [...new Set(list.filter(isStr).map((f) => f.trim()).filter(Boolean))];
+}
 const isPoint = (v: unknown): v is Point =>
 	Array.isArray(v) && v.length === 2 && isNum(v[0]) && isNum(v[1]);
 const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
@@ -316,7 +329,7 @@ export function parseBoard(text: string): Board {
 				  ? "play"
 				  : "drill",
 			tags: Array.isArray(meta.tags) ? meta.tags.filter(isStr) : [],
-			folder: isStr(meta.folder) ? meta.folder : "",
+			folders: foldersFrom(meta),
 			...(meta.imported === true ? { imported: true } : {}),
 			createdAt: isStr(meta.createdAt) ? meta.createdAt : fresh.meta.createdAt,
 			updatedAt: isStr(meta.updatedAt) ? meta.updatedAt : fresh.meta.updatedAt,

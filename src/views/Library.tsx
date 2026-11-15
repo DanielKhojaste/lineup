@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BoardPreview from "../components/board/BoardPreview";
 import { Icon } from "../components/Icon";
@@ -17,7 +17,7 @@ import { TEXT_LIMITS, truncate } from "../utils/text";
 import { BOARD_TYPE_LABELS } from "../model/board";
 import { Session, sessionTitle } from "../model/session";
 import { drillsOf, sameDrill } from "../model/sessionFile";
-import { pitchLabel, Sport, SPORT_INFO, SPORTS } from "../model/sports";
+import { isSport, pitchLabel, Sport, SPORT_INFO, SPORTS } from "../model/sports";
 import { Board, BOARD_TYPES, BoardType, PitchSettings } from "../model/types";
 import { allFolders, useLibrary } from "../state/LibraryContext";
 import {
@@ -47,7 +47,7 @@ type View =
  * imported things out so they don't clutter it.
  */
 function docInView(
-	meta: { folder: string; imported?: boolean },
+	meta: { folders: string[]; imported?: boolean },
 	sport: Sport,
 	view: View,
 ): boolean {
@@ -57,7 +57,7 @@ function docInView(
 		case "sessions":
 			return true;
 		case "unfiled":
-			return !meta.folder && !meta.imported;
+			return !meta.folders.length && !meta.imported;
 		case "created":
 			return !meta.imported;
 		case "imported":
@@ -65,7 +65,7 @@ function docInView(
 		case "sport":
 			return sport === view.sport;
 		case "folder":
-			return meta.folder === view.name;
+			return meta.folders.includes(view.name);
 	}
 }
 
@@ -84,7 +84,7 @@ function matches(board: Board, query: string): boolean {
 	const { meta, notes } = board;
 	return [
 		meta.title,
-		meta.folder,
+		...meta.folders,
 		...meta.tags,
 		notes.category,
 		notes.ageGroup,
@@ -101,7 +101,7 @@ function sessionMatches(session: Session, query: string): boolean {
 	const { meta, header } = session;
 	return [
 		meta.title,
-		meta.folder,
+		...meta.folders,
 		...meta.tags,
 		header.team,
 		header.description,
@@ -127,7 +127,7 @@ function BoardCard({
 	const details = [
 		BOARD_TYPE_LABELS[board.meta.type].one,
 		pitchLabel(board.pitch),
-		board.meta.folder,
+		folderLabel(board.meta.folders),
 		board.notes.duration,
 		board.steps.length > 0 &&
 			`${board.steps.length} step${board.steps.length > 1 ? "s" : ""}`,
@@ -157,16 +157,44 @@ function BoardCard({
 	);
 }
 
+/** One folder's name, or the first and how many more ("Drills +1"). */
+export function folderLabel(folders: string[]): string {
+	return folders.length > 1 ? `${folders[0]} +${folders.length - 1}` : (folders[0] ?? "");
+}
+
+const VIEW_KEY = "lineup.libraryView";
+
+/** The view (All, Boards, Sessions, a folder…) and sort picked last time Lineup was open. */
+function savedView(): { view: View; sort: Sort } {
+	try {
+		const raw = JSON.parse(localStorage.getItem(VIEW_KEY) ?? "{}");
+		const v = raw?.view;
+		const simple = ["everything", "all", "sessions", "unfiled", "created", "imported"];
+		const view: View =
+			v && simple.includes(v.kind)
+				? { kind: v.kind }
+				: v?.kind === "folder" && typeof v.name === "string"
+					? { kind: "folder", name: v.name }
+					: v?.kind === "sport" && isSport(v.sport)
+						? { kind: "sport", sport: v.sport }
+						: { kind: "everything" };
+		return { view, sort: raw?.sort === "title" ? "title" : "updated" };
+	} catch {
+		return { view: { kind: "everything" }, sort: "updated" };
+	}
+}
+
 /**
  * What the library was showing (view, filters, search, sort), so coming back
- * from a board or session shows the same thing. Kept while the app is open.
+ * from a board or session shows the same thing. The view and sort are also
+ * kept for next time Lineup opens.
  */
 const remembered: {
 	view: View;
 	type: BoardType | "all" | "sessions";
 	query: string;
 	sort: Sort;
-} = { view: { kind: "everything" }, type: "all", query: "", sort: "updated" };
+} = { ...savedView(), type: "all", query: "" };
 
 export default function Library() {
 	const library = useLibrary();
@@ -189,6 +217,13 @@ export default function Library() {
 	useEffect(() => {
 		Object.assign(remembered, { view, type, query, sort });
 	}, [view, type, query, sort]);
+	useEffect(() => {
+		try {
+			localStorage.setItem(VIEW_KEY, JSON.stringify({ view, sort }));
+		} catch {
+			// Without storage it's only remembered while the app is open.
+		}
+	}, [view, sort]);
 	const [newBoardOpen, setNewBoardOpen] = useState(false);
 	const [notice, setNotice] = useState<{
 		text: string;
@@ -203,6 +238,12 @@ export default function Library() {
 	}, [notice]);
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	const [newFolderOpen, setNewFolderOpen] = useState(false);
+	// What to do with a folder once it's made ("New folder…" in a Folders menu puts things in it).
+	const afterNewFolder = useRef<((name: string) => Promise<void>) | null>(null);
+	const newFolderThen = (then: (name: string) => Promise<void>) => {
+		afterNewFolder.current = then;
+		setNewFolderOpen(true);
+	};
 	const [renaming, setRenaming] = useState<string | null>(null);
 	const [deletingFolder, setDeletingFolder] = useState<string | null>(null);
 	const [deletingBoard, setDeletingBoard] = useState<Board | null>(null);
@@ -389,26 +430,38 @@ export default function Library() {
 		{ label: "Delete folder…", danger: true, onSelect: () => setDeletingFolder(name) },
 	];
 
-	/** "Move to folder ›" for a board or session. */
+	/**
+	 * "Folders ›" for a board or session: it can be in several, so each folder
+	 * is ticked on or off. "New folder…" makes one and puts it in.
+	 */
 	const folderSubmenu = (
-		current: string,
-		move: (folder: string) => Promise<void>,
+		current: string[],
+		set: (folders: string[]) => Promise<void>,
 	): ContextMenuEntry => ({
-		label: "Move to folder",
+		label: "Folders",
 		submenu: [
-			{
-				label: "No folder",
-				checked: !current,
-				onSelect: () => run(() => move(""), "Couldn't move it"),
-			},
-			...(folders.length ? ["separator" as const] : []),
 			...folders.map((f) => ({
-				label: f,
-				checked: current === f,
-				onSelect: () => run(() => move(f), "Couldn't move it"),
+				label: truncate(f, 40),
+				checked: current.includes(f),
+				onSelect: () =>
+					run(
+						() => set(current.includes(f) ? current.filter((x) => x !== f) : [...current, f]),
+						"Couldn't change its folders",
+					),
 			})),
-			"separator" as const,
-			{ label: "New folder…", onSelect: () => setNewFolderOpen(true) },
+			...(folders.length ? ["separator" as const] : []),
+			{
+				label: "New folder…",
+				onSelect: () => newFolderThen((name) => set([...current, name])),
+			},
+			...(current.length
+				? [
+						{
+							label: "Remove from all folders",
+							onSelect: () => run(() => set([]), "Couldn't change its folders"),
+						},
+					]
+				: []),
 		],
 	});
 
@@ -421,7 +474,7 @@ export default function Library() {
 			onSelect: () =>
 				run(() => library.duplicateBoard(board.id), "Couldn't duplicate the board"),
 		},
-		folderSubmenu(board.meta.folder, (f) => library.moveToFolder(board.id, f)),
+		folderSubmenu(board.meta.folders, (f) => library.setBoardFolders(board.id, f)),
 		"separator",
 		{
 			label: "Export",
@@ -454,7 +507,7 @@ export default function Library() {
 			onSelect: () =>
 				run(() => library.duplicateSession(session.id), "Couldn't duplicate the session"),
 		},
-		folderSubmenu(session.meta.folder, (f) => library.moveSessionToFolder(session.id, f)),
+		folderSubmenu(session.meta.folders, (f) => library.setSessionFolders(session.id, f)),
 		"separator",
 		{
 			label: "Export",
@@ -484,6 +537,7 @@ export default function Library() {
 		...shownSessions.map((x) => `s:${x.id}`),
 		...shown.map((b) => `b:${b.id}`),
 	];
+	const allSelected = visibleKeys.length > 0 && visibleKeys.every((k) => selected.has(k));
 	const describeCount = (boards: number, sessions: number) =>
 		[
 			boards && `${boards} ${boards === 1 ? "board" : "boards"}`,
@@ -492,18 +546,20 @@ export default function Library() {
 			.filter(Boolean)
 			.join(" and ");
 
-	const moveSelected = (folder: string) =>
+	/** Change the folders of everything selected, then say what happened. */
+	const refolderSelected = (change: (folders: string[]) => string[], done: string) =>
 		run(async () => {
-			for (const b of selectedBoards) await library.moveToFolder(b.id, folder);
-			for (const x of selectedSessions) await library.moveSessionToFolder(x.id, folder);
+			for (const b of selectedBoards) await library.setBoardFolders(b.id, change(b.meta.folders));
+			for (const x of selectedSessions)
+				await library.setSessionFolders(x.id, change(x.meta.folders));
 			setNotice({
-				text: `Moved ${describeCount(selectedBoards.length, selectedSessions.length)} to ${
-					folder ? `“${truncate(folder, 30)}”` : "no folder"
-				}.`,
+				text: `${done.replace("{n}", describeCount(selectedBoards.length, selectedSessions.length))}`,
 				tone: "info",
 			});
 			stopSelecting();
-		}, "Couldn't move them");
+		}, "Couldn't change their folders");
+	const addSelectedTo = (folder: string) =>
+		refolderSelected((f) => [...f, folder], `Added {n} to “${truncate(folder, 30)}”.`);
 
 	const exportSelected = () =>
 		run(async () => {
@@ -533,10 +589,28 @@ export default function Library() {
 		return `Delete ${describeCount(selectedBoards.length, selectedSessions.length)}?${sessions} This can't be undone. Export them first if you might want them back.`;
 	};
 
-	const moveMenu = (): ContextMenuEntry[] => [
-		{ label: "No folder", onSelect: () => moveSelected("") },
+	/** "Add to folder" for what's selected: they keep the folders they're in already. */
+	const folderMenuForSelected = (): ContextMenuEntry[] => [
+		...folders.map((f) => ({ label: truncate(f, 40), onSelect: () => addSelectedTo(f) })),
 		...(folders.length ? ["separator" as const] : []),
-		...folders.map((f) => ({ label: truncate(f, 40), onSelect: () => moveSelected(f) })),
+		{ label: "New folder…", onSelect: () => newFolderThen(async (name) => addSelectedTo(name)) },
+		...(view.kind === "folder"
+			? [
+					"separator" as const,
+					{
+						label: `Remove from “${truncate(view.name, 30)}”`,
+						onSelect: () =>
+							refolderSelected(
+								(f) => f.filter((x) => x !== view.name),
+								`Removed {n} from “${truncate(view.name, 30)}”.`,
+							),
+					},
+				]
+			: []),
+		{
+			label: "Remove from all folders",
+			onSelect: () => refolderSelected(() => [], "Removed {n} from all folders."),
+		},
 	];
 
 	/** A new board for the sport and field picked in the New board dialog. */
@@ -554,10 +628,14 @@ export default function Library() {
 			// Everything imported is marked, so it shows under "Imported" and not
 			// in "Not in a folder". Boards and sessions picked here land in the
 			// folder being viewed; the drills inside a session stay out of folders.
-			const imported = <T extends { meta: { folder: string; imported?: boolean } }>(
+			const imported = <T extends { meta: { folders: string[]; imported?: boolean } }>(
 				doc: T,
-				folder = doc.meta.folder || currentFolder,
-			): T => ({ ...doc, meta: { ...doc.meta, folder, imported: true } });
+				folders = doc.meta.folders.length
+					? doc.meta.folders
+					: currentFolder
+						? [currentFolder]
+						: [],
+			): T => ({ ...doc, meta: { ...doc.meta, folders, imported: true } });
 
 			const toAdd: Board[] = boards.map((b) => imported(b));
 			const sourceIds = boards.map((b) => b.id);
@@ -573,7 +651,7 @@ export default function Library() {
 						alreadyHad++;
 						continue;
 					}
-					toAdd.push(imported(drill, ""));
+					toAdd.push(imported(drill, []));
 					sourceIds.push(drill.id);
 				}
 			const addedBoards = await library.addBoards(toAdd);
@@ -627,8 +705,8 @@ export default function Library() {
 		}, "Import failed");
 
 	const counts = (name: string) =>
-		library.boards.filter((b) => b.meta.folder === name).length +
-		library.sessions.filter((s) => s.meta.folder === name).length;
+		library.boards.filter((b) => b.meta.folders.includes(name)).length +
+		library.sessions.filter((s) => s.meta.folders.includes(name)).length;
 	const countIn = (v: View) =>
 		library.boards.filter((b) => boardInView(b, v)).length +
 		library.sessions.filter((s) => sessionInView(s, v)).length;
@@ -906,7 +984,6 @@ export default function Library() {
 								title="Select several boards and sessions (or Ctrl+click a card)"
 								onClick={() => setSelecting(true)}
 							>
-								<Icon name="check" size={14} />
 								Select
 							</button>
 						)}
@@ -925,24 +1002,32 @@ export default function Library() {
 
 					{selecting && (
 						<div className="select-bar" role="toolbar" aria-label="Selected boards and sessions">
-							<span className="select-bar__count">
-								{selectedCount ? `${selectedCount} selected` : "Click cards to select them"}
-							</span>
+							{/* One box selects everything showing, or nothing; a dash when some are. */}
 							<button
 								type="button"
-								className="link-button"
-								onClick={() =>
-									setSelected(
-										visibleKeys.every((k) => selected.has(k))
-											? new Set()
-											: new Set(visibleKeys),
-									)
-								}
+								role="checkbox"
+								className="select-bar__all"
+								aria-checked={allSelected ? true : selectedCount ? "mixed" : false}
+								title={allSelected ? "Select none" : "Select all"}
+								onClick={() => setSelected(allSelected ? new Set() : new Set(visibleKeys))}
 							>
-								{visibleKeys.length && visibleKeys.every((k) => selected.has(k))
-									? "Select none"
-									: "Select all"}
+								<span
+									className={`card-check select-bar__box${selectedCount ? " is-checked" : ""}`}
+									aria-hidden="true"
+								>
+									{allSelected ? (
+										<Icon name="check" size={14} />
+									) : selectedCount ? (
+										<Icon name="minus" size={14} />
+									) : null}
+								</span>
+								<span className="select-bar__count">
+									{selectedCount ? `${selectedCount} selected` : "Select all"}
+								</span>
 							</button>
+							{!selectedCount && (
+								<span className="muted small">or click cards to select them</span>
+							)}
 							<span className="topbar__spacer" />
 							<button
 								type="button"
@@ -950,11 +1035,11 @@ export default function Library() {
 								disabled={!selectedCount}
 								onClick={(e) => {
 									const r = e.currentTarget.getBoundingClientRect();
-									openMenu({ clientX: r.left, clientY: r.bottom + 4 }, moveMenu());
+									openMenu({ clientX: r.left, clientY: r.bottom + 4 }, folderMenuForSelected());
 								}}
 							>
 								<Icon name="folder" size={14} />
-								Move to folder
+								Add to folder
 							</button>
 							<button
 								type="button"
@@ -973,8 +1058,14 @@ export default function Library() {
 							>
 								Delete…
 							</button>
-							<button type="button" className="button button--small" onClick={stopSelecting}>
-								Done
+							<button
+								type="button"
+								className="icon-button select-bar__done"
+								aria-label="Done"
+								title="Done (Esc)"
+								onClick={stopSelecting}
+							>
+								<Icon name="check" size={16} />
 							</button>
 						</div>
 					)}
@@ -1154,10 +1245,18 @@ export default function Library() {
 						? "There's already a folder with that name."
 						: null
 				}
-				onSubmit={(name) =>
-					run(() => library.createFolder(name), "Couldn't create the folder")
-				}
-				onClose={() => setNewFolderOpen(false)}
+				onSubmit={(name) => {
+					const then = afterNewFolder.current;
+					afterNewFolder.current = null;
+					run(async () => {
+						await library.createFolder(name);
+						await then?.(name.trim());
+					}, "Couldn't create the folder");
+				}}
+				onClose={() => {
+					afterNewFolder.current = null;
+					setNewFolderOpen(false);
+				}}
 			/>
 			<PromptDialog
 				open={renaming !== null}

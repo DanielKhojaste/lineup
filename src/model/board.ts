@@ -111,7 +111,7 @@ export function createBoard(
 			title,
 			type: "drill",
 			tags: [],
-			folder: "",
+			folders: [],
 			createdAt: now,
 			updatedAt: now,
 		},

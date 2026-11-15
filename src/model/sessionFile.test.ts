@@ -25,7 +25,7 @@ function sessionWith(...boardIds: string[]): Session {
 describe("shared session files", () => {
 	it("carries the session's drills, once each", () => {
 		const rondo = createBoard("Rondo");
-		rondo.meta.folder = "Warm-ups";
+		rondo.meta.folders = ["Warm-ups", "Rondos"];
 		const run = createBoard("Third-man run");
 		const boards = new Map([rondo, run].map((b) => [b.id, b]));
 		const session = sessionWith(rondo.id, run.id, rondo.id, "gone");
@@ -38,7 +38,7 @@ describe("shared session files", () => {
 		expect(shared.session.id).toBe(session.id);
 		expect(shared.drills.map((d) => d.id)).toEqual([rondo.id, run.id]);
 		// Folders from the sender's library don't come along.
-		expect(shared.drills[0].meta.folder).toBe("");
+		expect(shared.drills[0].meta.folders).toEqual([]);
 	});
 
 	it("reads a session file without drills", () => {

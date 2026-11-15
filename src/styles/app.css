@@ -3698,6 +3698,30 @@ fieldset.field {
 	font-weight: 600;
 }
 
+/* The select-all box: the same tick box as on the cards, with its count beside it. */
+.select-bar__all {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	padding: 4px 8px 4px 4px;
+	border-radius: 8px;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.select-bar__all:hover {
+	background: var(--hover);
+}
+
+.select-bar__box {
+	position: static;
+	box-shadow: none;
+}
+
+.select-bar__done {
+	color: var(--accent-text);
+}
+
 .settings__sizes {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 220px));

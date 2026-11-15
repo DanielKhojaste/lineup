@@ -40,7 +40,7 @@ function matches(board: Board, query: string) {
 	if (!query) return true;
 	const q = query.toLowerCase();
 	const { meta, notes } = board;
-	return [meta.title, meta.folder, ...meta.tags, notes.category, notes.description]
+	return [meta.title, ...meta.folders, ...meta.tags, notes.category, notes.description]
 		.join(" ")
 		.toLowerCase()
 		.includes(q);

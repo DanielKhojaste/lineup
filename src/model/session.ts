@@ -10,6 +10,7 @@ import {
 	decodeDocumentText,
 	encodeDocument,
 	isNum,
+	foldersFrom,
 	isObject,
 	isStr,
 } from "./file";
@@ -21,8 +22,8 @@ export const SESSION_EXTENSION = "lineup-session";
 export interface SessionMeta {
 	title: string;
 	tags: string[];
-	/** Library folder name; empty when the session isn't in a folder. */
-	folder: string;
+	/** Library folders it's in (none, one or several). */
+	folders: string[];
 	/** True for a session that came from someone else's file. */
 	imported?: boolean;
 	createdAt: string;
@@ -110,7 +111,7 @@ export function createSession(title = ""): Session {
 		schemaVersion: SESSION_SCHEMA_VERSION,
 		docType: "session",
 		id: newId(),
-		meta: { title, tags: [], folder: "", createdAt: now, updatedAt: now },
+		meta: { title, tags: [], folders: [], createdAt: now, updatedAt: now },
 		header: {
 			team: "",
 			sport: DEFAULT_PITCH.sport,
@@ -286,7 +287,7 @@ export function parseSession(source: string): Session {
 		meta: {
 			title: text(meta.title, 120),
 			tags: Array.isArray(meta.tags) ? meta.tags.filter(isStr) : [],
-			folder: isStr(meta.folder) ? meta.folder : "",
+			folders: foldersFrom(meta),
 			...(meta.imported === true ? { imported: true } : {}),
 			createdAt: isStr(meta.createdAt) ? meta.createdAt : fresh.meta.createdAt,
 			updatedAt: isStr(meta.updatedAt) ? meta.updatedAt : fresh.meta.updatedAt,

@@ -232,3 +232,26 @@ describe("board types", () => {
 		expect(parseBoard(JSON.stringify(old)).meta.type).toBe("play");
 	});
 });
+
+describe("folders", () => {
+	it("keeps a board in several folders", () => {
+		const board = createBoard("Rondo");
+		board.meta.folders = ["Warm-ups", "Rondos"];
+		expect(parseBoard(serializeBoard(board)).meta.folders).toEqual(["Warm-ups", "Rondos"]);
+	});
+
+	it("reads the one folder of files from before v0.8.1", () => {
+		const old = JSON.parse(serializeBoard(createBoard("Rondo")));
+		delete old.meta.folders;
+		old.meta.folder = "Warm-ups";
+		expect(parseBoard(JSON.stringify(old)).meta.folders).toEqual(["Warm-ups"]);
+		old.meta.folder = "";
+		expect(parseBoard(JSON.stringify(old)).meta.folders).toEqual([]);
+	});
+
+	it("drops blanks and repeats", () => {
+		const raw = JSON.parse(serializeBoard(createBoard("Rondo")));
+		raw.meta.folders = ["Drills", " ", "Drills", 4, " Rondos "];
+		expect(parseBoard(JSON.stringify(raw)).meta.folders).toEqual(["Drills", "Rondos"]);
+	});
+});
