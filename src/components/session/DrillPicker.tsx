@@ -9,6 +9,7 @@ import {
 import { SPORT_INFO } from "../../model/sports";
 import { Board, BOARD_TYPES, BoardType } from "../../model/types";
 import { useLibrary } from "../../state/LibraryContext";
+import { describeDay, lastRunByBoard } from "../../model/calendar";
 import { useSessionEditor } from "../../state/SessionContext";
 import BoardPreview from "../board/BoardPreview";
 
@@ -66,6 +67,15 @@ export default function DrillPicker() {
 			if (b.kind === "drill") counts.set(b.boardId, (counts.get(b.boardId) ?? 0) + 1);
 		return counts;
 	}, [session.blocks]);
+
+	// When each drill last ran, from sessions marked as run on the calendar.
+	const lastRun = useMemo(
+		() =>
+			lastRunByBoard(library.calendar, (id) =>
+				(library.getSession(id)?.blocks ?? []).flatMap((b) => (b.kind === "drill" ? [b.boardId] : [])),
+			),
+		[library],
+	);
 
 	const shown = library.boards
 		.filter((b) => type === "all" || b.meta.type === type)
@@ -167,6 +177,7 @@ export default function DrillPicker() {
 											BOARD_TYPE_LABELS[board.meta.type].one,
 											board.notes.duration,
 											board.notes.players,
+											lastRun.has(board.id) && `used ${describeDay(lastRun.get(board.id)!)}`,
 										]
 											.filter(Boolean)
 											.join(" · ")}
