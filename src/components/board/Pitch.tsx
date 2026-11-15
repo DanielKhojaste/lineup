@@ -30,11 +30,12 @@ export const SURFACES: Record<
 		stripes: true,
 	},
 	hockey: { floor: "#2F5E8C", outside: "#3A6B4D", line: "#FFFFFF" },
-	// Ice with a hint of blue (so white kits still show), dark boards around it.
-	// The red and blue lines are drawn in their own colours.
+	// Ice with a hint of blue (so white kits still show), and ice past the
+	// rounded corners too (no dark corners); the boards are the dark line
+	// around it. The red and blue lines are drawn in their own colours.
 	icehockey: {
 		floor: "#E3ECF1",
-		outside: "#36424E",
+		outside: "#E3ECF1",
 		line: "#36424E",
 		lineOpacity: 1,
 		corner: 8.53,
