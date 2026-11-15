@@ -2186,15 +2186,6 @@ button.save-status--error:hover {
 	opacity: 0.8;
 }
 
-.library__section {
-	font-size: 12px;
-	font-weight: 600;
-	text-transform: uppercase;
-	letter-spacing: 0.6px;
-	color: var(--text-muted);
-	margin-top: 4px;
-}
-
 /* ------------------------------ Session cards ------------------------------ */
 
 .session-card__preview {

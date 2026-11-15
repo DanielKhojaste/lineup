@@ -280,6 +280,28 @@ export default function Library() {
 			  );
 	}, [library.sessions, view, query, sort, type]);
 
+	// Boards and sessions together in one grid, in the order picked in Sort
+	// (not sessions first and boards after).
+	const mixed = useMemo(() => {
+		const items = [
+			...shownSessions.map((session) => ({
+				kind: "session" as const,
+				session,
+				title: sessionTitle(session),
+				updatedAt: session.meta.updatedAt,
+			})),
+			...shown.map((board) => ({
+				kind: "board" as const,
+				board,
+				title: board.meta.title,
+				updatedAt: board.meta.updatedAt,
+			})),
+		];
+		return sort === "title"
+			? items.sort((a, b) => a.title.localeCompare(b.title))
+			: items.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+	}, [shown, shownSessions, sort]);
+
 	// How many sessions this view has, for the Sessions chip (folders, sports and "Not in a folder").
 	const sessionsInView =
 		view.kind === "all" || view.kind === "sessions"
@@ -1066,27 +1088,6 @@ export default function Library() {
 							</div>
 						)}
 
-					{shownSessions.length > 0 && (
-						<>
-							{view.kind !== "sessions" && <h2 className="library__section">Sessions</h2>}
-							<div className="board-grid">
-								{shownSessions.map((session) => (
-									<SessionCard
-										key={session.id}
-										selection={selectionFor(`s:${session.id}`)}
-										session={session}
-										getBoard={library.getBoard}
-										onOpen={() => openSession(session.id)}
-										menu={sessionMenu(session)}
-									/>
-								))}
-							</div>
-							{view.kind !== "sessions" && shown.length > 0 && (
-								<h2 className="library__section">Boards</h2>
-							)}
-						</>
-					)}
-
 					{library.status === "ready" &&
 						view.kind !== "sessions" &&
 						shown.length === 0 &&
@@ -1119,15 +1120,26 @@ export default function Library() {
 					)}
 
 					<div className="board-grid">
-						{shown.map((board) => (
-							<BoardCard
-								key={board.id}
-								selection={selectionFor(`b:${board.id}`)}
-								board={board}
-								onOpen={() => openBoard(board.id)}
-								menu={() => boardMenu(board)}
-							/>
-						))}
+						{mixed.map((item) =>
+							item.kind === "session" ? (
+								<SessionCard
+									key={`s:${item.session.id}`}
+									selection={selectionFor(`s:${item.session.id}`)}
+									session={item.session}
+									getBoard={library.getBoard}
+									onOpen={() => openSession(item.session.id)}
+									menu={sessionMenu(item.session)}
+								/>
+							) : (
+								<BoardCard
+									key={`b:${item.board.id}`}
+									selection={selectionFor(`b:${item.board.id}`)}
+									board={item.board}
+									onOpen={() => openBoard(item.board.id)}
+									menu={() => boardMenu(item.board)}
+								/>
+							),
+						)}
 					</div>
 				</main>
 			</div>

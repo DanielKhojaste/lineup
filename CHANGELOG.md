@@ -19,7 +19,7 @@ This project adheres to semantic versioning (0.x during early development).
 - **Change sport / field** from a button in the board's Field settings, or from the board's right-click menu. It opens the same pictures as New board, with the board's sport and field now in grey and your pick in the accent colour. Tick **Start with a blank board** to clear the board as well; there's no confirmation, because Ctrl+Z brings everything back
 - **Size of a single marker:** select players or equipment and pick S, M, L or XL under Size. It goes on top of the board's player and equipment sizes, and goals keep their real size
 - Shirt numbers **0 and 00** (basketball and hockey use them)
-- **All** in the library: boards and sessions together, first in the sidebar and where the library opens
+- **All** in the library: boards and sessions together in one grid, in the order picked in Sort, first in the sidebar and where the library opens. Folders and sports mix them the same way
 - **Select several** boards and sessions with the **Select** button (or Ctrl+click a card), then move them to a folder, export them to a folder you pick, or delete them
 - A colour picker after the swatches everywhere you pick a colour, equipment included. It opens on the colour in use (a blue player's picker starts on that blue)
 - **Theme preview:** Settings › Appearance › Preview themes shows every component that uses a theme's primary and secondary colours (buttons, the tool rail, tabs, fields, the library, tags, the session plan, the step bar, selections on the board) and every colour the theme makes, for any theme, with dark and light side by side. Try a theme there before using it
