@@ -51,6 +51,7 @@ export default function SessionCard({
 
 	return (
 		<article
+			data-card={`s:${session.id}`}
 			className={`board-card session-card${selection?.selected ? " is-selected" : ""}`}
 			onContextMenu={(e) => openMenu(e, menu())}
 		>

@@ -4,7 +4,7 @@ import BoardPreview from "../components/board/BoardPreview";
 import { Icon } from "../components/Icon";
 import SettingsDialog from "../components/shell/SettingsDialog";
 import { ConfirmDialog, Modal, PromptDialog } from "../components/ui/Dialog";
-import { ContextMenuEntry, useContextMenu } from "../components/ui/ContextMenu";
+import { ContextMenuEntry, isTextField, useContextMenu } from "../components/ui/ContextMenu";
 import { boardToPng } from "../export/png";
 import { SURFACES } from "../components/board/Pitch";
 import NewBoardDialog from "../components/library/NewBoardDialog";
@@ -145,6 +145,7 @@ function BoardCard({
 	const { openMenu } = useContextMenu();
 	return (
 		<article
+			data-card={`b:${board.id}`}
 			className={`board-card${selection.selected ? " is-selected" : ""}`}
 			onContextMenu={(e) => openMenu(e, menu())}
 		>
@@ -178,7 +179,7 @@ function savedView(): { view: View; sort: Sort } {
 	try {
 		const raw = JSON.parse(localStorage.getItem(VIEW_KEY) ?? "{}");
 		const v = raw?.view;
-		const simple = ["everything", "all", "sessions", "plans", "unfiled", "created", "imported"];
+		const simple = ["all", "sessions", "plans", "unfiled", "created", "imported"];
 		const view: View =
 			v && simple.includes(v.kind)
 				? { kind: v.kind }
@@ -186,10 +187,11 @@ function savedView(): { view: View; sort: Sort } {
 					? { kind: "folder", name: v.name }
 					: v?.kind === "sport" && isSport(v.sport)
 						? { kind: "sport", sport: v.sport }
-						: { kind: "everything" };
+						: // "All" (boards and sessions together) was taken out for now: Boards instead.
+							{ kind: "all" };
 		return { view, sort: raw?.sort === "title" ? "title" : "updated" };
 	} catch {
-		return { view: { kind: "everything" }, sort: "updated" };
+		return { view: { kind: "all" }, sort: "updated" };
 	}
 }
 
@@ -284,6 +286,36 @@ export default function Library() {
 			});
 		},
 		handles: (e) => selecting || e.ctrlKey || e.metaKey,
+	});
+
+	// Delete (or Backspace): delete what's selected, or the card that has focus.
+	useEffect(() => {
+		const onKey = (e: KeyboardEvent) => {
+			if (e.key !== "Delete" && e.key !== "Backspace") return;
+			if (isTextField(e.target) || document.querySelector("dialog[open]")) return;
+			if (selecting) {
+				if (!selected.size) return;
+				e.preventDefault();
+				setDeletingSelected(true);
+				return;
+			}
+			const key = (document.activeElement as HTMLElement | null)?.closest<HTMLElement>("[data-card]")?.dataset.card;
+			if (!key) return;
+			const id = key.slice(2);
+			e.preventDefault();
+			if (key.startsWith("b:")) {
+				const board = library.getBoard(id);
+				if (board) setDeletingBoard(board);
+			} else if (key.startsWith("s:")) {
+				const session = library.getSession(id);
+				if (session) setDeletingSession(session);
+			} else if (key.startsWith("p:")) {
+				const plan = library.getPlan(id);
+				if (plan) setDeletingPlan(plan);
+			}
+		};
+		window.addEventListener("keydown", onKey);
+		return () => window.removeEventListener("keydown", onKey);
 	});
 
 	// Esc leaves select mode.
@@ -870,13 +902,6 @@ export default function Library() {
 			<div className="library__body">
 				<nav className="library__nav" aria-label="Library">
 					<div className="nav-group">
-						{navItem(
-							"All",
-							library.boards.length + library.sessions.length,
-							view.kind === "everything",
-							() => setView({ kind: "everything" }),
-							"stack",
-						)}
 						{navItem(
 							"Boards",
 							library.boards.length,

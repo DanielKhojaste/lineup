@@ -30,7 +30,7 @@ export default function PlanCard({
 	const topics = plan.topics.slice(0, 6);
 
 	return (
-		<article className="board-card plan-card" onContextMenu={(e) => openMenu(e, menu())}>
+		<article data-card={`p:${plan.id}`} className="board-card plan-card" onContextMenu={(e) => openMenu(e, menu())}>
 			<button
 				type="button"
 				className="board-card__open"

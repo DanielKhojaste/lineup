@@ -10,6 +10,7 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Added
 
+- **Delete** (or Backspace) in the library deletes the selected items, or the card that has focus, after asking
 - Example **basketball** and **volleyball** sessions (two drills each) in the `examples` folder, alongside the soccer ones
 - **Session preview:** go through a session block by block, with its drills listed on the left and the picked one large on the right, its minutes, players, tags, notes and coaching points under it. Plays move by themselves, or step through them with ← and →; ↑ and ↓ move between blocks. The details can go under the drill, beside it, or be hidden to make the drill as big as the window allows (Lineup remembers which), the preview starts at the first drill, and **Back** returns to where you opened it: the session, or the library. Open it with **Preview** in the session, or from the session's menu in the library
 - **Plans:** a block of training, like a season, **week by week**: each week has its sessions in order and can have a topic, like "Pressing" (notes too, when you want them). Make them under **Plans** in the library: add sessions from the panel on the right (or make a new one for the week), drag them between weeks (a line shows where they'll land), and duplicate a plan for next season. A plan has no dates, so it can be reused; **Add to calendar** puts each week's sessions on that week's training days
@@ -19,6 +20,7 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Changed
 
+- The library's **All** view (boards and sessions together) is gone for now; it opens on **Boards** instead
 - **New board** is a grid of sports, then the field, each with a tick to make it the default. With both set it's one click (Create), with **Change** to pick again and quick picks for the other field and your other sports
 - A plan's weeks can be laid out three ways to compare: **List**, **Table** (one row per week, sessions as chips with a picture) or **Outline** (the weeks on the left, the picked week large beside it). Sessions drag between weeks in all three
 - The calendar's week view shows each session's team, minutes, first three drills (with pictures) and topics
