@@ -1,3 +1,4 @@
+import { KeyCombo } from "../ui/Keys";
 import { Segmented } from "../ui/controls";
 import { MARKER_SCALES } from "../../config/sizes";
 import { useEffect, useRef, useState } from "react";
@@ -187,7 +188,10 @@ export default function SettingsDialog({
 								</button>
 							))}
 						</div>
-						<span className="muted small">Text and controls, everywhere. Ctrl+= and Ctrl+- change it too.</span>
+						<span className="muted small hint-keys">
+							Text and controls, everywhere. <KeyCombo text="Ctrl+=" small /> and{" "}
+							<KeyCombo text="Ctrl+-" small /> change it too.
+						</span>
 					</div>
 
 					<ThemeActions

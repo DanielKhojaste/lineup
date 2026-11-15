@@ -90,26 +90,60 @@ function TopicCard({ topicIndex, number }: { topicIndex: number; number: number 
 		if (e.button !== 0) return;
 		e.preventDefault();
 		(document.activeElement as HTMLElement | null)?.blur?.();
-		const row = (e.currentTarget as HTMLElement).closest("[data-session-row]");
-		row?.classList.add("is-dragging");
-		const move = (ev: PointerEvent) => {
+		const row = (e.currentTarget as HTMLElement).closest<HTMLElement>("[data-session-row]");
+		if (!row) return;
+		row.classList.add("is-dragging");
+		// A copy of the session follows the pointer, and a line shows where it will land.
+		const box = row.getBoundingClientRect();
+		const grab = { x: e.clientX - box.left, y: e.clientY - box.top };
+		const ghost = row.cloneNode(true) as HTMLElement;
+		ghost.classList.remove("is-dragging");
+		ghost.classList.add("plan-drag-ghost");
+		ghost.style.width = `${box.width}px`;
+		const line = document.createElement("div");
+		line.className = "plan-drop-line";
+		document.body.append(ghost, line);
+		const place = (x: number, y: number) => {
+			ghost.style.transform = `translate(${x - grab.x}px, ${y - grab.y}px) rotate(-1deg)`;
+		};
+		place(e.clientX, e.clientY);
+		const clear = () =>
 			document
 				.querySelectorAll(".plan-topic__sessions.is-drop")
 				.forEach((el) => el.classList.remove("is-drop"));
+		const move = (ev: PointerEvent) => {
+			place(ev.clientX, ev.clientY);
+			clear();
 			const t = dropTarget(ev.clientX, ev.clientY, row);
-			if (t)
-				document
-					.querySelector(`[data-topic-list="${t.topicId}"]`)
-					?.classList.add("is-drop");
+			const list = t && document.querySelector<HTMLElement>(`[data-topic-list="${t.topicId}"]`);
+			if (!t || !list) {
+				line.style.display = "none";
+				return;
+			}
+			list.classList.add("is-drop");
+			const rows = [...list.querySelectorAll<HTMLElement>("[data-session-row]")].filter((r) => r !== row);
+			const area = list.getBoundingClientRect();
+			const y =
+				t.index < rows.length
+					? rows[t.index].getBoundingClientRect().top - 3
+					: rows.length
+						? rows[rows.length - 1].getBoundingClientRect().bottom + 1
+						: area.top + 4;
+			Object.assign(line.style, {
+				display: "block",
+				left: `${area.left}px`,
+				width: `${area.width}px`,
+				top: `${y}px`,
+			});
 		};
 		const up = (ev: PointerEvent) => {
 			window.removeEventListener("pointermove", move);
 			window.removeEventListener("pointerup", up);
 			window.removeEventListener("pointercancel", up);
-			row?.classList.remove("is-dragging");
-			document
-				.querySelectorAll(".plan-topic__sessions.is-drop")
-				.forEach((el) => el.classList.remove("is-drop"));
+			row.classList.remove("is-dragging");
+			ghost.remove();
+			line.remove();
+			clear();
 			if (ev.type !== "pointerup") return;
 			const t = dropTarget(ev.clientX, ev.clientY, row);
 			if (t)

@@ -1,3 +1,4 @@
+import { TextWithKeys } from "../ui/Keys";
 import { TEXT_LIMITS } from "../../utils/text";
 import { DRAW_COLORS, ToolStyles } from "../../model/drawings";
 import {
@@ -230,7 +231,9 @@ export function ToolOptions({ tool }: { tool: string }) {
 
 	return (
 		<>
-			<p className="muted">{TOOL_HINTS[tool]}</p>
+			<p className="muted hint-keys">
+				<TextWithKeys text={TOOL_HINTS[tool]} />
+			</p>
 			{group && (
 				<Swatches
 					label="Colour"

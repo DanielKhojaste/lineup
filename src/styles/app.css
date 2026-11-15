@@ -1295,6 +1295,20 @@ kbd.key--wide {
 	min-width: 64px;
 }
 
+/* Smaller keycaps, for menus, top bars and sentences. */
+kbd.key--small {
+	min-width: 18px;
+	height: 18px;
+	padding: 0 5px;
+	border-bottom-width: 2px;
+	border-radius: 4px;
+	font-size: 10px;
+}
+
+kbd.key--small.key--wide {
+	min-width: 40px;
+}
+
 .keys__plus,
 .keys__sep,
 .keys__words {
@@ -4066,8 +4080,39 @@ input.plan-topic__title {
 }
 
 .calendar__entry:hover {
-	/* Tinted with the theme's colour, so it stands out from the day's own hover. */
-	background: var(--accent-soft);
+	/* "Infrared", from Giedi Prime: a band of light sweeps across the session
+	   and its edge lights up hard, in the theme's text colour (so it shows in
+	   light themes too). To be confirmed by Daniel. */
+	background:
+		linear-gradient(
+			100deg,
+			transparent 30%,
+			color-mix(in srgb, var(--text) 22%, transparent) 50%,
+			transparent 70%
+		)
+		no-repeat,
+		var(--raised);
+	background-size: 250% 100%, auto;
+	box-shadow:
+		0 0 0 1px color-mix(in srgb, var(--text) 85%, transparent),
+		0 0 12px color-mix(in srgb, var(--text) 22%, transparent);
+	animation: infrared-sweep 0.9s ease-out both;
+}
+
+@keyframes infrared-sweep {
+	from {
+		background-position: 130% 0, 0 0;
+	}
+	to {
+		background-position: -30% 0, 0 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.calendar__entry:hover {
+		animation: none;
+		background: var(--raised);
+	}
 }
 
 /* Pointing at a session highlights the session, not the day around it. */
@@ -4340,7 +4385,6 @@ input.plan-topic__title {
 	height: 100%;
 	max-height: 70vh;
 	border-radius: 10px;
-	background: var(--board-bg);
 }
 
 .session-preview__steps {
@@ -4459,4 +4503,69 @@ option:disabled {
 
 .segmented--small .segmented__item {
 	padding: 4px 6px;
+}
+
+/* Keycaps inside a sentence sit on the line, not above it. */
+.hint-keys .keys__combo,
+.context-menu__shortcut .keys__combo {
+	vertical-align: middle;
+	margin: 0 1px;
+}
+
+.context-menu__shortcut .keys__combo {
+	gap: 2px;
+}
+
+.session-preview__keys {
+	display: inline-flex;
+	align-items: center;
+	gap: 3px;
+}
+
+.session-preview__gap {
+	width: 10px;
+}
+
+/* With the details beside the drill or hidden, the drill takes all the room there is. */
+.session-preview__main--hidden .session-preview__board,
+.session-preview__main--side .session-preview__board {
+	max-height: none;
+}
+
+.session-preview__main--hidden {
+	padding: 12px 16px;
+}
+
+/* Dragging a session in a plan: the copy under the pointer, the line where it lands. */
+.plan-session.is-dragging {
+	opacity: 0.35;
+}
+
+.plan-drag-ghost {
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: 50;
+	pointer-events: none;
+	box-shadow: 0 10px 28px var(--shadow);
+	border-color: var(--accent);
+	opacity: 0.95;
+	list-style: none;
+}
+
+.plan-drop-line {
+	position: fixed;
+	z-index: 49;
+	height: 3px;
+	border-radius: 2px;
+	background: var(--accent);
+	box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent);
+	pointer-events: none;
+	display: none;
+}
+
+.plan-topic__sessions.is-drop {
+	outline: 1px dashed var(--border-strong);
+	outline-offset: 4px;
+	border-radius: var(--radius);
 }

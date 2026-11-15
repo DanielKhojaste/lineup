@@ -1,3 +1,4 @@
+import { Key } from "../components/ui/Keys";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import BoardPreview from "../components/board/BoardPreview";
@@ -123,6 +124,10 @@ export default function SessionPreview() {
 		const onKey = (e: KeyboardEvent) => {
 			if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 			const count = session.blocks.length;
+			const handled = ["ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight", " "].includes(e.key);
+			// The preview's own keys: a block clicked earlier keeps no focus ring.
+			if (handled && document.activeElement instanceof HTMLElement && document.activeElement.closest(".session-preview__list"))
+				document.activeElement.blur();
 			if (e.key === "ArrowDown" || e.key === "ArrowUp") {
 				e.preventDefault();
 				setIndex((i) => Math.max(0, Math.min(count - 1, i + (e.key === "ArrowDown" ? 1 : -1))));
@@ -172,7 +177,15 @@ export default function SessionPreview() {
 				<span className="topbar__heading">{sessionTitle(session)}</span>
 				<span className="muted small">{summary.join(" · ")}</span>
 				<span className="topbar__spacer" />
-				<span className="muted small session-preview__keys">↑ ↓ blocks · ← → steps · Space play</span>
+				<span className="muted small session-preview__keys">
+					<Key small>↑</Key>
+					<Key small>↓</Key> Blocks
+					<span className="session-preview__gap" />
+					<Key small>←</Key>
+					<Key small>→</Key> Steps
+					<span className="session-preview__gap" />
+					<Key small wide>Space</Key> Play
+				</span>
 				<div className="segmented segmented--small" role="radiogroup" aria-label="Drill details">
 					{(
 						[
