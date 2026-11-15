@@ -4186,3 +4186,19 @@ input.plan-topic__title {
 .button--danger-text:hover {
 	background: var(--hover);
 }
+
+/* The week view: one row of seven tall days. */
+.calendar__grid--week {
+	grid-auto-rows: minmax(360px, 1fr);
+}
+
+.calendar__grid--week .calendar__entry {
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 1px;
+	padding: 6px 8px;
+}
+
+.calendar__grid--week .calendar__entry-title {
+	white-space: normal;
+}

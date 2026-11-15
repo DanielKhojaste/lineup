@@ -11,6 +11,7 @@ import {
 	describeDay,
 	EntryStatus,
 	monthGrid,
+	startOfWeek,
 	parseISODate,
 	sortEntries,
 	toISODate,
@@ -251,16 +252,39 @@ function PickPlanDialog({
 	);
 }
 
+const MODE_KEY = "lineup.calendarMode";
+
+/** "16 – 22 Nov 2026", or "30 Nov – 6 Dec 2026" across two months. */
+function weekTitle(first: Date, last: Date): string {
+	const mon = (d: Date) => d.toLocaleDateString(undefined, { month: "short" });
+	const start = first.getMonth() === last.getMonth() ? `${first.getDate()}` : `${first.getDate()} ${mon(first)}`;
+	return `${start} – ${last.getDate()} ${mon(last)} ${last.getFullYear()}`;
+}
+
 export default function Calendar() {
 	const library = useLibrary();
 	const navigate = useNavigate();
 	const { openMenu } = useContextMenu();
 	const jumpTo = (useLocation().state as { date?: string } | null)?.date;
 	const today = toISODate(new Date());
-	const [month, setMonth] = useState(() => {
-		const d = (jumpTo && parseISODate(jumpTo)) || new Date();
-		return { year: d.getFullYear(), month: d.getMonth() };
+	// The day the calendar is showing (its month, or its week).
+	const [focus, setFocus] = useState<Date>(() => (jumpTo && parseISODate(jumpTo)) || new Date());
+	const [mode, setModeState] = useState<"month" | "week">(() => {
+		try {
+			return localStorage.getItem(MODE_KEY) === "week" ? "week" : "month";
+		} catch {
+			return "month";
+		}
 	});
+	const setMode = (next: "month" | "week") => {
+		setModeState(next);
+		try {
+			localStorage.setItem(MODE_KEY, next);
+		} catch {
+			// Only remembered while the app is open.
+		}
+	};
+	const month = { year: focus.getFullYear(), month: focus.getMonth() };
 	const [team, setTeam] = useState<string>("all");
 	const [editing, setEditing] = useState<(CalendarEntry & { isNew?: boolean }) | null>(null);
 	const [removing, setRemoving] = useState<CalendarEntry | null>(null);
@@ -268,7 +292,10 @@ export default function Calendar() {
 	const [layingOut, setLayingOut] = useState<Plan | null>(null);
 	const [dropDate, setDropDate] = useState<string | null>(null);
 
-	const days = monthGrid(month.year, month.month);
+	const days =
+		mode === "month"
+			? monthGrid(month.year, month.month)
+			: Array.from({ length: 7 }, (_, i) => addDays(startOfWeek(focus), i));
 	const teams = useMemo(
 		() => [...new Set(library.calendar.map((e) => e.team).filter(Boolean))].sort(),
 		[library.calendar],
@@ -280,16 +307,20 @@ export default function Calendar() {
 		return map;
 	}, [entries]);
 	const upcoming = sortEntries(entries.filter((e) => e.date >= today && e.status === "planned")).slice(0, 6);
-	const recent = sortEntries(entries.filter((e) => e.status === "done")).reverse().slice(0, 6);
-	const title = new Date(month.year, month.month, 1).toLocaleDateString(undefined, {
-		month: "long",
-		year: "numeric",
-	});
+	const recent = sortEntries(entries.filter((e) => e.status === "done" && e.date <= today))
+		.reverse()
+		.slice(0, 6);
+	const title =
+		mode === "month"
+			? new Date(month.year, month.month, 1).toLocaleDateString(undefined, {
+					month: "long",
+					year: "numeric",
+				})
+			: weekTitle(days[0], days[6]);
 	const shift = (by: number) =>
-		setMonth(({ year, month: m }) => {
-			const d = new Date(year, m + by, 1);
-			return { year: d.getFullYear(), month: d.getMonth() };
-		});
+		setFocus((d) =>
+			mode === "month" ? new Date(d.getFullYear(), d.getMonth() + by, 1) : addDays(d, 7 * by),
+		);
 
 	const openSession = (id: string) => navigate(`/session/${id}`, { state: { from: "/calendar" } });
 	const sessionTitle = (id: string) => library.getSession(id)?.meta.title ?? "Deleted session";
@@ -402,25 +433,39 @@ export default function Calendar() {
 			<div className="calendar-view__body">
 				<main className="calendar">
 					<div className="calendar__head">
-						<button type="button" className="icon-button" aria-label="Previous month" onClick={() => shift(-1)}>
+						<button type="button" className="icon-button" aria-label={mode === "month" ? "Previous month" : "Previous week"} onClick={() => shift(-1)}>
 							<Icon name="chevronLeft" size={18} />
 						</button>
 						<h2>{title}</h2>
-						<button type="button" className="icon-button" aria-label="Next month" onClick={() => shift(1)}>
+						<button type="button" className="icon-button" aria-label={mode === "month" ? "Next month" : "Next week"} onClick={() => shift(1)}>
 							<Icon name="chevronRight" size={18} />
 						</button>
 						<button
 							type="button"
 							className="button button--small"
 							onClick={() => {
-								const d = new Date();
-								setMonth({ year: d.getFullYear(), month: d.getMonth() });
+								setFocus(new Date());
 							}}
 						>
 							Today
 						</button>
+						<span className="topbar__spacer" />
+						<div className="segmented" role="radiogroup" aria-label="Show">
+							{(["month", "week"] as const).map((m) => (
+								<button
+									key={m}
+									type="button"
+									role="radio"
+									aria-checked={mode === m}
+									className={`segmented__item${mode === m ? " is-active" : ""}`}
+									onClick={() => setMode(m)}
+								>
+									{m === "month" ? "Month" : "Week"}
+								</button>
+							))}
+						</div>
 					</div>
-					<div className="calendar__grid" role="grid" aria-label={title}>
+					<div className={`calendar__grid calendar__grid--${mode}`} role="grid" aria-label={title}>
 						{WEEKDAYS.map((d) => (
 							<div key={d} className="calendar__weekday" role="columnheader">
 								{d}
@@ -429,7 +474,7 @@ export default function Calendar() {
 						{days.map((day) => {
 							const iso = toISODate(day);
 							const list = byDay.get(iso) ?? [];
-							const outside = day.getMonth() !== month.month;
+							const outside = mode === "month" && day.getMonth() !== month.month;
 							return (
 								<div
 									key={iso}
@@ -533,8 +578,7 @@ export default function Calendar() {
 					onClose={() => setLayingOut(null)}
 					onConfirm={async (list, first) => {
 						await library.addEntries(list);
-						const d = parseISODate(first)!;
-						setMonth({ year: d.getFullYear(), month: d.getMonth() });
+						setFocus(parseISODate(first)!);
 					}}
 				/>
 			)}
