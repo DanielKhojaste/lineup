@@ -161,7 +161,7 @@ function useWeek(topicIndex: number) {
 		line.className = "plan-drop-line";
 		document.body.append(ghost, line);
 		const place = (x: number, y: number) => {
-			ghost.style.transform = `translate(${x - grab.x}px, ${y - grab.y}px) rotate(-1deg)`;
+			ghost.style.transform = `translate(${x - grab.x}px, ${y - grab.y}px) rotate(-0.3deg)`;
 		};
 		place(e.clientX, e.clientY);
 		const clear = () =>

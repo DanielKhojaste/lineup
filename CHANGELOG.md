@@ -20,6 +20,10 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Changed
 
+- Calendar hover is softer: a light sweep in the theme's colour that stays readable in light themes, and the day keeps its own hover
+- The week view shows a session's first two topics
+- Dragging a session in a plan barely tilts it
+- More room between the session preview's shortcuts and its buttons
 - The library's **All** view (boards and sessions together) is gone for now; it opens on **Boards** instead
 - **New board** is a grid of sports, then the field, each with a tick to make it the default. With both set it's one click (Create), with **Change** to pick again and quick picks for the other field and your other sports
 - A plan's weeks can be laid out three ways to compare: **List**, **Table** (one row per week, sessions as chips with a picture) or **Outline** (the weeks on the left, the picked week large beside it). Sessions drag between weeks in all three

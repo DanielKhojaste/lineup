@@ -4080,23 +4080,23 @@ input.plan-topic__title {
 }
 
 .calendar__entry:hover {
-	/* "Infrared", from Giedi Prime: a band of light sweeps across the session
-	   and its edge lights up hard, in the theme's text colour (so it shows in
-	   light themes too). To be confirmed by Daniel. */
+	/* "Infrared", from Giedi Prime, toned down: a soft band of the theme's
+	   colour sweeps across once, and the edge lights up thinly. The band is
+	   tinted, never dark, so the text stays readable in light themes. */
 	background:
 		linear-gradient(
 			100deg,
 			transparent 30%,
-			color-mix(in srgb, var(--text) 22%, transparent) 50%,
+			color-mix(in srgb, var(--accent) 16%, transparent) 50%,
 			transparent 70%
 		)
 		no-repeat,
 		var(--raised);
 	background-size: 250% 100%, auto;
 	box-shadow:
-		0 0 0 1px color-mix(in srgb, var(--text) 85%, transparent),
-		0 0 12px color-mix(in srgb, var(--text) 22%, transparent);
-	animation: infrared-sweep 0.9s ease-out both;
+		0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent),
+		0 0 8px color-mix(in srgb, var(--accent) 14%, transparent);
+	animation: infrared-sweep 1.1s ease-out both;
 }
 
 @keyframes infrared-sweep {
@@ -4113,15 +4113,6 @@ input.plan-topic__title {
 		animation: none;
 		background: var(--raised);
 	}
-}
-
-/* Pointing at a session highlights the session, not the day around it. */
-.calendar__day:has(.calendar__entry:hover) {
-	background: var(--surface);
-}
-
-.calendar__day.is-outside:has(.calendar__entry:hover) {
-	background: var(--sunken);
 }
 
 .calendar__entry--done {
@@ -4590,7 +4581,12 @@ option:disabled {
 }
 
 .session-preview__gap {
-	width: 10px;
+	width: 12px;
+}
+
+/* Room between the shortcuts and the details switch beside them. */
+.session-preview__keys {
+	margin-right: 20px;
 }
 
 /* With the details beside the drill or hidden, the drill takes all the room there is. */

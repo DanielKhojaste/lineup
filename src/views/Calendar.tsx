@@ -330,7 +330,8 @@ function WeekEntryDetails({ entry }: { entry: CalendarEntry }) {
 			)}
 			{session.header.topics.length > 0 && (
 				<span className="calendar__topics">
-					{session.header.topics.map((t) => (
+					{/* The first two topics added; the rest are in the session. */}
+					{session.header.topics.slice(0, 2).map((t) => (
 						<span key={t} className="calendar__topic">
 							{t}
 						</span>
