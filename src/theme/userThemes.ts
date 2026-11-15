@@ -2,8 +2,13 @@ import { useSyncExternalStore } from "react";
 import { findPreset, ThemeFile, themeFromFile, ThemePreset, THEME_PRESETS } from "./themes";
 
 /**
- * Themes the coach saved or imported ("Your themes" in Settings), kept on this
- * computer. Their ids start with "user-" so they never clash with Lineup's own.
+ * Themes the coach saved or imported ("Your themes" in Settings). Their ids
+ * start with "user-" so they never clash with Lineup's own.
+ *
+ * In the desktop app each one is a `.lineup-theme` file in
+ * Documents/Lineup/themes, next to the boards (see `storage/themeFiles.ts`);
+ * the browser's storage keeps a copy so the theme in use is there straight
+ * away when the app starts. In a browser, that copy is all there is.
  */
 
 const STORAGE_KEY = "lineup.userThemes";
@@ -27,6 +32,85 @@ function read(): ThemePreset[] {
 
 let current = read();
 const listeners = new Set<() => void>();
+
+/** Which file each theme is in (desktop app only). */
+const fileOf = new Map<string, string>();
+let filesReady = false;
+
+function isDesktop(): boolean {
+	return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+}
+
+/** Write a theme's file, renaming it when its name changed. Problems are logged, not shown. */
+async function saveFile(theme: ThemePreset) {
+	if (!isDesktop() || !filesReady) return;
+	const files = await import("../storage/themeFiles");
+	const old = fileOf.get(theme.preset);
+	const taken = new Set(
+		[...fileOf.entries()].filter(([id]) => id !== theme.preset).map(([, f]) => f.toLowerCase()),
+	);
+	const file = files.themeFileName(theme.name, taken);
+	try {
+		await files.writeThemeFile(file, themeFileText(theme, { withId: true }));
+		fileOf.set(theme.preset, file);
+		if (old && old !== file) await files.removeThemeFile(old);
+	} catch (error) {
+		console.error(`Couldn't save the theme "${theme.name}"`, error);
+	}
+}
+
+async function removeFile(id: string) {
+	const file = fileOf.get(id);
+	fileOf.delete(id);
+	if (!isDesktop() || !file) return;
+	try {
+		const files = await import("../storage/themeFiles");
+		await files.removeThemeFile(file);
+	} catch (error) {
+		console.error("Couldn't delete the theme's file", error);
+	}
+}
+
+/**
+ * Read your themes from Documents/Lineup/themes when the app starts. Themes
+ * only in the browser's storage (from before themes were files) are written
+ * to the folder, so nothing is lost; themes added or edited by hand in the
+ * folder show up too.
+ */
+export async function loadUserThemeFiles(): Promise<void> {
+	if (!isDesktop() || filesReady) return;
+	try {
+		const files = await import("../storage/themeFiles");
+		const found: ThemePreset[] = [];
+		const seen = new Set<string>();
+		for (const { file, text } of await files.readThemeFiles()) {
+			try {
+				const raw = JSON.parse(text.replace(/^\uFEFF/, "")) as ThemeFile & { id?: unknown };
+				// A file without an id (copied in by hand) gets one from its name.
+				let id =
+					typeof raw.id === "string" && raw.id.startsWith("user-")
+						? raw.id
+						: `user-${file.replace(/\.lineup-theme$/i, "").toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+				if (seen.has(id)) id = `${id}-${seen.size}`;
+				const theme = themeFromFile(raw, id);
+				if (!theme) continue;
+				delete theme.pair;
+				seen.add(id);
+				fileOf.set(id, file);
+				found.push(theme);
+			} catch (error) {
+				console.error(`Skipped the theme file ${file}`, error);
+			}
+		}
+		filesReady = true;
+		// Themes saved before they were files: write them into the folder.
+		const missing = current.filter((t) => !seen.has(t.preset));
+		for (const theme of missing) await saveFile(theme);
+		write([...found, ...missing]);
+	} catch (error) {
+		console.error("Couldn't open the themes folder", error);
+	}
+}
 
 function write(next: ThemePreset[]) {
 	current = next;
@@ -76,6 +160,7 @@ export function addUserTheme(theme: Omit<ThemePreset, "preset">): ThemePreset {
 	// A pair only makes sense between Lineup's own themes.
 	delete saved.pair;
 	write([...current, saved]);
+	void saveFile(saved);
 	return saved;
 }
 
@@ -85,11 +170,13 @@ export function renameUserTheme(id: string, name: string): ThemePreset | undefin
 	if (!theme || !name.trim()) return theme;
 	const renamed = { ...theme, name: freeName(name.trim().slice(0, 40), id) };
 	write(current.map((t) => (t.preset === id ? renamed : t)));
+	void saveFile(renamed);
 	return renamed;
 }
 
 export function removeUserTheme(id: string) {
 	write(current.filter((t) => t.preset !== id));
+	void removeFile(id);
 }
 
 /** Any theme by id: Lineup's own, or one of yours. */
@@ -98,9 +185,14 @@ export function findTheme(id: string): ThemePreset | undefined {
 }
 
 /** The text of a `.lineup-theme` file: plain JSON, so it can be read and edited by hand. */
-export function themeFileText(theme: ThemePreset): string {
+export function themeFileText(
+	theme: ThemePreset,
+	{ withId = false }: { withId?: boolean } = {},
+): string {
 	const file: Record<string, unknown> = {
 		lineupTheme: 1,
+		// Files in the library folder keep their id, so the theme in use is found again.
+		...(withId ? { id: theme.preset } : {}),
 		name: theme.name,
 		mode: theme.mode,
 		accent: theme.accent,

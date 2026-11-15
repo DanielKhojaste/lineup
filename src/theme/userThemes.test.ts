@@ -38,3 +38,21 @@ describe("renaming your themes", () => {
 		removeUserTheme(b.preset);
 	});
 });
+
+describe("your themes as files", () => {
+	it("names files after the theme, never twice the same, and keeps the id inside", async () => {
+		const { themeFileName } = await import("../storage/themeFiles");
+		expect(themeFileName("Club colours", new Set())).toBe("Club colours.lineup-theme");
+		expect(themeFileName("Club colours", new Set(["club colours.lineup-theme"]))).toBe(
+			"Club colours (2).lineup-theme",
+		);
+		expect(themeFileName("CON", new Set())).toBe("CON_.lineup-theme");
+		const text = themeFileText(
+			{ preset: "user-abc", name: "Club", mode: "dark", accent: "#111111", secondary: "#222222" },
+			{ withId: true },
+		);
+		expect(JSON.parse(text).id).toBe("user-abc");
+		// Shared files don't carry an id: importing one always makes a new theme.
+		expect(JSON.parse(themeFileText({ preset: "user-abc", name: "Club", mode: "dark", accent: "#111111", secondary: "#222222" })).id).toBeUndefined();
+	});
+});

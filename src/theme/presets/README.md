@@ -23,7 +23,10 @@ Theme preview shows a paired theme's dark and light versions side by side.
 
 People can also save, import and export their own themes in Settings ›
 Appearance. Those are `.lineup-theme` files with the same fields (no `order`
-or `pair`).
+or `pair`). In the desktop app they're kept in `Documents\Lineup\themes\`
+(one file each, next to the boards), so they're backed up with the library
+and can be edited by hand; a file dropped in there shows up next time Lineup
+starts.
 
 Themes kept for later (like Lagoon) live in `../extra-themes/`, where Lineup
 doesn't list them.

@@ -13,7 +13,7 @@ import {
 	ThemeSettings,
 	themeTokens,
 } from "./themes";
-import { findTheme, useUserThemes } from "./userThemes";
+import { findTheme, loadUserThemeFiles, useUserThemes } from "./userThemes";
 
 const STORAGE_KEY = "lineup.theme";
 /** The Lineup theme used most recently, to go back to when a theme of yours is deleted. */
@@ -61,6 +61,11 @@ function loadTheme(): ThemeSettings {
 export function ThemeProvider({ children }: { children: ReactNode }) {
 	const [theme, setThemeState] = useState<ThemeSettings>(loadTheme);
 	const userThemes = useUserThemes();
+
+	// Your themes live in Documents/Lineup/themes in the desktop app.
+	useEffect(() => {
+		void loadUserThemeFiles();
+	}, []);
 
 	// The theme in use was deleted from "Your themes": go back to the Lineup
 	// theme used most recently (a theme you saved isn't left behind as Custom).
