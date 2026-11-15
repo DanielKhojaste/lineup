@@ -46,6 +46,7 @@ This project adheres to semantic versioning (0.x during early development).
 - A session's time can be set to **Auto** (it was "From the plan"), and the message about a plan that's longer than the session's time has the Auto tick in it
 - The message after importing a session says drills already in your library "weren't added again"
 - The Boards icon's squares no longer run into a thick cross in the middle
+- **Selection box:** lines, zones and text are picked when half or more of them is in the box, and players and equipment when the box touches any part of them (before, the box had to go around the whole drawing, and a marker's centre had to be in it)
 - The tool rail's ball is the board's sport's ball (a basketball, a volleyball, a hockey ball)
 - The basketball hoop is a softer burnt orange, so it no longer glares on the maple
 - "Use team kit" only shows when a player's kit is different from the team's
