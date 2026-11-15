@@ -10,6 +10,9 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Added
 
+- **Plans:** a block of training (a season, a month) as topics in order, like "Possession" then "Pressing", each with its sessions in order. Make them under **Plans** in the library: add sessions from the panel on the right (or make a new one named after the topic), drag them between topics, and duplicate a plan for next season. A plan has no dates, so it can be reused
+- **Calendar:** a month view of every session on its date, with the time and team. **Put a plan on the calendar** from a start date on your training days (say Tuesdays and Thursdays), add a single session to a day, drag a session to another day, and **mark it as run** with notes. Coming up and recently run are listed beside the month, and a plan shows when each of its sessions last ran
+
 - **Interface size** in Settings › Appearance: 90%, 100%, 110%, 125% or 150%, for text and controls everywhere. **Ctrl+=**, **Ctrl+-** and **Ctrl+0** change it from anywhere, and Lineup remembers it
 
 ### Changed

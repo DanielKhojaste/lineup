@@ -448,7 +448,7 @@ function PlanLayout() {
 				<button
 					type="button"
 					className="back-button"
-					onClick={() => navigate("/", { state: { view: "plans" } })}
+					onClick={() => navigate("/")}
 				>
 					<Icon name="chevronLeft" size={16} />
 					Library

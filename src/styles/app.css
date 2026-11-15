@@ -3741,3 +3741,448 @@ fieldset.field {
 .interface-size {
 	max-width: 420px;
 }
+
+/* ---------------------------------- Plans ---------------------------------- */
+
+/* A plan's card: its topics in order where a board card has its picture. */
+.plan-card__topics {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	width: 100%;
+	aspect-ratio: 3 / 2;
+	padding: 10px;
+	margin-bottom: 6px;
+	border-radius: 6px;
+	background: var(--sunken);
+	overflow: hidden;
+}
+
+.plan-card__topic {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 12px;
+}
+
+.plan-card__number {
+	display: grid;
+	place-items: center;
+	flex-shrink: 0;
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	background: var(--accent-soft);
+	color: var(--accent-text);
+	font-size: 11px;
+	font-weight: 600;
+}
+
+.plan-card__name {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.plan-card__count {
+	color: var(--text-muted);
+	font-variant-numeric: tabular-nums;
+}
+
+.plan-card__more {
+	font-size: 11px;
+	color: var(--text-muted);
+	padding-left: 26px;
+}
+
+/* The plan editor: topics in order, each a card with its sessions. */
+.plan-topic {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding: 14px;
+	margin-bottom: 12px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--surface);
+}
+
+.plan-topic.is-active {
+	border-color: var(--border-strong);
+	box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.plan-topic__head {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.plan-topic__number {
+	display: grid;
+	place-items: center;
+	flex-shrink: 0;
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	background: var(--accent-soft);
+	color: var(--accent-text);
+	font-weight: 600;
+}
+
+.plan-topic__head .field,
+.plan-topic__title {
+	flex: 1;
+	min-width: 0;
+}
+
+.plan-topic__title input,
+input.plan-topic__title {
+	font-size: 15px;
+	font-weight: 600;
+}
+
+.plan-topic__sessions {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.plan-session {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 4px 6px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--sunken);
+}
+
+.plan-session:hover {
+	border-color: var(--border-strong);
+}
+
+.plan-session__number {
+	width: 22px;
+	flex-shrink: 0;
+	text-align: right;
+	color: var(--text-muted);
+	font-size: 12px;
+}
+
+.plan-session__open {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 1px;
+	padding: 4px 6px;
+	border-radius: 6px;
+	text-align: left;
+}
+
+.plan-session__open:hover {
+	background: var(--hover);
+}
+
+.plan-session__title {
+	font-weight: 600;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.plan-session__meta {
+	font-size: 12px;
+	color: var(--text-muted);
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.plan-session__missing {
+	flex: 1;
+	padding: 6px;
+	font-size: 13px;
+	color: var(--danger);
+}
+
+.plan-topic__empty {
+	padding: 12px;
+	border: 1px dashed var(--border-strong);
+	border-radius: var(--radius);
+	font-size: 13px;
+	text-align: center;
+}
+
+/* Sessions in the "Add sessions" panel have no picture: just their text. */
+.drill-picker__item--text {
+	grid-template-columns: 1fr auto auto;
+}
+
+/* -------------------------------- Calendar --------------------------------- */
+
+.calendar-view {
+	display: flex;
+	flex-direction: column;
+	height: 100vh;
+}
+
+.calendar-view__title {
+	font-size: 15px;
+	font-weight: 600;
+	margin: 0;
+}
+
+.calendar-view__body {
+	flex: 1;
+	min-height: 0;
+	display: grid;
+	grid-template-columns: 1fr 300px;
+}
+
+.calendar {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	min-width: 0;
+	padding: 20px 24px;
+	overflow: auto;
+}
+
+.calendar__head {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.calendar__head h2 {
+	margin: 0 6px;
+	font-size: 20px;
+	min-width: 180px;
+}
+
+.calendar__grid {
+	flex: 1;
+	display: grid;
+	grid-template-columns: repeat(7, minmax(0, 1fr));
+	/* The weekday names, then the weeks sharing the height. */
+	grid-template-rows: auto;
+	grid-auto-rows: minmax(96px, 1fr);
+	border-top: 1px solid var(--border);
+	border-left: 1px solid var(--border);
+}
+
+.calendar__weekday {
+	padding: 6px 8px;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--text-muted);
+	border-right: 1px solid var(--border);
+	border-bottom: 1px solid var(--border);
+	min-height: 0;
+}
+
+.calendar__day {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	min-width: 0;
+	padding: 4px;
+	border-right: 1px solid var(--border);
+	border-bottom: 1px solid var(--border);
+	background: var(--surface);
+	cursor: pointer;
+}
+
+.calendar__day:hover {
+	background: var(--hover);
+}
+
+.calendar__day.is-outside {
+	background: var(--sunken);
+}
+
+.calendar__day.is-outside .calendar__date {
+	color: var(--text-muted);
+	opacity: 0.6;
+}
+
+.calendar__day.is-drop {
+	box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.calendar__date {
+	align-self: flex-end;
+	min-width: 24px;
+	padding: 2px 6px;
+	border-radius: 12px;
+	font-size: 12px;
+	text-align: center;
+	font-variant-numeric: tabular-nums;
+}
+
+.calendar__day.is-today .calendar__date {
+	background: var(--accent);
+	color: var(--on-accent);
+	font-weight: 600;
+}
+
+/* A session on a day: a small bar in its team's colour. */
+.calendar__entry {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	width: 100%;
+	padding: 3px 6px;
+	border-left: 3px solid var(--accent);
+	border-radius: 4px;
+	background: var(--raised);
+	font-size: 12px;
+	text-align: left;
+	cursor: grab;
+	touch-action: none;
+}
+
+.calendar__entry:hover {
+	background: var(--hover);
+}
+
+.calendar__entry--done {
+	opacity: 0.75;
+}
+
+.calendar__entry--cancelled .calendar__entry-title {
+	text-decoration: line-through;
+	color: var(--text-muted);
+}
+
+.calendar__time {
+	font-size: 11px;
+	color: var(--text-muted);
+}
+
+.calendar__entry-title {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Coming up and recently run, beside the month. */
+.agenda {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 20px 16px;
+	border-left: 1px solid var(--border);
+	background: var(--surface);
+	overflow: auto;
+}
+
+.agenda h2 {
+	margin: 8px 0 0;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--text-muted);
+}
+
+.agenda ul {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.agenda__item {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	width: 100%;
+	padding: 6px 8px;
+	border-radius: 6px;
+	text-align: left;
+}
+
+.agenda__item:hover {
+	background: var(--hover);
+}
+
+.agenda__dot {
+	flex-shrink: 0;
+	width: 8px;
+	height: 8px;
+	margin-top: 6px;
+	border-radius: 50%;
+}
+
+.agenda__text {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.agenda__title {
+	font-weight: 600;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Putting a plan on the calendar: the training days as toggles. */
+.day-toggles {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+/* Picking a plan from a list. */
+.pick-list {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.pick-list__item {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	width: 100%;
+	padding: 8px 10px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	text-align: left;
+}
+
+.pick-list__item:hover {
+	border-color: var(--border-strong);
+	background: var(--hover);
+}
+
+.button--danger-text {
+	color: var(--danger);
+	background: transparent;
+	border-color: transparent;
+}
+
+.button--danger-text:hover {
+	background: var(--hover);
+}

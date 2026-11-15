@@ -30,6 +30,9 @@ import {
 import { useSessionExport } from "../export/useSessionExport";
 import { relativeTime } from "../utils/time";
 import { logger } from "../utils/log";
+import { toISODate } from "../model/calendar";
+import { Plan } from "../model/plan";
+import PlanCard from "../components/library/PlanCard";
 
 const log = logger("library");
 
@@ -38,6 +41,7 @@ type View =
 	| { kind: "everything" }
 	| { kind: "all" }
 	| { kind: "sessions" }
+	| { kind: "plans" }
 	| { kind: "unfiled" }
 	| { kind: "created" }
 	| { kind: "imported" }
@@ -58,6 +62,7 @@ function docInView(
 		case "everything":
 		case "all":
 		case "sessions":
+		case "plans":
 			return true;
 		case "unfiled":
 			return !meta.folders.length && !meta.imported;
@@ -76,8 +81,9 @@ function docInView(
 const NOTICE_SECONDS = 7;
 
 const boardInView = (b: Board, view: View) =>
-	view.kind !== "sessions" && docInView(b.meta, b.pitch.sport, view);
+	view.kind !== "sessions" && view.kind !== "plans" && docInView(b.meta, b.pitch.sport, view);
 const sessionInView = (s: Session, view: View) =>
+	view.kind !== "plans" &&
 	docInView(s.meta, s.header.sport, view);
 type Sort = "updated" | "title";
 
@@ -172,7 +178,7 @@ function savedView(): { view: View; sort: Sort } {
 	try {
 		const raw = JSON.parse(localStorage.getItem(VIEW_KEY) ?? "{}");
 		const v = raw?.view;
-		const simple = ["everything", "all", "sessions", "unfiled", "created", "imported"];
+		const simple = ["everything", "all", "sessions", "plans", "unfiled", "created", "imported"];
 		const view: View =
 			v && simple.includes(v.kind)
 				? { kind: v.kind }
@@ -324,6 +330,21 @@ export default function Library() {
 			  );
 	}, [library.sessions, view, query, sort, type]);
 
+	// Plans have their own view.
+	const shownPlans = useMemo(() => {
+		if (view.kind !== "plans") return [];
+		const q = query.trim().toLowerCase();
+		const found = library.plans.filter((p) =>
+			[p.meta.title, p.team, ...p.meta.folders, ...p.topics.map((t) => t.title)]
+				.join(" ")
+				.toLowerCase()
+				.includes(q),
+		);
+		return sort === "title"
+			? [...found].sort((a, b) => a.meta.title.localeCompare(b.meta.title))
+			: [...found].sort((a, b) => b.meta.updatedAt.localeCompare(a.meta.updatedAt));
+	}, [library.plans, view, query, sort]);
+
 	// Boards and sessions together in one grid, in the order picked in Sort
 	// (not sessions first and boards after).
 	const mixed = useMemo(() => {
@@ -380,6 +401,23 @@ export default function Library() {
 	};
 
 	const openBoard = (id: string) => navigate(`/board/${id}`);
+	const newPlan = () =>
+		run(async () => {
+			const plan = await library.createPlan(currentFolder);
+			navigate(`/plan/${plan.id}`);
+		}, "Couldn't create the plan");
+	const [deletingPlan, setDeletingPlan] = useState<Plan | null>(null);
+	/** A plan card's menu, from right-clicking it or its ⋯ button. */
+	const planMenu = (plan: Plan): ContextMenuEntry[] => [
+		{ label: "Open", onSelect: () => navigate(`/plan/${plan.id}`) },
+		{
+			label: "Duplicate",
+			onSelect: () => run(() => library.duplicatePlan(plan.id), "Couldn't duplicate the plan"),
+		},
+		folderSubmenu(plan.meta.folders, (f) => library.setPlanFolders(plan.id, f)),
+		"separator",
+		{ label: "Delete…", danger: true, onSelect: () => setDeletingPlan(plan) },
+	];
 	const openSession = (id: string) => navigate(`/session/${id}`);
 
 	const [askingSport, setAskingSport] = useState(false);
@@ -727,6 +765,8 @@ export default function Library() {
 			  ? "All"
 			  : view.kind === "sessions"
 			  ? "Sessions"
+			  : view.kind === "plans"
+			  ? "Plans"
 			  : view.kind === "unfiled"
 			  ? "Not in a folder"
 			  : view.kind === "created"
@@ -742,7 +782,7 @@ export default function Library() {
 		count: number,
 		active: boolean,
 		onClick: () => void,
-		icon: "grid" | "folder" | "inbox" | "session" | "pen" | "download" | "stack",
+		icon: "grid" | "folder" | "inbox" | "session" | "pen" | "download" | "stack" | "plan" | "calendar",
 	) => (
 		<button
 			type="button"
@@ -845,6 +885,20 @@ export default function Library() {
 							view.kind === "sessions",
 							() => setView({ kind: "sessions" }),
 							"session",
+						)}
+						{navItem(
+							"Plans",
+							library.plans.length,
+							view.kind === "plans",
+							() => setView({ kind: "plans" }),
+							"plan",
+						)}
+						{navItem(
+							"Calendar",
+							library.calendar.filter((e) => e.date >= toISODate(new Date())).length,
+							false,
+							() => navigate("/calendar"),
+							"calendar",
 						)}
 					</div>
 					{sportsInLibrary.length > 0 && (
@@ -976,7 +1030,10 @@ export default function Library() {
 						<h1>{heading}</h1>
 						<span className="muted">
 							{[
+								view.kind === "plans" &&
+									`${shownPlans.length} ${shownPlans.length === 1 ? "plan" : "plans"}`,
 								view.kind !== "sessions" &&
+									view.kind !== "plans" &&
 									`${shown.length} ${shown.length === 1 ? "board" : "boards"}`,
 								shownSessions.length > 0 &&
 									`${shownSessions.length} ${
@@ -987,6 +1044,12 @@ export default function Library() {
 								.join(" · ") || "Nothing here yet"}
 						</span>
 						<span className="topbar__spacer" />
+						{view.kind === "plans" && shownPlans.length > 0 && (
+							<button type="button" className="button button--small library__select" onClick={newPlan}>
+								<Icon name="plus" size={16} />
+								New plan
+							</button>
+						)}
 						{!selecting && (shown.length > 0 || shownSessions.length > 0) && (
 							<button
 								type="button"
@@ -1190,8 +1253,42 @@ export default function Library() {
 							</div>
 						)}
 
+					{library.status === "ready" && view.kind === "plans" && shownPlans.length === 0 && (
+						<div className="empty-state">
+							{query ? (
+								<p>No plans match “{truncate(query.trim(), 40)}”.</p>
+							) : (
+								<>
+									<p>
+										No plans yet. A plan is a block of training (a season, a month)
+										as topics in order, each with its sessions. Lay it out on the
+										calendar on your training days.
+									</p>
+									<button type="button" className="button button--primary" onClick={newPlan}>
+										<Icon name="plus" size={16} />
+										New plan
+									</button>
+								</>
+							)}
+						</div>
+					)}
+
+					{view.kind === "plans" && shownPlans.length > 0 && (
+						<div className="board-grid">
+							{shownPlans.map((plan) => (
+								<PlanCard
+									key={plan.id}
+									plan={plan}
+									onOpen={() => navigate(`/plan/${plan.id}`)}
+									menu={() => planMenu(plan)}
+								/>
+							))}
+						</div>
+					)}
+
 					{library.status === "ready" &&
 						view.kind !== "sessions" &&
+						view.kind !== "plans" &&
 						shown.length === 0 &&
 						shownSessions.length === 0 && (
 						<div className="empty-state">
@@ -1364,6 +1461,18 @@ export default function Library() {
 					}
 				}}
 				onClose={() => setRenamingDoc(null)}
+			/>
+			<ConfirmDialog
+				open={deletingPlan !== null}
+				title="Delete plan"
+				message={`Delete the plan “${deletingPlan?.meta.title ?? ""}”? Its sessions stay in your library, and dates already on the calendar stay there. This can't be undone.`}
+				confirmLabel="Delete plan"
+				danger
+				onConfirm={() => {
+					const plan = deletingPlan!;
+					run(() => library.deletePlan(plan.id), "Couldn't delete the plan");
+				}}
+				onClose={() => setDeletingPlan(null)}
 			/>
 			<ConfirmDialog
 				open={deletingSession !== null}
