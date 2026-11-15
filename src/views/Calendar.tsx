@@ -21,7 +21,10 @@ import {
 	WEEKDAYS,
 } from "../model/calendar";
 import { Plan } from "../model/plan";
-import { formatMinutes, Session, totalMinutes } from "../model/session";
+import { formatMinutes, Session, sessionBoardIds, sessionTitle, totalMinutes } from "../model/session";
+import { Board } from "../model/types";
+import BoardPreview from "../components/board/BoardPreview";
+import SessionPicker from "../components/session/SessionPicker";
 import { useLibrary } from "../state/LibraryContext";
 
 /** Each team gets its own colour, picked from its name. */
@@ -60,8 +63,27 @@ function EntryDialog({
 	const [draft, setDraft] = useState({ ...entry, status: statusOf(entry) });
 	const set = (patch: Partial<CalendarEntry>) => setDraft((d) => ({ ...d, ...patch }));
 	const session = sessions.find((s) => s.id === draft.sessionId);
-	const sorted = [...sessions].sort((a, b) => a.meta.title.localeCompare(b.meta.title));
+	const library = useLibrary();
+	// Adding a session: the picker opens straight away.
+	const [picking, setPicking] = useState(entry.isNew && !entry.sessionId);
 	const date = parseISODate(draft.date);
+
+	// One window at a time: the picker replaces this window while it's open.
+	if (picking)
+		return (
+			<SessionPicker
+				onPick={(picked) => {
+					set({
+						sessionId: picked.id,
+						team: draft.team || picked.header.team || "",
+						time: draft.time ?? null,
+					});
+					setPicking(false);
+				}}
+				// Closing the picker before choosing anything cancels adding.
+				onClose={() => (draft.sessionId ? setPicking(false) : onClose())}
+			/>
+		);
 
 	return (
 		<Modal
@@ -79,36 +101,47 @@ function EntryDialog({
 					onClose();
 				}}
 			>
-				<label className="field">
+				<div className="field">
 					<span className="field__label">Session</span>
-					<select
-						className="field__input"
-						value={draft.sessionId}
-						required
-						data-autofocus={entry.isNew ? "" : undefined}
-						onChange={(e) => {
-							const s = sessions.find((x) => x.id === e.target.value);
-							set({
-								sessionId: e.target.value,
-								team: draft.team || s?.header.team || "",
-								time: draft.time ?? null,
-							});
-						}}
-					>
-						<option value="" disabled hidden>
-							Pick a session…
-						</option>
-						{sorted.map((s) => (
-							<option key={s.id} value={s.id}>
-								{s.meta.title}
-								{totalMinutes(s) ? ` (${formatMinutes(totalMinutes(s))})` : ""}
-							</option>
-						))}
-						{!session && draft.sessionId && (
-							<option value={draft.sessionId}>Deleted session</option>
-						)}
-					</select>
-				</label>
+					{session ? (
+						<div className="picked-session">
+							<span className="picked-session__strip" aria-hidden="true">
+								{sessionBoardIds(session)
+									.map(library.getBoard)
+									.filter((b): b is Board => !!b)
+									.slice(0, 3)
+									.map((b) => (
+										<BoardPreview key={b.id} board={b} className="picked-session__thumb" />
+									))}
+							</span>
+							<span className="picked-session__text">
+								<b>{sessionTitle(session)}</b>
+								<span className="muted small">
+									{[
+										session.header.team,
+										totalMinutes(session) ? formatMinutes(totalMinutes(session)) : "",
+										session.header.topics.join(", "),
+									]
+										.filter(Boolean)
+										.join(" · ")}
+								</span>
+							</span>
+							<button type="button" className="button button--small" onClick={() => setPicking(true)}>
+								Change…
+							</button>
+						</div>
+					) : (
+						<button
+							type="button"
+							className="button picked-session__choose"
+							data-autofocus=""
+							onClick={() => setPicking(true)}
+						>
+							<Icon name="session" size={16} />
+							{draft.sessionId ? "This session was deleted. Choose another…" : "Choose a session…"}
+						</button>
+					)}
+				</div>
 				<div className="field-grid">
 					<label className="field">
 						<span className="field__label">Date</span>
