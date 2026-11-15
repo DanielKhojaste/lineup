@@ -1,4 +1,4 @@
-import { CSSProperties, ReactNode, useState } from "react";
+import { CSSProperties, ReactNode, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { ThemeSwatch } from "../components/shell/ThemeDropdown";
@@ -13,9 +13,7 @@ import {
 import { useTheme } from "../theme/ThemeProvider";
 import { findTheme, useUserThemes } from "../theme/userThemes";
 import ThemeActions from "../components/shell/ThemeActions";
-import SpiceControls from "../components/shell/SpiceControls";
-import SpiceEffect from "../theme/SpiceEffect";
-import { usePreferences } from "../state/preferences";
+import ThemeEffectControls from "../components/shell/ThemeEffectControls";
 
 /** CSS custom properties for a theme, scoped to one element. */
 function themeStyle(theme: ThemePreset): CSSProperties {
@@ -365,14 +363,15 @@ export default function ThemePreview() {
 	const shown = both && pair ? [picked, pair] : [picked];
 	const inUse = picked.preset === theme.preset;
 	const label = (t: ThemePreset) => (t.mode === "dark" ? "dark" : "light");
-	const { themeEffects, spice, spiceOverBoard } = usePreferences();
-	// Previewing Dune shows its spice here, even before it's the theme in use.
-	const previewSpice =
-		picked.effect === "spice" && inUseTheme.effect !== "spice" && themeEffects;
+	// A picked theme's moving background shows here, even before it's the theme in use.
+	const { previewEffect } = useTheme();
+	useEffect(() => {
+		previewEffect(inUse ? null : picked);
+	}, [picked, inUse, previewEffect]);
+	useEffect(() => () => previewEffect(null), [previewEffect]);
 
 	return (
 		<div className="theme-page">
-			{previewSpice && <SpiceEffect settings={spice} overBoard={spiceOverBoard} />}
 			<header className="topbar">
 				<button type="button" className="back-button" onClick={() => navigate(-1)}>
 					<Icon name="chevronLeft" size={16} />
@@ -440,9 +439,9 @@ export default function ThemePreview() {
 						</span>
 						<ThemeActions theme={picked} onImported={(t) => setPickedId(t.preset)} />
 					</div>
-					{picked.effect && (
+					{picked.effects && (
 						<div className="theme-page__effect">
-							<SpiceControls effect={picked.effect} />
+							<ThemeEffectControls theme={picked} />
 						</div>
 					)}
 					<main className="theme-page__main">

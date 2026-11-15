@@ -3603,18 +3603,28 @@ fieldset.field {
 	pointer-events: none;
 }
 
-/* Settings and Theme preview: how Dune's spice looks. */
-.spice-controls {
+/* Settings and Theme preview: a theme's moving background, and how Dune's spice looks. */
+.effect-controls {
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
+}
+
+.effect-controls__pick {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.effect-controls__pick .field__label {
+	margin: 0;
 }
 
 .theme-page__effect {
 	padding: 12px 16px 0;
 }
 
-.spice-settings__dev {
+.effect-controls__dev {
 	margin-top: 4px;
 	font-size: 12px;
 	color: var(--text-muted);

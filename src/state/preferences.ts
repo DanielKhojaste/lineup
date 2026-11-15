@@ -13,8 +13,11 @@ export interface Preferences {
 	 * for new boards"). Until then, new sessions ask which sport they're for.
 	 */
 	hasDefaultSport: boolean;
-	/** Themes with moving backgrounds (Dune's spice) show them. */
-	themeEffects: boolean;
+	/**
+	 * The moving background picked for each theme that has them (theme id →
+	 * effect, or "off"). A theme left out shows its first.
+	 */
+	themeEffect: Record<string, string>;
 	/** How Dune's spice looks: size, speed and amount, as multiples of normal. */
 	spice: { size: number; speed: number; amount: number };
 	/** For testing only (dev builds): the spice drifts over the board too. */
@@ -25,7 +28,7 @@ const STORAGE_KEY = "lineup.preferences";
 const DEFAULTS: Preferences = {
 	defaultPitch: DEFAULT_PITCH,
 	hasDefaultSport: false,
-	themeEffects: true,
+	themeEffect: {},
 	spice: { size: 1, speed: 1, amount: 1 },
 	spiceOverBoard: false,
 };
@@ -35,6 +38,18 @@ function multiple(value: unknown, min: number, max: number): number {
 	return typeof value === "number" && Number.isFinite(value)
 		? Math.min(max, Math.max(min, value))
 		: 1;
+}
+
+/** The moving backgrounds picked for each theme, from what was saved. */
+function effectChoices(raw: Record<string, unknown> | null): Record<string, string> {
+	const choices: Record<string, string> = {};
+	const saved = raw?.themeEffect;
+	if (saved && typeof saved === "object")
+		for (const [theme, effect] of Object.entries(saved))
+			if (typeof effect === "string" && effect.length < 40) choices[theme] = effect;
+	// Before themes had a choice, there was one switch for Dune's spice.
+	if (raw?.themeEffects === false && !("dune" in choices)) choices.dune = "off";
+	return choices;
 }
 
 function read(): Preferences {
@@ -47,7 +62,7 @@ function read(): Preferences {
 				variant: pitch.variant === "half" ? "half" : "full",
 			},
 			hasDefaultSport: !!raw?.defaultPitch,
-			themeEffects: raw?.themeEffects !== false,
+			themeEffect: effectChoices(raw),
 			spice: {
 				size: multiple(raw?.spice?.size, 0.4, 3),
 				speed: multiple(raw?.spice?.speed, 0.1, 4),

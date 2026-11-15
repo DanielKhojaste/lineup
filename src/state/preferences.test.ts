@@ -20,17 +20,25 @@ describe("spice preferences", () => {
 
 	it("starts on, at the normal size, speed and amount", async () => {
 		const { getPreferences } = await load();
-		expect(getPreferences().themeEffects).toBe(true);
+		expect(getPreferences().themeEffect).toEqual({});
 		expect(getPreferences().spice).toEqual({ size: 1, speed: 1, amount: 1 });
 	});
 
 	it("keeps the chosen settings for next time", async () => {
 		const first = await load();
-		first.setPreferences({ themeEffects: false, spice: { size: 1.5, speed: 1.1, amount: 2.3 } });
+		first.setPreferences({
+			themeEffect: { dune: "off", fremen: "worm-sign" },
+			spice: { size: 1.5, speed: 1.1, amount: 2.3 },
+		});
 		const saved = JSON.parse(store.get("lineup.preferences")!);
 		const { getPreferences } = await load(saved);
-		expect(getPreferences().themeEffects).toBe(false);
+		expect(getPreferences().themeEffect).toEqual({ dune: "off", fremen: "worm-sign" });
 		expect(getPreferences().spice).toEqual({ size: 1.5, speed: 1.1, amount: 2.3 });
+	});
+
+	it("keeps the spice off for those who turned it off before themes had a choice", async () => {
+		const { getPreferences } = await load({ themeEffects: false });
+		expect(getPreferences().themeEffect).toEqual({ dune: "off" });
 	});
 
 	it("keeps hand-edited values within the sliders' range", async () => {

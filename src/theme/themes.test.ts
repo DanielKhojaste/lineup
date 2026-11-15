@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { contrast, mix, normalizeHex, readableOn } from "./color";
 import {
+	chosenEffect,
 	DEFAULT_THEME,
 	presetsFromFiles,
 	sanitizeTheme,
 	shownSecondary,
 	THEME_PRESETS,
+	themeFromFile,
 	themeTokens,
 } from "./themes";
 
@@ -193,5 +195,35 @@ describe("Amber Night's see-through topics", () => {
 		expect(night["chip-border"]).toBe("#9E80C8");
 		const day = themeTokens(findPreset("amber-day")!);
 		expect(day["chip-bg"]).toMatch(/^#/);
+	});
+});
+
+describe("moving backgrounds", () => {
+	const theme = (id: string) => THEME_PRESETS.find((p) => p.preset === id)!;
+
+	it("come with the Dune themes", () => {
+		expect(theme("dune").effects).toEqual(["spice"]);
+		expect(theme("dune-sand").effects).toEqual(["worm-sign"]);
+		expect(theme("fremen").effects).toContain("thumper");
+		expect(theme("giedi-prime").effects).toContain("black-sun");
+		expect(theme("amber-night").effects).toBeUndefined();
+	});
+
+	it("show the one picked for a theme, its first by default, or none", () => {
+		expect(chosenEffect(theme("fremen"), {})).toBe("thumper");
+		expect(chosenEffect(theme("fremen"), { fremen: "water-drops" })).toBe("water-drops");
+		expect(chosenEffect(theme("fremen"), { fremen: "off" })).toBeNull();
+		// A choice the theme doesn't have (a file was edited) falls back to its first.
+		expect(chosenEffect(theme("fremen"), { fremen: "spice" })).toBe("thumper");
+		expect(chosenEffect(theme("amber-night"), {})).toBeNull();
+	});
+
+	it("read from theme files, old and new, ignoring unknown ones", () => {
+		const file = { name: "X", accent: "#111111", secondary: "#222222" };
+		expect(themeFromFile({ ...file, effect: "spice" }, "x")?.effects).toEqual(["spice"]);
+		expect(themeFromFile({ ...file, effects: ["thumper", "lasers", "thumper"] }, "x")?.effects).toEqual([
+			"thumper",
+		]);
+		expect(themeFromFile({ ...file, effects: ["lasers"] }, "x")?.effects).toBeUndefined();
 	});
 });

@@ -7,15 +7,18 @@ import {
 	useState,
 } from "react";
 import {
+	chosenEffect,
 	DEFAULT_THEME,
 	findPreset,
 	sanitizeTheme,
+	ThemePreset,
 	ThemeSettings,
 	themeTokens,
 } from "./themes";
 import { findTheme, loadUserThemeFiles, useUserThemes } from "./userThemes";
 import { usePreferences } from "../state/preferences";
-import SpiceEffect from "./SpiceEffect";
+import ThemeEffectLayer from "./ThemeEffectLayer";
+import { effectColours } from "./effects";
 
 const STORAGE_KEY = "lineup.theme";
 /** The Lineup theme used most recently, to go back to when a theme of yours is deleted. */
@@ -37,6 +40,8 @@ function lastPreset(): ThemeSettings {
 interface ThemeContextValue {
 	theme: ThemeSettings;
 	setTheme: (theme: ThemeSettings) => void;
+	/** Show this theme's moving background instead, while it's being previewed (null to stop). */
+	previewEffect: (theme: ThemePreset | null) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -62,6 +67,8 @@ function loadTheme(): ThemeSettings {
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
 	const [theme, setThemeState] = useState<ThemeSettings>(loadTheme);
+	// The Theme preview shows the picked theme's moving background in place of this one's.
+	const [previewing, setPreviewing] = useState<ThemePreset | null>(null);
 	const userThemes = useUserThemes();
 
 	// Your themes live in Documents/Lineup/themes in the desktop app.
@@ -109,16 +116,27 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 					// Storage can be unavailable (private mode); the theme still applies for this session.
 				}
 			},
+			previewEffect: setPreviewing,
 		}),
 		[theme],
 	);
 
-	const effect = theme.preset === "custom" ? undefined : findTheme(theme.preset)?.effect;
-	const { themeEffects, spice, spiceOverBoard } = usePreferences();
+	const preset = previewing ?? (theme.preset === "custom" ? undefined : findTheme(theme.preset));
+	const { themeEffect, spice, spiceOverBoard } = usePreferences();
+	const effect = chosenEffect(preset, themeEffect);
+	const colours = useMemo(() => preset && effectColours(preset), [preset]);
 	return (
 		<ThemeContext.Provider value={value}>
 			{children}
-			{effect === "spice" && themeEffects && <SpiceEffect settings={spice} overBoard={spiceOverBoard} />}
+			{effect && colours && (
+				<ThemeEffectLayer
+					key={effect}
+					effect={effect}
+					colours={colours}
+					spice={spice}
+					overBoard={spiceOverBoard}
+				/>
+			)}
 		</ThemeContext.Provider>
 	);
 }

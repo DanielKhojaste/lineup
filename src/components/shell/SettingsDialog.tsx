@@ -11,7 +11,7 @@ import {
 	themeTokens,
 } from "../../theme/themes";
 import { addUserTheme, findTheme, useUserThemes } from "../../theme/userThemes";
-import SpiceControls from "./SpiceControls";
+import ThemeEffectControls from "./ThemeEffectControls";
 import ThemeActions from "./ThemeActions";
 import ThemeDropdown from "./ThemeDropdown";
 import { Keys } from "../ui/Keys";
@@ -146,7 +146,7 @@ export default function SettingsDialog({
 				<section className="dialog__section">
 					<h3>Appearance</h3>
 					<ThemeDropdown value={theme} userThemes={userThemes} onChange={setTheme} />
-					<SpiceControls effect={current.effect} />
+					<ThemeEffectControls theme={current} />
 
 					<ThemeActions
 						theme={current}

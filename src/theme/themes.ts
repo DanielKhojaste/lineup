@@ -20,12 +20,47 @@ export interface ThemePreset extends ThemeSettings {
 	/** The same theme in the other mode (e.g. Amber Night and Amber Day). */
 	pair?: string;
 	chips?: ChipStyle;
-	/** Something that moves behind the interface: "spice" is Dune's drifting spice. */
-	effect?: ThemeEffect;
+	/**
+	 * Moving backgrounds the theme comes with (Dune's drifting spice, say).
+	 * The first is the one shown until the coach picks another.
+	 */
+	effects?: ThemeEffect[];
 }
 
-/** Effects a theme can have. */
-export type ThemeEffect = "spice";
+/** Every moving background there is; drawn by `effects/`. */
+export const THEME_EFFECTS = [
+	"spice",
+	"thumper",
+	"worm-sign",
+	"desert-night",
+	"water-drops",
+	"water-of-life",
+	"water-of-life-streams",
+	"black-sun",
+	"black-fireworks",
+	"infrared",
+	"arena-red",
+] as const;
+export type ThemeEffect = (typeof THEME_EFFECTS)[number];
+
+export function isThemeEffect(value: unknown): value is ThemeEffect {
+	return THEME_EFFECTS.includes(value as ThemeEffect);
+}
+
+/**
+ * The moving background to show for a theme: the one picked for it in
+ * Settings, else its first. Null when it has none or it's turned off.
+ */
+export function chosenEffect(
+	theme: Pick<ThemePreset, "preset" | "effects"> | undefined,
+	choices: Record<string, string>,
+): ThemeEffect | null {
+	const effects = theme?.effects ?? [];
+	if (!theme || !effects.length) return null;
+	const choice = choices[theme.preset];
+	if (choice === "off") return null;
+	return effects.find((e) => e === choice) ?? effects[0];
+}
 
 /** What a theme file holds: a file in `src/theme/presets/`, or a `.lineup-theme` file. */
 export interface ThemeFile {
@@ -37,7 +72,15 @@ export interface ThemeFile {
 	tokens?: unknown;
 	pair?: unknown;
 	chips?: unknown;
+	effects?: unknown;
+	/** The old way of naming one effect: `"effect": "spice"`. */
 	effect?: unknown;
+}
+
+function effectsFrom(raw: ThemeFile): { effects?: ThemeEffect[] } {
+	const list = Array.isArray(raw.effects) ? raw.effects : raw.effect ? [raw.effect] : [];
+	const effects = [...new Set(list.filter(isThemeEffect))];
+	return effects.length ? { effects } : {};
 }
 
 /** A theme from a file's contents, or null when the file doesn't hold one. */
@@ -68,7 +111,7 @@ export function themeFromFile(raw: ThemeFile, id: string): ThemePreset | null {
 		...(Object.keys(tokens).length ? { tokens } : {}),
 		...(typeof raw.pair === "string" ? { pair: raw.pair } : {}),
 		...(raw.chips === "outline" ? { chips: "outline" as const } : {}),
-		...(raw.effect === "spice" ? { effect: "spice" as const } : {}),
+		...effectsFrom(raw),
 	};
 }
 

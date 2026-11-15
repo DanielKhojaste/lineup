@@ -4,7 +4,7 @@
 	"mode": "dark",
 	"accent": "#FF8A1F",
 	"secondary": "#2B8CFF",
-	"effect": "spice",
+	"effects": ["spice"],
 	"tokens": {
 		"bg": "#1A110A",
 		"surface": "#23170E",

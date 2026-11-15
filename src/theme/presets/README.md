@@ -13,6 +13,7 @@ to add a theme. The file name is the theme's id, so keep it once people use it.
 	"secondary": "#2C0055", // the secondary colour
 	"pair": "amber-day",    // optional: the same theme in the other mode
 	"chips": "outline",     // optional: tags and topics as a soft wash with a border ("filled" if left out)
+	"effects": ["spice"],   // optional: moving backgrounds, the first shown by default (see ../effects/)
 	"tokens": {}            // optional: set any colour below by hand
 }
 ```
