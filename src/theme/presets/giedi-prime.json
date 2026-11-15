@@ -4,7 +4,6 @@
 	"mode": "dark",
 	"accent": "#ECECEC",
 	"secondary": "#B3261E",
-	"effects": ["black-sun", "black-fireworks", "infrared", "arena-red"],
 	"tokens": {
 		"bg": "#080808",
 		"surface": "#111111",

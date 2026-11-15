@@ -4,7 +4,7 @@
 	"mode": "dark",
 	"accent": "#3A97FF",
 	"secondary": "#D9A75F",
-	"effects": ["thumper", "worm-sign", "desert-night", "water-drops", "water-of-life", "water-of-life-streams"],
+	"effects": ["desert-night"],
 	"tokens": {
 		"bg": "#0A0E15",
 		"surface": "#101622",

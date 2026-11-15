@@ -25,12 +25,12 @@ describe("spice preferences", () => {
 	it("keeps the chosen settings for next time", async () => {
 		const first = await load();
 		first.setPreferences({
-			themeEffect: { dune: "off", fremen: "worm-sign" },
+			themeEffect: { dune: "off", fremen: "off" },
 			spice: { size: 1.5, speed: 1.1, amount: 2.3 },
 		});
 		const saved = JSON.parse(store.get("lineup.preferences")!);
 		const { getPreferences } = await load(saved);
-		expect(getPreferences().themeEffect).toEqual({ dune: "off", fremen: "worm-sign" });
+		expect(getPreferences().themeEffect).toEqual({ dune: "off", fremen: "off" });
 		expect(getPreferences().spice).toEqual({ size: 1.5, speed: 1.1, amount: 2.3 });
 	});
 

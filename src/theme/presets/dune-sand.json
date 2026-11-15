@@ -4,7 +4,6 @@
 	"mode": "dark",
 	"accent": "#D9A55B",
 	"secondary": "#C2552A",
-	"effects": ["worm-sign"],
 	"tokens": {
 		"bg": "#13100D",
 		"surface": "#1A1612",

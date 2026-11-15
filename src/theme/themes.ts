@@ -28,19 +28,7 @@ export interface ThemePreset extends ThemeSettings {
 }
 
 /** Every moving background there is; drawn by `effects/`. */
-export const THEME_EFFECTS = [
-	"spice",
-	"thumper",
-	"worm-sign",
-	"desert-night",
-	"water-drops",
-	"water-of-life",
-	"water-of-life-streams",
-	"black-sun",
-	"black-fireworks",
-	"infrared",
-	"arena-red",
-] as const;
+export const THEME_EFFECTS = ["spice", "desert-night"] as const;
 export type ThemeEffect = (typeof THEME_EFFECTS)[number];
 
 export function isThemeEffect(value: unknown): value is ThemeEffect {

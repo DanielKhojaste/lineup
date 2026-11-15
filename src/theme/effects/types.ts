@@ -14,11 +14,6 @@ export interface SpiceSettings {
 	amount: number;
 }
 
-export interface Spot {
-	x: number;
-	y: number;
-}
-
 /** What an effect can see of the window. */
 export interface EffectEnv {
 	width: number;
@@ -26,16 +21,6 @@ export interface EffectEnv {
 	colours: EffectColours;
 	/** Read live: the sliders change it while the effect runs. */
 	spice: SpiceSettings;
-	/**
-	 * The middle of an empty part of the panels (no text, buttons or cards)
-	 * at least `radius` across, or null when there's no room. `score` picks
-	 * between the empty places (higher wins); without it, one at random.
-	 */
-	findSpace(radius: number, score?: (spot: Spot) => number): Spot | null;
-	/** Whether a spot found earlier is still empty (something may have opened there). */
-	hasSpace(spot: Spot, radius: number): boolean;
-	/** The boxes of the visible elements matching a selector (cached for a second). */
-	boxes(selector: string, limit?: number): DOMRect[];
 }
 
 export interface Effect {

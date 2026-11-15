@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { EFFECTS } from "./effects";
-import { EffectColours, EffectEnv, SpiceSettings, Spot } from "./effects/types";
+import { EffectColours, EffectEnv, SpiceSettings } from "./effects/types";
 import { ThemeEffect } from "./themes";
 
 /**
@@ -20,12 +20,6 @@ const FPS = 30;
 const AVOID = ".board-card__preview, .session-card__preview, dialog[open]";
 /** …and the board itself (the whole area around the field too). */
 const BOARD = ".board";
-/** What counts as "something there" when looking for an empty part of the panels (text counts too). */
-const BUSY =
-	"button, a, input, textarea, select, img, svg, canvas:not(.theme-effect), table, .board-card, .session-card, .nav-item, .filter-chip, .segmented, .notice, .chip, .tag, .theme-swatch, .kit-dot";
-/** Grid spacing, in pixels, when mapping the empty parts of the window. */
-const CELL = 14;
-
 export default function ThemeEffectLayer({
 	effect,
 	colours,
@@ -56,50 +50,6 @@ export default function ThemeEffectLayer({
 		let frame = 0;
 		const started = performance.now();
 
-		// Where the panels are empty, mapped on a grid now and then.
-		let bare: Uint8Array = new Uint8Array(0);
-		let cols = 0;
-		let rows = 0;
-		let mappedAt = -Infinity;
-		const mapSpace = () => {
-			cols = Math.ceil(env.width / CELL);
-			rows = Math.ceil(env.height / CELL);
-			bare = new Uint8Array(cols * rows).fill(1);
-			const mark = (r: DOMRect) => {
-				if (r.width < 1 || r.height < 1 || r.bottom < 0 || r.right < 0) return;
-				const c0 = Math.max(0, Math.floor(r.left / CELL));
-				const c1 = Math.min(cols - 1, Math.floor(r.right / CELL));
-				const r0 = Math.max(0, Math.floor(r.top / CELL));
-				const r1 = Math.min(rows - 1, Math.floor(r.bottom / CELL));
-				for (let row = r0; row <= r1; row++) bare.fill(0, row * cols + c0, row * cols + c1 + 1);
-			};
-			avoid.forEach(mark);
-			// Buttons, fields, cards, pictures…
-			for (const el of document.querySelectorAll(BUSY)) mark(el.getBoundingClientRect());
-			// …and any text.
-			const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-			let last: Element | null = null;
-			for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-				const parent = node.parentElement;
-				if (!parent || parent === last || !node.textContent?.trim()) continue;
-				last = parent;
-				mark(parent.getBoundingClientRect());
-			}
-			mappedAt = performance.now();
-		};
-		const roomAt = (c: number, r: number, cells: number) => {
-			for (let dr = -cells; dr <= cells; dr++)
-				for (let dc = -cells; dc <= cells; dc++) {
-					if (dc * dc + dr * dr > cells * cells) continue;
-					const cc = c + dc;
-					const rr = r + dr;
-					if (cc < 0 || rr < 0 || cc >= cols || rr >= rows || !bare[rr * cols + cc]) return false;
-				}
-			return true;
-		};
-
-		const boxCache = new Map<string, { at: number; boxes: DOMRect[] }>();
-
 		const env: EffectEnv = {
 			width: 0,
 			height: 0,
@@ -108,43 +58,6 @@ export default function ThemeEffectLayer({
 			},
 			get spice() {
 				return live.current.spice;
-			},
-			findSpace(radius, score) {
-				if (performance.now() - mappedAt > 2000) mapSpace();
-				const cells = Math.ceil(radius / CELL);
-				let best: Spot | null = null;
-				let bestScore = -Infinity;
-				for (let i = 0; i < (score ? 400 : 80); i++) {
-					const c = Math.floor(Math.random() * cols);
-					const r = Math.floor(Math.random() * rows);
-					if (!roomAt(c, r, cells)) continue;
-					const spot = { x: c * CELL + CELL / 2, y: r * CELL + CELL / 2 };
-					if (!score) return spot;
-					const s = score(spot);
-					if (s > bestScore) {
-						bestScore = s;
-						best = spot;
-					}
-				}
-				return best;
-			},
-			hasSpace(spot, radius) {
-				if (performance.now() - mappedAt > 2000) mapSpace();
-				return roomAt(Math.floor(spot.x / CELL), Math.floor(spot.y / CELL), Math.ceil(radius / CELL));
-			},
-			boxes(selector, limit = 200) {
-				const now = performance.now();
-				const cached = boxCache.get(selector);
-				if (cached && now - cached.at < 1000) return cached.boxes;
-				const boxes: DOMRect[] = [];
-				for (const el of document.querySelectorAll(selector)) {
-					const r = el.getBoundingClientRect();
-					if (r.width < 2 || r.height < 2 || r.bottom < 0 || r.top > env.height) continue;
-					boxes.push(r);
-					if (boxes.length >= limit) break;
-				}
-				boxCache.set(selector, { at: now, boxes });
-				return boxes;
 			},
 		};
 		const drawn = EFFECTS[effect].make(env);
@@ -162,7 +75,6 @@ export default function ThemeEffectLayer({
 			canvas.width = Math.round(env.width * ratio);
 			canvas.height = Math.round(env.height * ratio);
 			ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-			mappedAt = -Infinity;
 			measure();
 		};
 

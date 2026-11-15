@@ -201,29 +201,30 @@ describe("Amber Night's see-through topics", () => {
 describe("moving backgrounds", () => {
 	const theme = (id: string) => THEME_PRESETS.find((p) => p.preset === id)!;
 
-	it("come with the Dune themes", () => {
+	it("come with Dune and Fremen", () => {
 		expect(theme("dune").effects).toEqual(["spice"]);
-		expect(theme("dune-sand").effects).toEqual(["worm-sign"]);
-		expect(theme("fremen").effects).toContain("thumper");
-		expect(theme("giedi-prime").effects).toContain("black-sun");
-		expect(theme("amber-night").effects).toBeUndefined();
+		expect(theme("fremen").effects).toEqual(["desert-night"]);
+		expect(theme("dune-sand").effects).toBeUndefined();
+		expect(theme("giedi-prime").effects).toBeUndefined();
 	});
 
 	it("show the one picked for a theme, its first by default, or none", () => {
-		expect(chosenEffect(theme("fremen"), {})).toBe("thumper");
-		expect(chosenEffect(theme("fremen"), { fremen: "water-drops" })).toBe("water-drops");
+		expect(chosenEffect(theme("fremen"), {})).toBe("desert-night");
 		expect(chosenEffect(theme("fremen"), { fremen: "off" })).toBeNull();
 		// A choice the theme doesn't have (a file was edited) falls back to its first.
-		expect(chosenEffect(theme("fremen"), { fremen: "spice" })).toBe("thumper");
+		expect(chosenEffect(theme("fremen"), { fremen: "spice" })).toBe("desert-night");
+		expect(chosenEffect({ preset: "x", effects: ["spice", "desert-night"] }, { x: "desert-night" })).toBe(
+			"desert-night",
+		);
 		expect(chosenEffect(theme("amber-night"), {})).toBeNull();
 	});
 
 	it("read from theme files, old and new, ignoring unknown ones", () => {
 		const file = { name: "X", accent: "#111111", secondary: "#222222" };
 		expect(themeFromFile({ ...file, effect: "spice" }, "x")?.effects).toEqual(["spice"]);
-		expect(themeFromFile({ ...file, effects: ["thumper", "lasers", "thumper"] }, "x")?.effects).toEqual([
-			"thumper",
-		]);
+		expect(
+			themeFromFile({ ...file, effects: ["desert-night", "lasers", "desert-night"] }, "x")?.effects,
+		).toEqual(["desert-night"]);
 		expect(themeFromFile({ ...file, effects: ["lasers"] }, "x")?.effects).toBeUndefined();
 	});
 });

@@ -1,10 +1,9 @@
-import { EffectFactory, Spot } from "./types";
+import { EffectFactory } from "./types";
 import { glow, random, rgb, stamp } from "./util";
 
 /**
  * Desert night: the Fremen move at night. Faint stars twinkle over the
- * panels, now and then one falls, and Arrakis's two moons hang in the empty
- * part of the top bar.
+ * panels, now and then one of them sparkles, and comets streak across.
  */
 
 const PALE = "238, 230, 216";
@@ -19,34 +18,65 @@ interface Star {
 	blue: boolean;
 }
 
+interface Sparkle {
+	star: Star;
+	born: number;
+	life: number;
+}
+
+interface Comet {
+	x: number;
+	y: number;
+	vx: number;
+	vy: number;
+	born: number;
+	life: number;
+	/** Tail length, in seconds of travel. */
+	tail: number;
+	width: number;
+}
+
 const desertNight: EffectFactory = () => {
 	let stars: Star[] = [];
-	let moons: Spot | null = null;
-	let shooting: { x: number; y: number; vx: number; vy: number; born: number } | null = null;
-	let nextShooting = 3;
+	const sparkles: Sparkle[] = [];
+	const comets: Comet[] = [];
+	let nextSparkle = 0.4;
+	let nextComet = 0.8;
+
+	const comet = (width: number, height: number, t: number): Comet => {
+		// Mostly falling left to right, sometimes the other way.
+		const leftward = Math.random() < 0.3;
+		const angle = random(0.18, 0.55) + (leftward ? Math.PI - 0.73 : 0);
+		const speed = random(420, 700);
+		const big = Math.random() < 0.25;
+		return {
+			x: random(0.05, 0.85) * width + (leftward ? width * 0.15 : 0),
+			y: random(0.02, 0.45) * height,
+			vx: Math.cos(angle) * speed,
+			vy: Math.sin(angle) * speed,
+			born: t,
+			life: random(0.6, 1.1),
+			tail: big ? random(0.26, 0.34) : random(0.14, 0.22),
+			width: big ? 2.4 : 1.6,
+		};
+	};
 
 	return {
 		measure(env) {
 			const count = Math.min(260, Math.round((env.width * env.height) / 6000));
-			if (stars.length !== count) {
-				stars = Array.from({ length: count }, () => {
-					const bright = Math.random() < 0.08;
-					return {
-						x: Math.random() * env.width,
-						y: Math.random() * env.height,
-						size: bright ? random(5, 7) : random(2, 4),
-						alpha: bright ? random(0.6, 0.9) : random(0.22, 0.55),
-						rate: random(0.5, 2.2),
-						phase: random(0, Math.PI * 2),
-						blue: Math.random() < 0.25,
-					};
-				});
-			}
-			// The moons sit in the gap in the top bar when there is one.
-			const gap = env.boxes(".topbar__spacer").find((r) => r.width > 90);
-			moons = gap
-				? { x: gap.left + gap.width * 0.6, y: gap.top + gap.height / 2 }
-				: (moons ?? env.findSpace(36, (s) => -s.y));
+			if (stars.length === count) return;
+			stars = Array.from({ length: count }, () => {
+				const bright = Math.random() < 0.08;
+				return {
+					x: Math.random() * env.width,
+					y: Math.random() * env.height,
+					size: bright ? random(5, 7) : random(2, 4),
+					alpha: bright ? random(0.6, 0.9) : random(0.22, 0.55),
+					rate: random(0.5, 2.2),
+					phase: random(0, Math.PI * 2),
+					blue: Math.random() < 0.25,
+				};
+			});
 		},
 		draw(ctx, env, t) {
 			const pale = glow(PALE, 0.7);
@@ -56,62 +86,69 @@ const desertNight: EffectFactory = () => {
 				stamp(ctx, s.blue ? blue : pale, s.x, s.y, s.size, s.alpha * twinkle);
 			}
 
-			// A falling star now and then.
-			if (!shooting && t > nextShooting) {
-				const a = random(0.25, 0.6);
-				shooting = {
-					x: random(0.1, 0.8) * env.width,
-					y: random(0.05, 0.5) * env.height,
-					vx: Math.cos(a) * 520,
-					vy: Math.sin(a) * 520,
-					born: t,
-				};
+			// Now and then a star catches the light and sparkles.
+			if (t >= nextSparkle && stars.length) {
+				nextSparkle = t + random(0.35, 1.1);
+				sparkles.push({ star: stars[Math.floor(Math.random() * stars.length)], born: t, life: random(0.7, 1.2) });
 			}
-			if (shooting) {
-				const age = t - shooting.born;
-				if (age > 0.7) {
-					shooting = null;
-					nextShooting = t + random(6, 12);
-				} else {
-					const fade = Math.sin((age / 0.7) * Math.PI);
-					const x = shooting.x + shooting.vx * age;
-					const y = shooting.y + shooting.vy * age;
-					const tail = ctx.createLinearGradient(x, y, x - shooting.vx * 0.14, y - shooting.vy * 0.14);
-					tail.addColorStop(0, `rgba(${PALE}, ${0.7 * fade})`);
-					tail.addColorStop(1, `rgba(${PALE}, 0)`);
-					ctx.strokeStyle = tail;
-					ctx.lineWidth = 1.4;
-					ctx.beginPath();
-					ctx.moveTo(x, y);
-					ctx.lineTo(x - shooting.vx * 0.14, y - shooting.vy * 0.14);
-					ctx.stroke();
+			ctx.lineCap = "round";
+			for (let i = sparkles.length - 1; i >= 0; i--) {
+				const { star, born, life } = sparkles[i];
+				const p = (t - born) / life;
+				if (p >= 1) {
+					sparkles.splice(i, 1);
+					continue;
 				}
+				const k = Math.sin(p * Math.PI);
+				const colour = star.blue ? rgb(env.colours.accent) : PALE;
+				stamp(ctx, star.blue ? blue : pale, star.x, star.y, 10 + 12 * k, 0.9 * k);
+				// A four-pointed glint, turning slightly as it fades.
+				const reach = 5 + 9 * k;
+				ctx.save();
+				ctx.translate(star.x, star.y);
+				ctx.rotate(p * 0.4);
+				ctx.strokeStyle = `rgba(${colour}, ${0.75 * k})`;
+				ctx.lineWidth = 1;
+				ctx.beginPath();
+				ctx.moveTo(-reach, 0);
+				ctx.lineTo(reach, 0);
+				ctx.moveTo(0, -reach);
+				ctx.lineTo(0, reach);
+				ctx.stroke();
+				ctx.restore();
 			}
 
-			// Two moons: the first larger and full, the second a thin crescent.
-			if (moons) {
-				const { x, y } = moons;
-				const bg = rgb(env.colours.bg);
-				stamp(ctx, pale, x, y, 44, 0.22);
-				ctx.fillStyle = `rgba(${PALE}, 0.8)`;
+			// Comets: every couple of seconds, sometimes two at once.
+			if (t >= nextComet) {
+				nextComet = t + random(1.6, 4);
+				comets.push(comet(env.width, env.height, t));
+				if (Math.random() < 0.2) comets.push(comet(env.width, env.height, t + random(0, 0.3)));
+			}
+			for (let i = comets.length - 1; i >= 0; i--) {
+				const c = comets[i];
+				const age = t - c.born;
+				if (age > c.life) {
+					comets.splice(i, 1);
+					continue;
+				}
+				if (age < 0) continue;
+				// Bright quickly, then burning out.
+				const fade = Math.min(1, age / 0.12) * (1 - (age / c.life) ** 2);
+				const x = c.x + c.vx * age;
+				const y = c.y + c.vy * age;
+				const tx = x - c.vx * c.tail;
+				const ty = y - c.vy * c.tail;
+				const tail = ctx.createLinearGradient(x, y, tx, ty);
+				tail.addColorStop(0, `rgba(${PALE}, ${0.95 * fade})`);
+				tail.addColorStop(0.3, `rgba(${PALE}, ${0.4 * fade})`);
+				tail.addColorStop(1, `rgba(${PALE}, 0)`);
+				ctx.strokeStyle = tail;
+				ctx.lineWidth = c.width;
 				ctx.beginPath();
-				ctx.arc(x, y, 8, 0, Math.PI * 2);
-				ctx.fill();
-				ctx.fillStyle = `rgba(${bg}, 0.18)`;
-				ctx.beginPath();
-				ctx.arc(x + 2.5, y + 1.5, 3, 0, Math.PI * 2);
-				ctx.fill();
-				const x2 = x + 30;
-				const y2 = y - 5;
-				stamp(ctx, pale, x2, y2, 26, 0.16);
-				ctx.fillStyle = `rgba(${PALE}, 0.7)`;
-				ctx.beginPath();
-				ctx.arc(x2, y2, 5, 0, Math.PI * 2);
-				ctx.fill();
-				ctx.fillStyle = `rgba(${bg}, 0.95)`;
-				ctx.beginPath();
-				ctx.arc(x2 + 2.4, y2 - 1, 4.6, 0, Math.PI * 2);
-				ctx.fill();
+				ctx.moveTo(x, y);
+				ctx.lineTo(tx, ty);
+				ctx.stroke();
+				stamp(ctx, pale, x, y, 6 + c.width * 3, 0.9 * fade);
 			}
 		},
 	};
