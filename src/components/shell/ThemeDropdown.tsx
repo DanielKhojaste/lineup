@@ -1,4 +1,4 @@
-import { KeyboardEvent, useEffect, useId, useRef, useState } from "react";
+import { CSSProperties, KeyboardEvent, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { THEME_PRESETS, ThemePreset, ThemeSettings, themeTokens } from "../../theme/themes";
 import { findTheme } from "../../theme/userThemes";
 import { Icon } from "../Icon";
@@ -71,9 +71,39 @@ export default function ThemeDropdown({
 		return () => document.removeEventListener("pointerdown", away);
 	}, [open]);
 
-	// When the list opens near the bottom of the Settings window, scroll it into view.
-	useEffect(() => {
-		if (open) listRef.current?.scrollIntoView({ block: "nearest" });
+	// The list floats over everything (it doesn't push the Settings window's
+	// contents down or make it scroll): under the field, or above it when
+	// there's no room below. It follows the field if the window scrolls.
+	const [place, setPlace] = useState<CSSProperties>({ visibility: "hidden" });
+	useLayoutEffect(() => {
+		if (!open) return;
+		const update = () => {
+			const button = buttonRef.current?.getBoundingClientRect();
+			if (!button) return;
+			const gap = 4;
+			const margin = 8;
+			const below = window.innerHeight - button.bottom - gap - margin;
+			const above = button.top - gap - margin;
+			const wanted = Math.min(320, listRef.current?.scrollHeight ?? 320);
+			const up = below < Math.min(wanted, 200) && above > below;
+			setPlace({
+				position: "fixed",
+				left: button.left,
+				width: button.width,
+				maxHeight: Math.max(120, Math.min(320, up ? above : below)),
+				...(up
+					? { bottom: window.innerHeight - button.top + gap }
+					: { top: button.bottom + gap }),
+			});
+		};
+		update();
+		window.addEventListener("resize", update);
+		// Any scrolling container (the Settings window's body, say).
+		document.addEventListener("scroll", update, true);
+		return () => {
+			window.removeEventListener("resize", update);
+			document.removeEventListener("scroll", update, true);
+		};
 	}, [open]);
 
 	// Keep the highlighted theme in view.
@@ -153,6 +183,7 @@ export default function ThemeDropdown({
 					ref={listRef}
 					id={`${id}-list`}
 					className="theme-dropdown__list"
+					style={place}
 					role="listbox"
 					aria-labelledby={`${id}-label`}
 				>
