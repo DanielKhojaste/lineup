@@ -3470,7 +3470,7 @@ fieldset.field {
 /* Settings: shortcuts open like a dropdown. */
 .shortcuts-disclosure > summary {
 	display: flex;
-	align-items: baseline;
+	align-items: center;
 	gap: 10px;
 	cursor: pointer;
 	list-style: none;
@@ -3486,13 +3486,14 @@ fieldset.field {
 	height: 7px;
 	border-right: 1.5px solid currentColor;
 	border-bottom: 1.5px solid currentColor;
-	transform: translateY(-2px) rotate(-45deg);
+	/* Pointing right, centred on the heading's line. */
+	transform: rotate(-45deg);
 	transition: transform 0.15s;
-	align-self: center;
+	flex-shrink: 0;
 }
 
 .shortcuts-disclosure[open] > summary::before {
-	transform: translateY(-3px) rotate(45deg);
+	transform: translateY(-2px) rotate(45deg);
 }
 
 .shortcuts-disclosure[open] > summary {
@@ -3621,11 +3622,6 @@ fieldset.field {
 	padding: 12px 16px 0;
 }
 
-.effect-controls__dev {
-	margin-top: 4px;
-	font-size: 12px;
-	color: var(--text-muted);
-}
 
 .spice-settings {
 	display: flex;

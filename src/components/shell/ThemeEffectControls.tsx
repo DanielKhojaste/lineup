@@ -1,4 +1,3 @@
-import { TESTING_SWITCHES } from "../../testing";
 import { setPreferences, usePreferences } from "../../state/preferences";
 import { DEFAULT_SPICE, EFFECTS, SpiceSettings } from "../../theme/effects";
 import { chosenEffect, ThemePreset } from "../../theme/themes";
@@ -18,7 +17,7 @@ const times = (value: number) => `${value.toFixed(2).replace(/\.?0+$/, "")}×`;
  * stay the same next time.
  */
 export default function ThemeEffectControls({ theme }: { theme: ThemePreset }) {
-	const { themeEffect, spice, spiceOverBoard } = usePreferences();
+	const { themeEffect, spice } = usePreferences();
 	const effects = theme.effects ?? [];
 	if (!effects.length) return null;
 	const chosen = chosenEffect(theme, themeEffect);
@@ -77,16 +76,6 @@ export default function ThemeEffectControls({ theme }: { theme: ThemePreset }) {
 						Reset spice particle settings
 					</button>
 				</div>
-			)}
-			{TESTING_SWITCHES && chosen && (
-				<label className="check effect-controls__dev">
-					<input
-						type="checkbox"
-						checked={spiceOverBoard}
-						onChange={(e) => setPreferences({ spiceOverBoard: e.target.checked })}
-					/>
-					Over the board too (for testing; goes before the release)
-				</label>
 			)}
 		</div>
 	);

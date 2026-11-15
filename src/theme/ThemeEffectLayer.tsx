@@ -24,18 +24,15 @@ export default function ThemeEffectLayer({
 	effect,
 	colours,
 	spice,
-	overBoard = false,
 }: {
 	effect: ThemeEffect;
 	colours: EffectColours;
 	spice: SpiceSettings;
-	/** For testing only: draw over the board too. */
-	overBoard?: boolean;
 }) {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	// Read every frame, so moving a slider changes things straight away.
-	const live = useRef({ spice, overBoard, colours });
-	live.current = { spice, overBoard, colours };
+	const live = useRef({ spice, colours });
+	live.current = { spice, colours };
 
 	useEffect(() => {
 		const canvas = canvasRef.current;
@@ -63,7 +60,7 @@ export default function ThemeEffectLayer({
 		const drawn = EFFECTS[effect].make(env);
 
 		const measure = () => {
-			const selector = live.current.overBoard ? AVOID : `${BOARD}, ${AVOID}`;
+			const selector = `${BOARD}, ${AVOID}`;
 			avoid = [...document.querySelectorAll(selector)].map((el) => el.getBoundingClientRect());
 			drawn.measure?.(env);
 		};

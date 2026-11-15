@@ -44,8 +44,4 @@ describe("spice preferences", () => {
 		expect(getPreferences().spice).toEqual({ size: 3, speed: 0.1, amount: 1 });
 	});
 
-	it("can drift over the board, for testing", async () => {
-		const { getPreferences } = await load({ spiceOverBoard: true });
-		expect(getPreferences().spiceOverBoard).toBe(true);
-	});
 });

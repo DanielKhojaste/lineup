@@ -122,7 +122,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 	);
 
 	const preset = previewing ?? (theme.preset === "custom" ? undefined : findTheme(theme.preset));
-	const { themeEffect, spice, spiceOverBoard } = usePreferences();
+	const { themeEffect, spice } = usePreferences();
 	const effect = chosenEffect(preset, themeEffect);
 	const colours = useMemo(() => preset && effectColours(preset), [preset]);
 	return (
@@ -134,7 +134,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 					effect={effect}
 					colours={colours}
 					spice={spice}
-					overBoard={spiceOverBoard}
 				/>
 			)}
 		</ThemeContext.Provider>

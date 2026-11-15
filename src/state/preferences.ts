@@ -1,4 +1,3 @@
-import { TESTING_SWITCHES } from "../testing";
 import { useSyncExternalStore } from "react";
 import { DEFAULT_PITCH, isSport } from "../model/sports";
 import { PitchSettings } from "../model/types";
@@ -21,8 +20,6 @@ export interface Preferences {
 	themeEffect: Record<string, string>;
 	/** How Dune's spice looks: size, speed and amount, as multiples of normal. */
 	spice: { size: number; speed: number; amount: number };
-	/** For testing only (dev builds): the spice drifts over the board too. */
-	spiceOverBoard: boolean;
 }
 
 const STORAGE_KEY = "lineup.preferences";
@@ -31,7 +28,6 @@ const DEFAULTS: Preferences = {
 	hasDefaultSport: false,
 	themeEffect: {},
 	spice: { size: 1, speed: 1, amount: 1 },
-	spiceOverBoard: false,
 };
 
 /** A multiple between min and max (1 when missing). */
@@ -69,7 +65,6 @@ function read(): Preferences {
 				speed: multiple(raw?.spice?.speed, 0.1, 4),
 				amount: multiple(raw?.spice?.amount, 0.1, 3),
 			},
-			spiceOverBoard: TESTING_SWITCHES && raw?.spiceOverBoard === true,
 		};
 	} catch {
 		return DEFAULTS;

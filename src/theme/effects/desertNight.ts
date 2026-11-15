@@ -3,7 +3,8 @@ import { glow, random, rgb, stamp } from "./util";
 
 /**
  * Desert night: the Fremen move at night. Faint stars twinkle over the
- * panels, now and then one of them sparkles, and comets streak across.
+ * panels, now and then one of them sparkles, and every ten seconds or so a
+ * comet streaks across.
  */
 
 const PALE = "238, 230, 216";
@@ -41,23 +42,21 @@ const desertNight: EffectFactory = () => {
 	const sparkles: Sparkle[] = [];
 	const comets: Comet[] = [];
 	let nextSparkle = 0.4;
-	let nextComet = 0.8;
+	let nextComet = 2;
 
+	/** A comet from a random spot, heading right and a little down. */
 	const comet = (width: number, height: number, t: number): Comet => {
-		// Mostly falling left to right, sometimes the other way.
-		const leftward = Math.random() < 0.3;
-		const angle = random(0.18, 0.55) + (leftward ? Math.PI - 0.73 : 0);
-		const speed = random(420, 700);
-		const big = Math.random() < 0.25;
+		const angle = random(0.12, 0.45);
+		const speed = random(420, 620);
 		return {
-			x: random(0.05, 0.85) * width + (leftward ? width * 0.15 : 0),
-			y: random(0.02, 0.45) * height,
+			x: random(0.05, 0.7) * width,
+			y: random(0.05, 0.6) * height,
 			vx: Math.cos(angle) * speed,
 			vy: Math.sin(angle) * speed,
 			born: t,
-			life: random(0.6, 1.1),
-			tail: big ? random(0.26, 0.34) : random(0.14, 0.22),
-			width: big ? 2.4 : 1.6,
+			life: random(0.7, 1.1),
+			tail: random(0.16, 0.24),
+			width: 1.6,
 		};
 	};
 
@@ -70,7 +69,7 @@ const desertNight: EffectFactory = () => {
 				return {
 					x: Math.random() * env.width,
 					y: Math.random() * env.height,
-					size: bright ? random(5, 7) : random(2, 4),
+					size: bright ? random(4, 5) : random(2, 3.5),
 					alpha: bright ? random(0.6, 0.9) : random(0.22, 0.55),
 					rate: random(0.5, 2.2),
 					phase: random(0, Math.PI * 2),
@@ -101,14 +100,14 @@ const desertNight: EffectFactory = () => {
 				}
 				const k = Math.sin(p * Math.PI);
 				const colour = star.blue ? rgb(env.colours.accent) : PALE;
-				stamp(ctx, star.blue ? blue : pale, star.x, star.y, 10 + 12 * k, 0.9 * k);
-				// A four-pointed glint, turning slightly as it fades.
-				const reach = 5 + 9 * k;
+				stamp(ctx, star.blue ? blue : pale, star.x, star.y, 3 + 3 * k, 0.9 * k);
+				// A tiny four-pointed glint, the size of a speck of spice.
+				const reach = 1.5 + 2.5 * k;
 				ctx.save();
 				ctx.translate(star.x, star.y);
 				ctx.rotate(p * 0.4);
-				ctx.strokeStyle = `rgba(${colour}, ${0.75 * k})`;
-				ctx.lineWidth = 1;
+				ctx.strokeStyle = `rgba(${colour}, ${0.8 * k})`;
+				ctx.lineWidth = 0.8;
 				ctx.beginPath();
 				ctx.moveTo(-reach, 0);
 				ctx.lineTo(reach, 0);
@@ -118,11 +117,10 @@ const desertNight: EffectFactory = () => {
 				ctx.restore();
 			}
 
-			// Comets: every couple of seconds, sometimes two at once.
-			if (t >= nextComet) {
-				nextComet = t + random(1.6, 4);
+			// One comet at a time, about every ten seconds.
+			if (t >= nextComet && !comets.length) {
+				nextComet = t + random(8, 12);
 				comets.push(comet(env.width, env.height, t));
-				if (Math.random() < 0.2) comets.push(comet(env.width, env.height, t + random(0, 0.3)));
 			}
 			for (let i = comets.length - 1; i >= 0; i--) {
 				const c = comets[i];
