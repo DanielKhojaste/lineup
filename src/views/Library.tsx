@@ -548,7 +548,7 @@ export default function Library() {
 		{
 			label: "Preview",
 			disabled: session.blocks.length === 0,
-			onSelect: () => navigate(`/session/${session.id}/preview`),
+			onSelect: () => navigate(`/session/${session.id}/preview`, { state: { back: "/" } }),
 		},
 		{
 			label: "Rename…",

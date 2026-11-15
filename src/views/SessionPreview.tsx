@@ -52,13 +52,52 @@ function PlayingBoard({ board, playing, step }: { board: Board; playing: boolean
 	return <BoardPreview board={shown} className="session-preview__board" />;
 }
 
+type DetailsPlace = "below" | "side" | "hidden";
+const DETAILS_KEY = "lineup.previewDetails";
+
+/** Where the drill's details go: under the board, beside it, or hidden. Remembered. */
+function savedDetails(): DetailsPlace {
+	try {
+		const saved = localStorage.getItem(DETAILS_KEY);
+		return saved === "side" || saved === "hidden" ? saved : "below";
+	} catch {
+		return "below";
+	}
+}
+
 export default function SessionPreview() {
 	const { id } = useParams();
 	const library = useLibrary();
 	const navigate = useNavigate();
-	const from = (useLocation().state as { from?: string } | null)?.from;
+	// Where the preview was opened from: the library, or the session (and where
+	// the session itself was opened from, a plan or the calendar).
+	const { from, back } = (useLocation().state as { from?: string; back?: string } | null) ?? {};
 	const session: Session | undefined = id ? library.getSession(id) : undefined;
-	const [index, setIndex] = useState(0);
+	// Start at the first drill, past a team talk or anything else before it.
+	const [index, setIndex] = useState(() => {
+		const first = session?.blocks.findIndex((b) => b.kind === "drill") ?? -1;
+		return Math.max(0, first);
+	});
+	const [details, setDetailsState] = useState<DetailsPlace>(savedDetails);
+	const setDetails = (place: DetailsPlace) => {
+		setDetailsState(place);
+		try {
+			localStorage.setItem(DETAILS_KEY, place);
+		} catch {
+			// Only remembered while the app is open.
+		}
+	};
+	// The library may still be loading when the preview opens: start at the first drill once it's there.
+	const startedFor = useRef<string | null>(null);
+	useEffect(() => {
+		if (!session || startedFor.current === session.id) return;
+		startedFor.current = session.id;
+		setIndex(Math.max(0, session.blocks.findIndex((b) => b.kind === "drill")));
+	}, [session]);
+	const goBack = () =>
+		back
+			? navigate(back)
+			: navigate(`/session/${session!.id}`, { state: from ? { from } : undefined });
 	const [playing, setPlaying] = useState(true);
 	const [step, setStep] = useState(0);
 
@@ -95,12 +134,12 @@ export default function SessionPreview() {
 				e.preventDefault();
 				setPlaying((p) => !p);
 			} else if (e.key === "Escape") {
-				navigate(`/session/${session.id}`, { state: from ? { from } : undefined });
+				goBack();
 			}
 		};
 		window.addEventListener("keydown", onKey);
 		return () => window.removeEventListener("keydown", onKey);
-	}, [session, steps, navigate, from]);
+	}, [session, steps, navigate, from, back]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	if (library.status === "loading") return <Loader />;
 	if (!session)
@@ -124,13 +163,9 @@ export default function SessionPreview() {
 	return (
 		<div className="session-preview">
 			<header className="topbar">
-				<button
-					type="button"
-					className="back-button"
-					onClick={() => navigate(`/session/${session.id}`, { state: from ? { from } : undefined })}
-				>
+				<button type="button" className="back-button" onClick={goBack}>
 					<Icon name="chevronLeft" size={16} />
-					Edit session
+					{back === "/" ? "Library" : "Session"}
 				</button>
 				<span className="topbar__divider" aria-hidden="true" />
 				<span className="badge">Session</span>
@@ -138,6 +173,37 @@ export default function SessionPreview() {
 				<span className="muted small">{summary.join(" · ")}</span>
 				<span className="topbar__spacer" />
 				<span className="muted small session-preview__keys">↑ ↓ blocks · ← → steps · Space play</span>
+				<div className="segmented segmented--small" role="radiogroup" aria-label="Drill details">
+					{(
+						[
+							["below", "Details below"],
+							["side", "Details on the right"],
+							["hidden", "Hide details"],
+						] as const
+					).map(([place, label]) => (
+						<button
+							key={place}
+							type="button"
+							role="radio"
+							aria-checked={details === place}
+							aria-label={label}
+							title={label}
+							className={`segmented__item${details === place ? " is-active" : ""}`}
+							onClick={() => setDetails(place)}
+						>
+							<Icon name={place === "below" ? "panelBottom" : place === "side" ? "panelRight" : "eyeOff"} size={16} />
+						</button>
+					))}
+				</div>
+				{back === "/" && (
+					<button
+						type="button"
+						className="button button--small"
+						onClick={() => navigate(`/session/${session.id}`)}
+					>
+						Edit session
+					</button>
+				)}
 			</header>
 
 			<div className="session-preview__body">
@@ -180,7 +246,7 @@ export default function SessionPreview() {
 					})}
 				</nav>
 
-				<main className="session-preview__main">
+				<main className={`session-preview__main session-preview__main--${details}`}>
 					{block && board ? (
 						<>
 							<div className="session-preview__stagewrap">
@@ -211,6 +277,7 @@ export default function SessionPreview() {
 									))}
 								</div>
 							)}
+							{details !== "hidden" && (
 							<section className="session-preview__details">
 								<div className="session-preview__facts">
 									<span>
@@ -241,6 +308,7 @@ export default function SessionPreview() {
 									</>
 								)}
 							</section>
+							)}
 						</>
 					) : block ? (
 						<div className="session-preview__rest">

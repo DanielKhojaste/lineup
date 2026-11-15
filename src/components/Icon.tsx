@@ -50,6 +50,9 @@ export const ICONS = {
 	// Two layers: everything in the library.
 	stack: "M12 4l8 4-8 4-8-4zM4 12l8 4 8-4M4 16l8 4 8-4",
 	pencil: "M15.5 5.5l3 3M4 20l1-4L16 5a2.1 2.1 0 0 1 3 3L8 19z",
+	panelBottom: "M4 5h16v14H4zM4 14h16",
+	panelRight: "M4 5h16v14H4zM14 5v14",
+	eyeOff: "M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12zM4 4l16 16",
 	eye: "M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12zM9 12a3 3 0 1 0 6 0a3 3 0 1 0-6 0",
 	close: "M6 6l12 12M18 6L6 18",
 	check: "M5 12l5 5L20 7",

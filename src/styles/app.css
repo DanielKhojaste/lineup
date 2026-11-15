@@ -4413,3 +4413,50 @@ option {
 option:disabled {
 	color: var(--text-muted);
 }
+
+/* Drill details beside the board instead of under it. */
+.session-preview__main--side {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 320px;
+	grid-template-rows: minmax(0, 1fr) auto;
+	column-gap: 20px;
+}
+
+.session-preview__main--side .session-preview__stagewrap {
+	grid-column: 1;
+	grid-row: 1;
+}
+
+.session-preview__main--side .session-preview__steps {
+	grid-column: 1;
+	grid-row: 2;
+}
+
+.session-preview__main--side .session-preview__details {
+	grid-column: 2;
+	grid-row: 1 / 3;
+	padding: 0 0 0 20px;
+	border-top: 0;
+	border-left: 1px solid var(--border);
+	overflow-y: auto;
+}
+
+.session-preview__main--side .session-preview__facts {
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 4px;
+}
+
+.session-preview__main--side .session-preview__facts .topbar__spacer {
+	display: none;
+}
+
+/* A compact row of icon choices, for a top bar. */
+.segmented--small {
+	padding: 2px;
+	gap: 2px;
+}
+
+.segmented--small .segmented__item {
+	padding: 4px 6px;
+}
