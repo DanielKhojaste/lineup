@@ -86,7 +86,9 @@ export const SPORT_INFO: Record<Sport, SportInfo> = {
 		surface: "rink",
 		length: 60.96,
 		width: 25.91,
-		margin: { ends: 1.5, sides: 1.5 },
+		// No room around the rink: coaches don't draw outside the boards. Just
+		// enough for the boards' line to show.
+		margin: { ends: 0.3, sides: 0.3 },
 		goal: { width: 1.83, depth: 1.12 },
 		players: 6,
 	},
