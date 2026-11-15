@@ -1,3 +1,5 @@
+import { SPORT_INFO, SPORTS } from "../model/sports";
+import { SURFACES } from "../components/board/Pitch";
 import { PointerEvent as ReactPointerEvent, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
@@ -254,6 +256,7 @@ function PickPlanDialog({
 
 const MODE_KEY = "lineup.calendarMode";
 
+
 /** "16 – 22 Nov 2026", or "30 Nov – 6 Dec 2026" across two months. */
 function weekTitle(first: Date, last: Date): string {
 	const mon = (d: Date) => d.toLocaleDateString(undefined, { month: "short" });
@@ -300,7 +303,14 @@ export default function Calendar() {
 		() => [...new Set(library.calendar.map((e) => e.team).filter(Boolean))].sort(),
 		[library.calendar],
 	);
-	const entries = library.calendar.filter((e) => team === "all" || e.team === team);
+	// Several sports on one calendar: each session shows its sport's colour,
+	// and the sports can be shown one at a time.
+	const sportOf = (e: CalendarEntry) => library.getSession(e.sessionId)?.header.sport;
+	const sports = SPORTS.filter((sp) => library.calendar.some((e) => sportOf(e) === sp));
+	const [sport, setSport] = useState<string>("all");
+	const entries = library.calendar.filter(
+		(e) => (team === "all" || e.team === team) && (sport === "all" || sportOf(e) === sport),
+	);
 	const byDay = useMemo(() => {
 		const map = new Map<string, CalendarEntry[]>();
 		for (const e of entries) map.set(e.date, [...(map.get(e.date) ?? []), e]);
@@ -420,6 +430,19 @@ export default function Calendar() {
 						</select>
 					</label>
 				)}
+				{sports.length > 1 && (
+					<label className="sort">
+						<span className="muted">Sport</span>
+						<select className="field__input" value={sport} onChange={(e) => setSport(e.target.value)}>
+							<option value="all">All sports</option>
+							{sports.map((sp) => (
+								<option key={sp} value={sp}>
+									{SPORT_INFO[sp].name}
+								</option>
+							))}
+						</select>
+					</label>
+				)}
 				<button type="button" className="button" onClick={() => setPickPlan(true)}>
 					<Icon name="plan" size={16} />
 					Put a plan on it
@@ -511,6 +534,13 @@ export default function Calendar() {
 											onContextMenu={(ev) => openMenu(ev, entryMenu(e))}
 										>
 											{e.status === "done" && <Icon name="check" size={12} />}
+											{sports.length > 1 && sportOf(e) && (
+												<span
+													className="sport-swatch"
+													style={{ background: SURFACES[sportOf(e)!].floor }}
+													title={SPORT_INFO[sportOf(e)!].name}
+												/>
+											)}
 											{e.time && <span className="calendar__time mono">{e.time}</span>}
 											<span className="calendar__entry-title">{sessionTitle(e.sessionId)}</span>
 										</button>
