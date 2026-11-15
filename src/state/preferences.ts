@@ -1,6 +1,6 @@
 import { DEFAULT_SIZES, INTERFACE_SCALES, MARKER_SCALES } from "../config/sizes";
 import { useSyncExternalStore } from "react";
-import { DEFAULT_PITCH, isSport } from "../model/sports";
+import { DEFAULT_PITCH, FieldVariant, isSport, Sport } from "../model/sports";
 import { PitchSettings } from "../model/types";
 
 /**
@@ -20,6 +20,12 @@ export interface Preferences {
 	 * for new boards"). Until then, new sessions ask which sport they're for.
 	 */
 	hasDefaultSport: boolean;
+	/**
+	 * The field each sport's new boards start on, when the coach ticked
+	 * "Always start … boards on a …". With one for the default sport, New
+	 * board skips straight to Create (and "Change" brings the steps back).
+	 */
+	fieldDefaults: Partial<Record<Sport, FieldVariant>>;
 	/**
 	 * The moving background picked for each theme that has them (theme id →
 	 * effect, or "off"). A theme left out shows its first.
@@ -42,6 +48,7 @@ const DEFAULTS: Preferences = {
 	playerScale: DEFAULT_SIZES.players,
 	equipmentScale: DEFAULT_SIZES.equipment,
 	hasDefaultSport: false,
+	fieldDefaults: {},
 	themeEffect: {},
 	interfaceScale: 1,
 	spice: { size: 1, speed: 1, amount: 1 },
@@ -66,6 +73,19 @@ function effectChoices(raw: Record<string, unknown> | null): Record<string, stri
 	return choices;
 }
 
+/** The field defaults that were saved; before they existed, the default sport's field. */
+function fieldDefaultsFrom(raw: Record<string, any> | null): Partial<Record<Sport, FieldVariant>> {
+	const out: Partial<Record<Sport, FieldVariant>> = {};
+	const saved = raw?.fieldDefaults;
+	if (saved && typeof saved === "object") {
+		for (const [sport, variant] of Object.entries(saved))
+			if (isSport(sport) && (variant === "full" || variant === "half")) out[sport] = variant;
+	} else if (raw?.defaultPitch && isSport(raw.defaultPitch.sport)) {
+		out[raw.defaultPitch.sport as Sport] = raw.defaultPitch.variant === "half" ? "half" : "full";
+	}
+	return out;
+}
+
 function read(): Preferences {
 	try {
 		const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}");
@@ -76,6 +96,7 @@ function read(): Preferences {
 				variant: pitch.variant === "half" ? "half" : "full",
 			},
 			hasDefaultSport: !!raw?.defaultPitch,
+			fieldDefaults: fieldDefaultsFrom(raw),
 			themeEffect: effectChoices(raw),
 			interfaceScale: (INTERFACE_SCALES as readonly number[]).includes(raw?.interfaceScale)
 				? raw.interfaceScale

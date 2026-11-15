@@ -140,7 +140,12 @@ export default function SettingsDialog({
 						label="Default sport"
 						sizeLabel="Default size"
 						value={preferences.defaultPitch}
-						onChange={(defaultPitch) => setPreferences({ defaultPitch })}
+						onChange={(defaultPitch) =>
+							setPreferences({
+								defaultPitch,
+								fieldDefaults: { ...preferences.fieldDefaults, [defaultPitch.sport]: defaultPitch.variant },
+							})
+						}
 					/>
 					<div className="settings__sizes">
 						<Segmented
