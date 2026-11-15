@@ -12,36 +12,11 @@ import {
 } from "../../theme/themes";
 import { addUserTheme, findTheme, useUserThemes } from "../../theme/userThemes";
 import ThemeActions from "./ThemeActions";
+import ThemeDropdown from "./ThemeDropdown";
 import { Keys } from "../ui/Keys";
 import { useTheme } from "../../theme/ThemeProvider";
 import { Icon } from "../Icon";
 import PitchPicker from "./PitchPicker";
-
-/** A tiny picture of a theme: top bar, field, side panel. */
-export function ThemeSwatch({ settings }: { settings: ThemeSettings }) {
-	const t = themeTokens(
-		settings,
-		settings.preset === "custom" ? undefined : findTheme(settings.preset),
-	);
-	return (
-		<span
-			className="theme-preview"
-			style={{ background: t.bg, borderColor: t.border }}
-			aria-hidden="true"
-		>
-			<span className="theme-preview__bar" style={{ background: t.surface }}>
-				<span style={{ background: t.accent }} />
-			</span>
-			<span className="theme-preview__body">
-				<span className="theme-preview__pitch" />
-				<span className="theme-preview__side" style={{ background: t.surface }}>
-					<span style={{ background: t["chip-bg"] }} />
-					<span style={{ background: t.accent }} />
-				</span>
-			</span>
-		</span>
-	);
-}
 
 function HexColorInput({
 	label,
@@ -168,43 +143,7 @@ export default function SettingsDialog({
 
 				<section className="dialog__section">
 					<h3>Appearance</h3>
-					<div className="theme-picker">
-						<ThemeSwatch settings={theme} />
-						<div className="field">
-							<label className="field__label" htmlFor="theme-select">
-								Theme
-							</label>
-							<select
-								id="theme-select"
-								className="field__input"
-								value={theme.preset}
-								onChange={(e) => {
-									const picked = findTheme(e.target.value);
-									if (picked) setTheme(picked);
-								}}
-							>
-								<optgroup label="Lineup themes">
-									{THEME_PRESETS.map((preset) => (
-										<option key={preset.preset} value={preset.preset}>
-											{preset.name} ({preset.mode === "dark" ? "dark" : "light"})
-										</option>
-									))}
-								</optgroup>
-								{userThemes.length > 0 && (
-									<optgroup label="Your themes">
-										{userThemes.map((t) => (
-											<option key={t.preset} value={t.preset}>
-												{t.name} ({t.mode === "dark" ? "dark" : "light"})
-											</option>
-										))}
-									</optgroup>
-								)}
-								{theme.preset === "custom" && (
-									<option value="custom">Custom (not saved)</option>
-								)}
-							</select>
-						</div>
-					</div>
+					<ThemeDropdown value={theme} userThemes={userThemes} onChange={setTheme} />
 
 					<ThemeActions
 						theme={current}

@@ -38,6 +38,7 @@ This project adheres to semantic versioning (0.x during early development).
 - Text in a theme's colours (links, tabs, "Warm-up 1") is mixed towards the text colour until it's easy to read, in every theme
 - Amber Night's tags and topics are a soft purple wash with a purple border (a theme file can pick filled or outline chips)
 - Tags and topics have their text centred, with even space on both sides
+- The theme list in Settings is a dropdown with a swatch for each theme: a circle split into its primary and secondary, in a thin ring of its background. The Theme preview uses the same swatches
 - Settings: the default sport and its size are on one row, and the theme buttons say what they do (Preview all themes, Import…, Export…)
 - In dark themes, a secondary colour too dark to see (like Amber Night's purple) is shown lighter, so tags and topics read on dark panels
 - The tool rail's ball is the board's sport's ball (a basketball, a volleyball, a hockey ball)

@@ -1,7 +1,7 @@
 import { CSSProperties, ReactNode, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
-import { ThemeSwatch } from "../components/shell/SettingsDialog";
+import { ThemeSwatch } from "../components/shell/ThemeDropdown";
 import { Segmented, Swatches } from "../components/ui/controls";
 import {
 	pairOf,
