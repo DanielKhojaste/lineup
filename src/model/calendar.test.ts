@@ -71,9 +71,11 @@ describe("calendar entries", () => {
 			b.id,
 			c.id,
 		]);
-		const last = lastRunBySession([a, b, c, d]);
+		// On 15 March: the 19th hasn't happened yet, and s2's planned session on
+		// the 5th has passed, so it counts as run.
+		const last = lastRunBySession([a, b, c, d], "2026-03-15");
 		expect(last.get("s1")).toBe("2026-03-12");
-		expect(last.has("s2")).toBe(false);
+		expect(last.get("s2")).toBe("2026-03-05");
 	});
 
 	it("drops broken entries when reading the file", () => {
@@ -141,5 +143,19 @@ describe("a plan's weeks on the calendar", () => {
 			["d", "2026-03-19"],
 			["e", "2026-03-19"],
 		]);
+	});
+});
+
+describe("sessions that have passed", () => {
+	it("count as done unless cancelled, and only past ones count as run", async () => {
+		const { createEntry, statusOf, lastRunBySession } = await import("./calendar");
+		const past = createEntry("a", "2026-03-03");
+		const cancelled = { ...createEntry("b", "2026-03-03"), status: "cancelled" as const };
+		const future = { ...createEntry("a", "2026-03-20"), status: "done" as const };
+		expect(statusOf(past, "2026-03-10")).toBe("done");
+		expect(statusOf(cancelled, "2026-03-10")).toBe("cancelled");
+		expect(statusOf(createEntry("c", "2026-03-10"), "2026-03-10")).toBe("planned");
+		expect(lastRunBySession([past, cancelled, future], "2026-03-10").get("a")).toBe("2026-03-03");
+		expect(lastRunBySession([past, cancelled, future], "2026-03-10").has("b")).toBe(false);
 	});
 });

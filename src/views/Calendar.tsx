@@ -16,6 +16,7 @@ import {
 	startOfWeek,
 	parseISODate,
 	sortEntries,
+	statusOf,
 	toISODate,
 	WEEKDAYS,
 } from "../model/calendar";
@@ -55,7 +56,8 @@ function EntryDialog({
 	onOpenSession: (id: string) => void;
 	onClose: () => void;
 }) {
-	const [draft, setDraft] = useState(entry);
+	// A past session shows as done (it ran), unless it was cancelled.
+	const [draft, setDraft] = useState({ ...entry, status: statusOf(entry) });
 	const set = (patch: Partial<CalendarEntry>) => setDraft((d) => ({ ...d, ...patch }));
 	const session = sessions.find((s) => s.id === draft.sessionId);
 	const sorted = [...sessions].sort((a, b) => a.meta.title.localeCompare(b.meta.title));
@@ -145,7 +147,10 @@ function EntryDialog({
 						<div className="field">
 							<span className="field__label">Status</span>
 							<div className="segmented" role="radiogroup" aria-label="Status">
-								{(["planned", "done", "cancelled"] as const).map((s) => (
+								{(draft.date < toISODate(new Date())
+									? (["done", "cancelled"] as const)
+									: (["planned", "done", "cancelled"] as const)
+								).map((s) => (
 									<button
 										key={s}
 										type="button"
@@ -316,8 +321,8 @@ export default function Calendar() {
 		for (const e of entries) map.set(e.date, [...(map.get(e.date) ?? []), e]);
 		return map;
 	}, [entries]);
-	const upcoming = sortEntries(entries.filter((e) => e.date >= today && e.status === "planned")).slice(0, 6);
-	const recent = sortEntries(entries.filter((e) => e.status === "done" && e.date <= today))
+	const upcoming = sortEntries(entries.filter((e) => e.date >= today && statusOf(e, today) === "planned")).slice(0, 6);
+	const recent = sortEntries(entries.filter((e) => statusOf(e, today) === "done" && e.date <= today))
 		.reverse()
 		.slice(0, 6);
 	const title =
@@ -370,9 +375,13 @@ export default function Calendar() {
 		{ label: "Edit…", onSelect: () => setEditing(entry) },
 		{ label: "Open session", disabled: !library.getSession(entry.sessionId), onSelect: () => openSession(entry.sessionId) },
 		"separator",
-		...(["planned", "done", "cancelled"] as const).map((s) => ({
+		// A session whose date has passed has run (or was cancelled): it can't be planned any more.
+		...(entry.date < toISODate(new Date())
+			? (["done", "cancelled"] as const)
+			: (["planned", "done", "cancelled"] as const)
+		).map((s) => ({
 			label: s === "done" ? "Mark as done" : s === "cancelled" ? "Mark as cancelled" : "Mark as planned",
-			checked: entry.status === s,
+			checked: statusOf(entry) === s,
 			onSelect: () => library.updateEntry(entry.id, { status: s }),
 		})),
 		"separator",
@@ -521,9 +530,9 @@ export default function Calendar() {
 										<button
 											key={e.id}
 											type="button"
-											className={`calendar__entry calendar__entry--${e.status}`}
+											className={`calendar__entry calendar__entry--${statusOf(e, today)}`}
 											style={{ borderLeftColor: teamColor(e.team) }}
-											title={[sessionTitle(e.sessionId), e.team, STATUS_LABEL[e.status]].filter(Boolean).join(" · ")}
+											title={[sessionTitle(e.sessionId), e.team, STATUS_LABEL[statusOf(e, today)]].filter(Boolean).join(" · ")}
 											onPointerDown={(ev) => startDrag(ev, e)}
 											onKeyDown={(ev) => {
 												if (ev.key === "Enter" || ev.key === " ") {
@@ -533,7 +542,7 @@ export default function Calendar() {
 											}}
 											onContextMenu={(ev) => openMenu(ev, entryMenu(e))}
 										>
-											{e.status === "done" && <Icon name="check" size={12} />}
+											{statusOf(e, today) === "done" && <Icon name="check" size={12} />}
 											{sports.length > 1 && sportOf(e) && (
 												<span
 													className="sport-swatch"

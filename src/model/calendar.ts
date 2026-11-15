@@ -169,10 +169,22 @@ export function layOutWeeks(
 }
 
 /** When each session was last run (the latest entry marked done), by session id. */
-export function lastRunBySession(entries: CalendarEntry[]): Map<string, string> {
+/**
+ * A session's status as shown: one still planned whose date has passed counts
+ * as done (it ran), without anyone marking it. Cancelled ones stay cancelled.
+ */
+export function statusOf(entry: CalendarEntry, today = toISODate(new Date())): EntryStatus {
+	return entry.status === "planned" && entry.date < today ? "done" : entry.status;
+}
+
+export function lastRunBySession(
+	entries: CalendarEntry[],
+	today = toISODate(new Date()),
+): Map<string, string> {
 	const last = new Map<string, string>();
 	for (const e of entries) {
-		if (e.status !== "done") continue;
+		// Only sessions that have run: done, and not in the future.
+		if (statusOf(e, today) !== "done" || e.date > today) continue;
 		const seen = last.get(e.sessionId);
 		if (!seen || e.date > seen) last.set(e.sessionId, e.date);
 	}
