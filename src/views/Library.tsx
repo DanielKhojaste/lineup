@@ -30,7 +30,7 @@ import {
 import { useSessionExport } from "../export/useSessionExport";
 import { relativeTime } from "../utils/time";
 import { logger } from "../utils/log";
-import { toISODate } from "../model/calendar";
+import { longDay, nextSession, shortDay, toISODate } from "../model/calendar";
 import { Plan } from "../model/plan";
 import PlanCard from "../components/library/PlanCard";
 
@@ -816,22 +816,28 @@ export default function Library() {
 
 	const navItem = (
 		label: string,
-		count: number,
+		count: number | string,
 		active: boolean,
 		onClick: () => void,
 		icon: "grid" | "folder" | "inbox" | "session" | "pen" | "download" | "stack" | "plan" | "calendar",
+		title?: string,
 	) => (
 		<button
 			type="button"
 			className={`nav-item${active ? " is-active" : ""}`}
 			aria-current={active ? "page" : undefined}
 			onClick={onClick}
+			title={title}
 		>
 			<Icon name={icon} size={16} />
 			<span className="nav-item__label">{label}</span>
 			<span className="nav-item__count">{count}</span>
 		</button>
 	);
+
+	// The next session on the calendar, shown beside Calendar ("Today", "Tomorrow", "Thu 19", "3 Dec").
+	const next = nextSession(library.calendar);
+	const nextSessionTitle = next ? library.getSession(next.sessionId)?.meta.title : undefined;
 
 	return (
 		<div className="library">
@@ -925,10 +931,13 @@ export default function Library() {
 						)}
 						{navItem(
 							"Calendar",
-							library.calendar.filter((e) => e.date >= toISODate(new Date())).length,
+							next ? shortDay(next.date) : "",
 							false,
 							() => navigate("/calendar"),
 							"calendar",
+							next
+								? `Next: ${[nextSessionTitle, next.team].filter(Boolean).join(" · ")}, ${longDay(next.date)}${next.time ? ` at ${next.time}` : ""}`
+								: "Nothing planned",
 						)}
 					</div>
 					{sportsInLibrary.length > 0 && (

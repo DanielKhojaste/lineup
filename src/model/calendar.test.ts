@@ -1,15 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-	createEntry,
-	lastRunBySession,
-	layOutSessions,
-	monthGrid,
-	parseCalendar,
-	parseISODate,
-	sortEntries,
-	toISODate,
-	weekdayIndex,
-} from "./calendar";
+import { createEntry, lastRunBySession, layOutSessions, monthGrid, nextSession, parseCalendar, parseISODate, shortDay, sortEntries, toISODate, weekdayIndex } from "./calendar";
 import { createPlan, createTopic, parsePlan, planSessionIds } from "./plan";
 
 describe("calendar dates", () => {
@@ -157,5 +147,26 @@ describe("sessions that have passed", () => {
 		expect(statusOf(createEntry("c", "2026-03-10"), "2026-03-10")).toBe("planned");
 		expect(lastRunBySession([past, cancelled, future], "2026-03-10").get("a")).toBe("2026-03-03");
 		expect(lastRunBySession([past, cancelled, future], "2026-03-10").has("b")).toBe(false);
+	});
+});
+
+describe("the next session, in a few characters", () => {
+	const today = new Date(2026, 10, 16); // Monday 16 November 2026
+	it("says today, tomorrow, the weekday within a week, then the date", () => {
+		expect(shortDay("2026-11-16", today)).toBe("Today");
+		expect(shortDay("2026-11-17", today)).toBe("Tomorrow");
+		expect(shortDay("2026-11-19", today)).toBe("Thu 19");
+		expect(shortDay("2026-12-03", today)).toBe("3 Dec");
+	});
+
+	it("skips past, done and cancelled sessions", () => {
+		const entries = [
+			createEntry("a", "2026-11-10"),
+			createEntry("b", "2026-11-18", { status: "cancelled" }),
+			createEntry("c", "2026-11-20", { time: "18:00" }),
+			createEntry("d", "2026-11-19"),
+		];
+		expect(nextSession(entries, today)?.sessionId).toBe("d");
+		expect(nextSession([], today)).toBeUndefined();
 	});
 });

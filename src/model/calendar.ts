@@ -255,3 +255,27 @@ export function lastRunByBoard(
 	}
 	return last;
 }
+
+/** The next planned session from today on (not cancelled, not done), or undefined. */
+export function nextSession(entries: CalendarEntry[], today = new Date()): CalendarEntry | undefined {
+	const from = toISODate(today);
+	return sortEntries(entries.filter((e) => e.date >= from && e.status === "planned"))[0];
+}
+
+/** A date in a few characters: "Today", "Tomorrow", "Thu 19" within a week, else "3 Dec". */
+export function shortDay(date: string, today = new Date()): string {
+	const d = parseISODate(date);
+	if (!d) return "";
+	const days = Math.round((d.getTime() - parseISODate(toISODate(today))!.getTime()) / 86_400_000);
+	if (days === 0) return "Today";
+	if (days === 1) return "Tomorrow";
+	if (days > 1 && days < 7)
+		return `${d.toLocaleDateString("en-GB", { weekday: "short" })} ${d.getDate()}`;
+	return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+}
+
+/** "Thursday 19 November". */
+export function longDay(date: string): string {
+	const d = parseISODate(date);
+	return d ? d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" }) : date;
+}

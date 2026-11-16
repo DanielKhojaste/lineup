@@ -242,7 +242,7 @@ function EntryDialog({
 									className="button"
 									onClick={() => onOpenSession(session.id)}
 								>
-									Open session
+									Preview session
 								</button>
 							)}
 							<span className="topbar__spacer" />
@@ -420,7 +420,12 @@ export default function Calendar() {
 			mode === "month" ? new Date(d.getFullYear(), d.getMonth() + by, 1) : addDays(d, 7 * by),
 		);
 
-	const openSession = (id: string) => navigate(`/session/${id}`, { state: { from: "/calendar" } });
+	const editSession = (id: string) => navigate(`/session/${id}`, { state: { from: "/calendar" } });
+	/** A session opens to its preview; one without drills has nothing to show, so it opens to edit. */
+	const openSession = (id: string) =>
+		library.getSession(id)?.blocks.some((b) => b.kind === "drill")
+			? navigate(`/session/${id}/preview`, { state: { back: "/calendar", from: "/calendar" } })
+			: editSession(id);
 	const sessionTitle = (id: string) => library.getSession(id)?.meta.title ?? "Deleted session";
 	const newEntry = (date: string) =>
 		setEditing({ ...createEntry("", date, { team: team === "all" ? "" : team }), isNew: true });
@@ -444,7 +449,10 @@ export default function Calendar() {
 			window.removeEventListener("pointerup", up);
 			setDropDate(null);
 			if (!dragging) {
-				setEditing(entry);
+				// The week view shows the session's drills: a click opens its preview.
+				// The month view opens the date's details (date, team, status).
+				if (mode === "week" && library.getSession(entry.sessionId)) openSession(entry.sessionId);
+				else setEditing(entry);
 				return;
 			}
 			const date = dayAt(ev);
@@ -456,7 +464,8 @@ export default function Calendar() {
 
 	const entryMenu = (entry: CalendarEntry): ContextMenuEntry[] => [
 		{ label: "Edit…", onSelect: () => setEditing(entry) },
-		{ label: "Open session", disabled: !library.getSession(entry.sessionId), onSelect: () => openSession(entry.sessionId) },
+		{ label: "Preview session", disabled: !library.getSession(entry.sessionId), onSelect: () => openSession(entry.sessionId) },
+		{ label: "Edit session", disabled: !library.getSession(entry.sessionId), onSelect: () => editSession(entry.sessionId) },
 		"separator",
 		// A session whose date has passed has run (or was cancelled): it can't be planned any more.
 		...(entry.date < toISODate(new Date())
@@ -615,12 +624,18 @@ export default function Calendar() {
 											type="button"
 											className={`calendar__entry calendar__entry--${statusOf(e, today)}`}
 											style={{ borderLeftColor: teamColor(e.team) }}
-											title={[sessionTitle(e.sessionId), e.team, STATUS_LABEL[statusOf(e, today)]].filter(Boolean).join(" · ")}
+											title={[
+												[sessionTitle(e.sessionId), e.team, STATUS_LABEL[statusOf(e, today)]].filter(Boolean).join(" · "),
+												mode === "week" ? "Click to preview, right-click to edit" : "",
+											]
+												.filter(Boolean)
+												.join("\n")}
 											onPointerDown={(ev) => startDrag(ev, e)}
 											onKeyDown={(ev) => {
 												if (ev.key === "Enter" || ev.key === " ") {
 													ev.preventDefault();
-													setEditing(e);
+													if (mode === "week" && library.getSession(e.sessionId)) openSession(e.sessionId);
+													else setEditing(e);
 												}
 											}}
 											onContextMenu={(ev) => openMenu(ev, entryMenu(e))}

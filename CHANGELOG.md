@@ -20,6 +20,8 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Changed
 
+- Calendar: in the week view, clicking a session opens its preview (Back returns to the calendar); right-click to edit the date, team or status. **Preview session** and **Edit session** are in every session's menu
+- Library: **Calendar** shows when the next session is (Today, Tomorrow, Thu 19, 3 Dec), with the session in its tooltip, instead of a count
 - Plans: each week has a trash can to remove it (Ctrl+Z brings it back)
 - Plans: a session's pictures and text are one button, a little apart from its number; a session without drills shows "No drills yet"
 - Plans: matching topics show as bubbles beside the topic box while typing; long topics are cut with "…", and a week has 8 topics at most
