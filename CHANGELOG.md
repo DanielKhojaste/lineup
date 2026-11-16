@@ -52,6 +52,7 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Fixed
 
+- Printed and exported sessions: cones no longer sit on black discs and players no longer have thick dark rings (the board's hidden hover ring showed up where the app's styles don't reach)
 - A session with many topics in a plan no longer makes the page scroll sideways
 - A card's ⋯ button no longer sits on top of the end of its details line
 
