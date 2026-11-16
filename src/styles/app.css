@@ -3904,12 +3904,25 @@ input.plan-topic__title {
 	flex: 1;
 	min-width: 0;
 	display: flex;
-	flex-direction: column;
-	align-items: flex-start;
-	gap: 1px;
+	align-items: center;
+	gap: 12px;
 	padding: 4px 6px;
 	border-radius: 6px;
 	text-align: left;
+}
+
+.plan-session__text {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 1px;
+}
+
+/* Room between the session's number and its pictures. */
+.plan-session__number {
+	margin-right: 4px;
 }
 
 .plan-session__open:hover {
@@ -4727,10 +4740,6 @@ option:disabled {
 
 /* ------------------------ Plan layouts (to compare) ------------------------ */
 
-.plan-editor .timeline__head .segmented {
-	margin-left: 4px;
-}
-
 .plan-thumbs {
 	display: flex;
 	gap: 3px;
@@ -4745,133 +4754,11 @@ option:disabled {
 	background: var(--sunken);
 }
 
-/* Design B: one row per week. */
-.plan-table {
-	width: 100%;
-	border-collapse: collapse;
-	border: 1px solid var(--border);
-	border-radius: var(--radius);
-	background: var(--surface);
-	overflow: hidden;
-}
-
-.plan-table th,
-.plan-table td {
-	padding: 8px 12px;
-	border-bottom: 1px solid var(--border);
-	text-align: left;
-	vertical-align: middle;
-}
-
-.plan-table tbody tr:last-child td {
-	border-bottom: 0;
-}
-
-.plan-table th {
-	color: var(--text-muted);
-	font-size: 11px;
-	font-weight: 600;
-	letter-spacing: 0.06em;
-	text-transform: uppercase;
-}
-
-.plan-table tbody tr.is-active {
-	background: var(--accent-soft);
-	box-shadow: inset 3px 0 0 var(--accent);
-}
-
-.plan-table__week {
-	color: var(--accent-text);
-	font-weight: 700;
-	white-space: nowrap;
-	width: 1%;
-}
-
-.plan-table__topic {
-	width: 22%;
-}
-
-.plan-table__topic .field__label {
-	display: none;
-}
-
-.plan-table__topic .field__input {
-	background: transparent;
-	border-color: transparent;
-}
-
-.plan-table__topic .field__input:hover,
-.plan-table__topic .field__input:focus {
-	border-color: var(--border-strong);
-	background: var(--sunken);
-}
-
-.plan-table__time {
-	white-space: nowrap;
-	width: 1%;
-}
-
-.plan-table__more {
-	width: 1%;
-}
-
-.plan-table__sessions {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 6px;
-	min-height: 32px;
-	align-items: center;
-	border-radius: 6px;
-}
-
-.plan-table__sessions.is-drop {
-	outline: 1px dashed var(--accent);
-	outline-offset: 3px;
-}
-
-.plan-chip {
-	display: inline-flex;
-	align-items: center;
-	gap: 7px;
-	padding: 3px 9px 3px 3px;
-	border: 1px solid var(--border);
-	border-radius: 7px;
-	background: var(--raised);
-	color: var(--text);
-	font: inherit;
-	font-size: 12px;
-	cursor: grab;
-	touch-action: none;
-}
-
-.plan-chip:hover {
-	border-color: var(--border-strong);
-}
-
-.plan-chip.is-dragging {
-	opacity: 0.35;
-}
-
-.plan-chip--missing {
-	color: var(--text-muted);
-	font-style: italic;
-	padding-left: 9px;
-}
-
-.plan-chip .plan-thumbs__item {
-	width: 36px;
-	height: 24px;
-	border-radius: 4px;
-}
-
-.plan-chip.plan-drag-ghost {
-	width: auto !important;
-}
-
 /* Design C: the weeks as an outline, the picked week beside it. */
 .plan-outline {
 	display: grid;
-	grid-template-columns: 240px 1fr;
+	/* minmax(0, …): long text in a week ellipsizes instead of widening the page. */
+	grid-template-columns: 240px minmax(0, 1fr);
 	gap: 18px;
 	align-items: start;
 }
@@ -5149,21 +5036,6 @@ option:disabled {
 	gap: 0;
 }
 
-/* The table's week cell: the handle and the week. */
-.plan-table__week-inner {
-	display: inline-flex;
-	align-items: center;
-	gap: 4px;
-}
-
-.plan-table__week {
-	font-weight: 600;
-}
-
-.plan-table__topic {
-	width: 30%;
-}
-
 /* The outline: each week is its handle and a button; same weights as the table. */
 .plan-outline__week {
 	align-items: center;
@@ -5222,4 +5094,69 @@ div.plan-outline__week {
 .session-picker .filter-chip:disabled {
 	opacity: 0.4;
 	cursor: default;
+}
+
+/* A week's trash can: always in the week's header, on hover in the outline. */
+.plan-week-remove:not(:disabled):hover {
+	color: var(--danger);
+}
+
+.plan-outline__week .plan-week-remove {
+	opacity: 0;
+}
+
+.plan-outline__week:hover .plan-week-remove:not(:disabled),
+.plan-outline__week .plan-week-remove:focus-visible {
+	opacity: 1;
+}
+
+/* Long topics are cut with an ellipsis (the full text is in the tooltip). */
+.week-topics .chip {
+	max-width: 180px;
+}
+
+.chip__text {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.week-topics__bubble {
+	max-width: 180px;
+	padding: 1px 9px;
+	border: 1px dashed var(--border-strong);
+	border-radius: 999px;
+	background: transparent;
+	color: var(--text-muted);
+	font: inherit;
+	font-size: 12px;
+	line-height: 1.5;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.week-topics__bubble:hover,
+.week-topics__bubble:focus-visible {
+	border-style: solid;
+	border-color: var(--accent);
+	color: var(--text);
+}
+
+/* Three pictures wide either way, so the sessions' titles line up. */
+.plan-session .plan-thumbs {
+	width: 186px;
+}
+
+.plan-thumbs__empty {
+	flex: 1;
+	display: grid;
+	place-items: center;
+	height: 40px;
+	border: 1px dashed var(--border-strong);
+	border-radius: 4px;
+	color: var(--text-muted);
+	font-size: 11px;
 }

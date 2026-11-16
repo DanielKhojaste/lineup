@@ -20,6 +20,9 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Changed
 
+- Plans: each week has a trash can to remove it (Ctrl+Z brings it back)
+- Plans: a session's pictures and text are one button, a little apart from its number; a session without drills shows "No drills yet"
+- Plans: matching topics show as bubbles beside the topic box while typing; long topics are cut with "…", and a week has 8 topics at most
 - The calendar's session picker always shows every sport with its number of sessions, and starts on the calendar's sport filter
 - Plans: each week can have several **topics** (chips, with the sport's topics and your own suggested); a week's single topic from before becomes its first
 - Plans: weeks have a drag handle in every layout, to put them in a different order
@@ -32,7 +35,7 @@ This project adheres to semantic versioning (0.x during early development).
 - More room between the session preview's shortcuts and its buttons
 - The library's **All** view (boards and sessions together) is gone for now; it opens on **Boards** instead
 - **New board** is a grid of sports, then the field, each with a tick to make it the default. With both set it's one click (Create), with **Change** to pick again and quick picks for the other field and your other sports
-- A plan's weeks can be laid out three ways to compare: **List**, **Table** (one row per week, sessions as chips with a picture) or **Outline** (the weeks on the left, the picked week large beside it). Sessions drag between weeks in all three
+- A plan's weeks are an **Outline**: the weeks on the left, the picked week (or all of them) large beside it. (List and Table layouts were tried and are kept on the `archive/plan-layouts` branch)
 - The calendar's week view shows each session's team, minutes, first three drills (with pictures) and topics
 - Adding a session to the calendar opens a picker with the library's session cards, a search and the sports, instead of a long dropdown
 - Keyboard shortcuts are drawn as keys everywhere they're shown: menus, tool hints, Settings and the session preview
