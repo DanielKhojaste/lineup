@@ -46,9 +46,11 @@ This project adheres to semantic versioning (0.x during early development).
 ### Developers
 
 - Development builds keep a log of errors, warnings and library events: in the console, `__lineupLog()` in the dev tools, and a file per day in `Documents\Lineup\logs\` in the desktop app. Release builds keep nothing
+- Layout tests: `npm run test:layout` (Playwright; once: `npx playwright install chromium`) fills every screen with the longest names and the most topics and fails on any sideways scrollbar
 
 ### Fixed
 
+- A session with many topics in a plan no longer makes the page scroll sideways
 - A card's ⋯ button no longer sits on top of the end of its details line
 
 ---

@@ -10,6 +10,7 @@
 		"preview": "vite preview",
 		"tauri": "tauri",
 		"test": "vitest run",
+		"test:layout": "playwright test -c e2e/playwright.config.ts",
 		"version:sync": "node scripts/sync-version.mjs",
 		"version:check": "node scripts/sync-version.mjs --check"
 	},
@@ -29,6 +30,7 @@
 		"react-router-dom": "^7.11.0"
 	},
 	"devDependencies": {
+		"@playwright/test": "^1.63.0",
 		"@tauri-apps/cli": "^2",
 		"@types/react": "^19.2.8",
 		"@types/react-dom": "^19.2.3",
