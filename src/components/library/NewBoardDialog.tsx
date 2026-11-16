@@ -32,8 +32,8 @@ const fieldName = (sport: Sport, variant: FieldVariant) =>
  * A new board. With a default sport, the window opens on that sport and both
  * its fields, the default field highlighted: one click (or Enter) makes the
  * board. Any other sport is one click away below, then its field. Without a
- * default yet, it's the grid of sports, then the field, each with a tick to
- * make the pick the default.
+ * default yet, it's the grid of sports (with a tick to make the pick the
+ * default), then the field.
  */
 export default function NewBoardDialog({
 	open,
@@ -51,7 +51,6 @@ export default function NewBoardDialog({
 	const [step, setStep] = useState<Step>("sport");
 	const [pitch, setPitch] = useState<PitchSettings>(() => getPreferences().defaultPitch);
 	const [sportDefault, setSportDefault] = useState(false);
-	const [fieldDefault, setFieldDefault] = useState(false);
 
 	const prefs = getPreferences();
 	const defaultSport = prefs.hasDefaultSport ? prefs.defaultPitch.sport : undefined;
@@ -68,7 +67,6 @@ export default function NewBoardDialog({
 		setPitch({ sport, variant: p.fieldDefaults[sport] ?? "full" });
 		setStep(top ? "home" : "sport");
 		setSportDefault(p.hasDefaultSport && p.defaultPitch.sport === sport);
-		setFieldDefault(!!p.fieldDefaults[sport]);
 	}, [open, initialSport]);
 
 	// The window settles on its step after opening: focus the step's main pick, so Enter works.
@@ -83,23 +81,16 @@ export default function NewBoardDialog({
 	const pickSport = (sport: Sport) => {
 		setPitch({ sport, variant: fieldFor(sport) });
 		setSportDefault(sport === defaultSport);
-		setFieldDefault(!!prefs.fieldDefaults[sport]);
 	};
 
-	/** Makes the board; from the field step, the ticks are saved as defaults too. */
+	/**
+	 * Makes the board; from the field step, "Make … my default sport" is saved.
+	 * There's no default field to ask for: with the default sport on top and
+	 * both its fields there, either is one click.
+	 */
 	const create = (chosen: PitchSettings = pitch) => {
-		if (step === "field") {
-			const p = getPreferences();
-			const fieldDefaults = { ...p.fieldDefaults };
-			if (fieldDefault) fieldDefaults[chosen.sport] = chosen.variant;
-			else delete fieldDefaults[chosen.sport];
-			setPreferences({
-				fieldDefaults,
-				...(sportDefault && chosen.sport !== defaultSport
-					? { defaultPitch: { sport: chosen.sport, variant: fieldDefaults[chosen.sport] ?? "full" } }
-					: {}),
-			});
-		}
+		if (step !== "home" && sportDefault && chosen.sport !== defaultSport)
+			setPreferences({ defaultPitch: { sport: chosen.sport, variant: fieldFor(chosen.sport) } });
 		onCreate(chosen);
 		onClose();
 	};
@@ -107,7 +98,6 @@ export default function NewBoardDialog({
 	const info = SPORT_INFO[pitch.sport];
 	const fieldTile = (sport: Sport, variant: FieldVariant, onPick: () => void, small = false) => {
 		const active = pitch.sport === sport && pitch.variant === variant;
-		const isDefault = prefs.fieldDefaults[sport] === variant;
 		return (
 			<button
 				key={variant}
@@ -122,7 +112,7 @@ export default function NewBoardDialog({
 				<span className="field-tile__text">
 					<b>{fieldName(sport, variant)}</b>
 					{small && (
-						<small className="muted">{isDefault ? "Default · Enter" : "Click to create"}</small>
+						<small className="muted">{active ? "Click or press Enter" : "Click to create"}</small>
 					)}
 				</span>
 			</button>
@@ -221,10 +211,7 @@ export default function NewBoardDialog({
 						</button>
 						<div className="field-tiles" role="radiogroup" aria-label={`Full or half ${info.surface}`}>
 							{(["full", "half"] as FieldVariant[]).map((variant) =>
-								fieldTile(pitch.sport, variant, () => {
-									setPitch({ sport: pitch.sport, variant });
-									setFieldDefault(prefs.fieldDefaults[pitch.sport] === variant);
-								}),
+								fieldTile(pitch.sport, variant, () => setPitch({ sport: pitch.sport, variant })),
 							)}
 						</div>
 						{pitch.sport !== defaultSport && (
@@ -237,15 +224,6 @@ export default function NewBoardDialog({
 								Make {info.name.toLowerCase()} my default sport
 							</label>
 						)}
-						<label className="check">
-							<input
-								type="checkbox"
-								checked={fieldDefault}
-								onChange={(e) => setFieldDefault(e.target.checked)}
-							/>
-							Always start {info.name.toLowerCase()} boards on a{" "}
-							{fieldName(pitch.sport, pitch.variant).toLowerCase()}
-						</label>
 					</>
 				)}
 
