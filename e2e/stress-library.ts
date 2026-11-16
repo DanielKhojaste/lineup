@@ -5,7 +5,7 @@
  * browser's library (localStorage), the way the app stores it in a browser.
  */
 import { createBoard } from "../src/model/board";
-import { createEntry, EMPTY_CALENDAR } from "../src/model/calendar";
+import { createEntry, createEvent, EMPTY_CALENDAR, sampleSeason } from "../src/model/calendar";
 import { serializeBoard } from "../src/model/file";
 import { createPlan, createTopic } from "../src/model/plan";
 import { createDrillBlock, createSession } from "../src/model/session";
@@ -65,15 +65,24 @@ export function stressLibrary(): StressLibrary {
 		return week;
 	});
 
+	const season = sampleSeason();
+	season.name = `${LONG_FOLDER} (${season.name})`;
+	season.phases = season.phases.map((p) => ({ ...p, name: `${p.name}: ${LONG_WORD}` }));
 	const calendar = {
 		...EMPTY_CALENDAR,
-		entries: [-9, -2, 0, 0, 0, 1, 2, 3, 3, 5, 9, 16].map((offset, i) =>
-			createEntry([cool.id, long.id, empty.id][i % 3], day(offset), {
-				team: LONG_TEAM,
-				time: i % 2 ? "18:30" : null,
-				log: offset < 0 ? `${LONG}. ${LONG_WORD}` : "",
-			}),
-		),
+		seasons: [season],
+		entries: [
+			...[-9, -2, 0, 0, 0, 1, 2, 3, 3, 5, 9, 16].map((offset, i) =>
+				createEntry([cool.id, long.id, empty.id][i % 3], day(offset), {
+					team: LONG_TEAM,
+					time: i % 2 ? "18:30" : null,
+					log: offset < 0 ? `${LONG}. ${LONG_WORD}` : "",
+				}),
+			),
+			createEvent("match", day(0), `${LONG_WORD} Athletic`, { away: true, team: LONG_TEAM }),
+			createEvent("match", day(4), "Riverside", { time: "10:00" }),
+			createEvent("event", day(2), `${LONG} (parents' evening)`),
+		],
 	};
 
 	const byId = <T extends { id: string }>(items: T[], text: (x: T) => string) =>

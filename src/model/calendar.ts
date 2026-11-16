@@ -9,12 +9,21 @@ import { isObject, isStr } from "./file";
 
 export type EntryStatus = "planned" | "done" | "cancelled";
 
+/** A training session (from the library), a match, or any other event (a meeting, a tournament day…). */
+export type EntryKind = "session" | "match" | "event";
+
 export interface CalendarEntry {
 	id: string;
+	kind: EntryKind;
+	/** A match's opponent, or an event's name; empty for sessions. */
+	label: string;
+	/** A match played away ("@ Riverside") rather than at home ("vs Riverside"). */
+	away: boolean;
 	/** Local date, "2026-11-03". */
 	date: string;
 	/** "18:00", or null when the time doesn't matter. */
 	time: string | null;
+	/** The session; empty for matches and events. */
 	sessionId: string;
 	/** Team or age group, so several teams can share a calendar. */
 	team: string;
@@ -25,12 +34,37 @@ export interface CalendarEntry {
 	log: string;
 }
 
+/** The colours a season's phases can have; the app turns each into a tint that suits the theme. */
+export const PHASE_COLORS = ["grey", "green", "blue", "purple", "amber", "red"] as const;
+export type PhaseColor = (typeof PHASE_COLORS)[number];
+
+/** A stretch of the season: "Pre-season", "In-season · Phase 1", "Winter break"… */
+export interface SeasonPhase {
+	id: string;
+	name: string;
+	/** First and last day, "2026-07-13". */
+	start: string;
+	end: string;
+	color: PhaseColor;
+}
+
+/** A season, drawn as a timeline of its phases above the calendar. */
+export interface Season {
+	id: string;
+	/** "Season 2026–27". */
+	name: string;
+	start: string;
+	end: string;
+	phases: SeasonPhase[];
+}
+
 export interface CalendarData {
 	version: 1;
 	entries: CalendarEntry[];
+	seasons: Season[];
 }
 
-export const EMPTY_CALENDAR: CalendarData = { version: 1, entries: [] };
+export const EMPTY_CALENDAR: CalendarData = { version: 1, entries: [], seasons: [] };
 
 // ---------------------------------------------------------------- Dates ----
 
@@ -82,6 +116,9 @@ export function createEntry(
 ): CalendarEntry {
 	return {
 		id: newId(),
+		kind: "session",
+		label: "",
+		away: false,
 		date,
 		time: null,
 		sessionId,
@@ -91,6 +128,25 @@ export function createEntry(
 		log: "",
 		...options,
 	};
+}
+
+/** A match ("vs Riverside", or "@ Riverside" away) or another event on a date. */
+export function createEvent(
+	kind: "match" | "event",
+	date: string,
+	label = "",
+	options: Partial<Omit<CalendarEntry, "id" | "kind" | "label" | "date">> = {},
+): CalendarEntry {
+	return createEntry("", date, { kind, label, ...options });
+}
+
+/** What an entry is called on the calendar: a match as "vs X" or "@ X", an event by its name. */
+export function eventTitle(entry: CalendarEntry): string {
+	if (entry.kind === "match") {
+		const who = entry.label.trim() || "Match";
+		return entry.label.trim() ? `${entry.away ? "@" : "vs"} ${who}` : who;
+	}
+	return entry.label.trim() || "Event";
 }
 
 /** Entries in date and time order (untimed ones first on their day). */
@@ -204,14 +260,21 @@ export function parseCalendar(source: string): CalendarData {
 		return EMPTY_CALENDAR;
 	}
 	if (!isObject(raw) || !Array.isArray(raw.entries)) return EMPTY_CALENDAR;
+	// (Older calendars have no seasons, and every entry is a session.)
 	const entries = raw.entries.filter(isObject).flatMap((e): CalendarEntry[] => {
-		if (!isStr(e.sessionId) || !isStr(e.date) || !parseISODate(e.date)) return [];
+		const kind: EntryKind = e.kind === "match" || e.kind === "event" ? e.kind : "session";
+		if (!isStr(e.date) || !parseISODate(e.date)) return [];
+		// A session needs its session; matches and events stand alone.
+		if (kind === "session" && (!isStr(e.sessionId) || !e.sessionId)) return [];
 		return [
 			{
 				id: isStr(e.id) ? e.id : newId(),
+				kind,
+				label: isStr(e.label) ? e.label.slice(0, 120) : "",
+				away: e.away === true,
 				date: e.date,
 				time: isStr(e.time) && CLOCK.test(e.time) ? e.time : null,
-				sessionId: e.sessionId,
+				sessionId: kind === "session" && isStr(e.sessionId) ? e.sessionId : "",
 				team: isStr(e.team) ? e.team.slice(0, 120) : "",
 				planId: isStr(e.planId) ? e.planId : null,
 				status:
@@ -220,7 +283,36 @@ export function parseCalendar(source: string): CalendarData {
 			},
 		];
 	});
-	return { version: 1, entries };
+	const day = (v: unknown): string | null => (isStr(v) && parseISODate(v) ? v : null);
+	const seasons = (Array.isArray(raw.seasons) ? raw.seasons : []).filter(isObject).flatMap((x): Season[] => {
+		const start = day(x.start);
+		const end = day(x.end);
+		if (!start || !end || end < start) return [];
+		const phases = (Array.isArray(x.phases) ? x.phases : []).filter(isObject).flatMap((p): SeasonPhase[] => {
+			const ps = day(p.start);
+			const pe = day(p.end);
+			if (!ps || !pe || pe < ps) return [];
+			return [
+				{
+					id: isStr(p.id) ? p.id : newId(),
+					name: isStr(p.name) ? p.name.slice(0, 60) : "",
+					start: ps,
+					end: pe,
+					color: PHASE_COLORS.includes(p.color as PhaseColor) ? (p.color as PhaseColor) : "grey",
+				},
+			];
+		});
+		return [
+			{
+				id: isStr(x.id) ? x.id : newId(),
+				name: isStr(x.name) ? x.name.slice(0, 60) : "",
+				start,
+				end,
+				phases: phases.sort((a, b) => a.start.localeCompare(b.start)),
+			},
+		];
+	});
+	return { version: 1, entries, seasons };
 }
 
 /** "today", "yesterday", "12 days ago", "in 3 days", or the date for anything further away. */
@@ -278,4 +370,52 @@ export function shortDay(date: string, today = new Date()): string {
 export function longDay(date: string): string {
 	const d = parseISODate(date);
 	return d ? d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" }) : date;
+}
+
+// -------------------------------------------------------------- Seasons ----
+
+/** Days from one date to another (both "YYYY-MM-DD"), counting the first and the last. */
+export function daysBetween(start: string, end: string): number {
+	return Math.round((parseISODate(end)!.getTime() - parseISODate(start)!.getTime()) / 86_400_000) + 1;
+}
+
+/** The season around a date; else the next one to start; else the last one. */
+export function seasonFor(seasons: Season[], date: string): Season | undefined {
+	const sorted = [...seasons].sort((a, b) => a.start.localeCompare(b.start));
+	return (
+		sorted.find((s) => s.start <= date && date <= s.end) ??
+		sorted.find((s) => s.start > date) ??
+		sorted[sorted.length - 1]
+	);
+}
+
+/** The phase a date falls in, if any. */
+export function phaseOn(season: Season | undefined, date: string): SeasonPhase | undefined {
+	return season?.phases.find((p) => p.start <= date && date <= p.end);
+}
+
+/** A season from July to May with the usual phases, to edit from (dates around the given day). */
+export function sampleSeason(today = new Date()): Season {
+	const y = today.getMonth() >= 6 ? today.getFullYear() : today.getFullYear() - 1;
+	const d = (year: number, month: number, day: number) => toISODate(new Date(year, month - 1, day));
+	const phase = (name: string, start: string, end: string, color: PhaseColor): SeasonPhase => ({
+		id: newId(),
+		name,
+		start,
+		end,
+		color,
+	});
+	return {
+		id: newId(),
+		name: `Season ${y}–${String(y + 1).slice(2)}`,
+		start: d(y, 7, 13),
+		end: d(y + 1, 5, 30),
+		phases: [
+			phase("Pre-season", d(y, 7, 13), d(y, 8, 23), "grey"),
+			phase("In-season · Phase 1", d(y, 8, 24), d(y, 12, 13), "green"),
+			phase("Winter break", d(y, 12, 14), d(y + 1, 1, 10), "grey"),
+			phase("In-season · Phase 2", d(y + 1, 1, 11), d(y + 1, 4, 25), "blue"),
+			phase("Tournament", d(y + 1, 4, 26), d(y + 1, 5, 30), "purple"),
+		],
+	};
 }

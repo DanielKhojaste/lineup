@@ -10,6 +10,8 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Added
 
+- Calendar: **matches** ("vs Riverside", or "@ North FC" away, with kick-off and a result) and **other events** (team photos, a parents' meeting…), from **Add a match** or a day's right-click menu. Each kind has its colour: training to come in the theme's colour, sessions that ran with a ✓, matches in purple, events in blue, with a key under the calendar
+- Calendar: a **season timeline** at the top: the season's phases (pre-season, in-season, breaks, a tournament) in proportion, a line at today, the stretch the calendar is showing, and which phase and week it is now. Click a phase to show it; **Edit season** changes its dates and phases, **New season** starts from last season's a year on
 - **Delete** (or Backspace) in the library deletes the selected items, or the card that has focus, after asking
 - Example **basketball** and **volleyball** sessions (two drills each) in the `examples` folder, alongside the soccer ones
 - **Session preview:** go through a session block by block, with its drills listed on the left and the picked one large on the right, its minutes, players, tags, notes and coaching points under it. Plays move by themselves, or step through them with ← and →; ↑ and ↓ move between blocks. The details can go under the drill, beside it, or be hidden to make the drill as big as the window allows (Lineup remembers which), the preview starts at the first drill, and **Back** returns to where you opened it: the session, or the library. Open it with **Preview** in the session, or from the session's menu in the library

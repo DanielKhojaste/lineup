@@ -70,6 +70,10 @@ export const ICONS = {
 	chevronUp: "M6 15l6-6 6 6",
 	calendar: "M4 6h16v14H4zM4 10h16M8 3v4M16 3v4",
 	plan: "M4 5h6v6H4zM14 5h6v6h-6zM4 15h6v4H4zM14 15h6v4h-6z",
+	/** A match on the calendar. */
+	flag: "M6 21V4M6 4h11l-2 4 2 4H6",
+	/** Any other event on the calendar. */
+	star: "M12 4l2.4 5 5.6.6-4.2 3.8 1.2 5.6L12 16.2 7 19l1.2-5.6L4 9.6 9.6 9z",
 };
 
 export type IconName = keyof typeof ICONS;

@@ -10,7 +10,7 @@ import {
 } from "react";
 import { createBoard, newId } from "../model/board";
 import { parseBoard } from "../model/file";
-import { CalendarEntry, sortEntries } from "../model/calendar";
+import { CalendarEntry, Season, sortEntries } from "../model/calendar";
 import { createPlan, Plan } from "../model/plan";
 import { createSession, Session } from "../model/session";
 import { Sport } from "../model/sports";
@@ -69,6 +69,9 @@ interface LibraryContextValue {
 	setPlanFolders: (id: string, folders: string[]) => Promise<void>;
 	/** Sessions on dates, in date order. */
 	calendar: CalendarEntry[];
+	/** Seasons and their phases, drawn as the timeline above the calendar. */
+	seasons: Season[];
+	saveSeasons: (seasons: Season[]) => Promise<void>;
 	addEntries: (entries: CalendarEntry[]) => Promise<void>;
 	updateEntry: (id: string, patch: Partial<CalendarEntry>) => Promise<void>;
 	removeEntries: (ids: string[]) => Promise<void>;
@@ -114,6 +117,8 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 	plansRef.current = plans;
 	const [calendar, setCalendar] = useState<CalendarEntry[]>([]);
 	const calendarRef = useRef<CalendarEntry[]>([]);
+	const [seasons, setSeasons] = useState<Season[]>([]);
+	const seasonsRef = useRef<Season[]>([]);
 	const [folders, setFolders] = useState<string[]>([]);
 	const storeRef = useRef<LibraryStore | null>(null);
 	const boardsRef = useRef<Board[]>([]);
@@ -143,6 +148,8 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 				setPlans(plans.sort(byUpdated));
 				calendarRef.current = sortEntries(cal.entries);
 				setCalendar(calendarRef.current);
+				seasonsRef.current = cal.seasons ?? [];
+				setSeasons(seasonsRef.current);
 				setFolders(index.folders);
 				indexRef.current = index;
 				setTopics(index.topics);
@@ -225,7 +232,7 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 	const writeCalendar = useCallback(async (entries: CalendarEntry[]) => {
 		calendarRef.current = sortEntries(entries);
 		setCalendar(calendarRef.current);
-		await store().saveCalendar({ version: 1, entries: calendarRef.current });
+		await store().saveCalendar({ version: 1, entries: calendarRef.current, seasons: seasonsRef.current });
 	}, []);
 
 	const value = useMemo<LibraryContextValue>(
@@ -440,6 +447,12 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 			},
 
 			calendar,
+			seasons,
+			saveSeasons: async (next) => {
+				seasonsRef.current = next;
+				setSeasons(next);
+				await store().saveCalendar({ version: 1, entries: calendarRef.current, seasons: next });
+			},
 			addEntries: (entries) =>
 				writeCalendar([...calendarRef.current, ...entries]),
 			updateEntry: (id, patch) =>
@@ -505,6 +518,7 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 			addTopics,
 			plans,
 			calendar,
+			seasons,
 			folders,
 			saveBoard,
 			saveSession,

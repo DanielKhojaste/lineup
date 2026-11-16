@@ -6,10 +6,16 @@ import { Icon } from "../components/Icon";
 import PlanToCalendarDialog from "../components/plan/PlanToCalendarDialog";
 import { ContextMenuEntry, useContextMenu } from "../components/ui/ContextMenu";
 import { ConfirmDialog, Modal } from "../components/ui/Dialog";
+import EventDialog from "../components/calendar/EventDialog";
+import SeasonTimeline, { newSeason, SeasonDialog } from "../components/calendar/SeasonTimeline";
 import {
 	addDays,
 	CalendarEntry,
 	createEntry,
+	createEvent,
+	eventTitle,
+	Season,
+	seasonFor,
 	describeDay,
 	EntryStatus,
 	monthGrid,
@@ -382,6 +388,7 @@ export default function Calendar() {
 	const [pickPlan, setPickPlan] = useState(false);
 	const [layingOut, setLayingOut] = useState<Plan | null>(null);
 	const [dropDate, setDropDate] = useState<string | null>(null);
+	const [editingSeason, setEditingSeason] = useState<{ season: Season; isNew: boolean } | null>(null);
 
 	const days =
 		mode === "month"
@@ -396,8 +403,11 @@ export default function Calendar() {
 	const sportOf = (e: CalendarEntry) => library.getSession(e.sessionId)?.header.sport;
 	const sports = SPORTS.filter((sp) => library.calendar.some((e) => sportOf(e) === sp));
 	const [sport, setSport] = useState<string>("all");
+	// Matches and events have no sport: they stay whatever sport is shown.
 	const entries = library.calendar.filter(
-		(e) => (team === "all" || e.team === team) && (sport === "all" || sportOf(e) === sport),
+		(e) =>
+			(team === "all" || e.team === team) &&
+			(sport === "all" || e.kind !== "session" || sportOf(e) === sport),
 	);
 	const byDay = useMemo(() => {
 		const map = new Map<string, CalendarEntry[]>();
@@ -405,7 +415,9 @@ export default function Calendar() {
 		return map;
 	}, [entries]);
 	const upcoming = sortEntries(entries.filter((e) => e.date >= today && statusOf(e, today) === "planned")).slice(0, 6);
-	const recent = sortEntries(entries.filter((e) => statusOf(e, today) === "done" && e.date <= today))
+	const recent = sortEntries(
+		entries.filter((e) => e.kind === "session" && statusOf(e, today) === "done" && e.date <= today),
+	)
 		.reverse()
 		.slice(0, 6);
 	const title =
@@ -427,8 +439,19 @@ export default function Calendar() {
 			? navigate(`/session/${id}/preview`, { state: { back: "/calendar", from: "/calendar" } })
 			: editSession(id);
 	const sessionTitle = (id: string) => library.getSession(id)?.meta.title ?? "Deleted session";
+	/** What an entry is called: its session's title, "vs Riverside", or the event's name. */
+	const entryTitle = (e: CalendarEntry) => (e.kind === "session" ? sessionTitle(e.sessionId) : eventTitle(e));
 	const newEntry = (date: string) =>
 		setEditing({ ...createEntry("", date, { team: team === "all" ? "" : team }), isNew: true });
+	const newEvent = (kind: "match" | "event", date: string) =>
+		setEditing({ ...createEvent(kind, date, "", { team: team === "all" ? "" : team }), isNew: true });
+	/** Clicking an entry: in the week view a session opens its preview; otherwise its details. */
+	const openEntry = (entry: CalendarEntry) => {
+		if (mode === "week" && entry.kind === "session" && library.getSession(entry.sessionId))
+			openSession(entry.sessionId);
+		else setEditing(entry);
+	};
+	const season = seasonFor(library.seasons, toISODate(focus));
 
 	/** Drag an entry onto another day to move it. */
 	const startDrag = (e: ReactPointerEvent, entry: CalendarEntry) => {
@@ -451,8 +474,7 @@ export default function Calendar() {
 			if (!dragging) {
 				// The week view shows the session's drills: a click opens its preview.
 				// The month view opens the date's details (date, team, status).
-				if (mode === "week" && library.getSession(entry.sessionId)) openSession(entry.sessionId);
-				else setEditing(entry);
+				openEntry(entry);
 				return;
 			}
 			const date = dayAt(ev);
@@ -464,18 +486,29 @@ export default function Calendar() {
 
 	const entryMenu = (entry: CalendarEntry): ContextMenuEntry[] => [
 		{ label: "Edit…", onSelect: () => setEditing(entry) },
-		{ label: "Preview session", disabled: !library.getSession(entry.sessionId), onSelect: () => openSession(entry.sessionId) },
-		{ label: "Edit session", disabled: !library.getSession(entry.sessionId), onSelect: () => editSession(entry.sessionId) },
-		"separator",
-		// A session whose date has passed has run (or was cancelled): it can't be planned any more.
-		...(entry.date < toISODate(new Date())
-			? (["done", "cancelled"] as const)
-			: (["planned", "done", "cancelled"] as const)
-		).map((s) => ({
-			label: s === "done" ? "Mark as done" : s === "cancelled" ? "Mark as cancelled" : "Mark as planned",
-			checked: statusOf(entry) === s,
-			onSelect: () => library.updateEntry(entry.id, { status: s }),
-		})),
+		...(entry.kind === "session"
+			? ([
+					{ label: "Preview session", disabled: !library.getSession(entry.sessionId), onSelect: () => openSession(entry.sessionId) },
+					{ label: "Edit session", disabled: !library.getSession(entry.sessionId), onSelect: () => editSession(entry.sessionId) },
+					"separator",
+					// A session whose date has passed has run (or was cancelled): it can't be planned any more.
+					...(entry.date < toISODate(new Date())
+						? (["done", "cancelled"] as const)
+						: (["planned", "done", "cancelled"] as const)
+					).map((s) => ({
+						label: s === "done" ? "Mark as done" : s === "cancelled" ? "Mark as cancelled" : "Mark as planned",
+						checked: statusOf(entry) === s,
+						onSelect: () => library.updateEntry(entry.id, { status: s }),
+					})),
+				] as ContextMenuEntry[])
+			: [
+					{
+						label: entry.kind === "match" ? "Mark as cancelled or postponed" : "Mark as cancelled",
+						checked: entry.status === "cancelled",
+						onSelect: () =>
+							library.updateEntry(entry.id, { status: entry.status === "cancelled" ? "planned" : "cancelled" }),
+					},
+				]),
 		"separator",
 		{
 			label: "Copy to next week",
@@ -497,9 +530,9 @@ export default function Calendar() {
 	const listItem = (e: CalendarEntry) => (
 		<li key={e.id}>
 			<button type="button" className="agenda__item" onClick={() => setEditing(e)}>
-				<span className="agenda__dot" style={{ background: teamColor(e.team) }} />
+				<span className={`agenda__dot agenda__dot--${e.kind}`} />
 				<span className="agenda__text">
-					<span className="agenda__title">{sessionTitle(e.sessionId)}</span>
+					<span className="agenda__title">{entryTitle(e)}</span>
 					<span className="muted small">
 						{[describeDay(e.date), e.time, e.team].filter(Boolean).join(" · ")}
 					</span>
@@ -548,12 +581,24 @@ export default function Calendar() {
 					<Icon name="plan" size={16} />
 					Add a plan
 				</button>
+				<button type="button" className="button" onClick={() => newEvent("match", today)}>
+					<Icon name="flag" size={16} />
+					Add a match
+				</button>
 				<button type="button" className="button button--primary" onClick={() => newEntry(today)}>
 					<Icon name="plus" size={16} />
 					Add session
 				</button>
 			</header>
 
+			<SeasonTimeline
+				season={season}
+				today={today}
+				view={{ start: toISODate(days[0]), end: toISODate(days[days.length - 1]) }}
+				onJump={(date) => setFocus(parseISODate(date)!)}
+				onEdit={() => season && setEditingSeason({ season, isNew: false })}
+				onNew={() => setEditingSeason({ season: newSeason(library.seasons), isNew: true })}
+			/>
 			<div className="calendar-view__body">
 				<main className="calendar">
 					<div className="calendar__head">
@@ -613,6 +658,9 @@ export default function Calendar() {
 										if ((e.target as Element).closest(".calendar__entry")) return;
 										openMenu(e, [
 											{ label: "Add a session here…", onSelect: () => newEntry(iso) },
+											{ label: "Add a match here…", onSelect: () => newEvent("match", iso) },
+											{ label: "Add an event here…", onSelect: () => newEvent("event", iso) },
+											"separator",
 											{ label: "Add a plan…", onSelect: () => setPickPlan(true) },
 										]);
 									}}
@@ -622,11 +670,31 @@ export default function Calendar() {
 										<button
 											key={e.id}
 											type="button"
-											className={`calendar__entry calendar__entry--${statusOf(e, today)}`}
-											style={{ borderLeftColor: teamColor(e.team) }}
+											className={`calendar__entry calendar__entry--${e.kind}${
+												e.kind === "session"
+													? ` calendar__entry--${statusOf(e, today)}`
+													: e.status === "cancelled"
+														? " calendar__entry--cancelled"
+														: ""
+											}`}
+											data-past={e.kind !== "session" && e.date < today ? "" : undefined}
+											// With several teams, each team's colour runs down the side.
+											style={teams.length > 1 ? { boxShadow: `inset 3px 0 0 ${teamColor(e.team)}` } : undefined}
 											title={[
-												[sessionTitle(e.sessionId), e.team, STATUS_LABEL[statusOf(e, today)]].filter(Boolean).join(" · "),
-												mode === "week" ? "Click to preview, right-click to edit" : "",
+												[
+													entryTitle(e),
+													e.team,
+													e.kind === "session"
+														? STATUS_LABEL[statusOf(e, today)]
+														: e.status === "cancelled"
+															? "Cancelled"
+															: e.kind === "match"
+																? e.away ? "Away" : "Home"
+																: "",
+												]
+													.filter(Boolean)
+													.join(" · "),
+												mode === "week" && e.kind === "session" ? "Click to preview, right-click to edit" : "",
 											]
 												.filter(Boolean)
 												.join("\n")}
@@ -634,13 +702,20 @@ export default function Calendar() {
 											onKeyDown={(ev) => {
 												if (ev.key === "Enter" || ev.key === " ") {
 													ev.preventDefault();
-													if (mode === "week" && library.getSession(e.sessionId)) openSession(e.sessionId);
-													else setEditing(e);
+													openEntry(e);
 												}
 											}}
 											onContextMenu={(ev) => openMenu(ev, entryMenu(e))}
 										>
-											{statusOf(e, today) === "done" && <Icon name="check" size={12} />}
+											{e.kind === "match" ? (
+												<Icon name="flag" size={12} className="calendar__kind" />
+											) : e.kind === "event" ? (
+												<Icon name="star" size={12} className="calendar__kind" />
+											) : statusOf(e, today) === "done" ? (
+												<Icon name="check" size={12} className="calendar__kind" />
+											) : statusOf(e, today) === "planned" ? (
+												<span className="calendar__dot" aria-hidden="true" />
+											) : null}
 											{sports.length > 1 && sportOf(e) && (
 												<span
 													className="sport-swatch"
@@ -649,13 +724,38 @@ export default function Calendar() {
 												/>
 											)}
 											{e.time && <span className="calendar__time mono">{e.time}</span>}
-											<span className="calendar__entry-title">{sessionTitle(e.sessionId)}</span>
-											{mode === "week" && <WeekEntryDetails entry={e} />}
+											<span className="calendar__entry-title">{entryTitle(e)}</span>
+											{mode === "week" &&
+												(e.kind === "session" ? (
+													<WeekEntryDetails entry={e} />
+												) : (
+													<span className="calendar__entry-meta">
+														{[e.kind === "match" ? (e.away ? "Away" : "Home") : "", e.team].filter(Boolean).join(" · ")}
+													</span>
+												))}
 										</button>
 									))}
 								</div>
 							);
 						})}
+					</div>
+					<div className="calendar__legend" aria-label="Key">
+						<span>
+							<span className="calendar__swatch calendar__swatch--planned" />
+							Training · planned
+						</span>
+						<span>
+							<span className="calendar__swatch calendar__swatch--done" />
+							<Icon name="check" size={12} /> Ran
+						</span>
+						<span>
+							<span className="calendar__swatch calendar__swatch--match" />
+							Match
+						</span>
+						<span>
+							<span className="calendar__swatch calendar__swatch--event" />
+							Event
+						</span>
 					</div>
 				</main>
 				<aside className="agenda" aria-label="Coming up and recently run">
@@ -663,7 +763,7 @@ export default function Calendar() {
 					{upcoming.length ? (
 						<ul>{upcoming.map(listItem)}</ul>
 					) : (
-						<p className="muted small">Nothing planned. Add a session or a plan.</p>
+						<p className="muted small">Nothing planned. Add a session, a plan or a match.</p>
 					)}
 					<h2>Recently run</h2>
 					{recent.length ? (
@@ -674,7 +774,37 @@ export default function Calendar() {
 				</aside>
 			</div>
 
-			{editing && (
+			{editing && editing.kind !== "session" && (
+				<EventDialog
+					key={editing.id}
+					entry={editing}
+					onClose={() => setEditing(null)}
+					onSave={(entry) =>
+						editing.isNew ? library.addEntries([entry]) : library.updateEntry(entry.id, entry)
+					}
+					onRemove={() => {
+						setRemoving(editing);
+						setEditing(null);
+					}}
+				/>
+			)}
+			{editingSeason && (
+				<SeasonDialog
+					season={editingSeason.season}
+					isNew={editingSeason.isNew}
+					onClose={() => setEditingSeason(null)}
+					onSave={(saved) => {
+						const others = library.seasons.filter((x) => x.id !== saved.id);
+						void library.saveSeasons([...others, saved]);
+						if (editingSeason.isNew) setFocus(parseISODate(saved.start)! > new Date() ? parseISODate(saved.start)! : new Date());
+					}}
+					onDelete={() => {
+						void library.saveSeasons(library.seasons.filter((x) => x.id !== editingSeason.season.id));
+						setEditingSeason(null);
+					}}
+				/>
+			)}
+			{editing && editing.kind === "session" && (
 				<EntryDialog
 					key={editing.id}
 					sportFilter={sport}
@@ -694,7 +824,7 @@ export default function Calendar() {
 			<ConfirmDialog
 				open={removing !== null}
 				title="Remove from calendar"
-				message={`Take “${removing ? sessionTitle(removing.sessionId) : ""}” off ${removing ? describeDay(removing.date) : ""}? The session stays in your library.`}
+				message={`Take “${removing ? entryTitle(removing) : ""}” off ${removing ? describeDay(removing.date) : ""}?${removing?.kind === "session" ? " The session stays in your library." : ""}`}
 				confirmLabel="Remove"
 				danger
 				onConfirm={() => removing && library.removeEntries([removing.id])}

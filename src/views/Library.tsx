@@ -30,7 +30,7 @@ import {
 import { useSessionExport } from "../export/useSessionExport";
 import { relativeTime } from "../utils/time";
 import { logger } from "../utils/log";
-import { longDay, nextSession, shortDay, toISODate } from "../model/calendar";
+import { eventTitle, longDay, nextSession, shortDay, toISODate } from "../model/calendar";
 import { Plan } from "../model/plan";
 import PlanCard from "../components/library/PlanCard";
 
@@ -835,9 +835,13 @@ export default function Library() {
 		</button>
 	);
 
-	// The next session on the calendar, shown beside Calendar ("Today", "Tomorrow", "Thu 19", "3 Dec").
+	// The next thing on the calendar (a session, a match…), shown beside Calendar ("Today", "Tomorrow", "Thu 19", "3 Dec").
 	const next = nextSession(library.calendar);
-	const nextSessionTitle = next ? library.getSession(next.sessionId)?.meta.title : undefined;
+	const nextSessionTitle = next
+		? next.kind === "session"
+			? library.getSession(next.sessionId)?.meta.title
+			: eventTitle(next)
+		: undefined;
 
 	return (
 		<div className="library">

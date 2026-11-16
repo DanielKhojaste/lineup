@@ -4078,14 +4078,18 @@ input.plan-topic__title {
 
 /* A session on a day: a small bar in its team's colour. */
 .calendar__entry {
+	/* Each kind has its colour (below); the hover sweep builds on it. */
+	--entry-bg: var(--raised);
+	--entry-ink: var(--text);
+	--entry-kind: var(--text-muted);
 	display: flex;
 	align-items: center;
-	gap: 4px;
+	gap: 5px;
 	width: 100%;
 	padding: 3px 6px;
-	border-left: 3px solid var(--accent);
 	border-radius: 4px;
-	background: var(--raised);
+	background: var(--entry-bg);
+	color: var(--entry-ink);
 	font-size: 12px;
 	text-align: left;
 	cursor: grab;
@@ -4104,7 +4108,7 @@ input.plan-topic__title {
 			transparent 70%
 		)
 		no-repeat,
-		var(--raised);
+		var(--entry-bg);
 	background-size: 250% 100%, auto;
 	box-shadow:
 		0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent),
@@ -4124,12 +4128,12 @@ input.plan-topic__title {
 @media (prefers-reduced-motion: reduce) {
 	.calendar__entry:hover {
 		animation: none;
-		background: var(--raised);
+		background: var(--entry-bg);
 	}
 }
 
 .calendar__entry--done {
-	opacity: 0.75;
+	--entry-ink: var(--text-muted);
 }
 
 .calendar__entry--cancelled .calendar__entry-title {
@@ -5181,4 +5185,275 @@ div.plan-outline__week {
 	border-radius: 4px;
 	color: var(--text-muted);
 	font-size: 11px;
+}
+
+
+/* ------------------------ Calendar: kinds and colours ------------------------ */
+
+/* Training still to come: the theme's colour. */
+.calendar__entry--session.calendar__entry--planned {
+	--entry-bg: color-mix(in srgb, var(--accent) 16%, var(--surface));
+	--entry-kind: var(--accent);
+}
+
+.calendar__entry--match {
+	--entry-kind: #a66fe0;
+	--entry-bg: color-mix(in srgb, var(--entry-kind) 22%, var(--surface));
+	--entry-ink: color-mix(in srgb, var(--entry-kind) 35%, var(--text));
+	font-weight: 600;
+}
+
+.calendar__entry--event {
+	--entry-kind: #3e8fd6;
+	--entry-bg: color-mix(in srgb, var(--entry-kind) 20%, var(--surface));
+	--entry-ink: color-mix(in srgb, var(--entry-kind) 30%, var(--text));
+}
+
+/* Past matches and events step back a little, like sessions that ran. */
+.calendar__entry--match[data-past],
+.calendar__entry--event[data-past],
+.calendar__entry--cancelled {
+	opacity: 0.75;
+}
+
+.calendar__kind {
+	flex-shrink: 0;
+	color: var(--entry-kind);
+}
+
+.calendar__dot {
+	flex-shrink: 0;
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--entry-kind);
+}
+
+.agenda__dot--match {
+	background: #a66fe0;
+}
+
+.agenda__dot--event {
+	background: #3e8fd6;
+}
+
+.agenda__dot--session {
+	background: var(--accent);
+}
+
+.calendar__legend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 18px;
+	padding: 10px 2px 0;
+	color: var(--text-muted);
+	font-size: 12px;
+}
+
+.calendar__legend > span {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.calendar__swatch {
+	width: 12px;
+	height: 12px;
+	border-radius: 3px;
+}
+
+.calendar__swatch--planned {
+	background: color-mix(in srgb, var(--accent) 16%, var(--surface));
+	box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.calendar__swatch--done {
+	background: var(--raised);
+	box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+
+.calendar__swatch--match {
+	background: color-mix(in srgb, #a66fe0 22%, var(--surface));
+	box-shadow: inset 0 0 0 1px #a66fe0;
+}
+
+.calendar__swatch--event {
+	background: color-mix(in srgb, #3e8fd6 20%, var(--surface));
+	box-shadow: inset 0 0 0 1px #3e8fd6;
+}
+
+.event-dialog__match {
+	grid-template-columns: 1fr auto;
+	align-items: end;
+}
+
+/* ---------------------------- The season timeline ---------------------------- */
+
+.season {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 12px 24px 14px;
+	border-bottom: 1px solid var(--border);
+	background: var(--surface);
+}
+
+.season--empty {
+	flex-direction: row;
+	align-items: center;
+	gap: 12px;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	font-size: 13px;
+}
+
+.season__head {
+	display: flex;
+	align-items: baseline;
+	gap: 10px;
+	min-width: 0;
+	font-size: 13px;
+}
+
+.season__name {
+	font-size: 15px;
+}
+
+.season__now {
+	padding: 1px 8px;
+	border-radius: 999px;
+	background: var(--accent-soft);
+	color: var(--accent-text);
+	font-size: 12px;
+	font-weight: 600;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.season__track {
+	position: relative;
+	height: 34px;
+	border-radius: 6px;
+	background: var(--sunken);
+}
+
+.season__phase {
+	--phase: #8b949e;
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	display: flex;
+	align-items: center;
+	min-width: 0;
+	padding: 0 10px;
+	border: 0;
+	border-right: 2px solid var(--surface);
+	border-radius: 5px;
+	background: color-mix(in srgb, var(--phase) 24%, var(--surface));
+	color: color-mix(in srgb, var(--phase) 55%, var(--text));
+	font: inherit;
+	font-size: 12.5px;
+	font-weight: 600;
+	text-align: left;
+	cursor: pointer;
+}
+
+.season__phase > span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.season__phase:hover {
+	background: color-mix(in srgb, var(--phase) 36%, var(--surface));
+}
+
+.season__phase--grey {
+	--phase: #8b949e;
+}
+
+.season__phase--green {
+	--phase: #5fb15f;
+}
+
+.season__phase--blue {
+	--phase: #4f8fd6;
+}
+
+.season__phase--purple {
+	--phase: #a66fe0;
+}
+
+.season__phase--amber {
+	--phase: #d9a227;
+}
+
+.season__phase--red {
+	--phase: #d9534f;
+}
+
+/* The stretch the calendar is showing. */
+.season__view {
+	position: absolute;
+	top: -3px;
+	bottom: -3px;
+	border: 1.5px solid var(--text-muted);
+	border-radius: 6px;
+	pointer-events: none;
+}
+
+.season__today {
+	position: absolute;
+	top: -5px;
+	bottom: -5px;
+	width: 3px;
+	margin-left: -1.5px;
+	border-radius: 2px;
+	background: var(--text);
+	pointer-events: none;
+}
+
+/* Editing a season. */
+.dialog--season {
+	width: min(760px, calc(100vw - 32px));
+}
+
+.season-form__top {
+	display: grid;
+	grid-template-columns: 1fr 160px 160px;
+	gap: 10px;
+}
+
+.season-form__phases {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	margin: 0 0 6px;
+	padding: 0;
+	list-style: none;
+}
+
+.season-form__phase {
+	display: grid;
+	grid-template-columns: 96px minmax(0, 1fr) 150px 150px auto;
+	gap: 6px;
+	align-items: center;
+}
+
+.season-form__color {
+	height: 34px;
+	padding: 0 8px;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	background: color-mix(in srgb, var(--phase) 24%, var(--surface));
+	color: color-mix(in srgb, var(--phase) 55%, var(--text));
+	font: inherit;
+	font-weight: 600;
+}
+
+.calendar__grid--week .calendar__entry > .calendar__dot:first-child {
+	position: absolute;
+	top: 12px;
+	right: 9px;
 }

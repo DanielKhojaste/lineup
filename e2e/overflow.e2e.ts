@@ -96,12 +96,16 @@ for (const size of SIZES) {
 			await expectFits(page, "the plan (all weeks)");
 		});
 
-		test("calendar: month, week and the session picker", async ({ page }) => {
+		test("calendar: season, month, week, matches and the pickers", async ({ page }) => {
 			await page.goto("/calendar");
 			await page.getByRole("radio", { name: "Month" }).click();
 			await expectFits(page, "the calendar (month)");
 			await page.getByRole("radio", { name: "Week" }).click();
 			await expectFits(page, "the calendar (week)");
+			await page.getByRole("button", { name: "Edit season" }).click();
+			await page.waitForSelector(".dialog--season");
+			await expectFits(page, "the season window");
+			await page.keyboard.press("Escape");
 			await page.getByRole("button", { name: "Add session" }).click();
 			await page.waitForSelector(".dialog--picker");
 			await expectFits(page, "the session picker");

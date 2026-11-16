@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createEntry, lastRunBySession, layOutSessions, monthGrid, nextSession, parseCalendar, parseISODate, shortDay, sortEntries, toISODate, weekdayIndex } from "./calendar";
+import { createEntry, createEvent, daysBetween, eventTitle, lastRunBySession, layOutSessions, monthGrid, nextSession, parseCalendar, parseISODate, phaseOn, sampleSeason, seasonFor, shortDay, sortEntries, toISODate, weekdayIndex } from "./calendar";
 import { createPlan, createTopic, parsePlan, planSessionIds } from "./plan";
 
 describe("calendar dates", () => {
@@ -168,5 +168,42 @@ describe("the next session, in a few characters", () => {
 		];
 		expect(nextSession(entries, today)?.sessionId).toBe("d");
 		expect(nextSession([], today)).toBeUndefined();
+	});
+});
+
+describe("matches, events and seasons", () => {
+	it("reads older calendars: every entry is a session, and there are no seasons", () => {
+		const old = JSON.stringify({ version: 1, entries: [{ id: "a", date: "2026-11-03", sessionId: "s1" }] });
+		const cal = parseCalendar(old);
+		expect(cal.entries[0]).toMatchObject({ kind: "session", sessionId: "s1", label: "", away: false });
+		expect(cal.seasons).toEqual([]);
+	});
+
+	it("keeps matches and events, which need no session", () => {
+		const match = createEvent("match", "2026-11-21", "Riverside", { away: true, time: "10:00" });
+		const event = createEvent("event", "2026-11-24", "Team photos");
+		const cal = parseCalendar(JSON.stringify({ version: 1, entries: [match, event], seasons: [] }));
+		expect(cal.entries.map(eventTitle)).toEqual(["@ Riverside", "Team photos"]);
+		expect(eventTitle({ ...match, away: false })).toBe("vs Riverside");
+		expect(cal.entries[0].time).toBe("10:00");
+	});
+
+	it("keeps seasons with their phases in order, and drops ones with impossible dates", () => {
+		const season = sampleSeason(new Date(2026, 10, 16));
+		const broken = { ...season, id: "x", start: "2027-08-01", end: "2027-07-01" };
+		const cal = parseCalendar(
+			JSON.stringify({ version: 1, entries: [], seasons: [{ ...season, phases: [...season.phases].reverse() }, broken] }),
+		);
+		expect(cal.seasons).toHaveLength(1);
+		expect(cal.seasons[0].phases.map((p) => p.name)[0]).toBe("Pre-season");
+		expect(season.name).toBe("Season 2026–27");
+	});
+
+	it("finds the season and phase around a date", () => {
+		const season = sampleSeason(new Date(2026, 10, 16));
+		expect(seasonFor([season], "2026-11-16")?.id).toBe(season.id);
+		expect(phaseOn(season, "2026-11-16")?.name).toBe("In-season · Phase 1");
+		expect(phaseOn(season, "2026-12-25")?.name).toBe("Winter break");
+		expect(daysBetween("2026-11-16", "2026-11-22")).toBe(7);
 	});
 });
