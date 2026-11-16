@@ -36,7 +36,7 @@ This project adheres to semantic versioning (0.x during early development).
 - Dragging a session in a plan barely tilts it
 - More room between the session preview's shortcuts and its buttons
 - The library's **All** view (boards and sessions together) is gone for now; it opens on **Boards** instead
-- **New board** is a grid of sports, then the field, each with a tick to make it the default. With both set it's one click (Create), with **Change** to pick again and quick picks for the other field and your other sports
+- **New board**: your default sport on top with both its fields (the default one highlighted): one click, or Enter, makes the board. Other sports are below, one click then the field. Before there's a default, it's a grid of sports then the field, each with a tick to make it the default
 - A plan's weeks are an **Outline**: the weeks on the left, the picked week (or all of them) large beside it. (List and Table layouts were tried and are kept on the `archive/plan-layouts` branch)
 - The calendar's week view shows each session's team, minutes, first three drills (with pictures) and topics
 - Adding a session to the calendar opens a picker with the library's session cards, a search and the sports, instead of a long dropdown
