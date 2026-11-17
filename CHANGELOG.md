@@ -45,7 +45,7 @@ This project adheres to semantic versioning (0.x during early development).
 - Plans: selecting a session opens its preview (Back returns to the plan); **Edit session** is in its menu. Sessions are numbered within their week
 - Plans: the Outline has **All weeks** at the top, and remembers which week (or all) was showing for each plan
 - Plans: the description gets the whole width and grows with its text
-- Calendar hover is softer: a light sweep in the theme's colour that stays readable in light themes, and the day keeps its own hover
+- Calendar hover: the item's background gets a touch stronger (quick: `--hover-duration`, 0.14s); the day keeps its own hover. Each item has a stronger tint of its colour down its left edge
 - The week view shows a session's first two topics
 - Dragging a session in a plan barely tilts it
 - More room between the session preview's shortcuts and its buttons
@@ -66,6 +66,8 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Fixed
 
+- Desktop app: preferences (player size, sizes, colours…) are also kept in **Lineup/settings.json**, so they're the same in every build (dev and installed) and survive a reinstall
+- Theme effects (spice, desert night) never draw over any picture of a board, including the session preview's
 - Printed and exported sessions: cones no longer sit on black discs and players no longer have thick dark rings (the board's hidden hover ring showed up where the app's styles don't reach)
 - A session with many topics in a plan no longer makes the page scroll sideways
 - A card's ⋯ button no longer sits on top of the end of its details line

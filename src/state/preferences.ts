@@ -1,6 +1,7 @@
 import { DEFAULT_SIZES, INTERFACE_SCALES, MARKER_SCALES } from "../config/sizes";
 import { useSyncExternalStore } from "react";
 import { DEFAULT_PITCH, FieldVariant, isSport, Sport } from "../model/sports";
+import { readSettingsFile, writeSettingsFile } from "../storage/settingsFile";
 import { PitchSettings } from "../model/types";
 
 /**
@@ -94,7 +95,15 @@ function fieldDefaultsFrom(raw: Record<string, any> | null): Partial<Record<Spor
 
 function read(): Preferences {
 	try {
-		const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}");
+		return parse(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}"));
+	} catch {
+		return DEFAULTS;
+	}
+}
+
+/** Preferences from what was saved (anything missing or wrong falls back to the default). */
+function parse(raw: any): Preferences {
+	try {
 		const pitch = raw?.defaultPitch ?? {};
 		return {
 			defaultPitch: {
@@ -145,7 +154,27 @@ export function setPreferences(patch: Partial<Preferences>) {
 	} catch {
 		// Storage can be unavailable; the preference still applies until restart.
 	}
+	writeSettingsFile(current);
 	for (const listener of listeners) listener();
+}
+
+/**
+ * In the desktop app: take the preferences from Lineup/settings.json (the
+ * same for every build), or start that file from these. Called once at start.
+ */
+export async function syncPreferencesWithFile() {
+	const saved = await readSettingsFile();
+	if (saved && typeof saved === "object") {
+		current = parse(saved);
+		try {
+			localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
+		} catch {
+			// Fine: the file has them.
+		}
+		for (const listener of listeners) listener();
+	} else {
+		writeSettingsFile(current);
+	}
 }
 
 function subscribe(listener: () => void) {

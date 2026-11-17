@@ -40,7 +40,8 @@ function BoardPreview({
 	return (
 		<svg
 			xmlns="http://www.w3.org/2000/svg"
-			className={className}
+			// "board-picture": theme effects (spice, desert night) never draw over a board.
+			className={`board-picture${className ? ` ${className}` : ""}`}
 			viewBox={`${view.x} ${view.y} ${view.width} ${view.height}`}
 			width={width}
 			height={height}

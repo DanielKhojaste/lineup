@@ -36,14 +36,6 @@ import BoardPreview from "../components/board/BoardPreview";
 import SessionPicker from "../components/session/SessionPicker";
 import { useLibrary } from "../state/LibraryContext";
 
-/** Each team gets its own colour, picked from its name. */
-const TEAM_COLORS = ["#2F80ED", "#E2552B", "#27AE60", "#9B51E0", "#F2994A", "#EB5757", "#2BB5A8", "#C2A100"];
-function teamColor(team: string): string {
-	if (!team) return "var(--accent)";
-	let h = 0;
-	for (const ch of team) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-	return TEAM_COLORS[h % TEAM_COLORS.length];
-}
 
 const STATUS_LABEL: Record<EntryStatus, string> = {
 	planned: "Planned",
@@ -695,10 +687,7 @@ export default function Calendar() {
 											}`}
 											data-past={e.kind !== "session" && e.date < today ? "" : undefined}
 											// With several teams, each team's colour runs down the side.
-											style={{
-												...colorStyle(e),
-												...(teams.length > 1 ? { boxShadow: `inset 3px 0 0 ${teamColor(e.team)}` } : {}),
-											}}
+											style={colorStyle(e)}
 											title={[
 												[
 													entryTitle(e),

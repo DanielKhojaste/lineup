@@ -1,3 +1,4 @@
+import { syncPreferencesWithFile } from "./state/preferences";
 import "@fontsource/ibm-plex-sans/400.css";
 import "@fontsource/ibm-plex-sans/500.css";
 import "@fontsource/ibm-plex-sans/600.css";
@@ -26,6 +27,9 @@ document.addEventListener(
 	},
 	true,
 );
+
+// Desktop app: preferences from Lineup/settings.json (shared by every build).
+void syncPreferencesWithFile();
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
 	<App />,

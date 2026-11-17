@@ -4282,39 +4282,23 @@ input.plan-topic__title {
 	touch-action: none;
 }
 
-.calendar__entry:hover {
-	/* "Infrared", from Giedi Prime, toned down: a soft band of the theme's
-	   colour sweeps across once, and the edge lights up thinly. The band is
-	   tinted, never dark, so the text stays readable in light themes. */
-	background:
-		linear-gradient(
-			100deg,
-			transparent 30%,
-			color-mix(in srgb, var(--accent) 16%, transparent) 50%,
-			transparent 70%
-		)
-		no-repeat,
-		var(--entry-bg);
-	background-size: 250% 100%, auto;
-	box-shadow:
-		0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent),
-		0 0 8px color-mix(in srgb, var(--accent) 14%, transparent);
-	animation: infrared-sweep 1.1s ease-out both;
+.calendar__entry {
+	/* How quickly the hover comes and goes (quick: 0.12–0.16s). */
+	--hover-duration: 0.14s;
+	/* A stronger tint of the item's colour down its left edge. */
+	--entry-strip: color-mix(in srgb, var(--entry-kind) 60%, var(--entry-bg));
+	box-shadow: inset 3px 0 0 var(--entry-strip);
+	transition: background-color var(--hover-duration) ease;
 }
 
-@keyframes infrared-sweep {
-	from {
-		background-position: 130% 0, 0 0;
-	}
-	to {
-		background-position: -30% 0, 0 0;
-	}
+/* Hover: the item's background gets a touch stronger (Tint, picked in updates-302). */
+.calendar__entry:hover {
+	background: color-mix(in srgb, var(--entry-ink) 12%, var(--entry-bg));
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.calendar__entry:hover {
-		animation: none;
-		background: var(--entry-bg);
+	.calendar__entry {
+		transition: none;
 	}
 }
 
