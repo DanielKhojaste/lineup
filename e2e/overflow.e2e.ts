@@ -105,7 +105,7 @@ for (const size of SIZES) {
 			await page.getByRole("button", { name: "Add a practice" }).click();
 			await page.waitForSelector(".dialog--item");
 			await expectFits(page, "the new item window");
-			await page.getByRole("button", { name: "Attach a session…" }).click();
+			await page.getByRole("button", { name: "Attach a session or board…" }).click();
 			await page.waitForSelector(".dialog--picker");
 			await expectFits(page, "the session picker");
 		});
