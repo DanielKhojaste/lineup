@@ -31,7 +31,7 @@ export default function EventDialog({
 	return (
 		<Modal
 			open
-			title={entry.isNew ? (match ? "Add a game" : "Add an event") : eventTitle(entry)}
+			title={entry.isNew ? (match ? "Add a match" : "Add an event") : eventTitle(entry)}
 			onClose={onClose}
 		>
 			<form
@@ -54,7 +54,7 @@ export default function EventDialog({
 								className={`segmented__item${draft.kind === k ? " is-active" : ""}`}
 								onClick={() => set({ kind: k })}
 							>
-								{k === "match" ? "Game" : "Other event"}
+								{k === "match" ? "Match" : "Other event"}
 							</button>
 						))}
 					</div>
@@ -142,7 +142,7 @@ export default function EventDialog({
 						label="Colour"
 						value={draft.color}
 						defaultColor={preferences.calendarColors[draft.kind] || KIND_COLORS[draft.kind]}
-						defaultLabel={`The usual for ${match ? "games" : "events"}`}
+						defaultLabel={`The usual for ${match ? "matches" : "events"}`}
 						onChange={(color) => set({ color })}
 					/>
 				</div>

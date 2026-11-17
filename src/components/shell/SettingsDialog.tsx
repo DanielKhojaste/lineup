@@ -300,7 +300,7 @@ export default function SettingsDialog({
 						{(
 							[
 								["session", "Practices"],
-								["match", "Games"],
+								["match", "Matches"],
 								["event", "Events"],
 							] as const
 						).map(([kind, name]) => (

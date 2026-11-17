@@ -606,7 +606,7 @@ export default function Calendar() {
 				</button>
 				<button type="button" className="button" onClick={() => newEvent("match", today)}>
 					<Icon name="flag" size={16} />
-					Add a game
+					Add a match
 				</button>
 				<button type="button" className="button button--primary" onClick={() => newEntry(today)}>
 					<Icon name="plus" size={16} />
@@ -674,7 +674,7 @@ export default function Calendar() {
 										if ((e.target as Element).closest(".calendar__entry")) return;
 										openMenu(e, [
 											{ label: "Add a session here…", onSelect: () => newEntry(iso) },
-											{ label: "Add a game here…", onSelect: () => newEvent("match", iso) },
+											{ label: "Add a match here…", onSelect: () => newEvent("match", iso) },
 											{ label: "Add an event here…", onSelect: () => newEvent("event", iso) },
 											"separator",
 											{ label: "Add a plan…", onSelect: () => setPickPlan(true) },
@@ -768,7 +768,7 @@ export default function Calendar() {
 						</span>
 						<span>
 							<span className="calendar__swatch calendar__swatch--match" style={calendarColors.match || KIND_COLORS.match ? ({ "--entry-kind": calendarColors.match || KIND_COLORS.match } as React.CSSProperties) : undefined} />
-							Game
+							Match
 						</span>
 						<span>
 							<span className="calendar__swatch calendar__swatch--event" style={calendarColors.event || KIND_COLORS.event ? ({ "--entry-kind": calendarColors.event || KIND_COLORS.event } as React.CSSProperties) : undefined} />
@@ -781,7 +781,7 @@ export default function Calendar() {
 					{upcoming.length ? (
 						<ul>{upcoming.map(listItem)}</ul>
 					) : (
-						<p className="muted small">Nothing planned. Add a session, a plan or a game.</p>
+						<p className="muted small">Nothing planned. Add a session, a plan or a match.</p>
 					)}
 					<h2>Recently run</h2>
 					{recent.length ? (
