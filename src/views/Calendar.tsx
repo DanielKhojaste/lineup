@@ -8,7 +8,8 @@ import { Icon } from "../components/Icon";
 import PlanToCalendarDialog from "../components/plan/PlanToCalendarDialog";
 import { ContextMenuEntry, useContextMenu } from "../components/ui/ContextMenu";
 import { ConfirmDialog, Modal } from "../components/ui/Dialog";
-import EventDialog from "../components/calendar/EventDialog";
+import ItemDialog from "../components/calendar/ItemDialog";
+import { usePreviewChoice } from "../preview/designs";
 import ColorSwatches from "../components/calendar/ColorSwatches";
 import { usePreferences } from "../state/preferences";
 import {
@@ -362,6 +363,60 @@ function WeekEntryDetails({ entry }: { entry: CalendarEntry }) {
 	);
 }
 
+/**
+ * What's on a calendar item (two designs to compare on the preview branch):
+ * A, "Type above": a small PRACTICE / MATCH / EVENT label with the time, and
+ * the name under it; B, "Icon in line": the kind's icon, the time and the
+ * name on one line.
+ */
+function EntryCard({
+	entry,
+	variant,
+	title,
+	done,
+}: {
+	entry: CalendarEntry;
+	variant: "tag" | "inline";
+	title: string;
+	done: boolean;
+}) {
+	const library = useLibrary();
+	const kind = entry.kind === "session" ? "Practice" : entry.kind === "match" ? "Match" : "Event";
+	const icon = done ? "check" : entry.kind === "match" ? "flag" : entry.kind === "event" ? "star" : "session";
+	// A named practice also says which session it is.
+	const session =
+		entry.kind === "session" && entry.label.trim() ? library.getSession(entry.sessionId)?.meta.title : undefined;
+	if (variant === "tag")
+		return (
+			<span className="entry-card entry-card--tag">
+				<span className="entry-card__kind">
+					{done && <Icon name="check" size={10} />}
+					{kind}
+					{entry.kind === "match" && <span> · {entry.away ? "Away" : "Home"}</span>}
+					{entry.time && <span className="mono"> · {entry.time}</span>}
+				</span>
+				<span className="calendar__entry-title">{title}</span>
+				{session && <span className="entry-card__session">{session}</span>}
+			</span>
+		);
+	return (
+		<span className="entry-card entry-card--inline">
+			<Icon name={icon} size={12} className="calendar__kind" />
+			{entry.time && <span className="calendar__time mono">{entry.time}</span>}
+			<span className="calendar__entry-title">
+				{entry.kind === "session" && !entry.label.trim() && library.getSession(entry.sessionId) ? (
+					<>
+						<b>Practice</b> · {title}
+					</>
+				) : (
+					title
+				)}
+				{session && <span className="entry-card__session"> · {session}</span>}
+			</span>
+		</span>
+	);
+}
+
 function weekTitle(first: Date, last: Date): string {
 	const mon = (d: Date) => d.toLocaleDateString(undefined, { month: "short" });
 	const start = first.getMonth() === last.getMonth() ? `${first.getDate()}` : `${first.getDate()} ${mon(first)}`;
@@ -455,7 +510,11 @@ export default function Calendar() {
 			: editSession(id);
 	const sessionTitle = (id: string) => library.getSession(id)?.meta.title ?? "Deleted session";
 	/** What an entry is called: its session's title, "vs Riverside", or the event's name. */
-	const entryTitle = (e: CalendarEntry) => (e.kind === "session" ? sessionTitle(e.sessionId) : eventTitle(e));
+	const entryTitle = (e: CalendarEntry) =>
+		e.kind === "session"
+			? e.label.trim() || library.getSession(e.sessionId)?.meta.title || "Practice"
+			: eventTitle(e);
+	const itemDesign = usePreviewChoice("items");
 	const newEntry = (date: string) =>
 		setEditing({ ...createEntry("", date, { team: team === "all" ? "" : team }), isNew: true });
 	const newEvent = (kind: "match" | "event", date: string) =>
@@ -602,7 +661,7 @@ export default function Calendar() {
 				</button>
 				<button type="button" className="button button--primary" onClick={() => newEntry(today)}>
 					<Icon name="plus" size={16} />
-					Add session
+					Add a practice
 				</button>
 			</header>
 
@@ -665,7 +724,7 @@ export default function Calendar() {
 									onContextMenu={(e) => {
 										if ((e.target as Element).closest(".calendar__entry")) return;
 										openMenu(e, [
-											{ label: "Add a session here…", onSelect: () => newEntry(iso) },
+											{ label: "Add a practice here…", onSelect: () => newEntry(iso) },
 											{ label: "Add a match here…", onSelect: () => newEvent("match", iso) },
 											{ label: "Add an event here…", onSelect: () => newEvent("event", iso) },
 											"separator",
@@ -716,13 +775,6 @@ export default function Calendar() {
 											}}
 											onContextMenu={(ev) => openMenu(ev, entryMenu(e))}
 										>
-											{e.kind === "match" ? (
-												<Icon name="flag" size={12} className="calendar__kind" />
-											) : e.kind === "event" ? (
-												<Icon name="star" size={12} className="calendar__kind" />
-											) : statusOf(e, today) === "done" ? (
-												<Icon name="check" size={12} className="calendar__kind" />
-											) : null}
 											{sports.length > 1 && sportOf(e) && (
 												<span
 													className="sport-swatch"
@@ -730,14 +782,21 @@ export default function Calendar() {
 													title={SPORT_INFO[sportOf(e)!].name}
 												/>
 											)}
-											{e.time && <span className="calendar__time mono">{e.time}</span>}
-											<span className="calendar__entry-title">{entryTitle(e)}</span>
+											<EntryCard entry={e} variant={itemDesign} title={entryTitle(e)} done={e.kind === "session" && statusOf(e, today) === "done"} />
 											{mode === "week" &&
-												(e.kind === "session" ? (
+												(e.kind === "session" && library.getSession(e.sessionId) ? (
 													<WeekEntryDetails entry={e} />
 												) : (
 													<span className="calendar__entry-meta">
-														{[e.kind === "match" ? (e.away ? "Away" : "Home") : "", e.team, e.location].filter(Boolean).join(" · ")}
+														{[
+															e.kind === "match" ? (e.away ? "Away" : "Home") : "",
+															e.kind === "match" && library.getBoard(e.boardId) ? "Formation" : "",
+															e.kind !== "session" && library.getSession(e.sessionId) ? library.getSession(e.sessionId)!.meta.title : "",
+															e.team,
+															e.location,
+														]
+															.filter(Boolean)
+															.join(" · ")}
 													</span>
 												))}
 										</button>
@@ -781,26 +840,11 @@ export default function Calendar() {
 				</aside>
 			</div>
 
-			{editing && editing.kind !== "session" && (
-				<EventDialog
+			{editing && (
+				<ItemDialog
 					key={editing.id}
 					entry={editing}
-					onClose={() => setEditing(null)}
-					onSave={(entry) =>
-						editing.isNew ? library.addEntries([entry]) : library.updateEntry(entry.id, entry)
-					}
-					onRemove={() => {
-						setRemoving(editing);
-						setEditing(null);
-					}}
-				/>
-			)}
-			{editing && editing.kind === "session" && (
-				<EntryDialog
-					key={editing.id}
 					sportFilter={sport}
-					entry={editing}
-					sessions={library.sessions}
 					onClose={() => setEditing(null)}
 					onSave={(entry) =>
 						editing.isNew ? library.addEntries([entry]) : library.updateEntry(entry.id, entry)
@@ -809,7 +853,7 @@ export default function Calendar() {
 						setRemoving(editing);
 						setEditing(null);
 					}}
-					onOpenSession={openSession}
+					onPreviewSession={openSession}
 				/>
 			)}
 			<ConfirmDialog

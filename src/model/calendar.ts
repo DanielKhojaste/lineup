@@ -23,8 +23,10 @@ export interface CalendarEntry {
 	date: string;
 	/** "18:00", or null when the time doesn't matter. */
 	time: string | null;
-	/** The session; empty for matches and events. */
+	/** A session attached to it: a practice's plan, a game's warm-up…; empty for none. */
 	sessionId: string;
+	/** A game's formation or line-up (a board); empty for none. */
+	boardId: string;
 	/** Where it happens: a pitch, a hall, the other team's ground; optional. */
 	location: string;
 	/** This item's own colour ("#A66FE0"); empty for its kind's colour. */
@@ -125,6 +127,7 @@ export function createEntry(
 		away: false,
 		location: "",
 		color: "",
+		boardId: "",
 		date,
 		time: null,
 		sessionId,
@@ -270,8 +273,7 @@ export function parseCalendar(source: string): CalendarData {
 	const entries = raw.entries.filter(isObject).flatMap((e): CalendarEntry[] => {
 		const kind: EntryKind = e.kind === "match" || e.kind === "event" ? e.kind : "session";
 		if (!isStr(e.date) || !parseISODate(e.date)) return [];
-		// A session needs its session; matches and events stand alone.
-		if (kind === "session" && (!isStr(e.sessionId) || !e.sessionId)) return [];
+		// Any item can have a session attached; none needs one.
 		return [
 			{
 				id: isStr(e.id) ? e.id : newId(),
@@ -280,7 +282,8 @@ export function parseCalendar(source: string): CalendarData {
 				away: e.away === true,
 				date: e.date,
 				time: isStr(e.time) && CLOCK.test(e.time) ? e.time : null,
-				sessionId: kind === "session" && isStr(e.sessionId) ? e.sessionId : "",
+				sessionId: isStr(e.sessionId) ? e.sessionId : "",
+				boardId: kind === "match" && isStr(e.boardId) ? e.boardId : "",
 				team: isStr(e.team) ? e.team.slice(0, 120) : "",
 				location: isStr(e.location) ? e.location.slice(0, 120) : "",
 				color: isStr(e.color) && /^#[0-9a-f]{6}$/i.test(e.color) ? e.color : "",
