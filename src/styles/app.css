@@ -5688,6 +5688,8 @@ div.plan-outline__week {
 .swatch-pick--custom:focus-within {
 	outline: 2px solid var(--accent);
 	outline-offset: 2px;
+}
+
 /* ----------------------- Preview branch: design switch ----------------------- */
 
 .design-switcher {
