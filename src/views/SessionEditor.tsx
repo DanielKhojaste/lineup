@@ -1,3 +1,4 @@
+import { flushSync } from "react-dom";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
@@ -31,6 +32,12 @@ function SessionLayout() {
 	const library = useLibrary();
 	const navigate = useNavigate();
 	const exporter = useSessionExport();
+	// Printing: the sheet is drawn (with or without the ink saver) before the print window opens.
+	const [printInk, setPrintInk] = useState(false);
+	const printSheet = (ink: boolean) => {
+		flushSync(() => setPrintInk(ink));
+		window.print();
+	};
 	// An empty new session isn't saved; leaving it empty drops it from the library.
 	const { status, flush } = useAutosave(state.session, (s) =>
 		isEmptySession(s) ? Promise.resolve() : library.saveSession(s),
@@ -85,7 +92,7 @@ function SessionLayout() {
 			}
 			if (mod && key === "p") {
 				e.preventDefault();
-				window.print();
+				printSheet(false);
 				return;
 			}
 			if (isTextField(e.target) || document.querySelector("dialog[open]"))
@@ -189,6 +196,7 @@ function SessionLayout() {
 					}
 					items={[
 						{ label: "PDF document", onSelect: () => exporter.exportAs(session, "pdf") },
+						{ label: "PDF document, ink saver", onSelect: () => exporter.exportAs(session, "pdf", true) },
 						{ label: "Image (PNG)", onSelect: () => exporter.exportAs(session, "png") },
 						"separator",
 						{
@@ -201,15 +209,20 @@ function SessionLayout() {
 						},
 					]}
 				/>
-				<button
-					type="button"
-					className="button"
-					title="Print the session sheet (Ctrl+P)"
-					onClick={() => window.print()}
-				>
-					<Icon name="print" size={16} />
-					Print
-				</button>
+				<Menu
+					label="Print the session"
+					buttonClassName="button"
+					button={
+						<>
+							<Icon name="print" size={16} />
+							Print
+						</>
+					}
+					items={[
+						{ label: "Print (Ctrl+P)", onSelect: () => printSheet(false) },
+						{ label: "Print with ink saver (white pitches)", onSelect: () => printSheet(true) },
+					]}
+				/>
 			</header>
 			{exporter.error && (
 				<div className="notice notice--error session-editor__notice" role="alert">
@@ -235,7 +248,7 @@ function SessionLayout() {
 				</main>
 				<DrillPicker />
 			</div>
-			<SessionSheet session={session} getBoard={library.getBoard} />
+			<SessionSheet session={session} getBoard={library.getBoard} ink={printInk} />
 		</div>
 	);
 }

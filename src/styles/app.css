@@ -2809,142 +2809,312 @@ fieldset.field {
 }
 
 .sheet__part {
+	margin-bottom: 12px;
+}
+
+/* The parts of a session, by colour (paper colours, the same in every theme). */
+.sheet {
+	--tone-warm: #c98a1a;
+	--tone-main: #2d6a48;
+	--tone-game: #3c6b93;
+	--tone-cool: #7a6aa8;
+	--tone-other: #5d6b7a;
+	--tone-break: #b8c1cb;
+}
+
+.sheet__head {
 	margin-bottom: 14px;
+	padding-bottom: 4px;
 }
 
 .sheet__title {
-	font-size: 22px;
-	font-weight: 700;
-	text-align: center;
-	margin-bottom: 12px;
-	letter-spacing: 0.2px;
+	margin: 0;
+	font-size: 26px;
+	line-height: 1.15;
+	letter-spacing: -0.01em;
 }
 
-.sheet__summary {
+.sheet__sub {
+	margin-top: 3px;
+	color: var(--sheet-muted);
+	font-size: 13px;
+}
+
+.sheet__facts {
 	display: flex;
 	flex-wrap: wrap;
-	border: 1px solid var(--sheet-line);
-	border-radius: 6px;
-	overflow: hidden;
-	background: var(--sheet-band);
+	gap: 6px 22px;
+	margin: 12px 0 8px;
+	font-size: 12.5px;
 }
 
-/* Cells fill each row; the borders between them come from a negative margin trick. */
-.sheet__cell {
-	flex: 1 1 150px;
-	padding: 8px 10px;
-	border-right: 1px solid var(--sheet-line);
-	border-bottom: 1px solid var(--sheet-line);
-	margin: 0 -1px -1px 0;
-}
-
-.sheet__cell--wide {
-	flex-basis: 45%;
-}
-
-.sheet__label {
+.sheet__facts b {
 	display: block;
+	color: var(--sheet-muted);
 	font-size: 9.5px;
 	font-weight: 700;
+	letter-spacing: 0.08em;
 	text-transform: uppercase;
-	letter-spacing: 0.6px;
-	color: var(--sheet-muted);
-	margin-bottom: 2px;
+}
+
+.sheet__topics {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 5px;
+	margin-bottom: 8px;
+}
+
+.sheet__pill {
+	padding: 1px 9px;
+	border-radius: 999px;
+	background: #fff1cc;
+	color: #6b4c00;
+	font-size: 11px;
+	font-weight: 600;
 }
 
 .sheet__description {
-	margin-top: 10px;
-	white-space: pre-line;
+	margin: 4px 0 10px;
+	font-size: 12.5px;
 }
 
-.sheet__activity {
-	width: 100%;
-	border-collapse: collapse;
-	table-layout: fixed;
+/* The whole session in a bar: each block as long as its minutes. */
+.sheet__timeline {
+	display: flex;
+	height: 26px;
+	margin-top: 8px;
+	border-radius: 6px;
+	overflow: hidden;
 }
 
-.sheet__activity th,
-.sheet__activity td {
-	border: 1px solid var(--sheet-line);
-	padding: 7px 9px;
-	text-align: left;
-	vertical-align: top;
+.sheet__tl {
+	display: flex;
+	align-items: center;
+	min-width: 0;
+	padding: 0 6px;
+	border-right: 2px solid #fff;
+	color: #fff;
+	font-size: 10.5px;
+	font-weight: 600;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
-.sheet__activity th {
-	background: var(--sheet-head);
-	border-color: var(--sheet-head);
-	color: #ffffff;
-	font-size: 11px;
+.sheet__tl:last-child {
+	border-right: 0;
+}
+
+.sheet__tl--warm { background: var(--tone-warm); }
+.sheet__tl--main { background: var(--tone-main); }
+.sheet__tl--game { background: var(--tone-game); }
+.sheet__tl--cool { background: var(--tone-cool); }
+.sheet__tl--other { background: var(--tone-other); }
+.sheet__tl--break { background: var(--tone-break); }
+
+.sheet__axis {
+	position: relative;
+	height: 14px;
+	margin-top: 3px;
+	color: var(--sheet-muted);
+	font-size: 9.5px;
+}
+
+.sheet__axis > span {
+	position: absolute;
+	top: 0;
+	transform: translateX(-50%);
+}
+
+.sheet__axis > span:first-child {
+	left: 0;
+	transform: none;
+}
+
+.sheet__axis-end {
+	right: 0;
+	transform: none !important;
+}
+
+/* A part's name, in its colour. */
+.sheet__stage {
+	display: inline-block;
+	margin-right: 7px;
+	padding: 1px 7px;
+	border-radius: 4px;
+	color: #fff;
+	font-size: 9.5px;
 	font-weight: 700;
+	letter-spacing: 0.06em;
 	text-transform: uppercase;
-	letter-spacing: 0.5px;
+	vertical-align: 1px;
 }
 
-.sheet__when {
-	font-weight: 500;
-	text-transform: none;
-	letter-spacing: 0;
-	opacity: 0.85;
+.sheet__stage--warm { background: var(--tone-warm); }
+.sheet__stage--main { background: var(--tone-main); }
+.sheet__stage--game { background: var(--tone-game); }
+.sheet__stage--cool { background: var(--tone-cool); }
+.sheet__stage--other { background: var(--tone-other); }
+.sheet__stage--break { background: #8d97a3; }
+
+/* A drill: the diagram, zoomed to its area, then what happens. */
+.sheet__drill {
+	display: grid;
+	grid-template-columns: 330px minmax(0, 1fr);
+	gap: 16px;
+	padding-top: 12px;
+	border-top: 1px solid #dfe4e9;
 }
 
-.sheet__setup {
-	width: 250px;
-}
-
-.sheet__focus {
-	width: 190px;
-}
-
-.sheet__setup svg {
+.sheet__diagram svg {
 	display: block;
 	width: 100%;
 	height: auto;
-	border-radius: 3px;
+	border-radius: 5px;
+}
+
+.sheet--ink .sheet__diagram svg {
+	box-shadow: inset 0 0 0 1px #c9d6cc;
+	outline: 1px solid #c9d6cc;
+	outline-offset: -1px;
+}
+
+.sheet__when {
+	margin-bottom: 3px;
+	color: var(--sheet-muted);
+	font-size: 11px;
+	font-weight: 600;
 }
 
 .sheet__name {
-	font-size: 13px;
+	font-size: 15px;
 	font-weight: 700;
-	margin-bottom: 4px;
+	line-height: 1.25;
 }
 
 .sheet__type {
-	font-weight: 400;
 	color: var(--sheet-muted);
-	font-size: 11px;
+	font-size: 12px;
+	font-weight: 500;
+}
+
+.sheet__mini {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 2px 12px;
+	margin: 4px 0 6px;
+	font-size: 11.5px;
+}
+
+.sheet__mini b {
+	font-weight: 600;
 }
 
 .sheet p {
-	margin-top: 3px;
+	margin: 0 0 6px;
 }
 
 .sheet__text {
 	white-space: pre-line;
 }
 
-.sheet ul {
-	margin: 3px 0 0 16px;
-}
-
-.sheet__pause {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: baseline;
-	gap: 4px 12px;
-	padding: 7px 10px;
-	border: 1px dashed var(--sheet-line);
-	border-radius: 6px;
-	background: var(--sheet-band);
-}
-
-.sheet__pause span {
+.sheet__label {
+	margin: 8px 0 3px;
 	color: var(--sheet-muted);
+	font-size: 9.5px;
+	font-weight: 700;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
 }
 
-.sheet__pause p {
-	flex-basis: 100%;
-	margin: 0;
+/* Focus points: boxes to tick during the session. */
+.sheet__ticks {
+	margin: 4px 0 6px;
+	padding: 0;
+	list-style: none;
+}
+
+.sheet__ticks li {
+	position: relative;
+	margin-bottom: 3px;
+	padding-left: 19px;
+}
+
+.sheet__ticks li::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 3px;
+	width: 10px;
+	height: 10px;
+	border: 1.5px solid #a07a1c;
+	border-radius: 2px;
+}
+
+.sheet__list {
+	margin: 0 0 6px;
+	padding-left: 16px;
+}
+
+/* Everything else (breaks, games, a team talk): a row in full ink, its notes under it. */
+.sheet__row {
+	padding: 8px 0 8px 10px;
+	border-top: 1px solid #dfe4e9;
+	border-left: 3px solid var(--tone-other);
+}
+
+.sheet__row--warm { border-left-color: var(--tone-warm); }
+.sheet__row--main { border-left-color: var(--tone-main); }
+.sheet__row--game { border-left-color: var(--tone-game); }
+.sheet__row--cool { border-left-color: var(--tone-cool); }
+.sheet__row--break { border-left-color: var(--tone-break); }
+
+.sheet__row-head {
+	display: flex;
+	align-items: baseline;
+	gap: 4px;
+	font-size: 13px;
+}
+
+.sheet__row-head strong {
+	color: var(--sheet-ink);
+	font-weight: 700;
+}
+
+.sheet__row-when {
+	margin-left: auto;
+	color: var(--sheet-ink);
+	font-size: 11.5px;
+	font-variant-numeric: tabular-nums;
+}
+
+.sheet__row-notes {
+	margin: 3px 0 0 !important;
+	color: var(--sheet-ink);
+	white-space: pre-line;
+}
+
+.sheet__row--break .sheet__row-head strong {
+	font-weight: 600;
+}
+
+/* Room for notes, and who made it. */
+.sheet__notes {
+	padding-top: 8px;
+	border-top: 1px solid #dfe4e9;
+}
+
+.sheet__lines span {
+	display: block;
+	height: 24px;
+	border-bottom: 1px solid #dfe4e9;
+}
+
+.sheet__made {
+	margin-top: 10px;
+	color: #9aa3ad;
+	font-size: 9.5px;
+	text-align: right;
 }
 
 /* Printing (Ctrl+P): only the sheet, at the page's width. */

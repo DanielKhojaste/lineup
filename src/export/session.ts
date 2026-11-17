@@ -23,6 +23,7 @@ interface RenderedSheet {
 async function renderSheet(
 	session: Session,
 	getBoard: (id: string) => Board | undefined,
+	ink = false,
 ): Promise<RenderedSheet> {
 	const { toCanvas } = await import("html-to-image");
 	const host = document.createElement("div");
@@ -30,7 +31,7 @@ async function renderSheet(
 	document.body.appendChild(host);
 	const root = createRoot(host);
 	try {
-		flushSync(() => root.render(createElement(SessionSheetContent, { session, getBoard })));
+		flushSync(() => root.render(createElement(SessionSheetContent, { session, getBoard, ink })));
 		await document.fonts.ready;
 		const sheet = host.firstElementChild as HTMLElement;
 		const origin = sheet.getBoundingClientRect().top;
@@ -63,8 +64,9 @@ function canvasBytes(canvas: HTMLCanvasElement, type = "image/png"): Promise<Uin
 export async function sessionToPng(
 	session: Session,
 	getBoard: (id: string) => Board | undefined,
+	ink = false,
 ): Promise<Uint8Array> {
-	const { canvas } = await renderSheet(session, getBoard);
+	const { canvas } = await renderSheet(session, getBoard, ink);
 	return canvasBytes(canvas);
 }
 
@@ -99,9 +101,10 @@ export function pageBreaks(
 export async function sessionToPdf(
 	session: Session,
 	getBoard: (id: string) => Board | undefined,
+	ink = false,
 ): Promise<Uint8Array> {
 	const [{ canvas, parts }, { jsPDF }] = await Promise.all([
-		renderSheet(session, getBoard),
+		renderSheet(session, getBoard, ink),
 		import("jspdf"),
 	]);
 	const height = canvas.height / SCALE;

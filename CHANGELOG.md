@@ -24,6 +24,7 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Changed
 
+- **Printed and exported sessions** (the summary): the facts in one line, a timeline of the whole session coloured by part, each drill's diagram zoomed to the area it uses with its focus points as tick boxes, the other blocks as clear rows in full ink, and room for notes. **Print with ink saver** and **PDF document, ink saver** draw the pitches white with soft lines, for printing at home
 - Times are picked as hour, minutes and AM or PM (PM until you pick otherwise; computers set to 24-hour times get 0–23 and no AM/PM)
 - Calendar: "match" is now **game** (Add a game, Game in the key)
 - Windows focus what they're meant to: e.g. Save when opening a practice, not the first field

@@ -10,14 +10,15 @@ export function useSessionExport() {
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
-	const exportAs = async (session: Session, kind: "pdf" | "png") => {
+	/** `ink`: the ink saver (white pitches) for printing at home. */
+	const exportAs = async (session: Session, kind: "pdf" | "png", ink = false) => {
 		setBusy(true);
 		setError(null);
 		try {
 			const bytes =
 				kind === "pdf"
-					? await sessionToPdf(session, library.getBoard)
-					: await sessionToPng(session, library.getBoard);
+					? await sessionToPdf(session, library.getBoard, ink)
+					: await sessionToPng(session, library.getBoard, ink);
 			await exportSessionFile(sessionTitle(session), kind, bytes);
 		} catch (e) {
 			setError(`Export failed: ${(e as Error).message || e}`);

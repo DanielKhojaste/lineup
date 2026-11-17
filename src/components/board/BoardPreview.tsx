@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { fieldView } from "../../model/sports";
-import { Board } from "../../model/types";
+import { Board, Drawing } from "../../model/types";
 import DrawingShape from "./Drawings";
 import NodeMarker from "./Markers";
 import Pitch from "./Pitch";
@@ -13,7 +13,16 @@ interface BoardPreviewProps {
 	height?: number;
 	/** Extra SVG content (e.g. a <style> block for standalone exports). */
 	children?: React.ReactNode;
+	/** Show only this part of the board (e.g. the area a drill uses); the whole field otherwise. */
+	view?: { x: number; y: number; width: number; height: number };
+	/** For printing: a white pitch, and white lines and arrows in dark ink. */
+	ink?: boolean;
 }
+
+/** On a white pitch, white drawings print in dark ink instead. */
+const INK = "#2B3440";
+const inked = (d: Drawing): Drawing =>
+	/^#?f{3}(f{3})?$/i.test(d.color.trim()) || d.color.toLowerCase() === "white" ? { ...d, color: INK } : d;
 
 /** A read-only picture of a board: library thumbnails and image export. */
 function BoardPreview({
@@ -22,9 +31,12 @@ function BoardPreview({
 	width,
 	height,
 	children,
+	view: shown,
+	ink = false,
 }: BoardPreviewProps) {
-	// Just the field, like the editor shows it.
-	const view = fieldView(board.pitch);
+	// Just the field, like the editor shows it (or the part asked for).
+	const view = shown ?? fieldView(board.pitch);
+	const drawings = ink ? board.drawings.map(inked) : board.drawings;
 	return (
 		<svg
 			xmlns="http://www.w3.org/2000/svg"
@@ -36,8 +48,8 @@ function BoardPreview({
 			aria-label={`Preview of ${board.meta.title}`}
 		>
 			{children}
-			<Pitch pitch={board.pitch} />
-			{board.drawings
+			<Pitch pitch={board.pitch} ink={ink} />
+			{drawings
 				.filter((d) => d.kind !== "text")
 				.map((d) => (
 					<DrawingShape key={d.id} drawing={d} />
@@ -45,7 +57,7 @@ function BoardPreview({
 			{board.nodes.map((node) => (
 				<NodeMarker key={node.id} node={node} selected={false} board={board} />
 			))}
-			{board.drawings
+			{drawings
 				.filter((d) => d.kind === "text")
 				.map((d) => (
 					<DrawingShape key={d.id} drawing={d} />

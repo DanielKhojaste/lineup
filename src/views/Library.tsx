@@ -598,6 +598,7 @@ export default function Library() {
 			label: "Export",
 			submenu: [
 				{ label: "PDF document", onSelect: () => sessionExport.exportAs(session, "pdf") },
+				{ label: "PDF document, ink saver", onSelect: () => sessionExport.exportAs(session, "pdf", true) },
 				{ label: "Image (PNG)", onSelect: () => sessionExport.exportAs(session, "png") },
 				"separator",
 				{
