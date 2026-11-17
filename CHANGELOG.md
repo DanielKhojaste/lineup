@@ -12,7 +12,7 @@ This project adheres to semantic versioning (0.x during early development).
 
 - **Teams**: pick a saved team from the list under any Team box (sessions, plans, the calendar), or type a new one, which is saved for next time. **Settings › Teams** lists them to add or remove. Your library's existing teams are there from the start
 - Calendar: an optional **Location** for every item, shown on it, in its tooltip and under Coming up
-- Calendar **colours**: a colour for practices, matches and events in **Settings › Calendar colours**, and any item can have its own
+- Calendar **colours**: a colour for practices, matches and events in **Settings › Calendar colours**, and any item can have its own, including any custom colour
 - Calendar: **matches** ("vs Riverside", or "@ North FC" away, with kick-off and a result) and **other events** (team photos, a parents' meeting…), from **Add a match** or a day's right-click menu. Each kind has its colour: training to come in the theme's colour, sessions that ran with a ✓, matches in purple, events in blue, with a key under the calendar
 - **Delete** (or Backspace) in the library deletes the selected items, or the card that has focus, after asking
 - Example **basketball** and **volleyball** sessions (two drills each) in the `examples` folder, alongside the soccer ones

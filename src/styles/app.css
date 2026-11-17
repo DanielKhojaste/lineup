@@ -5555,12 +5555,6 @@ div.plan-outline__week {
 	gap: 6px;
 }
 
-.swatch-row__divider {
-	width: 1px;
-	height: 18px;
-	margin: 0 2px;
-	background: var(--border);
-}
 
 .swatch-pick {
 	display: grid;
@@ -5677,4 +5671,21 @@ div.plan-outline__week {
 
 .team-field__option.is-current {
 	font-weight: 600;
+}
+
+
+/* Any other colour: a rainbow until one is picked, then that colour. */
+.swatch-pick--custom {
+	position: relative;
+	background: conic-gradient(#e2553b, #e2a93b, #5fb15f, #2bb5a8, #4f8fd6, #a66fe0, #e26aa6, #e2553b);
+	color: #fff;
+}
+
+.swatch-pick--custom.is-active {
+	background: var(--swatch);
+}
+
+.swatch-pick--custom:focus-within {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
 }
