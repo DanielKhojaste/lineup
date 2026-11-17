@@ -9,7 +9,6 @@ import PlanToCalendarDialog from "../components/plan/PlanToCalendarDialog";
 import { ContextMenuEntry, useContextMenu } from "../components/ui/ContextMenu";
 import { ConfirmDialog, Modal } from "../components/ui/Dialog";
 import ItemDialog from "../components/calendar/ItemDialog";
-import { usePreviewChoice } from "../preview/designs";
 import ColorSwatches from "../components/calendar/ColorSwatches";
 import { usePreferences } from "../state/preferences";
 import {
@@ -514,7 +513,8 @@ export default function Calendar() {
 		e.kind === "session"
 			? e.label.trim() || library.getSession(e.sessionId)?.meta.title || "Practice"
 			: eventTitle(e);
-	const itemDesign = usePreviewChoice("items");
+	// "Type above" was picked (updates-302).
+	const itemDesign = "tag" as const;
 	const newEntry = (date: string) =>
 		setEditing({ ...createEntry("", date, { team: team === "all" ? "" : team }), isNew: true });
 	const newEvent = (kind: "match" | "event", date: string) =>

@@ -25,7 +25,7 @@ export interface CalendarEntry {
 	time: string | null;
 	/** A session attached to it: a practice's plan, a game's warm-up…; empty for none. */
 	sessionId: string;
-	/** A game's formation or line-up (a board); empty for none. */
+	/** A board attached to it (a match's formation, a line-up…); empty for none. */
 	boardId: string;
 	/** Where it happens: a pitch, a hall, the other team's ground; optional. */
 	location: string;
@@ -283,7 +283,7 @@ export function parseCalendar(source: string): CalendarData {
 				date: e.date,
 				time: isStr(e.time) && CLOCK.test(e.time) ? e.time : null,
 				sessionId: isStr(e.sessionId) ? e.sessionId : "",
-				boardId: kind === "match" && isStr(e.boardId) ? e.boardId : "",
+				boardId: isStr(e.boardId) ? e.boardId : "",
 				team: isStr(e.team) ? e.team.slice(0, 120) : "",
 				location: isStr(e.location) ? e.location.slice(0, 120) : "",
 				color: isStr(e.color) && /^#[0-9a-f]{6}$/i.test(e.color) ? e.color : "",
