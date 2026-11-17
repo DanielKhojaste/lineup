@@ -25,6 +25,13 @@ export const PREVIEW_CHOICES = {
 			["corners", "B · Corner buttons"],
 		],
 	},
+	time: {
+		label: "Time field",
+		options: [
+			["combo", "Type or pick (new)"],
+			["boxes", "Hour, minutes, AM/PM"],
+		],
+	},
 } as const;
 
 export type PreviewKey = keyof typeof PREVIEW_CHOICES;
