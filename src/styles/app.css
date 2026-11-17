@@ -6360,3 +6360,59 @@ div.plan-outline__week {
 .attach-tabs {
 	align-self: flex-start;
 }
+
+/* A time, typed or picked from a list of half hours. */
+.time-combo {
+	position: relative;
+	display: block;
+}
+
+.time-combo__input {
+	width: 100%;
+	padding-right: 30px;
+}
+
+.time-combo__clear {
+	position: absolute;
+	top: 50%;
+	right: 4px;
+	transform: translateY(-50%);
+	color: var(--text-muted);
+	font-size: 16px;
+	line-height: 1;
+}
+
+.time-combo__list {
+	position: absolute;
+	top: calc(100% + 4px);
+	left: 0;
+	z-index: 40;
+	width: 100%;
+	min-width: 140px;
+	max-height: 232px;
+	margin: 0;
+	padding: 4px;
+	overflow-y: auto;
+	list-style: none;
+	border: 1px solid var(--border-strong);
+	border-radius: 8px;
+	background: var(--raised);
+	box-shadow: 0 10px 28px rgb(0 0 0 / 0.3);
+}
+
+.time-combo__option {
+	padding: 5px 10px;
+	border-radius: 6px;
+	font-size: 13px;
+	font-variant-numeric: tabular-nums;
+	cursor: pointer;
+}
+
+.time-combo__option:hover,
+.time-combo__option.is-active {
+	background: var(--accent-soft);
+}
+
+.time-combo__option.is-current {
+	font-weight: 700;
+}

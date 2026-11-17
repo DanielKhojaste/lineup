@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { usePreviewChoice } from "../../preview/designs";
+import TimeCombo from "./TimeCombo";
 
 /** Does this computer show times as 6:30 PM (rather than 18:30)? */
 function uses12Hours(): boolean {
@@ -27,6 +29,7 @@ export default function TimeField({
 	/** For screen readers, e.g. "Time" or "Kick-off". */
 	label: string;
 }) {
+	const design = usePreviewChoice("time");
 	const twelve = uses12Hours();
 	const [h24, m] = value ? value.split(":").map(Number) : [null, null];
 	// AM or PM is kept even while there's no time, so it's never blank.
@@ -35,6 +38,9 @@ export default function TimeField({
 	const hour12 = h24 === null ? "" : String(((h24 + 11) % 12) + 1);
 	const minutes = m === null ? "00" : String(m).padStart(2, "0");
 	const minuteOptions = MINUTES.includes(minutes) ? MINUTES : [...MINUTES, minutes].sort();
+
+	// Preview branch: the "type or pick" box to compare (updates-302).
+	if (design === "combo") return <TimeCombo value={value} onChange={onChange} label={label} />;
 
 	const emit = (hour: number | null, minute: string, isPm: boolean) => {
 		if (hour === null) return onChange(null);
