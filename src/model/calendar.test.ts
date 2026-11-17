@@ -79,8 +79,10 @@ describe("calendar entries", () => {
 				],
 			}),
 		);
-		expect(data.entries).toHaveLength(1);
+		// A practice without a session is kept (preview branch: sessions are optional).
+		expect(data.entries).toHaveLength(2);
 		expect(data.entries[0]).toMatchObject({ time: null, status: "done" });
+		expect(data.entries[1]).toMatchObject({ kind: "session", sessionId: "" });
 		expect(parseCalendar("{").entries).toEqual([]);
 	});
 });

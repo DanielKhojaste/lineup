@@ -102,7 +102,10 @@ for (const size of SIZES) {
 			await expectFits(page, "the calendar (month)");
 			await page.getByRole("radio", { name: "Week" }).click();
 			await expectFits(page, "the calendar (week)");
-			await page.getByRole("button", { name: "Add session" }).click();
+			await page.getByRole("button", { name: "Add a practice" }).click();
+			await page.waitForSelector(".dialog--item");
+			await expectFits(page, "the new item window");
+			await page.getByRole("button", { name: "Attach a session…" }).click();
 			await page.waitForSelector(".dialog--picker");
 			await expectFits(page, "the session picker");
 		});

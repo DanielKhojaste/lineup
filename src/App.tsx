@@ -1,3 +1,4 @@
+import DesignSwitcher from "./preview/DesignSwitcher";
 import { ContextMenuProvider } from "./components/ui/ContextMenu";
 import ViewManager from "./router/ViewManager";
 import { LibraryProvider } from "./state/LibraryContext";
@@ -37,6 +38,8 @@ function App() {
 			<ContextMenuProvider>
 				<LibraryProvider>
 					<ViewManager />
+					{/* Preview branch: switch between designs to compare. */}
+					<DesignSwitcher />
 				</LibraryProvider>
 			</ContextMenuProvider>
 		</ThemeProvider>

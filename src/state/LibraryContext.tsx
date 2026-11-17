@@ -406,11 +406,15 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 						})),
 					});
 				}
-				if (calendarRef.current.some((e) => e.sessionId === id && e.status !== "done"))
+				// A plain practice of this session goes (unless it ran); games, events and
+				// named practices stay, without the session.
+				if (calendarRef.current.some((e) => e.sessionId === id))
 					await writeCalendar(
-						calendarRef.current.filter(
-							(e) => e.sessionId !== id || e.status === "done",
-						),
+						calendarRef.current.flatMap((e) => {
+							if (e.sessionId !== id || e.status === "done") return [e];
+							if (e.kind === "session" && !e.label.trim()) return [];
+							return [{ ...e, sessionId: "" }];
+						}),
 					);
 			},
 
