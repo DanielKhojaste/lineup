@@ -66,7 +66,7 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Fixed
 
-- Desktop app: preferences (player size, sizes, colours…) are also kept in **Lineup/settings.json**, so they're the same in every build (dev and installed) and survive a reinstall
+- Desktop app: preferences (player and equipment sizes, colours…) are also kept in the app's own data folder (`Lineup/settings.json`), so they're the same in every build, dev and installed. The file has a version and when it changed, ready to sync with an account later
 - Theme effects (spice, desert night) never draw over any picture of a board, including the session preview's
 - Printed and exported sessions: cones no longer sit on black discs and players no longer have thick dark rings (the board's hidden hover ring showed up where the app's styles don't reach)
 - A session with many topics in a plan no longer makes the page scroll sideways
