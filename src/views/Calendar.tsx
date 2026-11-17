@@ -7,15 +7,12 @@ import PlanToCalendarDialog from "../components/plan/PlanToCalendarDialog";
 import { ContextMenuEntry, useContextMenu } from "../components/ui/ContextMenu";
 import { ConfirmDialog, Modal } from "../components/ui/Dialog";
 import EventDialog from "../components/calendar/EventDialog";
-import SeasonTimeline, { newSeason, SeasonDialog } from "../components/calendar/SeasonTimeline";
 import {
 	addDays,
 	CalendarEntry,
 	createEntry,
 	createEvent,
 	eventTitle,
-	Season,
-	seasonFor,
 	describeDay,
 	EntryStatus,
 	monthGrid,
@@ -257,7 +254,13 @@ function EntryDialog({
 					<button type="button" className="button" onClick={onClose}>
 						Cancel
 					</button>
-					<button type="submit" className="button button--primary" disabled={!draft.sessionId}>
+					<button
+						type="submit"
+						className="button button--primary"
+						disabled={!draft.sessionId}
+						// Opening a practice focuses Save, not the date (which would select its day).
+						{...(!entry.isNew ? { "data-autofocus": "" } : {})}
+					>
 						{entry.isNew ? "Add" : "Save"}
 					</button>
 				</div>
@@ -388,7 +391,6 @@ export default function Calendar() {
 	const [pickPlan, setPickPlan] = useState(false);
 	const [layingOut, setLayingOut] = useState<Plan | null>(null);
 	const [dropDate, setDropDate] = useState<string | null>(null);
-	const [editingSeason, setEditingSeason] = useState<{ season: Season; isNew: boolean } | null>(null);
 
 	const days =
 		mode === "month"
@@ -451,7 +453,7 @@ export default function Calendar() {
 			openSession(entry.sessionId);
 		else setEditing(entry);
 	};
-	const season = seasonFor(library.seasons, toISODate(focus));
+
 
 	/** Drag an entry onto another day to move it. */
 	const startDrag = (e: ReactPointerEvent, entry: CalendarEntry) => {
@@ -591,14 +593,7 @@ export default function Calendar() {
 				</button>
 			</header>
 
-			<SeasonTimeline
-				season={season}
-				today={today}
-				view={{ start: toISODate(days[0]), end: toISODate(days[days.length - 1]) }}
-				onJump={(date) => setFocus(parseISODate(date)!)}
-				onEdit={() => season && setEditingSeason({ season, isNew: false })}
-				onNew={() => setEditingSeason({ season: newSeason(library.seasons), isNew: true })}
-			/>
+			{/* The season timeline is kept on the archive/season-timeline branch for now. */}
 			<div className="calendar-view__body">
 				<main className="calendar">
 					<div className="calendar__head">
@@ -713,8 +708,6 @@ export default function Calendar() {
 												<Icon name="star" size={12} className="calendar__kind" />
 											) : statusOf(e, today) === "done" ? (
 												<Icon name="check" size={12} className="calendar__kind" />
-											) : statusOf(e, today) === "planned" ? (
-												<span className="calendar__dot" aria-hidden="true" />
 											) : null}
 											{sports.length > 1 && sportOf(e) && (
 												<span
@@ -785,22 +778,6 @@ export default function Calendar() {
 					onRemove={() => {
 						setRemoving(editing);
 						setEditing(null);
-					}}
-				/>
-			)}
-			{editingSeason && (
-				<SeasonDialog
-					season={editingSeason.season}
-					isNew={editingSeason.isNew}
-					onClose={() => setEditingSeason(null)}
-					onSave={(saved) => {
-						const others = library.seasons.filter((x) => x.id !== saved.id);
-						void library.saveSeasons([...others, saved]);
-						if (editingSeason.isNew) setFocus(parseISODate(saved.start)! > new Date() ? parseISODate(saved.start)! : new Date());
-					}}
-					onDelete={() => {
-						void library.saveSeasons(library.seasons.filter((x) => x.id !== editingSeason.season.id));
-						setEditingSeason(null);
 					}}
 				/>
 			)}

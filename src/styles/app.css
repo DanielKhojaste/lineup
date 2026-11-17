@@ -210,13 +210,19 @@ h3 {
 
 .link-button {
 	align-self: flex-start;
+	/* The padding sits outside the text's line, so it lines up with what's above. */
+	margin-left: -8px;
+	padding: 2px 8px;
+	border-radius: 6px;
 	color: var(--accent-text);
 	font-weight: 600;
-	padding: 2px 0;
+	transition: background-color 0.12s ease;
 }
 
-.link-button:hover:not(:disabled) {
-	text-decoration: underline;
+/* A soft tint behind the words, not an underline. */
+.link-button:hover:not(:disabled),
+.link-button:focus-visible {
+	background: var(--accent-soft);
 }
 
 .link-button:disabled {
@@ -1200,10 +1206,17 @@ h3 {
 	min-width: 0;
 }
 
-/* Two columns, kept apart by space alone (no line between them). */
+/* Two columns, kept apart by space alone (no line between them). Always
+   two, at any interface size, unless the window is really narrow. */
 .shortcuts {
-	columns: 2 260px;
-	column-gap: 48px;
+	column-count: 2;
+	column-gap: 40px;
+}
+
+@media (max-width: 640px) {
+	.shortcuts {
+		column-count: 1;
+	}
 }
 
 .shortcuts__group {
@@ -4003,9 +4016,12 @@ input.plan-topic__title {
 }
 
 .calendar__head h2 {
-	margin: 0 6px;
+	margin: 0;
 	font-size: 20px;
+	/* Wide enough for "September 2026", centred, so the arrows sit the same
+	   distance from it and don't move from month to month. */
 	min-width: 180px;
+	text-align: center;
 }
 
 .calendar__grid {
@@ -4289,8 +4305,18 @@ input.plan-topic__title {
 }
 
 .calendar__entry-meta {
+	max-width: 100%;
+	overflow: hidden;
 	color: var(--text-muted);
 	font-size: 11px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* A long team name doesn't widen the filters at the top. */
+.calendar-view .sort .field__input {
+	max-width: 200px;
+	text-overflow: ellipsis;
 }
 
 .calendar__drills {
@@ -4594,11 +4620,49 @@ option:disabled {
 .session-preview__keys {
 	display: inline-flex;
 	align-items: center;
+	gap: 18px;
+}
+
+/* Keys sit together; their word has a little room after them. */
+.session-preview__keygroup {
+	display: inline-flex;
+	align-items: center;
 	gap: 3px;
 }
 
-.session-preview__gap {
-	width: 12px;
+.session-preview__keygroup > span:last-child {
+	margin-left: 5px;
+}
+
+.session-preview__title {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* The session's team, length and players, at the top of its blocks. */
+.session-preview__summary {
+	position: sticky;
+	top: -16px;
+	z-index: 1;
+	flex-shrink: 0;
+	margin: -16px -16px 2px;
+	padding: 14px 20px 10px;
+	background: var(--surface);
+	border-bottom: 1px solid var(--border);
+	color: var(--text-muted);
+	font-size: 12px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* In a small window the key hints go (they're in Settings › Keyboard shortcuts). */
+@media (max-width: 1150px) {
+	.session-preview__keys {
+		display: none;
+	}
 }
 
 /* Room between the shortcuts and the details switch beside them. */
@@ -5221,13 +5285,6 @@ div.plan-outline__week {
 	color: var(--entry-kind);
 }
 
-.calendar__dot {
-	flex-shrink: 0;
-	width: 6px;
-	height: 6px;
-	border-radius: 50%;
-	background: var(--entry-kind);
-}
 
 .agenda__dot--match {
 	background: #a66fe0;
@@ -5287,173 +5344,27 @@ div.plan-outline__week {
 	align-items: end;
 }
 
-/* ---------------------------- The season timeline ---------------------------- */
 
-.season {
+
+/* The topic box and its bubbles: one line, never a second row. */
+.week-topics__entry {
+	flex: 1 1 240px;
+	min-width: 180px;
 	display: flex;
-	flex-direction: column;
-	gap: 8px;
-	padding: 12px 24px 14px;
-	border-bottom: 1px solid var(--border);
-	background: var(--surface);
-}
-
-.season--empty {
-	flex-direction: row;
+	flex-wrap: nowrap;
 	align-items: center;
-	gap: 12px;
-	padding-top: 10px;
-	padding-bottom: 10px;
-	font-size: 13px;
-}
-
-.season__head {
-	display: flex;
-	align-items: baseline;
-	gap: 10px;
-	min-width: 0;
-	font-size: 13px;
-}
-
-.season__name {
-	font-size: 15px;
-}
-
-.season__now {
-	padding: 1px 8px;
-	border-radius: 999px;
-	background: var(--accent-soft);
-	color: var(--accent-text);
-	font-size: 12px;
-	font-weight: 600;
-	white-space: nowrap;
+	gap: 5px;
 	overflow: hidden;
-	text-overflow: ellipsis;
 }
 
-.season__track {
-	position: relative;
-	height: 34px;
-	border-radius: 6px;
-	background: var(--sunken);
+.week-topics__entry .week-topics__input {
+	flex: 0 0 150px;
 }
 
-.season__phase {
-	--phase: #8b949e;
-	position: absolute;
-	top: 0;
-	bottom: 0;
-	display: flex;
-	align-items: center;
-	min-width: 0;
-	padding: 0 10px;
-	border: 0;
-	border-right: 2px solid var(--surface);
-	border-radius: 5px;
-	background: color-mix(in srgb, var(--phase) 24%, var(--surface));
-	color: color-mix(in srgb, var(--phase) 55%, var(--text));
-	font: inherit;
-	font-size: 12.5px;
-	font-weight: 600;
-	text-align: left;
-	cursor: pointer;
+.week-topics__entry .week-topics__bubble {
+	flex-shrink: 0;
 }
 
-.season__phase > span {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-.season__phase:hover {
-	background: color-mix(in srgb, var(--phase) 36%, var(--surface));
-}
-
-.season__phase--grey {
-	--phase: #8b949e;
-}
-
-.season__phase--green {
-	--phase: #5fb15f;
-}
-
-.season__phase--blue {
-	--phase: #4f8fd6;
-}
-
-.season__phase--purple {
-	--phase: #a66fe0;
-}
-
-.season__phase--amber {
-	--phase: #d9a227;
-}
-
-.season__phase--red {
-	--phase: #d9534f;
-}
-
-/* The stretch the calendar is showing. */
-.season__view {
-	position: absolute;
-	top: -3px;
-	bottom: -3px;
-	border: 1.5px solid var(--text-muted);
-	border-radius: 6px;
-	pointer-events: none;
-}
-
-.season__today {
-	position: absolute;
-	top: -5px;
-	bottom: -5px;
-	width: 3px;
-	margin-left: -1.5px;
-	border-radius: 2px;
-	background: var(--text);
-	pointer-events: none;
-}
-
-/* Editing a season. */
-.dialog--season {
-	width: min(760px, calc(100vw - 32px));
-}
-
-.season-form__top {
-	display: grid;
-	grid-template-columns: 1fr 160px 160px;
-	gap: 10px;
-}
-
-.season-form__phases {
-	display: flex;
-	flex-direction: column;
-	gap: 6px;
-	margin: 0 0 6px;
-	padding: 0;
-	list-style: none;
-}
-
-.season-form__phase {
-	display: grid;
-	grid-template-columns: 96px minmax(0, 1fr) 150px 150px auto;
-	gap: 6px;
-	align-items: center;
-}
-
-.season-form__color {
-	height: 34px;
-	padding: 0 8px;
-	border: 1px solid var(--border);
-	border-radius: 6px;
-	background: color-mix(in srgb, var(--phase) 24%, var(--surface));
-	color: color-mix(in srgb, var(--phase) 55%, var(--text));
-	font: inherit;
-	font-weight: 600;
-}
-
-.calendar__grid--week .calendar__entry > .calendar__dot:first-child {
-	position: absolute;
-	top: 12px;
-	right: 9px;
+.week-topics__bubble[hidden] {
+	display: none;
 }

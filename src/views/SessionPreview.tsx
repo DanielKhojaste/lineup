@@ -174,17 +174,25 @@ export default function SessionPreview() {
 				</button>
 				<span className="topbar__divider" aria-hidden="true" />
 				<span className="badge">Session</span>
-				<span className="topbar__heading">{sessionTitle(session)}</span>
-				<span className="muted small">{summary.join(" · ")}</span>
+				<span className="topbar__heading session-preview__title" title={sessionTitle(session)}>
+					{sessionTitle(session)}
+				</span>
 				<span className="topbar__spacer" />
 				<span className="muted small session-preview__keys">
-					<Key small>↑</Key>
-					<Key small>↓</Key> Blocks
-					<span className="session-preview__gap" />
-					<Key small>←</Key>
-					<Key small>→</Key> Steps
-					<span className="session-preview__gap" />
-					<Key small wide>Space</Key> Play
+					<span className="session-preview__keygroup">
+						<Key small>↑</Key>
+						<Key small>↓</Key>
+						<span>Blocks</span>
+					</span>
+					<span className="session-preview__keygroup">
+						<Key small>←</Key>
+						<Key small>→</Key>
+						<span>Steps</span>
+					</span>
+					<span className="session-preview__keygroup">
+						<Key small wide>Space</Key>
+						<span>Play</span>
+					</span>
 				</span>
 				<div className="segmented segmented--small" role="radiogroup" aria-label="Drill details">
 					{(
@@ -208,19 +216,28 @@ export default function SessionPreview() {
 						</button>
 					))}
 				</div>
-				{back === "/" && (
-					<button
-						type="button"
-						className="button button--small"
-						onClick={() => navigate(`/session/${session.id}`, { state: back ? { from: back } : undefined })}
-					>
-						Edit session
-					</button>
-				)}
+				{/* Always here, top right. From the session's own editor it simply goes back to it. */}
+				<button
+					type="button"
+					className="button button--small"
+					onClick={() =>
+						back?.startsWith(`/session/${session.id}`) || !back
+							? goBack()
+							: navigate(`/session/${session.id}`, { state: { from: back } })
+					}
+				>
+					<Icon name="pencil" size={14} />
+					Edit session
+				</button>
 			</header>
 
 			<div className="session-preview__body">
 				<nav className="session-preview__list" aria-label="Blocks">
+					{summary.length > 0 && (
+						<p className="session-preview__summary" title={summary.join(" · ")}>
+							{summary.join(" · ")}
+						</p>
+					)}
 					{session.blocks.length === 0 && (
 						<p className="muted small">This session has nothing in it yet.</p>
 					)}

@@ -7,11 +7,14 @@ import {
 	useMemo,
 	useReducer,
 	useState,
+	useLayoutEffect,
+	useRef,
 } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import Loader from "../components/Loader";
 import PlanToCalendarDialog from "../components/plan/PlanToCalendarDialog";
+import { ConfirmDialog } from "../components/ui/Dialog";
 import { ContextMenuEntry, isTextField, useContextMenu } from "../components/ui/ContextMenu";
 import { BoardInput, BoardTextarea, FieldGestureContext } from "../components/ui/fields";
 import { describeDay, lastRunBySession } from "../model/calendar";
@@ -40,6 +43,8 @@ const PlanContext = createContext<{
 	/** The topic the sessions panel adds to. */
 	activeTopic: string;
 	setActiveTopic: (id: string) => void;
+	/** Asks before removing a week (from its trash can or its menu). */
+	askRemoveWeek: (id: string) => void;
 } | null>(null);
 
 function usePlan() {
@@ -92,6 +97,30 @@ function WeekTopics({ topicIndex }: { topicIndex: number }) {
 				.sort((a, b) => Number(!a.toLowerCase().startsWith(q)) - Number(!b.toLowerCase().startsWith(q)))
 				.slice(0, 6)
 		: [];
+	// How many bubbles fit beside the box (measured after each change; the rest stay hidden).
+	const entryRef = useRef<HTMLDivElement>(null);
+	const [fit, setFit] = useState(6);
+	const matchKey = matches.join("|");
+	useLayoutEffect(() => {
+		const entry = entryRef.current;
+		if (!entry) return;
+		const measure = () => {
+			const bubbles = [...entry.querySelectorAll<HTMLElement>(".week-topics__bubble")];
+			bubbles.forEach((b) => (b.hidden = false));
+			const right = entry.getBoundingClientRect().right;
+			let n = 0;
+			for (const b of bubbles) {
+				if (b.getBoundingClientRect().right > right + 0.5) break;
+				n++;
+			}
+			bubbles.forEach((b, i) => (b.hidden = i >= n));
+			setFit(n);
+		};
+		measure();
+		const observer = new ResizeObserver(measure);
+		observer.observe(entry);
+		return () => observer.disconnect();
+	}, [matchKey]);
 	const add = (value: string) => {
 		const typed = value.trim().slice(0, 40);
 		setDraft("");
@@ -116,44 +145,48 @@ function WeekTopics({ topicIndex }: { topicIndex: number }) {
 				</span>
 			))}
 			{full ? (
-				<span className="muted small">{MAX_WEEK_TOPICS} topics at most</span>
+				<span className="muted small">Maximum {MAX_WEEK_TOPICS} topics</span>
 			) : (
-				<input
-					className="chip-input week-topics__input"
-					aria-label={`Week ${topicIndex + 1} topics`}
-					placeholder={week.topics.length ? "+ Topic" : "+ Add topics, e.g. Pressing"}
-					value={draft}
-					maxLength={40}
-					onChange={(e) => setDraft(e.target.value)}
-					onKeyDown={(e) => {
-						if (e.key === "Enter" || e.key === ",") {
-							e.preventDefault();
-							add(draft);
-						} else if (e.key === "Escape" && draft) {
-							e.stopPropagation();
-							setDraft("");
-						} else if (e.key === "Backspace" && !draft && week.topics.length) {
-							set(week.topics.slice(0, -1));
-						}
-					}}
-					onBlur={(e) => {
-						// Not when a bubble is being clicked: that adds its own topic.
-						if (!(e.relatedTarget as Element | null)?.closest(".week-topics__bubble")) add(draft);
-					}}
-				/>
+				// The box and its bubbles share one line: only the bubbles that fit the rest of it show.
+				<div className="week-topics__entry" ref={entryRef}>
+					<input
+						className="chip-input week-topics__input"
+						aria-label={`Week ${topicIndex + 1} topics`}
+						placeholder={week.topics.length ? "+ Topic" : "+ Add topics, e.g. Pressing"}
+						value={draft}
+						maxLength={40}
+						onChange={(e) => setDraft(e.target.value)}
+						onKeyDown={(e) => {
+							if (e.key === "Enter" || e.key === ",") {
+								e.preventDefault();
+								add(draft);
+							} else if (e.key === "Escape" && draft) {
+								e.stopPropagation();
+								setDraft("");
+							} else if (e.key === "Backspace" && !draft && week.topics.length) {
+								set(week.topics.slice(0, -1));
+							}
+						}}
+						onBlur={(e) => {
+							// Not when a bubble is being clicked: that adds its own topic.
+							if (!(e.relatedTarget as Element | null)?.closest(".week-topics__bubble")) add(draft);
+						}}
+					/>
+					{matches.map((t, i) => (
+						<button
+							key={t}
+							type="button"
+							className="week-topics__bubble"
+							title={t}
+							hidden={i >= fit}
+							onMouseDown={(e) => e.preventDefault()}
+							onClick={() => add(t)}
+						>
+							+ {t}
+						</button>
+					))}
+				</div>
 			)}
-			{matches.map((t) => (
-				<button
-					key={t}
-					type="button"
-					className="week-topics__bubble"
-					title={t}
-					onMouseDown={(e) => e.preventDefault()}
-					onClick={() => add(t)}
-				>
-					+ {t}
-				</button>
-			))}
 		</div>
 	);
 }
@@ -225,7 +258,7 @@ function useWeekDrag() {
 
 /** Removes a week (and its sessions from the plan; the sessions stay in the library). Ctrl+Z brings it back. */
 function RemoveWeekButton({ topicIndex }: { topicIndex: number }) {
-	const { state, dispatch } = usePlan();
+	const { state, askRemoveWeek } = usePlan();
 	const weeks = state.present.topics;
 	const week = weeks[topicIndex];
 	const only = weeks.length === 1;
@@ -238,7 +271,7 @@ function RemoveWeekButton({ topicIndex }: { topicIndex: number }) {
 			disabled={only}
 			onClick={(e) => {
 				e.stopPropagation();
-				dispatch({ type: "removeTopic", id: week.id });
+				askRemoveWeek(week.id);
 			}}
 		>
 			<Icon name="trash" size={15} />
@@ -346,7 +379,7 @@ function placeDropLine(line: HTMLElement, t: NonNullable<ReturnType<typeof dropT
 
 /** A week's drag and menus, shared by the list, the table and the outline. */
 function useWeek(topicIndex: number) {
-	const { state, dispatch } = usePlan();
+	const { state, dispatch, askRemoveWeek } = usePlan();
 	const open = useOpenSession();
 	const library = useLibrary();
 	const navigate = useNavigate();
@@ -494,7 +527,7 @@ function useWeek(topicIndex: number) {
 			label: topic.sessionIds.length ? "Remove week and its sessions from the plan" : "Remove week",
 			danger: true,
 			disabled: plan.topics.length === 1,
-			onSelect: () => dispatch({ type: "removeTopic", id: topic.id }),
+			onSelect: () => askRemoveWeek(topic.id),
 		},
 	];
 
@@ -1028,10 +1061,14 @@ function PlanLayout() {
 function PlanProvider({ plan, children }: { plan: Plan; children: React.ReactNode }) {
 	const [state, dispatch] = useReducer(planReducer, plan, createHistory<Plan>);
 	const [activeTopic, setActiveTopic] = useState(plan.topics[plan.topics.length - 1]?.id ?? "");
+	const [removing, setRemoving] = useState<string | null>(null);
 	const value = useMemo(
-		() => ({ state, dispatch, activeTopic, setActiveTopic }),
+		() => ({ state, dispatch, activeTopic, setActiveTopic, askRemoveWeek: setRemoving }),
 		[state, activeTopic],
 	);
+	const weeks = state.present.topics;
+	const index = weeks.findIndex((t) => t.id === removing);
+	const week = weeks[index];
 	const gestures = useMemo(
 		() => ({
 			begin: () => dispatch({ type: "beginGesture" }),
@@ -1042,6 +1079,23 @@ function PlanProvider({ plan, children }: { plan: Plan; children: React.ReactNod
 	return (
 		<PlanContext.Provider value={value}>
 			<FieldGestureContext.Provider value={gestures}>{children}</FieldGestureContext.Provider>
+			<ConfirmDialog
+				open={!!week}
+				title={`Remove week ${index + 1}?`}
+				message={
+					week
+						? `“${weekLabel(index + 1, week.topics)}”${
+								week.sessionIds.length
+									? ` and its ${week.sessionIds.length === 1 ? "session" : `${week.sessionIds.length} sessions`} come off the plan (sessions stay in your library).`
+									: " comes off the plan."
+							} Ctrl+Z brings it back.`
+						: ""
+				}
+				confirmLabel="Remove week"
+				danger
+				onConfirm={() => week && dispatch({ type: "removeTopic", id: week.id })}
+				onClose={() => setRemoving(null)}
+			/>
 		</PlanContext.Provider>
 	);
 }
