@@ -10,10 +10,13 @@ export default function BoardPicker({
 	title = "Choose a formation",
 	onPick,
 	onClose,
+	onSwitch,
 }: {
 	title?: string;
 	onPick: (board: Board) => void;
 	onClose: () => void;
+	/** In the calendar's Attach window: switch to picking the other kind. */
+	onSwitch?: (to: "session" | "board") => void;
 }) {
 	const library = useLibrary();
 	const [query, setQuery] = useState("");
@@ -26,6 +29,22 @@ export default function BoardPicker({
 	return (
 		<Modal open title={title} onClose={onClose} className="dialog--picker">
 			<div className="dialog__section session-picker">
+				{onSwitch && (
+					<div className="segmented segmented--small attach-tabs" role="radiogroup" aria-label="Attach">
+						{(["session", "board"] as const).map((t) => (
+							<button
+								key={t}
+								type="button"
+								role="radio"
+								aria-checked={t === "board"}
+								className={`segmented__item${t === "board" ? " is-active" : ""}`}
+								onClick={() => t !== "board" && onSwitch(t)}
+							>
+								{t === "session" ? "Session" : "Board (e.g. a formation)"}
+							</button>
+						))}
+					</div>
+				)}
 				<div className="session-picker__bar">
 					<label className="search">
 						<Icon name="search" size={16} />

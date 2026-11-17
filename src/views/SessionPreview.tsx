@@ -67,7 +67,7 @@ function StepControls({
 	onPlay,
 	onStep,
 }: {
-	variant: "bar" | "corners";
+	variant: "bar" | "corners" | "dock" | "fade" | "compact";
 	steps: number;
 	step: number;
 	playing: boolean;
@@ -108,6 +108,17 @@ function StepControls({
 			<Icon name="chevronRight" size={18} />
 		</button>
 	);
+	if (variant === "compact")
+		return (
+			<div className="step-controls step-controls--corner-left step-controls--compact">
+				{play}
+				{prev}
+				<span className="step-controls__count" title={label}>
+					{playing ? "▶" : step === 0 ? "S" : step} / {steps}
+				</span>
+				{next}
+			</div>
+		);
 	if (variant === "corners")
 		return (
 			<>
@@ -122,7 +133,11 @@ function StepControls({
 			</>
 		);
 	return (
-		<div className="step-controls step-controls--bar" role="group" aria-label="Animation">
+		<div
+			className={`step-controls step-controls--bar${variant === "dock" ? " step-controls--dock" : ""}${variant === "fade" ? " step-controls--fade" : ""}`}
+			role="group"
+			aria-label="Animation"
+		>
 			{prev}
 			{play}
 			{next}
@@ -218,6 +233,14 @@ export default function SessionPreview() {
 	const [playing, setPlaying] = useState(true);
 	const [step, setStep] = useState(0);
 	const controls = usePreviewChoice("controls");
+	// "Fades when idle": the controls fade out a moment after the pointer stops (or leaves the field).
+	const [idle, setIdle] = useState(true);
+	const idleTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+	const wake = () => {
+		setIdle(false);
+		clearTimeout(idleTimer.current);
+		idleTimer.current = setTimeout(() => setIdle(true), 1500);
+	};
 
 	const stageOf = (boardId: string) => {
 		const board = library.getBoard(boardId);
@@ -396,9 +419,13 @@ export default function SessionPreview() {
 				<main className={`session-preview__main session-preview__main--${details}`}>
 					{block && board ? (
 						<>
-							<div className="session-preview__stagewrap">
+							<div
+								className={`session-preview__stagewrap${idle ? " is-idle" : ""}`}
+								onPointerMove={wake}
+								onPointerLeave={() => setIdle(true)}
+							>
 								<PlayingBoard board={board} playing={playing} step={step} />
-								{steps > 0 && (
+								{steps > 0 && controls !== "dock" && (
 									<FieldOverlay>
 									<StepControls
 										variant={controls}
@@ -414,6 +441,21 @@ export default function SessionPreview() {
 									</FieldOverlay>
 								)}
 							</div>
+							{steps > 0 && controls === "dock" && (
+								<div className="step-controls-dock">
+									<StepControls
+										variant="dock"
+										steps={steps}
+										step={step}
+										playing={playing}
+										onPlay={() => setPlaying((p) => !p)}
+										onStep={(s) => {
+											setPlaying(false);
+											setStep(Math.max(0, Math.min(steps, s)));
+										}}
+									/>
+								</div>
+							)}
 							{details !== "hidden" && (
 							<section className="session-preview__details">
 								<div className="session-preview__facts">

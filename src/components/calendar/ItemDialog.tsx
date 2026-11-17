@@ -55,23 +55,26 @@ export default function ItemDialog({
 	if (picking === "session")
 		return (
 			<SessionPicker
-				title={kind === "match" ? "Attach a session (e.g. the warm-up)" : "Attach a session"}
+				title="Attach a session or a board"
 				initialSport={sportFilter === "all" ? "all" : (sportFilter as never)}
 				onPick={(picked) => {
 					set({ sessionId: picked.id, team: draft.team || picked.header.team || "" });
 					setPicking(null);
 				}}
 				onClose={() => setPicking(null)}
+				onSwitch={setPicking}
 			/>
 		);
 	if (picking === "board")
 		return (
 			<BoardPicker
+				title="Attach a session or a board"
 				onPick={(b) => {
 					set({ boardId: b.id });
 					setPicking(null);
 				}}
 				onClose={() => setPicking(null)}
+				onSwitch={setPicking}
 			/>
 		);
 
@@ -88,7 +91,7 @@ export default function ItemDialog({
 				onSubmit={(e) => {
 					e.preventDefault();
 					const { isNew: _, ...clean } = draft;
-					onSave({ ...clean, label: clean.label.trim(), boardId: clean.kind === "match" ? clean.boardId : "" });
+					onSave({ ...clean, label: clean.label.trim() });
 					onClose();
 				}}
 			>
@@ -159,12 +162,12 @@ export default function ItemDialog({
 					</label>
 				)}
 
-				{/* What's attached: a session (any kind), a formation (matches). */}
+				{/* What's attached: a session and/or a board (a formation…), on any kind of item. */}
 				<div className="field">
 					<span className="field__label">
-						{kind === "match" ? "Session (e.g. the warm-up)" : "Session"} <span className="muted">(optional)</span>
+						Attached <span className="muted">(optional)</span>
 					</span>
-					{session ? (
+					{session && (
 						<div className="picked-session">
 							<span className="picked-session__strip" aria-hidden="true">
 								{sessionBoardIds(session)
@@ -178,7 +181,7 @@ export default function ItemDialog({
 							<span className="picked-session__text">
 								<b>{session.meta.title}</b>
 								<span className="muted small">
-									{[session.header.team, totalMinutes(session) ? formatMinutes(totalMinutes(session)) : ""]
+									{["Session", session.header.team, totalMinutes(session) ? formatMinutes(totalMinutes(session)) : ""]
 										.filter(Boolean)
 										.join(" · ")}
 								</span>
@@ -190,50 +193,43 @@ export default function ItemDialog({
 								type="button"
 								className="icon-button icon-button--small"
 								aria-label="Detach the session"
-								title="Detach (the session stays in your library)"
 								onClick={() => set({ sessionId: "" })}
 							>
 								<Icon name="close" size={14} />
 							</button>
 						</div>
-					) : (
-						<button type="button" className="button picked-session__choose" onClick={() => setPicking("session")}>
-							<Icon name="session" size={16} />
-							{draft.sessionId ? "Its session was deleted. Attach another…" : "Attach a session…"}
+					)}
+					{formation && (
+						<div className="picked-session">
+							<BoardPreview board={formation} className="picked-session__thumb" />
+							<span className="picked-session__text">
+								<b>{formation.meta.title || "Untitled board"}</b>
+								<span className="muted small">Board</span>
+							</span>
+							<button type="button" className="button button--small" onClick={() => setPicking("board")}>
+								Change…
+							</button>
+							<button
+								type="button"
+								className="icon-button icon-button--small"
+								aria-label="Detach the board"
+								onClick={() => set({ boardId: "" })}
+							>
+								<Icon name="close" size={14} />
+							</button>
+						</div>
+					)}
+					{!(session && formation) && (
+						<button
+							type="button"
+							className="button picked-session__choose"
+							onClick={() => setPicking(session ? "board" : "session")}
+						>
+							<Icon name="plus" size={16} />
+							{session ? "Attach a board…" : formation ? "Attach a session…" : "Attach a session or board…"}
 						</button>
 					)}
 				</div>
-				{kind === "match" && (
-					<div className="field">
-						<span className="field__label">
-							Formation <span className="muted">(optional)</span>
-						</span>
-						{formation ? (
-							<div className="picked-session">
-								<BoardPreview board={formation} className="picked-session__thumb" />
-								<span className="picked-session__text">
-									<b>{formation.meta.title || "Untitled board"}</b>
-								</span>
-								<button type="button" className="button button--small" onClick={() => setPicking("board")}>
-									Change…
-								</button>
-								<button
-									type="button"
-									className="icon-button icon-button--small"
-									aria-label="Detach the formation"
-									onClick={() => set({ boardId: "" })}
-								>
-									<Icon name="close" size={14} />
-								</button>
-							</div>
-						) : (
-							<button type="button" className="button picked-session__choose" onClick={() => setPicking("board")}>
-								<Icon name="player" size={16} />
-								Attach a formation (a board)…
-							</button>
-						)}
-					</div>
-				)}
 
 				<div className="field-grid">
 					<label className="field">
@@ -303,8 +299,8 @@ export default function ItemDialog({
 						<span className="muted">(optional)</span>
 					</span>
 					<textarea
-						className="field__input field__input--area"
-						rows={2}
+						className="field__input field__input--area item-notes"
+						rows={1}
 						maxLength={4000}
 						value={draft.log}
 						onChange={(e) => set({ log: e.target.value })}

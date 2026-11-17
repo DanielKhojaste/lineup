@@ -10,23 +10,19 @@ export const PREVIEW_CHOICES = {
 	hover: {
 		label: "Calendar item hover",
 		options: [
+			["tint", "C · Tint (picked)"],
 			["lift", "A · Lift"],
 			["ring", "B · Ring"],
-			["tint", "C · Tint"],
 		],
 	},
 	controls: {
 		label: "Animation controls (session preview)",
 		options: [
+			["dock", "D · Under the field"],
+			["fade", "E · Fades when idle"],
+			["compact", "F · Compact corner"],
 			["bar", "A · Floating bar"],
 			["corners", "B · Corner buttons"],
-		],
-	},
-	items: {
-		label: "Calendar items",
-		options: [
-			["tag", "A · Type above"],
-			["inline", "B · Icon in line"],
 		],
 	},
 } as const;
