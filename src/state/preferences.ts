@@ -27,6 +27,11 @@ export interface Preferences {
 	 */
 	fieldDefaults: Partial<Record<Sport, FieldVariant>>;
 	/**
+	 * Each kind of calendar item's colour ("#A66FE0"), when the coach picked
+	 * one; otherwise the app's (practices in the theme's colour).
+	 */
+	calendarColors: Partial<Record<"session" | "match" | "event", string>>;
+	/**
 	 * The moving background picked for each theme that has them (theme id →
 	 * effect, or "off"). A theme left out shows its first.
 	 */
@@ -49,6 +54,7 @@ const DEFAULTS: Preferences = {
 	equipmentScale: DEFAULT_SIZES.equipment,
 	hasDefaultSport: false,
 	fieldDefaults: {},
+	calendarColors: {},
 	themeEffect: {},
 	interfaceScale: 1,
 	spice: { size: 1, speed: 1, amount: 1 },
@@ -97,6 +103,12 @@ function read(): Preferences {
 			},
 			hasDefaultSport: !!raw?.defaultPitch,
 			fieldDefaults: fieldDefaultsFrom(raw),
+			calendarColors: Object.fromEntries(
+				Object.entries(raw?.calendarColors ?? {}).filter(
+					([kind, color]) =>
+						["session", "match", "event"].includes(kind) && typeof color === "string" && /^#[0-9a-f]{6}$/i.test(color),
+				),
+			),
 			themeEffect: effectChoices(raw),
 			interfaceScale: (INTERFACE_SCALES as readonly number[]).includes(raw?.interfaceScale)
 				? raw.interfaceScale

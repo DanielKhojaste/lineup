@@ -10,6 +10,11 @@ export interface LibraryIndex {
 	folders: string[];
 	/** Session topics the coach made up, suggested again in every session. */
 	topics: string[];
+	/**
+	 * The coach's teams, offered wherever a team is asked for. Missing in older
+	 * libraries: then it's filled in from the teams already used.
+	 */
+	teams?: string[];
 }
 
 export const EMPTY_INDEX: LibraryIndex = { version: 1, folders: [], topics: [] };
@@ -19,7 +24,12 @@ export function cleanIndex(raw: unknown): LibraryIndex {
 	const index = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
 	const strings = (v: unknown) =>
 		Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
-	return { version: 1, folders: strings(index.folders), topics: strings(index.topics) };
+	return {
+		version: 1,
+		folders: strings(index.folders),
+		topics: strings(index.topics),
+		...(Array.isArray(index.teams) ? { teams: strings(index.teams) } : {}),
+	};
 }
 
 /** Everything in the library, plus the files that couldn't be read. */

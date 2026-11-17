@@ -25,6 +25,10 @@ export interface CalendarEntry {
 	time: string | null;
 	/** The session; empty for matches and events. */
 	sessionId: string;
+	/** Where it happens: a pitch, a hall, the other team's ground; optional. */
+	location: string;
+	/** This item's own colour ("#A66FE0"); empty for its kind's colour. */
+	color: string;
 	/** Team or age group, so several teams can share a calendar. */
 	team: string;
 	/** The plan this entry was laid out from, if any. */
@@ -119,6 +123,8 @@ export function createEntry(
 		kind: "session",
 		label: "",
 		away: false,
+		location: "",
+		color: "",
 		date,
 		time: null,
 		sessionId,
@@ -276,6 +282,8 @@ export function parseCalendar(source: string): CalendarData {
 				time: isStr(e.time) && CLOCK.test(e.time) ? e.time : null,
 				sessionId: kind === "session" && isStr(e.sessionId) ? e.sessionId : "",
 				team: isStr(e.team) ? e.team.slice(0, 120) : "",
+				location: isStr(e.location) ? e.location.slice(0, 120) : "",
+				color: isStr(e.color) && /^#[0-9a-f]{6}$/i.test(e.color) ? e.color : "",
 				planId: isStr(e.planId) ? e.planId : null,
 				status:
 					e.status === "done" || e.status === "cancelled" ? e.status : "planned",
@@ -418,4 +426,26 @@ export function sampleSeason(today = new Date()): Season {
 			phase("Tournament", d(y + 1, 4, 26), d(y + 1, 5, 30), "purple"),
 		],
 	};
+}
+
+// --------------------------------------------------------------- Colours ----
+
+/** Colours to pick from for calendar items. */
+export const CALENDAR_COLORS = [
+	"#E2A93B",
+	"#5FB15F",
+	"#2BB5A8",
+	"#4F8FD6",
+	"#A66FE0",
+	"#E26AA6",
+	"#D9534F",
+	"#8B949E",
+] as const;
+
+/** Each kind's colour before the coach picks one ("" for practices: the theme's colour). */
+export const KIND_COLORS: Record<EntryKind, string> = { session: "", match: "#A66FE0", event: "#4F8FD6" };
+
+/** An item's colour: its own, else its kind's (the coach's choice, else the app's); "" is the theme's colour. */
+export function entryColor(entry: CalendarEntry, defaults: Partial<Record<EntryKind, string>>): string {
+	return entry.color || defaults[entry.kind] || KIND_COLORS[entry.kind];
 }

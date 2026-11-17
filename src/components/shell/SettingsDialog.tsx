@@ -23,6 +23,9 @@ import { Keys } from "../ui/Keys";
 import { useTheme } from "../../theme/ThemeProvider";
 import { Icon } from "../Icon";
 import PitchPicker from "./PitchPicker";
+import ColorSwatches from "../calendar/ColorSwatches";
+import { KIND_COLORS } from "../../model/calendar";
+import { useLibrary } from "../../state/LibraryContext";
 
 function HexColorInput({
 	label,
@@ -286,6 +289,40 @@ export default function SettingsDialog({
 					</details>
 				</section>
 
+				<TeamsSettings />
+
+				<section className="dialog__section">
+					<h3>Calendar colours</h3>
+					<p className="muted small">
+						Each kind of item's colour. One item can have its own colour too (in its window).
+					</p>
+					<div className="settings__colors">
+						{(
+							[
+								["session", "Practices"],
+								["match", "Games"],
+								["event", "Events"],
+							] as const
+						).map(([kind, name]) => (
+							<div key={kind} className="settings__color-row">
+								<span>{name}</span>
+								<ColorSwatches
+									label={`${name} colour`}
+									value={preferences.calendarColors[kind] ?? ""}
+									defaultColor={KIND_COLORS[kind]}
+									defaultLabel={kind === "session" ? "The theme's colour" : `Default (${KIND_COLORS[kind]})`}
+									onChange={(color) => {
+										const calendarColors = { ...preferences.calendarColors };
+										if (color) calendarColors[kind] = color;
+										else delete calendarColors[kind];
+										setPreferences({ calendarColors });
+									}}
+								/>
+							</div>
+						))}
+					</div>
+				</section>
+
 				<section className="dialog__section">
 					<details className="disclosure shortcuts-disclosure">
 						<summary>
@@ -313,5 +350,61 @@ export default function SettingsDialog({
 				</section>
 			</div>
 		</dialog>
+	);
+}
+
+/** The coach's saved teams: offered wherever a team is asked for. */
+function TeamsSettings() {
+	const library = useLibrary();
+	const [draft, setDraft] = useState("");
+	const add = () => {
+		const t = draft.trim();
+		if (t) void library.addTeams([t]);
+		setDraft("");
+	};
+	return (
+		<section className="dialog__section">
+			<h3>Teams</h3>
+			<p className="muted small">
+				Offered wherever you pick a team. A name you type somewhere new is added here too.
+			</p>
+			{library.teams.length > 0 && (
+				<ul className="settings__teams">
+					{library.teams.map((t) => (
+						<li key={t}>
+							<span title={t}>{t}</span>
+							<button
+								type="button"
+								className="icon-button icon-button--small"
+								aria-label={`Remove ${t} from your teams`}
+								title="Remove from your teams (sessions and the calendar keep the name)"
+								onClick={() => void library.removeTeam(t)}
+							>
+								<Icon name="trash" size={14} />
+							</button>
+						</li>
+					))}
+				</ul>
+			)}
+			<form
+				className="settings__team-add"
+				onSubmit={(e) => {
+					e.preventDefault();
+					add();
+				}}
+			>
+				<input
+					className="field__input"
+					aria-label="New team"
+					placeholder="U14 Girls"
+					maxLength={120}
+					value={draft}
+					onChange={(e) => setDraft(e.target.value)}
+				/>
+				<button type="submit" className="button" disabled={!draft.trim()}>
+					Add team
+				</button>
+			</form>
+		</section>
 	);
 }

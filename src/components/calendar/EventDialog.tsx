@@ -1,5 +1,9 @@
 import { useState } from "react";
-import { CalendarEntry, describeDay, eventTitle, parseISODate, toISODate } from "../../model/calendar";
+import ColorSwatches from "./ColorSwatches";
+import { usePreferences } from "../../state/preferences";
+import TeamField from "../ui/TeamField";
+import TimeField from "../ui/TimeField";
+import { CalendarEntry, describeDay, eventTitle, KIND_COLORS, parseISODate, toISODate } from "../../model/calendar";
 import { Modal } from "../ui/Dialog";
 
 /**
@@ -18,6 +22,7 @@ export default function EventDialog({
 	onClose: () => void;
 }) {
 	const [draft, setDraft] = useState(entry);
+	const preferences = usePreferences();
 	const set = (patch: Partial<CalendarEntry>) => setDraft((d) => ({ ...d, ...patch }));
 	const match = draft.kind === "match";
 	const past = draft.date < toISODate(new Date());
@@ -26,7 +31,7 @@ export default function EventDialog({
 	return (
 		<Modal
 			open
-			title={entry.isNew ? (match ? "Add a match" : "Add an event") : eventTitle(entry)}
+			title={entry.isNew ? (match ? "Add a game" : "Add an event") : eventTitle(entry)}
 			onClose={onClose}
 		>
 			<form
@@ -49,7 +54,7 @@ export default function EventDialog({
 								className={`segmented__item${draft.kind === k ? " is-active" : ""}`}
 								onClick={() => set({ kind: k })}
 							>
-								{k === "match" ? "Match" : "Other event"}
+								{k === "match" ? "Game" : "Other event"}
 							</button>
 						))}
 					</div>
@@ -111,28 +116,36 @@ export default function EventDialog({
 							onChange={(e) => e.target.value && set({ date: e.target.value })}
 						/>
 					</label>
-					<label className="field">
+					<div className="field">
 						<span className="field__label">
 							{match ? "Kick-off" : "Time"} <span className="muted">(optional)</span>
 						</span>
-						<input
-							className="field__input"
-							type="time"
-							value={draft.time ?? ""}
-							onChange={(e) => set({ time: e.target.value || null })}
-						/>
-					</label>
+						<TimeField label="Time" value={draft.time} onChange={(time) => set({ time })} />
+					</div>
 				</div>
+				<TeamField value={draft.team} onChange={(team) => set({ team })} />
 				<label className="field">
-					<span className="field__label">Team</span>
+					<span className="field__label">
+						Location <span className="muted">(optional)</span>
+					</span>
 					<input
 						className="field__input"
-						value={draft.team}
+						value={draft.location}
 						maxLength={120}
-						placeholder="U12 Girls"
-						onChange={(e) => set({ team: e.target.value })}
+						placeholder={match ? (draft.away ? "Their ground" : "Pitch 2, Riverside Park") : "Clubhouse"}
+						onChange={(e) => set({ location: e.target.value })}
 					/>
 				</label>
+				<div className="field">
+					<span className="field__label">Colour</span>
+					<ColorSwatches
+						label="Colour"
+						value={draft.color}
+						defaultColor={preferences.calendarColors[draft.kind] || KIND_COLORS[draft.kind]}
+						defaultLabel={`The usual for ${match ? "games" : "events"}`}
+						onChange={(color) => set({ color })}
+					/>
+				</div>
 				<label className="field">
 					<span className="field__label">
 						{match && past ? "Result and notes" : "Notes"} <span className="muted">(optional)</span>

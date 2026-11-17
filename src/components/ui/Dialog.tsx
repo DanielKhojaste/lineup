@@ -29,9 +29,11 @@ export function Modal({
 			dialog.showModal();
 			// showModal() focuses the first button (the close ×). Move focus to the
 			// field or the main action instead, so typing and Enter work straight away.
-			dialog
-				.querySelector<HTMLElement>("[data-autofocus], input, select, textarea")
-				?.focus();
+			// What's marked for focus comes first, wherever it is; else the first field.
+			(
+				dialog.querySelector<HTMLElement>("[data-autofocus]") ??
+				dialog.querySelector<HTMLElement>("input, select, textarea")
+			)?.focus();
 		}
 		if (!open && dialog.open) dialog.close();
 	}, [open]);

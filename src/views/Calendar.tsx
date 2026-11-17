@@ -1,15 +1,21 @@
 import { isSport, SPORT_INFO, SPORTS } from "../model/sports";
+import TeamField from "../components/ui/TeamField";
+import TimeField from "../components/ui/TimeField";
 import { SURFACES } from "../components/board/Pitch";
-import { PointerEvent as ReactPointerEvent, useMemo, useState } from "react";
+import React, { PointerEvent as ReactPointerEvent, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import PlanToCalendarDialog from "../components/plan/PlanToCalendarDialog";
 import { ContextMenuEntry, useContextMenu } from "../components/ui/ContextMenu";
 import { ConfirmDialog, Modal } from "../components/ui/Dialog";
 import EventDialog from "../components/calendar/EventDialog";
+import ColorSwatches from "../components/calendar/ColorSwatches";
+import { usePreferences } from "../state/preferences";
 import {
 	addDays,
 	CalendarEntry,
+	entryColor,
+	KIND_COLORS,
 	createEntry,
 	createEvent,
 	eventTitle,
@@ -67,6 +73,7 @@ function EntryDialog({
 }) {
 	// A past session shows as done (it ran), unless it was cancelled.
 	const [draft, setDraft] = useState({ ...entry, status: statusOf(entry) });
+	const preferences = usePreferences();
 	const set = (patch: Partial<CalendarEntry>) => setDraft((d) => ({ ...d, ...patch }));
 	const session = sessions.find((s) => s.id === draft.sessionId);
 	const library = useLibrary();
@@ -160,28 +167,36 @@ function EntryDialog({
 							onChange={(e) => e.target.value && set({ date: e.target.value })}
 						/>
 					</label>
-					<label className="field">
+					<div className="field">
 						<span className="field__label">
 							Time <span className="muted">(optional)</span>
 						</span>
-						<input
-							className="field__input"
-							type="time"
-							value={draft.time ?? ""}
-							onChange={(e) => set({ time: e.target.value || null })}
-						/>
-					</label>
+						<TimeField label="Time" value={draft.time} onChange={(time) => set({ time })} />
+					</div>
 				</div>
+				<TeamField value={draft.team} onChange={(team) => set({ team })} />
 				<label className="field">
-					<span className="field__label">Team</span>
+					<span className="field__label">
+						Location <span className="muted">(optional)</span>
+					</span>
 					<input
 						className="field__input"
-						value={draft.team}
+						value={draft.location}
 						maxLength={120}
-						placeholder="U12 Girls"
-						onChange={(e) => set({ team: e.target.value })}
+						placeholder={"Pitch 2, Riverside Park"}
+						onChange={(e) => set({ location: e.target.value })}
 					/>
 				</label>
+				<div className="field">
+					<span className="field__label">Colour</span>
+					<ColorSwatches
+						label="Colour"
+						value={draft.color}
+						defaultColor={preferences.calendarColors.session || KIND_COLORS.session}
+						defaultLabel="The usual for practices"
+						onChange={(color) => set({ color })}
+					/>
+				</div>
 				{!entry.isNew && (
 					<>
 						<div className="field">
@@ -319,7 +334,7 @@ function WeekEntryDetails({ entry }: { entry: CalendarEntry }) {
 	if (!session) return null;
 	const drills = session.blocks.filter((b): b is Extract<typeof b, { kind: "drill" }> => b.kind === "drill");
 	const minutes = totalMinutes(session);
-	const meta = [entry.team || session.header.team, minutes ? formatMinutes(minutes) : ""].filter(Boolean).join(" · ");
+	const meta = [entry.team || session.header.team, minutes ? formatMinutes(minutes) : "", entry.location].filter(Boolean).join(" · ");
 	return (
 		<>
 			{meta && <span className="calendar__entry-meta">{meta}</span>}
@@ -363,6 +378,12 @@ function weekTitle(first: Date, last: Date): string {
 
 export default function Calendar() {
 	const library = useLibrary();
+	const { calendarColors } = usePreferences();
+	/** The colour an item is drawn in, as a CSS custom property (none: its kind's default in CSS). */
+	const colorStyle = (e: CalendarEntry) => {
+		const c = entryColor(e, calendarColors);
+		return c ? ({ "--entry-kind": c } as React.CSSProperties) : undefined;
+	};
 	const navigate = useNavigate();
 	const { openMenu } = useContextMenu();
 	const jumpTo = (useLocation().state as { date?: string } | null)?.date;
@@ -532,11 +553,11 @@ export default function Calendar() {
 	const listItem = (e: CalendarEntry) => (
 		<li key={e.id}>
 			<button type="button" className="agenda__item" onClick={() => setEditing(e)}>
-				<span className={`agenda__dot agenda__dot--${e.kind}`} />
+				<span className={`agenda__dot agenda__dot--${e.kind}`} style={entryColor(e, calendarColors) ? { background: entryColor(e, calendarColors) } : undefined} />
 				<span className="agenda__text">
 					<span className="agenda__title">{entryTitle(e)}</span>
 					<span className="muted small">
-						{[describeDay(e.date), e.time, e.team].filter(Boolean).join(" · ")}
+						{[describeDay(e.date), e.time, e.team, e.location].filter(Boolean).join(" · ")}
 					</span>
 				</span>
 			</button>
@@ -585,7 +606,7 @@ export default function Calendar() {
 				</button>
 				<button type="button" className="button" onClick={() => newEvent("match", today)}>
 					<Icon name="flag" size={16} />
-					Add a match
+					Add a game
 				</button>
 				<button type="button" className="button button--primary" onClick={() => newEntry(today)}>
 					<Icon name="plus" size={16} />
@@ -653,7 +674,7 @@ export default function Calendar() {
 										if ((e.target as Element).closest(".calendar__entry")) return;
 										openMenu(e, [
 											{ label: "Add a session here…", onSelect: () => newEntry(iso) },
-											{ label: "Add a match here…", onSelect: () => newEvent("match", iso) },
+											{ label: "Add a game here…", onSelect: () => newEvent("match", iso) },
 											{ label: "Add an event here…", onSelect: () => newEvent("event", iso) },
 											"separator",
 											{ label: "Add a plan…", onSelect: () => setPickPlan(true) },
@@ -674,11 +695,15 @@ export default function Calendar() {
 											}`}
 											data-past={e.kind !== "session" && e.date < today ? "" : undefined}
 											// With several teams, each team's colour runs down the side.
-											style={teams.length > 1 ? { boxShadow: `inset 3px 0 0 ${teamColor(e.team)}` } : undefined}
+											style={{
+												...colorStyle(e),
+												...(teams.length > 1 ? { boxShadow: `inset 3px 0 0 ${teamColor(e.team)}` } : {}),
+											}}
 											title={[
 												[
 													entryTitle(e),
 													e.team,
+													e.location,
 													e.kind === "session"
 														? STATUS_LABEL[statusOf(e, today)]
 														: e.status === "cancelled"
@@ -723,7 +748,7 @@ export default function Calendar() {
 													<WeekEntryDetails entry={e} />
 												) : (
 													<span className="calendar__entry-meta">
-														{[e.kind === "match" ? (e.away ? "Away" : "Home") : "", e.team].filter(Boolean).join(" · ")}
+														{[e.kind === "match" ? (e.away ? "Away" : "Home") : "", e.team, e.location].filter(Boolean).join(" · ")}
 													</span>
 												))}
 										</button>
@@ -734,19 +759,19 @@ export default function Calendar() {
 					</div>
 					<div className="calendar__legend" aria-label="Key">
 						<span>
-							<span className="calendar__swatch calendar__swatch--planned" />
-							Training · planned
+							<span className="calendar__swatch calendar__swatch--planned" style={calendarColors.session || KIND_COLORS.session ? ({ "--entry-kind": calendarColors.session || KIND_COLORS.session } as React.CSSProperties) : undefined} />
+							Practice · planned
 						</span>
 						<span>
 							<span className="calendar__swatch calendar__swatch--done" />
 							<Icon name="check" size={12} /> Ran
 						</span>
 						<span>
-							<span className="calendar__swatch calendar__swatch--match" />
-							Match
+							<span className="calendar__swatch calendar__swatch--match" style={calendarColors.match || KIND_COLORS.match ? ({ "--entry-kind": calendarColors.match || KIND_COLORS.match } as React.CSSProperties) : undefined} />
+							Game
 						</span>
 						<span>
-							<span className="calendar__swatch calendar__swatch--event" />
+							<span className="calendar__swatch calendar__swatch--event" style={calendarColors.event || KIND_COLORS.event ? ({ "--entry-kind": calendarColors.event || KIND_COLORS.event } as React.CSSProperties) : undefined} />
 							Event
 						</span>
 					</div>
@@ -756,7 +781,7 @@ export default function Calendar() {
 					{upcoming.length ? (
 						<ul>{upcoming.map(listItem)}</ul>
 					) : (
-						<p className="muted small">Nothing planned. Add a session, a plan or a match.</p>
+						<p className="muted small">Nothing planned. Add a session, a plan or a game.</p>
 					)}
 					<h2>Recently run</h2>
 					{recent.length ? (

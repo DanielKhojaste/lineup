@@ -44,6 +44,11 @@ interface LibraryContextValue {
 	/** Session topics the coach made up (kept in library.json). */
 	topics: string[];
 	addTopics: (topics: string[]) => Promise<void>;
+	/** The coach's teams (kept in library.json), offered wherever a team is asked for. */
+	teams: string[];
+	/** Remember teams (new names are added; ones already saved are left alone). */
+	addTeams: (teams: string[]) => Promise<void>;
+	removeTeam: (team: string) => Promise<void>;
 	getSession: (id: string) => Session | undefined;
 	createSession: (folder: string, sport: Sport) => Promise<Session>;
 	saveSession: (session: Session) => Promise<void>;
@@ -153,6 +158,21 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 				setFolders(index.folders);
 				indexRef.current = index;
 				setTopics(index.topics);
+				// Before teams were saved: start the list from the teams already used.
+				if (!index.teams) {
+					const used = [
+						...sessions.map((x) => x.header.team),
+						...plans.map((x) => x.team),
+						...cal.entries.map((x) => x.team),
+					]
+						.map((t) => t.trim())
+						.filter(Boolean);
+					const seen = new Map<string, string>();
+					for (const t of used) if (!seen.has(t.toLowerCase())) seen.set(t.toLowerCase(), t);
+					indexRef.current = { ...index, teams: [...seen.values()].sort((a, b) => a.localeCompare(b)) };
+					await store.saveIndex(indexRef.current);
+				}
+				setTeams(indexRef.current.teams ?? []);
 				setProblems(problems);
 				setStatus("ready");
 				log.info(`Loaded ${loaded.length} boards and ${sessions.length} sessions from ${store.location}`);
@@ -184,6 +204,25 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 	}, []);
 
 	/** Remember topics the coach made up, so they're suggested in every session. */
+	const [teams, setTeams] = useState<string[]>([]);
+	const addTeams = useCallback(async (added: string[]) => {
+		const current = indexRef.current.teams ?? [];
+		const known = new Set(current.map((t) => t.toLowerCase()));
+		const fresh = [...new Set(added.map((t) => t.trim()).filter((t) => t && !known.has(t.toLowerCase())))];
+		if (!fresh.length) return;
+		indexRef.current = { ...indexRef.current, teams: [...current, ...fresh] };
+		setTeams(indexRef.current.teams!);
+		await store().saveIndex(indexRef.current);
+	}, []);
+	const removeTeam = useCallback(async (team: string) => {
+		indexRef.current = {
+			...indexRef.current,
+			teams: (indexRef.current.teams ?? []).filter((t) => t !== team),
+		};
+		setTeams(indexRef.current.teams!);
+		await store().saveIndex(indexRef.current);
+	}, []);
+
 	const addTopics = useCallback(async (added: string[]) => {
 		const known = new Set(indexRef.current.topics.map((t) => t.toLowerCase()));
 		const fresh = added
@@ -317,6 +356,9 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 			sessions,
 			topics,
 			addTopics,
+			teams,
+			addTeams,
+			removeTeam,
 			getSession: (id) => sessionsRef.current.find((s) => s.id === id),
 			saveSession,
 
@@ -516,6 +558,9 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 			sessions,
 			topics,
 			addTopics,
+			teams,
+			addTeams,
+			removeTeam,
 			plans,
 			calendar,
 			seasons,

@@ -10,6 +10,9 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Added
 
+- **Teams**: pick a saved team from the list under any Team box (sessions, plans, the calendar), or type a new one, which is saved for next time. **Settings › Teams** lists them to add or remove. Your library's existing teams are there from the start
+- Calendar: an optional **Location** for every item, shown on it, in its tooltip and under Coming up
+- Calendar **colours**: a colour for practices, games and events in **Settings › Calendar colours**, and any item can have its own
 - Calendar: **matches** ("vs Riverside", or "@ North FC" away, with kick-off and a result) and **other events** (team photos, a parents' meeting…), from **Add a match** or a day's right-click menu. Each kind has its colour: training to come in the theme's colour, sessions that ran with a ✓, matches in purple, events in blue, with a key under the calendar
 - **Delete** (or Backspace) in the library deletes the selected items, or the card that has focus, after asking
 - Example **basketball** and **volleyball** sessions (two drills each) in the `examples` folder, alongside the soccer ones
@@ -21,6 +24,9 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Changed
 
+- Times are picked as hour, minutes and AM or PM (PM until you pick otherwise; computers set to 24-hour times get 0–23 and no AM/PM)
+- Calendar: "match" is now **game** (Add a game, Game in the key)
+- Windows focus what they're meant to: e.g. Save when opening a practice, not the first field
 - Plans: removing a week asks first (Ctrl+Z still brings it back)
 - Plans: topic bubbles only fill the rest of the box's line (never a second row); "Maximum 8 topics"
 - Session preview: **Edit session** is always at the top right; the team, length and players moved above the blocks; the key hints have room between them, and step aside in small windows

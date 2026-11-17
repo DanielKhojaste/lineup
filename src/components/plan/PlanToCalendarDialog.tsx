@@ -1,4 +1,6 @@
 import { useState } from "react";
+import TeamField from "../ui/TeamField";
+import TimeField from "../ui/TimeField";
 import {
 	addDays,
 	layOutWeeks,
@@ -72,17 +74,12 @@ export default function PlanToCalendarDialog({
 							onChange={(e) => setStart(e.target.value)}
 						/>
 					</label>
-					<label className="field">
+					<div className="field">
 						<span className="field__label">
 							Time <span className="muted">(optional)</span>
 						</span>
-						<input
-							className="field__input"
-							type="time"
-							value={time}
-							onChange={(e) => setTime(e.target.value)}
-						/>
-					</label>
+						<TimeField label="Time" value={time || null} onChange={(t) => setTime(t ?? "")} />
+					</div>
 				</div>
 				<fieldset className="field">
 					<legend className="field__label">Training days</legend>
@@ -104,16 +101,7 @@ export default function PlanToCalendarDialog({
 						))}
 					</div>
 				</fieldset>
-				<label className="field">
-					<span className="field__label">Team</span>
-					<input
-						className="field__input"
-						value={team}
-						maxLength={120}
-						placeholder="U12 Girls"
-						onChange={(e) => setTeam(e.target.value)}
-					/>
-				</label>
+				<TeamField value={team} onChange={setTeam} />
 				<p className="muted">
 					{sessionIds.length === 0
 						? "This plan has no sessions yet."

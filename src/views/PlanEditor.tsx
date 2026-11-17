@@ -10,6 +10,7 @@ import {
 	useLayoutEffect,
 	useRef,
 } from "react";
+import TeamField from "../components/ui/TeamField";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import Loader from "../components/Loader";
@@ -986,12 +987,11 @@ function PlanLayout() {
 				<main className="session-editor__main">
 					<section className="session-header" aria-label="Plan details">
 						<div className="session-header__grid plan-header__grid">
-							<BoardInput
+							<TeamField
 								label="Team or age group"
-								placeholder="U12 Girls"
-								maxLength={120}
 								value={plan.team}
-								onValue={(team) => dispatch({ type: "updatePlan", patch: { team } })}
+								onChange={(team) => dispatch({ type: "updatePlan", patch: { team } })}
+								undoable
 							/>
 							<div className="field">
 								<label className="field__label" htmlFor="plan-sport">

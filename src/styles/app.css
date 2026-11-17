@@ -5254,21 +5254,24 @@ div.plan-outline__week {
 
 /* ------------------------ Calendar: kinds and colours ------------------------ */
 
-/* Training still to come: the theme's colour. */
-.calendar__entry--session.calendar__entry--planned {
-	--entry-bg: color-mix(in srgb, var(--accent) 16%, var(--surface));
+/* Each kind's colour (an item's own colour, or the coach's pick, comes in as --entry-kind). */
+.calendar__entry--session {
 	--entry-kind: var(--accent);
 }
 
 .calendar__entry--match {
 	--entry-kind: #a66fe0;
-	--entry-bg: color-mix(in srgb, var(--entry-kind) 22%, var(--surface));
-	--entry-ink: color-mix(in srgb, var(--entry-kind) 35%, var(--text));
 	font-weight: 600;
 }
 
 .calendar__entry--event {
-	--entry-kind: #3e8fd6;
+	--entry-kind: #4f8fd6;
+}
+
+/* Still to come: tinted with the item's colour. Practices that ran stay plain, with a ✓. */
+.calendar__entry--session.calendar__entry--planned,
+.calendar__entry--match,
+.calendar__entry--event {
 	--entry-bg: color-mix(in srgb, var(--entry-kind) 20%, var(--surface));
 	--entry-ink: color-mix(in srgb, var(--entry-kind) 30%, var(--text));
 }
@@ -5291,7 +5294,7 @@ div.plan-outline__week {
 }
 
 .agenda__dot--event {
-	background: #3e8fd6;
+	background: #4f8fd6;
 }
 
 .agenda__dot--session {
@@ -5319,24 +5322,17 @@ div.plan-outline__week {
 	border-radius: 3px;
 }
 
-.calendar__swatch--planned {
-	background: color-mix(in srgb, var(--accent) 16%, var(--surface));
-	box-shadow: inset 0 0 0 1px var(--accent);
-}
-
 .calendar__swatch--done {
 	background: var(--raised);
 	box-shadow: inset 0 0 0 1px var(--border-strong);
 }
 
-.calendar__swatch--match {
-	background: color-mix(in srgb, #a66fe0 22%, var(--surface));
-	box-shadow: inset 0 0 0 1px #a66fe0;
-}
-
+/* Practices, games and events in their colours (set on each swatch). */
+.calendar__swatch--planned,
+.calendar__swatch--match,
 .calendar__swatch--event {
-	background: color-mix(in srgb, #3e8fd6 20%, var(--surface));
-	box-shadow: inset 0 0 0 1px #3e8fd6;
+	background: color-mix(in srgb, var(--entry-kind, var(--accent)) 22%, var(--surface));
+	box-shadow: inset 0 0 0 1px var(--entry-kind, var(--accent));
 }
 
 .event-dialog__match {
@@ -5367,4 +5363,164 @@ div.plan-outline__week {
 
 .week-topics__bubble[hidden] {
 	display: none;
+}
+
+/* An optional time: hour, minutes, and AM or PM (always one picked). */
+.time-field {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.time-field__part {
+	width: auto;
+	min-width: 62px;
+	padding-right: 4px;
+}
+
+.time-field__part:disabled {
+	opacity: 0.5;
+}
+
+.time-field__colon {
+	color: var(--text-muted);
+	font-weight: 600;
+}
+
+.time-field__ampm {
+	margin-left: 4px;
+}
+
+
+/* ------------------------- Colour swatches, teams -------------------------- */
+
+.swatch-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+}
+
+.swatch-row__divider {
+	width: 1px;
+	height: 18px;
+	margin: 0 2px;
+	background: var(--border);
+}
+
+.swatch-pick {
+	display: grid;
+	place-items: center;
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	border: 2px solid transparent;
+	border-radius: 50%;
+	background: var(--swatch);
+	color: #fff;
+	cursor: pointer;
+	box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.15);
+}
+
+.swatch-pick:hover {
+	transform: scale(1.08);
+}
+
+.swatch-pick.is-active {
+	border-color: var(--text);
+}
+
+/* "Default": the colour, with a ring to set it apart. */
+.swatch-pick--default {
+	background: var(--surface);
+	box-shadow: inset 0 0 0 5px var(--swatch);
+	color: var(--text);
+}
+
+.settings__colors {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.settings__color-row {
+	display: grid;
+	grid-template-columns: 90px 1fr;
+	align-items: center;
+	gap: 12px;
+	font-size: 13px;
+}
+
+.settings__teams {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin: 0 0 10px;
+	padding: 0;
+	list-style: none;
+}
+
+.settings__teams li {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	max-width: 260px;
+	padding: 2px 2px 2px 10px;
+	border: 1px solid var(--border);
+	border-radius: 999px;
+	background: var(--raised);
+	font-size: 13px;
+}
+
+.settings__teams li > span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.settings__team-add {
+	display: flex;
+	gap: 8px;
+	max-width: 420px;
+}
+
+/* A team: the saved teams in a list under the box. */
+.team-field {
+	position: relative;
+}
+
+.team-field__list {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	right: 0;
+	z-index: 30;
+	max-height: 260px;
+	margin: 4px 0 0;
+	padding: 4px;
+	overflow-y: auto;
+	list-style: none;
+	border: 1px solid var(--border-strong);
+	border-radius: 8px;
+	background: var(--raised);
+	box-shadow: 0 10px 28px rgb(0 0 0 / 0.28);
+}
+
+.team-field__option {
+	padding: 6px 10px;
+	border-radius: 6px;
+	font-size: 13px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.team-field__option:hover,
+.team-field__option.is-active {
+	background: var(--accent-soft);
+}
+
+.team-field__option.is-current {
+	font-weight: 600;
 }
