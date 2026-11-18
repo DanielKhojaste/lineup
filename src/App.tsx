@@ -37,7 +37,6 @@ function App() {
 			<ContextMenuProvider>
 				<LibraryProvider>
 					<ViewManager />
-					{/* Preview branch: switch between designs to compare. */}
 				</LibraryProvider>
 			</ContextMenuProvider>
 		</ThemeProvider>

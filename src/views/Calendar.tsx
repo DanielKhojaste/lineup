@@ -9,6 +9,7 @@ import PlanToCalendarDialog from "../components/plan/PlanToCalendarDialog";
 import { ContextMenuEntry, useContextMenu } from "../components/ui/ContextMenu";
 import { ConfirmDialog, Modal } from "../components/ui/Dialog";
 import CalendarSidebar from "../components/calendar/CalendarSidebar";
+import { showTime, uses12Hours } from "../components/ui/TimeCombo";
 import ShowAllDialog from "../components/ui/ShowAllDialog";
 import ItemDialog from "../components/calendar/ItemDialog";
 import ColorSwatches from "../components/calendar/ColorSwatches";
@@ -366,55 +367,24 @@ function WeekEntryDetails({ entry }: { entry: CalendarEntry }) {
 }
 
 /**
- * What's on a calendar item (two designs to compare on the preview branch):
- * A, "Type above": a small PRACTICE / MATCH / EVENT label with the time, and
- * the name under it; B, "Icon in line": the kind's icon, the time and the
- * name on one line.
+ * What's on a calendar item: a small PRACTICE / MATCH / EVENT label with the
+ * time, and the name under it (a named practice also says which session).
  */
-function EntryCard({
-	entry,
-	variant,
-	title,
-	done,
-}: {
-	entry: CalendarEntry;
-	variant: "tag" | "inline";
-	title: string;
-	done: boolean;
-}) {
+function EntryCard({ entry, title, done }: { entry: CalendarEntry; title: string; done: boolean }) {
 	const library = useLibrary();
 	const kind = entry.kind === "session" ? "Practice" : entry.kind === "match" ? "Match" : "Event";
-	const icon = done ? "check" : entry.kind === "match" ? "flag" : entry.kind === "event" ? "star" : "session";
-	// A named practice also says which session it is.
 	const session =
 		entry.kind === "session" && entry.label.trim() ? library.getSession(entry.sessionId)?.meta.title : undefined;
-	if (variant === "tag")
-		return (
-			<span className="entry-card entry-card--tag">
-				<span className="entry-card__kind">
-					{done && <Icon name="check" size={10} />}
-					{kind}
-					{entry.kind === "match" && <span> · {entry.away ? "Away" : "Home"}</span>}
-					{entry.time && <span className="mono"> · {entry.time}</span>}
-				</span>
-				<span className="calendar__entry-title">{title}</span>
-				{session && <span className="entry-card__session">{session}</span>}
-			</span>
-		);
 	return (
-		<span className="entry-card entry-card--inline">
-			<Icon name={icon} size={12} className="calendar__kind" />
-			{entry.time && <span className="calendar__time mono">{entry.time}</span>}
-			<span className="calendar__entry-title">
-				{entry.kind === "session" && !entry.label.trim() && library.getSession(entry.sessionId) ? (
-					<>
-						<b>Practice</b> · {title}
-					</>
-				) : (
-					title
-				)}
-				{session && <span className="entry-card__session"> · {session}</span>}
+		<span className="entry-card entry-card--tag">
+			<span className="entry-card__kind">
+				{done && <Icon name="check" size={10} />}
+				{kind}
+				{entry.kind === "match" && <span> · {entry.away ? "Away" : "Home"}</span>}
+				{entry.time && <span className="mono"> · {showTime(entry.time, uses12Hours())}</span>}
 			</span>
+			<span className="calendar__entry-title">{title}</span>
+			{session && <span className="entry-card__session">{session}</span>}
 		</span>
 	);
 }
@@ -546,7 +516,6 @@ export default function Calendar() {
 			? e.label.trim() || library.getSession(e.sessionId)?.meta.title || "Practice"
 			: eventTitle(e);
 	// "Type above" was picked (updates-302).
-	const itemDesign = "tag" as const;
 	const newEntry = (date: string) =>
 		setEditing({ ...createEntry("", date, { team: team === "all" ? "" : team }), isNew: true });
 	const newEvent = (kind: "match" | "event", date: string) =>
@@ -812,7 +781,7 @@ export default function Calendar() {
 													title={SPORT_INFO[sportOf(e)!].name}
 												/>
 											)}
-											<EntryCard entry={e} variant={itemDesign} title={entryTitle(e)} done={e.kind === "session" && statusOf(e, today) === "done"} />
+											<EntryCard entry={e} title={entryTitle(e)} done={e.kind === "session" && statusOf(e, today) === "done"} />
 											{mode === "week" &&
 												(e.kind === "session" && library.getSession(e.sessionId) ? (
 													<WeekEntryDetails entry={e} />
@@ -890,7 +859,7 @@ export default function Calendar() {
 					empty="Nothing on this day."
 					renderItem={(e) => (
 						<span className={`show-all__entry show-all__entry--${e.kind}`} style={colorStyle(e)}>
-							<span className="show-all__time mono">{e.time || "—"}</span>
+							<span className="show-all__time mono">{e.time ? showTime(e.time, uses12Hours()) : "—"}</span>
 							<span className="show-all__text">{entryTitle(e)}</span>
 							<span className="show-all__meta muted">
 								{[

@@ -21,7 +21,7 @@ const KINDS: { kind: EntryKind; name: string; icon: IconName }[] = [
 ];
 
 /**
- * Any calendar item, new or old (preview branch, updates-301 #5): a practice,
+ * Any calendar item, new or old: a practice,
  * a match or another event. Any of them can have a session attached (a
  * practice's plan, a match's warm-up…), and a match can have a formation.
  */

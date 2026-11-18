@@ -82,6 +82,7 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Fixed
 
+- Calendar items show their time like the time box does (6:30 PM, or 18:30 where the computer uses 24-hour time), and in a narrow week column the time moves under the kind instead of being cut off
 - Printing no longer prints the theme's moving background (Dune's spice and the like) over the page
 - Exported PDFs: text can be selected, copied and searched (an invisible text layer over the page); pictures are sharper (about 290 dpi instead of 190) and files much smaller (a 17 MB export is now under 1 MB)
 - Player names on exported and printed diagrams are white with a dark edge again (they came out black on the grass), and bigger

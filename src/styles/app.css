@@ -3906,7 +3906,6 @@ fieldset.field {
 	padding: 12px 16px 0;
 }
 
-
 .spice-settings {
 	display: flex;
 	flex-direction: column;
@@ -4934,7 +4933,6 @@ option:disabled {
 	white-space: nowrap;
 }
 
-
 /* Room between the shortcuts and the details switch beside them. */
 .session-preview__keys {
 	margin-right: 20px;
@@ -5191,7 +5189,6 @@ option:disabled {
 	color: var(--text-muted);
 }
 
-
 .plan-topic--large .plan-session {
 	padding-top: 8px;
 	padding-bottom: 8px;
@@ -5338,7 +5335,6 @@ option:disabled {
 .field-tile__text small {
 	font-size: 11px;
 }
-
 
 /* ------------------------- Plan page (updates-206) ------------------------- */
 
@@ -5552,7 +5548,6 @@ div.plan-outline__week {
 	font-size: 11px;
 }
 
-
 /* ------------------------ Calendar: kinds and colours ------------------------ */
 
 /* Each kind's colour (an item's own colour, or the coach's pick, comes in as --entry-kind). */
@@ -5588,7 +5583,6 @@ div.plan-outline__week {
 	flex-shrink: 0;
 	color: var(--entry-kind);
 }
-
 
 .agenda__dot--match {
 	background: #a66fe0;
@@ -5641,8 +5635,6 @@ div.plan-outline__week {
 	align-items: end;
 }
 
-
-
 /* The topic box and its bubbles: one line, never a second row. */
 .week-topics__entry {
 	flex: 1 1 240px;
@@ -5667,32 +5659,6 @@ div.plan-outline__week {
 }
 
 /* An optional time: hour, minutes, and AM or PM (always one picked). */
-.time-field {
-	display: flex;
-	align-items: center;
-	gap: 4px;
-}
-
-.time-field__part {
-	width: auto;
-	min-width: 62px;
-	padding-right: 4px;
-}
-
-.time-field__part:disabled {
-	opacity: 0.5;
-}
-
-.time-field__colon {
-	color: var(--text-muted);
-	font-weight: 600;
-}
-
-.time-field__ampm {
-	margin-left: 4px;
-}
-
-
 /* ------------------------- Colour swatches, teams -------------------------- */
 
 .swatch-row {
@@ -5701,7 +5667,6 @@ div.plan-outline__week {
 	align-items: center;
 	gap: 6px;
 }
-
 
 .swatch-pick {
 	display: grid;
@@ -5820,7 +5785,6 @@ div.plan-outline__week {
 	font-weight: 600;
 }
 
-
 /* Any other colour: a rainbow until one is picked, then that colour. */
 .swatch-pick--custom {
 	position: relative;
@@ -5837,7 +5801,7 @@ div.plan-outline__week {
 	outline-offset: 2px;
 }
 
-/* --------- Animation controls over the field (two designs to compare) --------- */
+/* --------------------- Animation controls over the field --------------------- */
 
 .session-preview__stagewrap {
 	position: relative;
@@ -5858,24 +5822,12 @@ div.plan-outline__week {
 }
 
 /* Dark glass, so it reads on any pitch colour (and on white). */
-.step-controls--bar,
-.step-controls--corner-left,
-.step-controls--corner-right {
+.step-controls--corner-left {
 	background: rgb(16 20 24 / 0.72);
 	backdrop-filter: blur(6px);
 	box-shadow:
 		0 6px 18px rgb(0 0 0 / 0.35),
 		inset 0 0 0 1px rgb(255 255 255 / 0.12);
-}
-
-/* A · one bar centred along the bottom of the field. */
-.step-controls--bar {
-	left: 50%;
-	bottom: 14px;
-	transform: translateX(-50%);
-	padding: 5px 12px 5px 6px;
-	border-radius: 999px;
-	white-space: nowrap;
 }
 
 .step-controls__btn,
@@ -5913,47 +5865,7 @@ div.plan-outline__week {
 	background: #fff;
 }
 
-.step-controls__divider {
-	width: 1px;
-	height: 18px;
-	margin: 0 6px;
-	background: rgb(255 255 255 / 0.25);
-}
-
-.step-controls__dots {
-	display: flex;
-	align-items: center;
-	gap: 5px;
-}
-
-.step-controls__label {
-	min-width: 86px;
-	margin-left: 8px;
-	font-size: 12px;
-	font-weight: 600;
-	font-variant-numeric: tabular-nums;
-}
-
-.step-dot {
-	width: 9px;
-	height: 9px;
-	padding: 0;
-	border: 0;
-	border-radius: 50%;
-	background: rgb(255 255 255 / 0.4);
-	cursor: pointer;
-}
-
-.step-dot:hover {
-	background: rgb(255 255 255 / 0.75);
-}
-
-.step-dot.is-active {
-	background: #fff;
-	box-shadow: 0 0 0 3px rgb(255 255 255 / 0.25);
-}
-
-/* B · round buttons in the two bottom corners: play and back/forward on the left, numbered steps on the right. */
+/* In the field's bottom-left corner: play, back, "2 / 4" and forward. */
 .step-controls--corner-left {
 	left: 12px;
 	bottom: 12px;
@@ -5966,35 +5878,7 @@ div.plan-outline__week {
 	height: 42px;
 }
 
-.step-controls--corner-right {
-	right: 12px;
-	bottom: 12px;
-	gap: 4px;
-	padding: 4px;
-	border-radius: 999px;
-}
-
-.step-controls--corner-right .step-dot {
-	width: 30px;
-	height: 30px;
-	background: transparent;
-	color: #fff;
-	font: inherit;
-	font-size: 12px;
-	font-weight: 700;
-}
-
-.step-controls--corner-right .step-dot:hover {
-	background: rgb(255 255 255 / 0.16);
-}
-
-.step-controls--corner-right .step-dot.is-active {
-	background: #fff;
-	color: #111;
-	box-shadow: none;
-}
-
-/* --------------- Calendar items, two designs (preview branch) --------------- */
+/* ---------------------- Calendar items: the kind above the name ---------------------- */
 
 .entry-card {
 	min-width: 0;
@@ -6002,7 +5886,6 @@ div.plan-outline__week {
 	flex: 1;
 }
 
-/* A · the kind above the name. */
 .entry-card--tag {
 	display: flex;
 	flex-direction: column;
@@ -6012,19 +5895,21 @@ div.plan-outline__week {
 
 .entry-card__kind {
 	display: inline-flex;
+	flex-wrap: wrap;
 	align-items: center;
-	gap: 3px;
+	column-gap: 3px;
 	color: color-mix(in srgb, var(--entry-kind) 65%, var(--text));
 	font-size: 9.5px;
 	font-weight: 700;
 	letter-spacing: 0.06em;
 	text-transform: uppercase;
-	white-space: nowrap;
-	/* In a narrow week column, "Match · Home · 10:00" is cut instead of widening the card. */
+	/* In a narrow week column, "Practice · 6:30 PM" wraps after the kind
+	   instead of widening the card or cutting the time. */
 	max-width: 100%;
-	overflow: hidden;
-	overflow: hidden;
-	text-overflow: ellipsis;
+}
+
+.entry-card__kind > * {
+	white-space: nowrap;
 }
 
 .entry-card__kind .mono {
@@ -6045,16 +5930,6 @@ div.plan-outline__week {
 }
 
 /* B · the kind's icon, the time and the name in a line. */
-.entry-card--inline {
-	display: flex;
-	align-items: center;
-	gap: 5px;
-}
-
-.entry-card--inline .calendar__entry-title b {
-	font-weight: 700;
-}
-
 /* The new item window: what it is, as three big choices. */
 .dialog--item {
 	width: min(560px, calc(100vw - 32px));
@@ -6198,7 +6073,7 @@ div.plan-outline__week {
 .show-all__entry {
 	--entry-kind: var(--text-muted);
 	display: grid;
-	grid-template-columns: 48px minmax(0, 1fr);
+	grid-template-columns: 62px minmax(0, 1fr);
 	column-gap: 10px;
 	padding-left: 8px;
 	box-shadow: inset 3px 0 0 color-mix(in srgb, var(--entry-kind) 70%, transparent);
@@ -6235,19 +6110,7 @@ div.plan-outline__week {
 	font-style: italic;
 }
 
-/* D · under the field: the same bar, below the picture, so it never covers anything. */
-.step-controls-dock {
-	display: flex;
-	justify-content: center;
-	margin-top: 10px;
-}
-
-.step-controls--dock {
-	position: static;
-	transform: none;
-}
-
-/* E · fades out a moment after the pointer stops, back as soon as it moves. */
+/* The controls fade out a moment after the pointer stops, back as soon as it moves. */
 .step-controls--fade {
 	transition: opacity 0.35s ease;
 }
@@ -6257,7 +6120,7 @@ div.plan-outline__week {
 	pointer-events: none;
 }
 
-/* F · compact: play, back, a "2 / 3" counter and forward, in one corner. */
+/* The "2 / 4" counter (just ▶ while playing). */
 .step-controls__count {
 	min-width: 52px;
 	color: #fff;
@@ -6270,41 +6133,6 @@ div.plan-outline__week {
 .step-controls--compact .step-controls__play {
 	width: 34px;
 	height: 34px;
-}
-
-
-/* E with lots of steps: a track the same width however many there are; each
-   step is a segment (filled up to the current one), taller on hover. */
-.step-track {
-	display: flex;
-	align-items: center;
-	gap: 2px;
-	width: clamp(140px, 24vw, 260px);
-	height: 20px;
-}
-
-.step-track__seg {
-	flex: 1;
-	height: 5px;
-	padding: 0;
-	border: 0;
-	border-radius: 2px;
-	background: rgb(255 255 255 / 0.3);
-	cursor: pointer;
-	transition: height 0.12s ease;
-}
-
-.step-track__seg.is-done {
-	background: rgb(255 255 255 / 0.85);
-}
-
-.step-track__seg.is-active {
-	background: #fff;
-	box-shadow: 0 0 0 2px rgb(255 255 255 / 0.25);
-}
-
-.step-track__seg:hover {
-	height: 11px;
 }
 
 /* Notes: small to start, growing with what's typed (or resized). */

@@ -79,7 +79,7 @@ describe("calendar entries", () => {
 				],
 			}),
 		);
-		// A practice without a session is kept (preview branch: sessions are optional).
+		// A practice without a session is kept (sessions are optional).
 		expect(data.entries).toHaveLength(2);
 		expect(data.entries[0]).toMatchObject({ time: null, status: "done" });
 		expect(data.entries[1]).toMatchObject({ kind: "session", sessionId: "" });
