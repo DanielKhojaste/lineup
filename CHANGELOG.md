@@ -32,6 +32,7 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Changed
 
+- CI: the build check runs on pull requests into dev and main (and by hand), no longer again on the push that merging makes
 - Animation steps are counted from **1** everywhere: the starting position is step 1 (the board's step chips read 1, 2, 3, 4; a play with three moves has four steps)
 - Session preview: a play runs once and stops on its last step (Play starts it again from step 1). While it plays, the controls show just ▶
 - Time boxes are one box: type a time (6p, 630, 18:30) or pick from the half hours under it

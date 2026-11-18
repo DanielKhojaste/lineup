@@ -1,11 +1,11 @@
 name: Build Check
 
+# Pull requests into dev and main only: a PR's run already checks the branch
+# merged with its base, so the push that merging makes would only repeat it.
+# Run it by hand from the Actions tab for anything else.
 on:
   pull_request:
     branches: [main, dev]
-  push:
-    branches: [main, dev]
-  # Allow manual workflow triggering
   workflow_dispatch:
 
 # Prevents multiple builds from running at once for the same PR/branch
