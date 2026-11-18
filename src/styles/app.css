@@ -4395,7 +4395,7 @@ input.plan-topic__title {
 }
 
 /* "+3 more" on a busy day in the month view. */
-.calendar__more {
+.calendar__day-more {
 	align-self: flex-start;
 	padding: 1px 6px;
 	border-radius: 4px;
@@ -4404,8 +4404,8 @@ input.plan-topic__title {
 	font-weight: 600;
 }
 
-.calendar__more:hover,
-.calendar__more:focus-visible {
+.calendar__day-more:hover,
+.calendar__day-more:focus-visible {
 	background: var(--hover);
 	color: var(--text);
 }

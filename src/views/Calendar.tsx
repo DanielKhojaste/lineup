@@ -773,7 +773,7 @@ export default function Calendar() {
 									{list.length < all.length && (
 										<button
 											type="button"
-											className="calendar__more"
+											className="calendar__day-more"
 											onClick={() => setShowDay(iso)}
 											title="Show everything on this day"
 										>
