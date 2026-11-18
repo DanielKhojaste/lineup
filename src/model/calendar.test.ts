@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createEntry, createEvent, daysBetween, eventTitle, lastRunBySession, layOutSessions, monthGrid, nextSession, parseCalendar, parseISODate, phaseOn, sampleSeason, seasonFor, shortDay, sortEntries, toISODate, weekdayIndex } from "./calendar";
+import { createEntry, repeatWeekly, seriesIds, weeklyDates, createEvent, daysBetween, eventTitle, lastRunBySession, layOutSessions, monthGrid, nextSession, parseCalendar, parseISODate, phaseOn, sampleSeason, seasonFor, shortDay, sortEntries, toISODate, weekdayIndex } from "./calendar";
 import { createPlan, createTopic, parsePlan, planSessionIds } from "./plan";
 
 describe("calendar dates", () => {
@@ -207,5 +207,33 @@ describe("matches, events and seasons", () => {
 		expect(phaseOn(season, "2026-11-16")?.name).toBe("In-season · Phase 1");
 		expect(phaseOn(season, "2026-12-25")?.name).toBe("Winter break");
 		expect(daysBetween("2026-11-16", "2026-11-22")).toBe(7);
+	});
+});
+
+describe("weekly series", () => {
+	it("repeats every week up to and including the last day", () => {
+		expect(weeklyDates("2026-11-26", "2026-12-17")).toEqual(["2026-11-26", "2026-12-03", "2026-12-10", "2026-12-17"]);
+		expect(weeklyDates("2026-11-26", "2026-12-16")).toEqual(["2026-11-26", "2026-12-03", "2026-12-10"]);
+		expect(weeklyDates("2026-11-26", "2026-11-01")).toEqual(["2026-11-26"]);
+	});
+	it("makes linked copies, and removes one, the following or all", () => {
+		const first = createEntry("s1", "2026-11-26", { time: "18:30", team: "U12" });
+		const all = repeatWeekly(first, "2026-12-17");
+		expect(all).toHaveLength(4);
+		expect(all[0].id).toBe(first.id);
+		expect(new Set(all.map((e) => e.seriesId)).size).toBe(1);
+		expect(all.every((e) => e.time === "18:30" && e.team === "U12")).toBe(true);
+		const third = all[2];
+		expect(seriesIds(all, third, "one")).toEqual([third.id]);
+		expect(seriesIds(all, third, "following")).toEqual([all[2].id, all[3].id]);
+		expect(seriesIds(all, third, "all")).toHaveLength(4);
+		// A series survives saving and loading.
+		const back = parseCalendar(JSON.stringify({ version: 1, entries: all }));
+		expect(back.entries.map((e) => e.seriesId)).toEqual(all.map((e) => e.seriesId));
+	});
+	it("leaves a one-off alone", () => {
+		const one = createEntry("s1", "2026-11-26");
+		expect(repeatWeekly(one, "2026-11-30")).toEqual([one]);
+		expect(seriesIds([one], one, "all")).toEqual([one.id]);
 	});
 });

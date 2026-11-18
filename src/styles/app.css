@@ -6523,3 +6523,18 @@ div.plan-outline__week {
 	align-items: center;
 	gap: 8px;
 }
+
+/* A new calendar item repeating every week: Repeat, Until, and what it'll make. */
+.item-repeat__summary {
+	grid-column: 1 / -1;
+	margin: -4px 0 0;
+}
+
+/* Removing a repeating item: one, the following, or all. */
+.series-choices {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 8px;
+	margin-top: 12px;
+}

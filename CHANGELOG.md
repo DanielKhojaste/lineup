@@ -10,6 +10,7 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Added
 
+- Calendar: **repeat** a new practice, match or event **every week** until a date (it says how many it'll make, like "8 practices, every Thursday until 7 Jan"). Removing one of them asks: **only this one**, **this and the following**, or **all in the series**. Editing one changes only that one
 - **Formation** is one of the parts of a session (with Warm-up, Activity, Small-sided game, Scrimmage and Cool-down), with its own colour on printed timelines
 
 ### Changed

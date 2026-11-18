@@ -35,6 +35,8 @@ export interface CalendarEntry {
 	team: string;
 	/** The plan this entry was laid out from, if any. */
 	planId: string | null;
+	/** Items made together as a weekly series share this; empty for a one-off. */
+	seriesId?: string;
 	status: EntryStatus;
 	/** Notes after the session: how it went, who was there. */
 	log: string;
@@ -288,6 +290,7 @@ export function parseCalendar(source: string): CalendarData {
 				location: isStr(e.location) ? e.location.slice(0, 120) : "",
 				color: isStr(e.color) && /^#[0-9a-f]{6}$/i.test(e.color) ? e.color : "",
 				planId: isStr(e.planId) ? e.planId : null,
+				...(isStr(e.seriesId) && e.seriesId ? { seriesId: e.seriesId } : {}),
 				status:
 					e.status === "done" || e.status === "cancelled" ? e.status : "planned",
 				log: isStr(e.log) ? e.log.slice(0, 4000) : "",
@@ -451,4 +454,47 @@ export const KIND_COLORS: Record<EntryKind, string> = { session: "", match: "#A6
 /** An item's colour: its own, else its kind's (the coach's choice, else the app's); "" is the theme's colour. */
 export function entryColor(entry: CalendarEntry, defaults: Partial<Record<EntryKind, string>>): string {
 	return entry.color || defaults[entry.kind] || KIND_COLORS[entry.kind];
+}
+
+/** The most items one weekly series makes (two years of weeks). */
+export const MAX_REPEATS = 104;
+
+/** The dates of a weekly series: the first one, then every 7 days up to `until` (inclusive). */
+export function weeklyDates(first: string, until: string): string[] {
+	const start = parseISODate(first);
+	const end = parseISODate(until);
+	if (!start || !end || until < first) return [first];
+	const dates: string[] = [];
+	for (let d = start; toISODate(d) <= until && dates.length < MAX_REPEATS; d = addDays(d, 7)) dates.push(toISODate(d));
+	return dates;
+}
+
+/**
+ * An item repeated every week until a date: the item itself, then a copy for
+ * each later week, all sharing a series id (so they can be removed together).
+ * Only the first keeps the item's id; a one-off (until before the next week) stays as it is.
+ */
+export function repeatWeekly(entry: CalendarEntry, until: string): CalendarEntry[] {
+	const dates = weeklyDates(entry.date, until);
+	if (dates.length < 2) return [entry];
+	const seriesId = newId();
+	return dates.map((date, i) => ({
+		...entry,
+		id: i === 0 ? entry.id : newId(),
+		date,
+		seriesId,
+		status: "planned",
+		log: i === 0 ? entry.log : "",
+	}));
+}
+
+/** Which items of a series to remove: just this one, this and the ones after it, or all of them. */
+export type SeriesScope = "one" | "following" | "all";
+
+/** The ids to remove from the calendar for an item and a scope. */
+export function seriesIds(entries: CalendarEntry[], entry: CalendarEntry, scope: SeriesScope): string[] {
+	if (scope === "one" || !entry.seriesId) return [entry.id];
+	return entries
+		.filter((e) => e.seriesId === entry.seriesId && (scope === "all" || e.date >= entry.date))
+		.map((e) => e.id);
 }

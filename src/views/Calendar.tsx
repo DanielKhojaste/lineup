@@ -28,6 +28,8 @@ import {
 	startOfWeek,
 	parseISODate,
 	sortEntries,
+	seriesIds,
+	SeriesScope,
 	longDay,
 	statusOf,
 	toISODate,
@@ -47,235 +49,50 @@ const STATUS_LABEL: Record<EntryStatus, string> = {
 	cancelled: "Cancelled",
 };
 
-/** Add a session to a day (or edit an entry already on the calendar). */
-function EntryDialog({
-	entry,
-	sessions,
-	onSave,
+/**
+ * Removing an item that repeats every week: just this one, this one and the
+ * ones after it, or the whole series.
+ */
+function RemoveSeriesDialog({
+	title,
+	day,
+	count,
+	following,
 	onRemove,
-	onOpenSession,
 	onClose,
-	sportFilter,
 }: {
-	/** The calendar's sport filter: the picker starts on it. */
-	sportFilter: string;
-	/** A new entry (not on the calendar yet) or an existing one. */
-	entry: CalendarEntry & { isNew?: boolean };
-	sessions: Session[];
-	onSave: (entry: CalendarEntry) => void;
-	onRemove: () => void;
-	onOpenSession: (id: string) => void;
+	title: string;
+	day: string;
+	count: number;
+	following: number;
+	onRemove: (scope: SeriesScope) => void;
 	onClose: () => void;
 }) {
-	// A past session shows as done (it ran), unless it was cancelled.
-	const [draft, setDraft] = useState({ ...entry, status: statusOf(entry) });
-	const preferences = usePreferences();
-	const set = (patch: Partial<CalendarEntry>) => setDraft((d) => ({ ...d, ...patch }));
-	const session = sessions.find((s) => s.id === draft.sessionId);
-	const library = useLibrary();
-	// Adding a session: the picker opens straight away.
-	const [picking, setPicking] = useState(entry.isNew && !entry.sessionId);
-	const date = parseISODate(draft.date);
-
-	// One window at a time: the picker replaces this window while it's open.
-	if (picking)
-		return (
-			<SessionPicker
-				initialSport={isSport(sportFilter) ? sportFilter : "all"}
-				onPick={(picked) => {
-					set({
-						sessionId: picked.id,
-						team: draft.team || picked.header.team || "",
-						time: draft.time ?? null,
-					});
-					setPicking(false);
-				}}
-				// Closing the picker before choosing anything cancels adding.
-				onClose={() => (draft.sessionId ? setPicking(false) : onClose())}
-			/>
-		);
-
 	return (
-		<Modal
-			open
-			title={entry.isNew ? "Add a session" : session?.meta.title ?? "Session"}
-			onClose={onClose}
-		>
-			<form
-				className="dialog__section"
-				onSubmit={(e) => {
-					e.preventDefault();
-					if (!draft.sessionId) return;
-					const { isNew: _, ...clean } = draft;
-					onSave(clean);
-					onClose();
-				}}
-			>
-				<div className="field">
-					<span className="field__label">Session</span>
-					{session ? (
-						<div className="picked-session">
-							<span className="picked-session__strip" aria-hidden="true">
-								{sessionBoardIds(session)
-									.map(library.getBoard)
-									.filter((b): b is Board => !!b)
-									.slice(0, 3)
-									.map((b) => (
-										<BoardPreview key={b.id} board={b} className="picked-session__thumb" />
-									))}
-							</span>
-							<span className="picked-session__text">
-								<b>{sessionTitle(session)}</b>
-								<span className="muted small">
-									{[
-										session.header.team,
-										totalMinutes(session) ? formatMinutes(totalMinutes(session)) : "",
-										session.header.topics.join(", "),
-									]
-										.filter(Boolean)
-										.join(" · ")}
-								</span>
-							</span>
-							<button type="button" className="button button--small" onClick={() => setPicking(true)}>
-								Change…
-							</button>
-						</div>
-					) : (
-						<button
-							type="button"
-							className="button picked-session__choose"
-							data-autofocus=""
-							onClick={() => setPicking(true)}
-						>
-							<Icon name="session" size={16} />
-							{draft.sessionId ? "This session was deleted. Choose another…" : "Choose a session…"}
+		<Modal open title="Remove a repeating item" onClose={onClose} className="dialog--confirm">
+			<div className="dialog__section">
+				<p>
+					“{title}” on {day} repeats every week ({count} in all). Which do you want to remove?
+				</p>
+				<div className="series-choices">
+					<button type="button" className="button" data-autofocus="" onClick={() => onRemove("one")}>
+						Only this one
+					</button>
+					{following > 1 && following < count && (
+						<button type="button" className="button" onClick={() => onRemove("following")}>
+							This and the following ({following})
 						</button>
 					)}
+					<button type="button" className="button button--danger" onClick={() => onRemove("all")}>
+						All in the series ({count})
+					</button>
 				</div>
-				<div className="field-grid">
-					<label className="field">
-						<span className="field__label">Date</span>
-						<input
-							className="field__input"
-							type="date"
-							required
-							value={draft.date}
-							onChange={(e) => e.target.value && set({ date: e.target.value })}
-						/>
-					</label>
-					<div className="field">
-						<span className="field__label">
-							Time <span className="muted">(optional)</span>
-						</span>
-						<TimeField label="Time" value={draft.time} onChange={(time) => set({ time })} />
-					</div>
-				</div>
-				<TeamField value={draft.team} onChange={(team) => set({ team })} />
-				<label className="field">
-					<span className="field__label">
-						Location <span className="muted">(optional)</span>
-					</span>
-					<input
-						className="field__input"
-						value={draft.location}
-						maxLength={120}
-						placeholder={"Pitch 2, Riverside Park"}
-						onChange={(e) => set({ location: e.target.value })}
-					/>
-				</label>
-				<div className="field">
-					<span className="field__label">Colour</span>
-					<ColorSwatches
-						label="Colour"
-						value={draft.color}
-						defaultColor={preferences.calendarColors.session || KIND_COLORS.session}
-						defaultLabel="The usual for practices"
-						onChange={(color) => set({ color })}
-					/>
-				</div>
-				{!entry.isNew && (
-					<>
-						<div className="field">
-							<span className="field__label">Status</span>
-							<div className="segmented" role="radiogroup" aria-label="Status">
-								{(draft.date < toISODate(new Date())
-									? (["done", "cancelled"] as const)
-									: (["planned", "done", "cancelled"] as const)
-								).map((s) => (
-									<button
-										key={s}
-										type="button"
-										role="radio"
-										aria-checked={draft.status === s}
-										className={`segmented__item${draft.status === s ? " is-active" : ""}`}
-										onClick={() => set({ status: s })}
-									>
-										{STATUS_LABEL[s]}
-									</button>
-								))}
-							</div>
-						</div>
-						<label className="field">
-							<span className="field__label">
-								{draft.status === "done" ? "How did it go?" : "Notes"}
-							</span>
-							<textarea
-								className="field__input field__input--area"
-								rows={3}
-								maxLength={4000}
-								placeholder={
-									draft.status === "done"
-										? "Who was there, what worked, what to change next time…"
-										: "Anything to remember for this date"
-								}
-								value={draft.log}
-								onChange={(e) => set({ log: e.target.value })}
-							/>
-						</label>
-					</>
-				)}
-				{date && (
-					<p className="muted small">
-						{date.toLocaleDateString(undefined, {
-							weekday: "long",
-							day: "numeric",
-							month: "long",
-						})}{" "}
-						({describeDay(draft.date)})
-					</p>
-				)}
 				<div className="dialog__actions">
-					{!entry.isNew && (
-						<>
-							<button type="button" className="button button--danger-text" onClick={onRemove}>
-								Remove
-							</button>
-							{session && (
-								<button
-									type="button"
-									className="button"
-									onClick={() => onOpenSession(session.id)}
-								>
-									Preview session
-								</button>
-							)}
-							<span className="topbar__spacer" />
-						</>
-					)}
 					<button type="button" className="button" onClick={onClose}>
 						Cancel
 					</button>
-					<button
-						type="submit"
-						className="button button--primary"
-						disabled={!draft.sessionId}
-						// Opening a practice focuses Save, not the date (which would select its day).
-						{...(!entry.isNew ? { "data-autofocus": "" } : {})}
-					>
-						{entry.isNew ? "Add" : "Save"}
-					</button>
 				</div>
-			</form>
+			</div>
 		</Modal>
 	);
 }
@@ -452,6 +269,9 @@ export default function Calendar() {
 		return top.sort((a, b) => a.localeCompare(b));
 	}, [library.calendar]);
 	const [showAllTeams, setShowAllTeams] = useState(false);
+	// How many items are in an item's weekly series (1 for a one-off).
+	const seriesSize = (e: CalendarEntry) =>
+		e.seriesId ? library.calendar.filter((x) => x.seriesId === e.seriesId).length : 1;
 	// How many items a day shows in the month view before "+N more".
 	const DAY_LIMIT = 4;
 	const [showDay, setShowDay] = useState<string | null>(null);
@@ -902,8 +722,8 @@ export default function Calendar() {
 					entry={editing}
 					sportFilter={sport}
 					onClose={() => setEditing(null)}
-					onSave={(entry) =>
-						editing.isNew ? library.addEntries([entry]) : library.updateEntry(entry.id, entry)
+					onSave={(list) =>
+						editing.isNew ? library.addEntries(list) : library.updateEntry(list[0].id, list[0])
 					}
 					onRemove={() => {
 						setRemoving(editing);
@@ -912,8 +732,21 @@ export default function Calendar() {
 					onPreviewSession={openSession}
 				/>
 			)}
+			{removing && seriesSize(removing) > 1 && (
+				<RemoveSeriesDialog
+					title={entryTitle(removing)}
+					day={parseISODate(removing.date)?.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" }) ?? removing.date}
+					count={seriesSize(removing)}
+					following={library.calendar.filter((e) => e.seriesId === removing.seriesId && e.date >= removing.date).length}
+					onRemove={(scope) => {
+						void library.removeEntries(seriesIds(library.calendar, removing, scope));
+						setRemoving(null);
+					}}
+					onClose={() => setRemoving(null)}
+				/>
+			)}
 			<ConfirmDialog
-				open={removing !== null}
+				open={removing !== null && seriesSize(removing) <= 1}
 				title="Remove from calendar"
 				message={`Take “${removing ? entryTitle(removing) : ""}” off ${removing ? describeDay(removing.date) : ""}?${removing?.kind === "session" ? " The session stays in your library." : ""}`}
 				confirmLabel="Remove"

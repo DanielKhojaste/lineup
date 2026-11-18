@@ -1,6 +1,6 @@
 import { Sport } from "../../model/sports";
 import { useState } from "react";
-import { CalendarEntry, describeDay, EntryKind, eventTitle, KIND_COLORS, parseISODate, statusOf, toISODate } from "../../model/calendar";
+import { addDays, CalendarEntry, describeDay, EntryKind, eventTitle, KIND_COLORS, MAX_REPEATS, parseISODate, repeatWeekly, shortDay, statusOf, toISODate, weeklyDates } from "../../model/calendar";
 import { formatMinutes, sessionBoardIds, totalMinutes } from "../../model/session";
 import { Board } from "../../model/types";
 import { usePreferences } from "../../state/preferences";
@@ -35,7 +35,8 @@ export default function ItemDialog({
 }: {
 	entry: CalendarEntry & { isNew?: boolean };
 	sportFilter?: string;
-	onSave: (entry: CalendarEntry) => void;
+	/** The item (or, repeated every week, the item and its copies). */
+	onSave: (entries: CalendarEntry[]) => void;
 	onRemove: () => void;
 	onPreviewSession: (id: string) => void;
 	onClose: () => void;
@@ -45,6 +46,14 @@ export default function ItemDialog({
 	const [draft, setDraft] = useState({ ...entry, status: entry.kind === "session" ? statusOf(entry) : entry.status });
 	const set = (patch: Partial<CalendarEntry>) => setDraft((d) => ({ ...d, ...patch }));
 	const [picking, setPicking] = useState<"session" | "board" | null>(null);
+	// A new item can repeat every week until a date (eight weeks to start with).
+	const [repeat, setRepeat] = useState(false);
+	const [until, setUntil] = useState(() => {
+		const d = parseISODate(entry.date);
+		return d ? toISODate(addDays(d, 7 * 7)) : entry.date;
+	});
+	const repeatDates = repeat ? weeklyDates(draft.date, until) : [draft.date];
+	const inSeries = entry.seriesId ? library.calendar.filter((e) => e.seriesId === entry.seriesId).length : 1;
 	// The sport picked in the Attach window, kept when switching between sessions and boards.
 	const [pickSport, setPickSport] = useState<Sport | "all">(
 		sportFilter === "all" ? "all" : (sportFilter as Sport),
@@ -99,7 +108,8 @@ export default function ItemDialog({
 				onSubmit={(e) => {
 					e.preventDefault();
 					const { isNew: _, ...clean } = draft;
-					onSave({ ...clean, label: clean.label.trim() });
+					const item = { ...clean, label: clean.label.trim() };
+					onSave(entry.isNew && repeat ? repeatWeekly(item, until) : [item]);
 					onClose();
 				}}
 			>
@@ -260,6 +270,50 @@ export default function ItemDialog({
 						<TimeField label="Time" value={draft.time} onChange={(time) => set({ time })} />
 					</div>
 				</div>
+				{entry.isNew && (
+					<div className="field-grid item-repeat">
+						<div className="field">
+							<span className="field__label">Repeat</span>
+							<div className="segmented" role="radiogroup" aria-label="Repeat">
+								{([false, true] as const).map((on) => (
+									<button
+										key={String(on)}
+										type="button"
+										role="radio"
+										aria-checked={repeat === on}
+										className={`segmented__item${repeat === on ? " is-active" : ""}`}
+										onClick={() => setRepeat(on)}
+									>
+										{on ? "Every week" : "Doesn't repeat"}
+									</button>
+								))}
+							</div>
+						</div>
+						{repeat && (
+							<label className="field">
+								<span className="field__label">Until</span>
+								<input
+									className="field__input"
+									type="date"
+									required
+									min={draft.date}
+									value={until}
+									onChange={(e) => e.target.value && setUntil(e.target.value)}
+								/>
+							</label>
+						)}
+						{repeat && (
+							<p className="muted small item-repeat__summary">
+								{repeatDates.length}{" "}
+								{(kind === "session" ? "practice" : kind === "match" ? "match" : "event") +
+									(repeatDates.length === 1 ? "" : kind === "match" ? "es" : "s")}
+								, every {date?.toLocaleDateString(undefined, { weekday: "long" })}
+								{repeatDates.length > 1 && ` until ${shortDay(repeatDates[repeatDates.length - 1])}`}
+								{repeatDates.length >= MAX_REPEATS && " (the most at once)"}
+							</p>
+						)}
+					</div>
+				)}
 				<div className="field-grid">
 					<TeamField
 						value={draft.team}
@@ -324,6 +378,7 @@ export default function ItemDialog({
 				{date && (
 					<p className="muted small">
 						{date.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })} ({describeDay(draft.date)})
+						{inSeries > 1 && ` · repeats every week (${inSeries} in the series); changes here are for this one`}
 					</p>
 				)}
 				<div className="dialog__actions">
