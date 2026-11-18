@@ -8,6 +8,10 @@ This project adheres to semantic versioning (0.x during early development).
 
 ## [Unreleased]
 
+---
+
+## [0.9.0] - 2026-11-18
+
 ### Added
 
 - **Teams with a sport**: a team can play more than one sport ("U12 Girls" in soccer and in basketball shows as two rows, each with the sport's letter: S for soccer, B for basketball; two letters only when sports share one, like FU for futsal and FH for field hockey). A new team takes the sport of its session, plan or attached board; with nothing to go by, a row of sports asks which (or Skip). Teams saved before take their sport from the sessions and plans they're on
@@ -19,7 +23,7 @@ This project adheres to semantic versioning (0.x during early development).
 - **Lots of teams:** the Team box lists eight, then **Show all N teams…**; the calendar's Team filter lists the ten you use most, then **Show all teams…**. Both open a window with every team and a search
 - Calendar items are a **Practice**, a **Match** or an **Event**, made in one window with the kind above the name on each card; any of them can have a session or a board attached (a practice's plan, a match's formation), and a practice can have its own name
 - **Teams**: pick a saved team from the list under any Team box (sessions, plans, the calendar), or type a new one, which is saved for next time. **Settings › Teams** lists them to add or remove. Your library's existing teams are there from the start
-- Calendar: an optional **Location** for every item, shown on it, in its tooltip and under Coming up
+- Calendar: an optional **Location** for every item, shown on it and in its tooltip
 - Calendar **colours**: a colour for practices, matches and events in **Settings › Calendar colours**, and any item can have its own, including any custom colour
 - Calendar: **matches** ("vs Riverside", or "@ North FC" away, with kick-off and a result) and **other events** (team photos, a parents' meeting…), from **Add a match** or a day's right-click menu. Each kind has its colour: training to come in the theme's colour, sessions that ran with a ✓, matches in purple, events in blue, with a key under the calendar
 - **Delete** (or Backspace) in the library deletes the selected items, or the card that has focus, after asking
@@ -39,14 +43,12 @@ This project adheres to semantic versioning (0.x during early development).
 - Session preview: the key hints (Blocks, Steps, Play) show in the smallest window again. A long title shrinks first, then hints that don't fit drop out whole, never cut in half; layout tests check 960×600, 1100×720 and 1440×900
 - Library: **Boards**, **Sessions** and **Plans** each have sport chips at the top (the sport stays when moving between them). The board-type chips (Drills, Plays…) are gone; folders and sports show **All / Boards / Sessions** when they have both
 - "Drills" is now "boards" wherever it meant boards in general: session cards ("3 boards"), search boxes, the session's library panel, messages
-- "8 topics maximum" (was "Maximum 8 topics")
-- Calendar items get a thin outline in their own colour on hover (Ring), instead of a stronger background
+- Calendar items get a thin outline in their own colour on hover (Ring), and a stronger tint of their colour down the left edge
 - **Printed and exported sessions** (the summary): the facts in one line, a timeline of the whole session coloured by part, each drill's diagram zoomed to the area it uses with its focus points as tick boxes, the other blocks as clear rows in full ink, and room for notes. **Print with ink saver** and **PDF document, ink saver** draw the pitches white with soft lines, for printing at home
-- Times are picked as hour, minutes and AM or PM (PM until you pick otherwise; computers set to 24-hour times get 0–23 and no AM/PM)
 - Windows focus what they're meant to: e.g. Save when opening a practice, not the first field
 - Plans: removing a week asks first (Ctrl+Z still brings it back)
-- Plans: topic bubbles only fill the rest of the box's line (never a second row); "Maximum 8 topics"
-- Session preview: **Edit session** is always at the top right; the team, length and players moved above the blocks; the key hints have room between them, and step aside in small windows
+- Plans: topic bubbles only fill the rest of the box's line (never a second row); "8 topics maximum"
+- Session preview: **Edit session** is always at the top right; the team, length and players moved above the blocks; the key hints have room between them
 - Calendar: the season timeline is put away for now (kept on the `archive/season-timeline` branch; saved seasons stay in the calendar file)
 - Calendar: planned practices no longer have a dot; opening a practice no longer selects the day in its date; the month or week sits centred between the arrows; long team names end in "…" in the Team filter and on items
 - Links like **+ Add notes** get a soft tint on hover instead of an underline
@@ -54,7 +56,7 @@ This project adheres to semantic versioning (0.x during early development).
 - Calendar: in the week view, clicking a session opens its preview (Back returns to the calendar); right-click to edit the date, team or status. **Preview session** and **Edit session** are in every session's menu
 - Library: **Calendar** shows when the next session is (Today, Tomorrow, Thu 19, 3 Dec), with the session in its tooltip, instead of a count
 - Plans: each week has a trash can to remove it (Ctrl+Z brings it back)
-- Plans: a session's pictures and text are one button, a little apart from its number; a session without drills shows "No drills yet"
+- Plans: a session's pictures and text are one button, a little apart from its number; a session without boards shows "No boards yet"
 - Plans: matching topics show as bubbles beside the topic box while typing; long topics are cut with "…", and a week has 8 topics at most
 - The calendar's session picker always shows every sport with its number of sessions, and starts on the calendar's sport filter
 - Plans: each week can have several **topics** (chips, with the sport's topics and your own suggested); a week's single topic from before becomes its first
@@ -62,7 +64,6 @@ This project adheres to semantic versioning (0.x during early development).
 - Plans: selecting a session opens its preview (Back returns to the plan); **Edit session** is in its menu. Sessions are numbered within their week
 - Plans: the Outline has **All weeks** at the top, and remembers which week (or all) was showing for each plan
 - Plans: the description gets the whole width and grows with its text
-- Calendar hover: the item's background gets a touch stronger (quick: `--hover-duration`, 0.14s); the day keeps its own hover. Each item has a stronger tint of its colour down its left edge
 - The week view shows a session's first two topics
 - Dragging a session in a plan barely tilts it
 - More room between the session preview's shortcuts and its buttons
