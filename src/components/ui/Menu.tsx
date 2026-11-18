@@ -7,11 +7,16 @@ export interface MenuItem {
 	disabled?: boolean;
 }
 
+/** A small title over a group of items. */
+export interface MenuHeading {
+	heading: string;
+}
+
 interface MenuProps {
 	/** Accessible name of the button that opens the menu. */
 	label: string;
 	button: ReactNode;
-	items: (MenuItem | "separator")[];
+	items: (MenuItem | MenuHeading | "separator")[];
 	buttonClassName?: string;
 	align?: "start" | "end";
 }
@@ -91,9 +96,13 @@ export function Menu({
 					{items.map((item, i) =>
 						item === "separator" ? (
 							<div key={i} className="menu__separator" role="separator" />
+						) : "heading" in item ? (
+							<div key={i} className="menu__heading" role="presentation">
+								{item.heading}
+							</div>
 						) : (
 							<button
-								key={item.label}
+								key={i}
 								type="button"
 								role="menuitem"
 								className={`menu__item${

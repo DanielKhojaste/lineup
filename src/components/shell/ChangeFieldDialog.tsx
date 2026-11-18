@@ -1,3 +1,4 @@
+import { KeyCombo } from "../ui/Keys";
 import { useEffect, useState } from "react";
 import { SPORT_INFO } from "../../model/sports";
 import { PitchSettings } from "../../model/types";
@@ -92,7 +93,7 @@ export default function ChangeFieldDialog({
 							<span className="change-field__warning" role="note">
 								Removes every marker and drawing
 								{state.board.steps.length ? " and animation step" : ""}.
-								Ctrl+Z brings them back.
+								<KeyCombo text="Ctrl+Z" small /> brings them back.
 							</span>
 						)}
 					</div>

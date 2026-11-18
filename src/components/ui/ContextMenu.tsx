@@ -1,3 +1,4 @@
+import { KeyCombo } from "./Keys";
 import {
 	createContext,
 	ReactNode,
@@ -366,7 +367,9 @@ function MenuList({
 						</span>
 						<span className="context-menu__label">{entry.label}</span>
 						{entry.shortcut && (
-							<span className="context-menu__shortcut">{entry.shortcut}</span>
+							<span className="context-menu__shortcut">
+								<KeyCombo text={entry.shortcut} small />
+							</span>
 						)}
 						{entry.submenu && (
 							<span className="context-menu__more" aria-hidden="true">

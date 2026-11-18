@@ -8,14 +8,93 @@ This project adheres to semantic versioning (0.x during early development).
 
 ## [Unreleased]
 
+---
+
+## [0.9.0] - 2026-11-18
+
+### Added
+
+- **Teams with a sport**: a team can play more than one sport ("U12 Girls" in soccer and in basketball shows as two rows, each with the sport's letter: S for soccer, B for basketball; two letters only when sports share one, like FU for futsal and FH for field hockey). A new team takes the sport of its session, plan or attached board; with nothing to go by, a row of sports asks which (or Skip). Teams saved before take their sport from the sessions and plans they're on
+- The calendar's **sidebar**: the month in numbers at the top (practices, matches, events), then the next item as a briefing (when, where, how long, its session's boards; click it to preview the session, or Edit), and **Topics covered in November** (the month shown) at the bottom, the top five with bars. It follows the month you're looking at
+- The **Attach** window: boards have the same search and sport filter as sessions, both tabs list the folders on the left (only the ones with something for the sport picked, with counts), the sport stays when switching tabs, and a match opens on **Board**
+- Session preview: the animation's controls sit in the field's bottom-left corner (play, back, "3 / 8", forward) and fade out when the pointer is still, so they don't cover the players
+- **Session details:** export or print a session with a page per drill: page 1 has the session's facts, timeline and an outline of every block (with the page each drill is on), then each drill gets a large diagram, what happens, coaching points as tick boxes, progressions and room for notes. It's under **Export** and **Print** next to the one-page **Session summary**, with the ink saver too
+- Calendar: a busy day in the month view shows its first three items and **+N more**, which lists everything on that day (with a search when there's a lot)
+- **Lots of teams:** the Team box lists eight, then **Show all N teams…**; the calendar's Team filter lists the ten you use most, then **Show all teams…**. Both open a window with every team and a search
+- Calendar items are a **Practice**, a **Match** or an **Event**, made in one window with the kind above the name on each card; any of them can have a session or a board attached (a practice's plan, a match's formation), and a practice can have its own name
+- **Teams**: pick a saved team from the list under any Team box (sessions, plans, the calendar), or type a new one, which is saved for next time. **Settings › Teams** lists them to add or remove. Your library's existing teams are there from the start
+- Calendar: an optional **Location** for every item, shown on it and in its tooltip
+- Calendar **colours**: a colour for practices, matches and events in **Settings › Calendar colours**, and any item can have its own, including any custom colour
+- Calendar: **matches** ("vs Riverside", or "@ North FC" away, with kick-off and a result) and **other events** (team photos, a parents' meeting…), from **Add a match** or a day's right-click menu. Each kind has its colour: training to come in the theme's colour, sessions that ran with a ✓, matches in purple, events in blue, with a key under the calendar
+- **Delete** (or Backspace) in the library deletes the selected items, or the card that has focus, after asking
+- Example **basketball** and **volleyball** sessions (two drills each) in the `examples` folder, alongside the soccer ones
+- **Session preview:** go through a session block by block, with its drills listed on the left and the picked one large on the right, its minutes, players, tags, notes and coaching points under it. Plays move by themselves, or step through them with ← and →; ↑ and ↓ move between blocks. The details can go under the drill, beside it, or be hidden to make the drill as big as the window allows (Lineup remembers which), the preview starts at the first drill, and **Back** returns to where you opened it: the session, or the library. Open it with **Preview** in the session, or from the session's menu in the library
+- **Plans:** a block of training, like a season, **week by week**: each week has its sessions in order and can have a topic, like "Pressing" (notes too, when you want them). Make them under **Plans** in the library: add sessions from the panel on the right (or make a new one for the week), drag them between weeks (a line shows where they'll land), and duplicate a plan for next season. A plan has no dates, so it can be reused; **Add to calendar** puts each week's sessions on that week's training days
+- **Calendar:** a month or week view (it remembers which) of every session on its date, with the time and team. **Add a plan** from the week it starts, on your training days (say Tuesdays and Thursdays), add a single session to a day, drag a session to another day, and add notes on how it went. A session counts as run once its date has passed, with a tick (or mark it as cancelled). With more than one sport, each session shows its sport's colour and the calendar can show one sport at a time. Coming up and recently run are listed beside it, a plan shows when each of its sessions last ran, and drills show when they were last used when you add them to a session
+
+- **Interface size** in Settings › Appearance: 90%, 100%, 110%, 125% or 150%, for text and controls everywhere. **Ctrl+=**, **Ctrl+-** and **Ctrl+0** change it from anywhere, and Lineup remembers it
+
 ### Changed
 
+- CI: the build check runs on pull requests into dev and main (and by hand), no longer again on the push that merging makes
+- Animation steps are counted from **1** everywhere: the starting position is step 1 (the board's step chips read 1, 2, 3, 4; a play with three moves has four steps)
+- Session preview: a play runs once and stops on its last step (Play starts it again from step 1). While it plays, the controls show just ▶
+- Time boxes are one box: type a time (6p, 630, 18:30) or pick from the half hours under it
+- Session preview: the key hints (Blocks, Steps, Play) show in the smallest window again. A long title shrinks first, then hints that don't fit drop out whole, never cut in half; layout tests check 960×600, 1100×720 and 1440×900
+- Library: **Boards**, **Sessions** and **Plans** each have sport chips at the top (the sport stays when moving between them). The board-type chips (Drills, Plays…) are gone; folders and sports show **All / Boards / Sessions** when they have both
+- "Drills" is now "boards" wherever it meant boards in general: session cards ("3 boards"), search boxes, the session's library panel, messages
+- Calendar items get a thin outline in their own colour on hover (Ring), and a stronger tint of their colour down the left edge
+- **Printed and exported sessions** (the summary): the facts in one line, a timeline of the whole session coloured by part, each drill's diagram zoomed to the area it uses with its focus points as tick boxes, the other blocks as clear rows in full ink, and room for notes. **Print with ink saver** and **PDF document, ink saver** draw the pitches white with soft lines, for printing at home
+- Windows focus what they're meant to: e.g. Save when opening a practice, not the first field
+- Plans: removing a week asks first (Ctrl+Z still brings it back)
+- Plans: topic bubbles only fill the rest of the box's line (never a second row); "8 topics maximum"
+- Session preview: **Edit session** is always at the top right; the team, length and players moved above the blocks; the key hints have room between them
+- Calendar: the season timeline is put away for now (kept on the `archive/season-timeline` branch; saved seasons stay in the calendar file)
+- Calendar: planned practices no longer have a dot; opening a practice no longer selects the day in its date; the month or week sits centred between the arrows; long team names end in "…" in the Team filter and on items
+- Links like **+ Add notes** get a soft tint on hover instead of an underline
+- Settings: keyboard shortcuts are always in two columns, whatever the window or interface size
+- Calendar: in the week view, clicking a session opens its preview (Back returns to the calendar); right-click to edit the date, team or status. **Preview session** and **Edit session** are in every session's menu
+- Library: **Calendar** shows when the next session is (Today, Tomorrow, Thu 19, 3 Dec), with the session in its tooltip, instead of a count
+- Plans: each week has a trash can to remove it (Ctrl+Z brings it back)
+- Plans: a session's pictures and text are one button, a little apart from its number; a session without boards shows "No boards yet"
+- Plans: matching topics show as bubbles beside the topic box while typing; long topics are cut with "…", and a week has 8 topics at most
+- The calendar's session picker always shows every sport with its number of sessions, and starts on the calendar's sport filter
+- Plans: each week can have several **topics** (chips, with the sport's topics and your own suggested); a week's single topic from before becomes its first
+- Plans: weeks have a drag handle in every layout, to put them in a different order
+- Plans: selecting a session opens its preview (Back returns to the plan); **Edit session** is in its menu. Sessions are numbered within their week
+- Plans: the Outline has **All weeks** at the top, and remembers which week (or all) was showing for each plan
+- Plans: the description gets the whole width and grows with its text
+- The week view shows a session's first two topics
+- Dragging a session in a plan barely tilts it
+- More room between the session preview's shortcuts and its buttons
+- The library's **All** view (boards and sessions together) is gone for now; it opens on **Boards** instead
+- **New board**: your default sport on top with both its fields: one click, or Enter, makes the board. Other sports are below, one click then the field. Before there's a default, it's a grid of sports (with a tick to make one the default) then the field
+- A plan's weeks are an **Outline**: the weeks on the left, the picked week (or all of them) large beside it. (List and Table layouts were tried and are kept on the `archive/plan-layouts` branch)
+- The calendar's week view shows each session's team, minutes, first three drills (with pictures) and topics
+- Adding a session to the calendar opens a picker with the library's session cards, a search and the sports, instead of a long dropdown
+- Keyboard shortcuts are drawn as keys everywhere they're shown: menus, tool hints, Settings and the session preview
 - A card's **Folders ›** menu stays open while you tick folders, so a board or session can go into several at once
-- The **Select** button has an empty tick box, like the boxes on the cards
+- The **Select** button has an empty tick box, like the boxes on the cards, and its text is the size of the other buttons
 - Version tags put the Windows, macOS and Linux installers on a draft GitHub release, ready for its notes
+
+### Developers
+
+- Development builds keep a log of errors, warnings and library events: in the console, `__lineupLog()` in the dev tools, and a file per day in `Documents\Lineup\logs\` in the desktop app. Release builds keep nothing
+- Layout tests: `npm run test:layout` (Playwright; once: `npx playwright install chromium`) fills every screen with the longest names and the most topics and fails on any sideways scrollbar
 
 ### Fixed
 
+- Calendar items show their time like the time box does (6:30 PM, or 18:30 where the computer uses 24-hour time), and in a narrow week column the time moves under the kind instead of being cut off
+- Printing no longer prints the theme's moving background (Dune's spice and the like) over the page
+- Exported PDFs: text can be selected, copied and searched (an invisible text layer over the page); pictures are sharper (about 290 dpi instead of 190) and files much smaller (a 17 MB export is now under 1 MB)
+- Player names on exported and printed diagrams are white with a dark edge again (they came out black on the grass), and bigger
+- The minutes under the session timeline no longer overlap at the end ("70" beside "71 min")
+- Exports and prints with the ink saver are named "Session (ink saver)"; Session details "Session (details)"
+- Team names lose stray spaces ("BU10 Black   " is "BU10 Black"), and a name you type that's already saved, in any capitals, picks the saved team
+- Desktop app: preferences (player and equipment sizes, colours…) are also kept in the app's own data folder (`Lineup/settings.json`), so they're the same in every build, dev and installed. The file has a version and when it changed, ready to sync with an account later
+- Theme effects (spice, desert night) never draw over any picture of a board, including the session preview's
+- Printed and exported sessions: cones no longer sit on black discs and players no longer have thick dark rings (the board's hidden hover ring showed up where the app's styles don't reach)
+- A session with many topics in a plan no longer makes the page scroll sideways
 - A card's ⋯ button no longer sits on top of the end of its details line
 
 ---

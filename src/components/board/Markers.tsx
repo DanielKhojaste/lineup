@@ -51,11 +51,20 @@ export function stripePaths(r: number): string[] {
 	return paths;
 }
 
+/**
+ * The hover ring is invisible until pointed at. Its "invisible" is written on
+ * the element too, not only in the stylesheet: where the stylesheet doesn't
+ * reach (pictures of the board for exports, some print previews) an unstyled
+ * circle is filled black, which drew black discs behind cones and thick
+ * dark rings around players.
+ */
+const HOVER_RING = { fill: "none", stroke: "#fff", strokeOpacity: 0, strokeWidth: 2 } as const;
+
 function SelectionRing({ r, selected }: { r: number; selected: boolean }) {
 	return (
 		<>
-			<circle className="marker__hover" r={r + 6} />
-			{selected && <circle className="marker__selection" r={r + 7} />}
+			<circle className="marker__hover" r={r + 6} {...HOVER_RING} />
+			{selected && <circle className="marker__selection" r={r + 7} fill="none" />}
 		</>
 	);
 }
@@ -105,6 +114,13 @@ function PlayerMarker({ node, selected, board }: MarkerProps<PlayerNode>) {
 					className="marker__caption"
 					y={PLAYER_RADIUS + 16}
 					textAnchor="middle"
+					// Also as attributes: exported pictures lose the stylesheet's paint order,
+					// which turned names black on the grass.
+					fill="#fff"
+					stroke="#0b1a12"
+					strokeWidth={3.5}
+					strokeLinejoin="round"
+					paintOrder="stroke"
 				>
 					{caption}
 				</text>
@@ -248,6 +264,7 @@ function GoalMarker({ node, selected, board }: MarkerProps<GoalNode>) {
 		<g transform={`rotate(${node.rotation})`}>
 			<rect
 				className="marker__hover marker__hover--box"
+				{...HOVER_RING}
 				x={-d - 6}
 				y={-half - 6}
 				width={d + 12}
@@ -257,6 +274,7 @@ function GoalMarker({ node, selected, board }: MarkerProps<GoalNode>) {
 			{selected && (
 				<rect
 					className="marker__selection"
+					fill="none"
 					x={-d - 7}
 					y={-half - 7}
 					width={d + 14}

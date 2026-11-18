@@ -210,13 +210,19 @@ h3 {
 
 .link-button {
 	align-self: flex-start;
+	/* The padding sits outside the text's line, so it lines up with what's above. */
+	margin-left: -8px;
+	padding: 2px 8px;
+	border-radius: 6px;
 	color: var(--accent-text);
 	font-weight: 600;
-	padding: 2px 0;
+	transition: background-color 0.12s ease;
 }
 
-.link-button:hover:not(:disabled) {
-	text-decoration: underline;
+/* A soft tint behind the words, not an underline. */
+.link-button:hover:not(:disabled),
+.link-button:focus-visible {
+	background: var(--accent-soft);
 }
 
 .link-button:disabled {
@@ -1200,10 +1206,17 @@ h3 {
 	min-width: 0;
 }
 
-/* Two columns, kept apart by space alone (no line between them). */
+/* Two columns, kept apart by space alone (no line between them). Always
+   two, at any interface size, unless the window is really narrow. */
 .shortcuts {
-	columns: 2 260px;
-	column-gap: 48px;
+	column-count: 2;
+	column-gap: 40px;
+}
+
+@media (max-width: 640px) {
+	.shortcuts {
+		column-count: 1;
+	}
 }
 
 .shortcuts__group {
@@ -1293,6 +1306,20 @@ kbd.key {
 
 kbd.key--wide {
 	min-width: 64px;
+}
+
+/* Smaller keycaps, for menus, top bars and sentences. */
+kbd.key--small {
+	min-width: 18px;
+	height: 18px;
+	padding: 0 5px;
+	border-bottom-width: 2px;
+	border-radius: 4px;
+	font-size: 10px;
+}
+
+kbd.key--small.key--wide {
+	min-width: 40px;
 }
 
 .keys__plus,
@@ -1488,6 +1515,19 @@ button.save-status--error:hover {
 
 .menu__item--danger {
 	color: var(--danger);
+}
+
+.menu__heading {
+	padding: 8px 10px 3px;
+	color: var(--text-muted);
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.menu__heading:first-child {
+	padding-top: 4px;
 }
 
 .menu__separator {
@@ -2782,142 +2822,394 @@ fieldset.field {
 }
 
 .sheet__part {
+	margin-bottom: 12px;
+}
+
+/* The parts of a session, by colour (paper colours, the same in every theme). */
+.sheet {
+	--tone-warm: #c98a1a;
+	--tone-main: #2d6a48;
+	--tone-game: #3c6b93;
+	--tone-cool: #7a6aa8;
+	--tone-other: #5d6b7a;
+	--tone-break: #b8c1cb;
+}
+
+.sheet__head {
 	margin-bottom: 14px;
+	padding-bottom: 4px;
 }
 
 .sheet__title {
-	font-size: 22px;
-	font-weight: 700;
-	text-align: center;
-	margin-bottom: 12px;
-	letter-spacing: 0.2px;
+	margin: 0;
+	font-size: 26px;
+	line-height: 1.15;
+	letter-spacing: -0.01em;
 }
 
-.sheet__summary {
+.sheet__sub {
+	margin-top: 3px;
+	color: var(--sheet-muted);
+	font-size: 13px;
+}
+
+.sheet__facts {
 	display: flex;
 	flex-wrap: wrap;
-	border: 1px solid var(--sheet-line);
-	border-radius: 6px;
-	overflow: hidden;
-	background: var(--sheet-band);
+	gap: 6px 22px;
+	margin: 12px 0 8px;
+	font-size: 12.5px;
 }
 
-/* Cells fill each row; the borders between them come from a negative margin trick. */
-.sheet__cell {
-	flex: 1 1 150px;
-	padding: 8px 10px;
-	border-right: 1px solid var(--sheet-line);
-	border-bottom: 1px solid var(--sheet-line);
-	margin: 0 -1px -1px 0;
-}
-
-.sheet__cell--wide {
-	flex-basis: 45%;
-}
-
-.sheet__label {
+.sheet__facts b {
 	display: block;
+	color: var(--sheet-muted);
 	font-size: 9.5px;
 	font-weight: 700;
+	letter-spacing: 0.08em;
 	text-transform: uppercase;
-	letter-spacing: 0.6px;
-	color: var(--sheet-muted);
-	margin-bottom: 2px;
+}
+
+.sheet__topics {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 5px;
+	margin-bottom: 8px;
+}
+
+.sheet__pill {
+	padding: 1px 9px;
+	border-radius: 999px;
+	background: #fff1cc;
+	color: #6b4c00;
+	font-size: 11px;
+	font-weight: 600;
 }
 
 .sheet__description {
-	margin-top: 10px;
-	white-space: pre-line;
+	margin: 4px 0 10px;
+	font-size: 12.5px;
 }
 
-.sheet__activity {
-	width: 100%;
-	border-collapse: collapse;
-	table-layout: fixed;
+/* The whole session in a bar: each block as long as its minutes. */
+.sheet__timeline {
+	display: flex;
+	height: 26px;
+	margin-top: 8px;
+	border-radius: 6px;
+	overflow: hidden;
 }
 
-.sheet__activity th,
-.sheet__activity td {
-	border: 1px solid var(--sheet-line);
-	padding: 7px 9px;
-	text-align: left;
-	vertical-align: top;
+.sheet__tl {
+	display: flex;
+	align-items: center;
+	min-width: 0;
+	padding: 0 6px;
+	border-right: 2px solid #fff;
+	color: #fff;
+	font-size: 10.5px;
+	font-weight: 600;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
-.sheet__activity th {
-	background: var(--sheet-head);
-	border-color: var(--sheet-head);
-	color: #ffffff;
-	font-size: 11px;
+.sheet__tl:last-child {
+	border-right: 0;
+}
+
+.sheet__tl--warm { background: var(--tone-warm); }
+.sheet__tl--main { background: var(--tone-main); }
+.sheet__tl--game { background: var(--tone-game); }
+.sheet__tl--cool { background: var(--tone-cool); }
+.sheet__tl--other { background: var(--tone-other); }
+.sheet__tl--break { background: var(--tone-break); }
+
+.sheet__axis {
+	position: relative;
+	height: 14px;
+	margin-top: 3px;
+	color: var(--sheet-muted);
+	font-size: 9.5px;
+}
+
+.sheet__axis > span {
+	position: absolute;
+	top: 0;
+	transform: translateX(-50%);
+}
+
+.sheet__axis > span:first-child {
+	left: 0;
+	transform: none;
+}
+
+.sheet__axis-end {
+	right: 0;
+	transform: none !important;
+}
+
+/* A part's name, in its colour. */
+.sheet__stage {
+	display: inline-block;
+	margin-right: 7px;
+	padding: 1px 7px;
+	border-radius: 4px;
+	color: #fff;
+	font-size: 9.5px;
 	font-weight: 700;
+	letter-spacing: 0.06em;
 	text-transform: uppercase;
-	letter-spacing: 0.5px;
+	vertical-align: 1px;
 }
 
-.sheet__when {
-	font-weight: 500;
-	text-transform: none;
-	letter-spacing: 0;
-	opacity: 0.85;
+.sheet__stage--warm { background: var(--tone-warm); }
+.sheet__stage--main { background: var(--tone-main); }
+.sheet__stage--game { background: var(--tone-game); }
+.sheet__stage--cool { background: var(--tone-cool); }
+.sheet__stage--other { background: var(--tone-other); }
+.sheet__stage--break { background: #8d97a3; }
+
+/* A drill: the diagram, zoomed to its area, then what happens. */
+.sheet__drill {
+	display: grid;
+	grid-template-columns: 330px minmax(0, 1fr);
+	gap: 16px;
+	padding-top: 12px;
+	border-top: 1px solid #dfe4e9;
 }
 
-.sheet__setup {
-	width: 250px;
-}
-
-.sheet__focus {
-	width: 190px;
-}
-
-.sheet__setup svg {
+.sheet__diagram svg {
 	display: block;
 	width: 100%;
 	height: auto;
-	border-radius: 3px;
+	border-radius: 5px;
+}
+
+/* Names under players are small once a whole pitch shrinks onto paper: bigger on the sheet. */
+.sheet__diagram .marker__caption {
+	font-size: 19px;
+	stroke-width: 4.5px;
+}
+
+.sheet--ink .sheet__diagram svg {
+	box-shadow: inset 0 0 0 1px #c9d6cc;
+	outline: 1px solid #c9d6cc;
+	outline-offset: -1px;
+}
+
+.sheet__when {
+	margin-bottom: 3px;
+	color: var(--sheet-muted);
+	font-size: 11px;
+	font-weight: 600;
 }
 
 .sheet__name {
-	font-size: 13px;
+	font-size: 15px;
 	font-weight: 700;
-	margin-bottom: 4px;
+	line-height: 1.25;
 }
 
 .sheet__type {
-	font-weight: 400;
 	color: var(--sheet-muted);
-	font-size: 11px;
+	font-size: 12px;
+	font-weight: 500;
+}
+
+.sheet__mini {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 2px 12px;
+	margin: 4px 0 6px;
+	font-size: 11.5px;
+}
+
+.sheet__mini b {
+	font-weight: 600;
 }
 
 .sheet p {
-	margin-top: 3px;
+	margin: 0 0 6px;
 }
 
 .sheet__text {
 	white-space: pre-line;
 }
 
-.sheet ul {
-	margin: 3px 0 0 16px;
-}
-
-.sheet__pause {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: baseline;
-	gap: 4px 12px;
-	padding: 7px 10px;
-	border: 1px dashed var(--sheet-line);
-	border-radius: 6px;
-	background: var(--sheet-band);
-}
-
-.sheet__pause span {
+.sheet__label {
+	margin: 8px 0 3px;
 	color: var(--sheet-muted);
+	font-size: 9.5px;
+	font-weight: 700;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
 }
 
-.sheet__pause p {
-	flex-basis: 100%;
-	margin: 0;
+/* Focus points: boxes to tick during the session. */
+.sheet__ticks {
+	margin: 4px 0 6px;
+	padding: 0;
+	list-style: none;
+}
+
+.sheet__ticks li {
+	position: relative;
+	margin-bottom: 3px;
+	padding-left: 19px;
+}
+
+.sheet__ticks li::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 3px;
+	width: 10px;
+	height: 10px;
+	border: 1.5px solid #a07a1c;
+	border-radius: 2px;
+}
+
+.sheet__list {
+	margin: 0 0 6px;
+	padding-left: 16px;
+}
+
+/* Everything else (breaks, games, a team talk): a row in full ink, its notes under it. */
+.sheet__row {
+	padding: 8px 0 8px 10px;
+	border-top: 1px solid #dfe4e9;
+	border-left: 3px solid var(--tone-other);
+}
+
+.sheet__row--warm { border-left-color: var(--tone-warm); }
+.sheet__row--main { border-left-color: var(--tone-main); }
+.sheet__row--game { border-left-color: var(--tone-game); }
+.sheet__row--cool { border-left-color: var(--tone-cool); }
+.sheet__row--break { border-left-color: var(--tone-break); }
+
+.sheet__row-head {
+	display: flex;
+	align-items: baseline;
+	gap: 4px;
+	font-size: 13px;
+}
+
+.sheet__row-head strong {
+	color: var(--sheet-ink);
+	font-weight: 700;
+}
+
+.sheet__row-when {
+	margin-left: auto;
+	color: var(--sheet-ink);
+	font-size: 11.5px;
+	font-variant-numeric: tabular-nums;
+}
+
+.sheet__row-notes {
+	margin: 3px 0 0 !important;
+	color: var(--sheet-ink);
+	white-space: pre-line;
+}
+
+.sheet__row--break .sheet__row-head strong {
+	font-weight: 600;
+}
+
+/* Room for notes, and who made it. */
+.sheet__notes {
+	padding-top: 8px;
+	border-top: 1px solid #dfe4e9;
+}
+
+.sheet__lines span {
+	display: block;
+	height: 24px;
+	border-bottom: 1px solid #dfe4e9;
+}
+
+.sheet__made {
+	margin-top: 10px;
+	color: #9aa3ad;
+	font-size: 9.5px;
+	text-align: right;
+}
+
+/* Session Details: an outline of the blocks, then a page per drill. */
+.sheet__outline-list {
+	margin: 4px 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+.sheet__outline-row {
+	display: grid;
+	grid-template-columns: 52px auto minmax(0, 1fr) 52px 34px;
+	align-items: center;
+	gap: 10px;
+	padding: 5px 0 5px 8px;
+	border-bottom: 1px solid #e6eaee;
+	border-left: 3px solid var(--tone-other);
+}
+
+.sheet__outline-when,
+.sheet__outline-min,
+.sheet__outline-page {
+	color: var(--sheet-muted);
+	font-variant-numeric: tabular-nums;
+}
+
+.sheet__outline-min,
+.sheet__outline-page {
+	text-align: right;
+}
+
+.sheet__outline-name {
+	font-weight: 600;
+}
+
+.sheet__outline-notes {
+	color: var(--sheet-muted);
+	font-weight: 400;
+}
+
+.sheet__outline-row .sheet__stage {
+	justify-self: start;
+}
+
+.sheet__page {
+	padding-top: 14px;
+	border-top: 1px solid #dfe4e9;
+}
+
+.sheet__page-top {
+	display: flex;
+	justify-content: space-between;
+	margin-bottom: 10px;
+	color: #9aa3ad;
+	font-size: 10px;
+}
+
+.sheet__page-title {
+	margin: 2px 0 6px;
+	color: var(--sheet-head);
+	font-size: 20px;
+	line-height: 1.2;
+}
+
+.sheet__diagram--large {
+	margin: 10px 0 14px;
+}
+
+.sheet__page-cols {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 22px;
+}
+
+.sheet__page-notes {
+	margin-top: 14px;
 }
 
 /* Printing (Ctrl+P): only the sheet, at the page's width. */
@@ -2947,7 +3239,9 @@ fieldset.field {
 	}
 
 	#root > * > :not(.print-sheet),
-	.context-menu {
+	.context-menu,
+	/* The theme's moving background (spice, stars…) never prints. */
+	.theme-effect {
 		display: none !important;
 	}
 
@@ -2969,6 +3263,12 @@ fieldset.field {
 
 	.sheet__part {
 		break-inside: avoid;
+	}
+
+	.sheet__page {
+		break-before: page;
+		padding-top: 0;
+		border-top: 0;
 	}
 }
 
@@ -3606,7 +3906,6 @@ fieldset.field {
 	padding: 12px 16px 0;
 }
 
-
 .spice-settings {
 	display: flex;
 	flex-direction: column;
@@ -3696,6 +3995,12 @@ fieldset.field {
 	box-shadow: 0 4px 14px var(--shadow);
 }
 
+/* The library's Select button: the text at the size of the other buttons (13px). */
+.library__select {
+	font-size: 13px;
+	gap: 6px;
+}
+
 .select-bar__count {
 	font-weight: 600;
 }
@@ -3729,4 +4034,2471 @@ fieldset.field {
 	grid-template-columns: repeat(2, minmax(0, 220px));
 	gap: 12px;
 	margin-top: 12px;
+}
+
+/* Settings: the interface size choices, not the full width of the window. */
+.interface-size {
+	max-width: 420px;
+}
+
+/* ---------------------------------- Plans ---------------------------------- */
+
+/* A plan's card: its topics in order where a board card has its picture. */
+.plan-card__topics {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	width: 100%;
+	aspect-ratio: 3 / 2;
+	padding: 10px;
+	margin-bottom: 6px;
+	border-radius: 6px;
+	background: var(--sunken);
+	overflow: hidden;
+}
+
+.plan-card__topic {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 12px;
+}
+
+.plan-card__number {
+	display: grid;
+	place-items: center;
+	flex-shrink: 0;
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	background: var(--accent-soft);
+	color: var(--accent-text);
+	font-size: 11px;
+	font-weight: 600;
+}
+
+.plan-card__name {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.plan-card__count {
+	color: var(--text-muted);
+	font-variant-numeric: tabular-nums;
+}
+
+.plan-card__more {
+	font-size: 11px;
+	color: var(--text-muted);
+	padding-left: 26px;
+}
+
+/* The plan editor: topics in order, each a card with its sessions. */
+.plan-topic {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding: 14px;
+	margin-bottom: 12px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--surface);
+}
+
+.plan-topic.is-active {
+	border-color: var(--border-strong);
+	box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.plan-topic__head {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.plan-topic__week {
+	flex-shrink: 0;
+	min-width: 64px;
+	font-weight: 700;
+	color: var(--accent-text);
+}
+
+.plan-topic__add-notes {
+	font-size: 12px;
+}
+
+.plan-topic__number {
+	display: grid;
+	place-items: center;
+	flex-shrink: 0;
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	background: var(--accent-soft);
+	color: var(--accent-text);
+	font-weight: 600;
+}
+
+.plan-topic__head .field,
+.plan-topic__title {
+	flex: 1;
+	min-width: 0;
+}
+
+.plan-topic__title input,
+input.plan-topic__title {
+	font-size: 15px;
+	font-weight: 600;
+}
+
+.plan-topic__sessions {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.plan-session {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 4px 6px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--sunken);
+}
+
+.plan-session:hover {
+	border-color: var(--border-strong);
+}
+
+.plan-session__number {
+	width: 22px;
+	flex-shrink: 0;
+	text-align: right;
+	color: var(--text-muted);
+	font-size: 12px;
+}
+
+.plan-session__open {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 4px 6px;
+	border-radius: 6px;
+	text-align: left;
+}
+
+.plan-session__text {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 1px;
+}
+
+/* Room between the session's number and its pictures. */
+.plan-session__number {
+	margin-right: 4px;
+}
+
+.plan-session__open:hover {
+	background: var(--hover);
+}
+
+.plan-session__title {
+	font-weight: 600;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.plan-session__meta {
+	font-size: 12px;
+	color: var(--text-muted);
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.plan-session__missing {
+	flex: 1;
+	padding: 6px;
+	font-size: 13px;
+	color: var(--danger);
+}
+
+.plan-topic__empty {
+	padding: 12px;
+	border: 1px dashed var(--border-strong);
+	border-radius: var(--radius);
+	font-size: 13px;
+	text-align: center;
+}
+
+/* Sessions in the "Add sessions" panel have no picture: just their text. */
+.drill-picker__item--text {
+	grid-template-columns: 1fr auto auto;
+}
+
+/* -------------------------------- Calendar --------------------------------- */
+
+.calendar-view {
+	display: flex;
+	flex-direction: column;
+	height: 100vh;
+}
+
+.calendar-view__title {
+	font-size: 15px;
+	font-weight: 600;
+	margin: 0;
+}
+
+.calendar-view__body {
+	flex: 1;
+	min-height: 0;
+	display: grid;
+	grid-template-columns: 1fr 300px;
+}
+
+.calendar {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	min-width: 0;
+	padding: 20px 24px;
+	overflow: auto;
+}
+
+.calendar__head {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.calendar__head h2 {
+	margin: 0;
+	font-size: 20px;
+	/* Wide enough for "September 2026", centred, so the arrows sit the same
+	   distance from it and don't move from month to month. */
+	min-width: 180px;
+	text-align: center;
+}
+
+.calendar__grid {
+	flex: 1;
+	display: grid;
+	grid-template-columns: repeat(7, minmax(0, 1fr));
+	/* The weekday names, then the weeks sharing the height. */
+	grid-template-rows: auto;
+	grid-auto-rows: minmax(96px, 1fr);
+	border-top: 1px solid var(--border);
+	border-left: 1px solid var(--border);
+}
+
+.calendar__weekday {
+	padding: 6px 8px;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--text-muted);
+	border-right: 1px solid var(--border);
+	border-bottom: 1px solid var(--border);
+	min-height: 0;
+}
+
+.calendar__day {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	min-width: 0;
+	padding: 4px;
+	border-right: 1px solid var(--border);
+	border-bottom: 1px solid var(--border);
+	background: var(--surface);
+	cursor: pointer;
+}
+
+.calendar__day:hover {
+	background: var(--hover);
+}
+
+.calendar__day.is-outside {
+	background: var(--sunken);
+}
+
+.calendar__day.is-outside .calendar__date {
+	color: var(--text-muted);
+	opacity: 0.6;
+}
+
+.calendar__day.is-drop {
+	box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.calendar__date {
+	align-self: flex-end;
+	min-width: 24px;
+	padding: 2px 6px;
+	border-radius: 12px;
+	font-size: 12px;
+	text-align: center;
+	font-variant-numeric: tabular-nums;
+}
+
+.calendar__day.is-today .calendar__date {
+	background: var(--accent);
+	color: var(--on-accent);
+	font-weight: 600;
+}
+
+/* A session on a day: a small bar in its team's colour. */
+.calendar__entry {
+	/* Each kind has its colour (below); the hover sweep builds on it. */
+	--entry-bg: var(--raised);
+	--entry-ink: var(--text);
+	--entry-kind: var(--text-muted);
+	display: flex;
+	align-items: center;
+	gap: 5px;
+	width: 100%;
+	padding: 3px 6px;
+	border-radius: 4px;
+	background: var(--entry-bg);
+	color: var(--entry-ink);
+	font-size: 12px;
+	text-align: left;
+	cursor: grab;
+	touch-action: none;
+}
+
+.calendar__entry {
+	/* How quickly the hover comes and goes (quick: 0.12–0.16s). */
+	--hover-duration: 0.14s;
+	/* A stronger tint of the item's colour down its left edge. */
+	--entry-strip: color-mix(in srgb, var(--entry-kind) 60%, var(--entry-bg));
+	box-shadow: inset 3px 0 0 var(--entry-strip);
+	transition: box-shadow var(--hover-duration) ease;
+}
+
+/* Hover: a thin outline in the item's own text colour (Ring, picked in updates-401;
+   Tint and Lift are kept on archive/calendar-hover). */
+.calendar__entry:hover {
+	box-shadow:
+		inset 3px 0 0 var(--entry-strip),
+		inset 0 0 0 1.5px color-mix(in srgb, var(--entry-ink) 60%, transparent);
+}
+
+/* "+3 more" on a busy day in the month view. */
+.calendar__day-more {
+	align-self: flex-start;
+	padding: 1px 6px;
+	border-radius: 4px;
+	color: var(--text-muted);
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.calendar__day-more:hover,
+.calendar__day-more:focus-visible {
+	background: var(--hover);
+	color: var(--text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.calendar__entry {
+		transition: none;
+	}
+}
+
+.calendar__entry--done {
+	--entry-ink: var(--text-muted);
+}
+
+.calendar__entry--cancelled .calendar__entry-title {
+	text-decoration: line-through;
+	color: var(--text-muted);
+}
+
+.calendar__time {
+	font-size: 11px;
+	color: var(--text-muted);
+}
+
+.calendar__entry-title {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Coming up and recently run, beside the month. */
+.agenda {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 20px 16px;
+	border-left: 1px solid var(--border);
+	background: var(--surface);
+	overflow: auto;
+}
+
+.agenda h2 {
+	margin: 8px 0 0;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--text-muted);
+}
+
+.agenda ul {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.agenda__item {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	width: 100%;
+	padding: 6px 8px;
+	border-radius: 6px;
+	text-align: left;
+}
+
+.agenda__item:hover {
+	background: var(--hover);
+}
+
+.agenda__dot {
+	flex-shrink: 0;
+	width: 8px;
+	height: 8px;
+	margin-top: 6px;
+	border-radius: 50%;
+}
+
+.agenda__text {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.agenda__title {
+	font-weight: 600;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Putting a plan on the calendar: the training days as toggles. */
+.day-toggles {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+/* Picking a plan from a list. */
+.pick-list {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.pick-list__item {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	width: 100%;
+	padding: 8px 10px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	text-align: left;
+}
+
+.pick-list__item:hover {
+	border-color: var(--border-strong);
+	background: var(--hover);
+}
+
+.button--danger-text {
+	color: var(--danger);
+	background: transparent;
+	border-color: transparent;
+}
+
+.button--danger-text:hover {
+	background: var(--hover);
+}
+
+/* The week view: one row of seven tall days. */
+.calendar__grid--week {
+	grid-auto-rows: minmax(360px, 1fr);
+}
+
+.calendar__grid--week .calendar__entry {
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 1px;
+	padding: 6px 8px;
+}
+
+.calendar__grid--week .calendar__entry-title {
+	white-space: normal;
+}
+
+/* Design A: what each session is, with its first three drills' pictures. */
+.calendar__grid--week .calendar__entry {
+	gap: 5px;
+	padding: 7px 8px;
+}
+
+.calendar__grid--week .calendar__entry-title {
+	font-weight: 600;
+	line-height: 1.25;
+}
+
+.calendar__entry-meta {
+	max-width: 100%;
+	overflow: hidden;
+	color: var(--text-muted);
+	font-size: 11px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* A long team name doesn't widen the filters at the top. */
+.calendar-view .sort .field__input {
+	max-width: 200px;
+	text-overflow: ellipsis;
+}
+
+.calendar__drills {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	width: 100%;
+}
+
+.calendar__drill {
+	display: grid;
+	grid-template-columns: 40px 1fr;
+	gap: 6px;
+	align-items: center;
+	font-size: 11px;
+	min-width: 0;
+}
+
+.calendar__drill-thumb {
+	display: block;
+	width: 40px;
+	height: 27px;
+	border-radius: 3px;
+	background: var(--sunken);
+}
+
+.calendar__drill-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	text-align: left;
+}
+
+.calendar__more {
+	color: var(--text-muted);
+	font-size: 11px;
+}
+
+.calendar__topics {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 3px;
+}
+
+.calendar__topic {
+	padding: 1px 6px;
+	border-radius: 999px;
+	background: var(--accent-soft);
+	color: var(--accent-text);
+	font-size: 10px;
+	font-weight: 600;
+}
+
+/* ----------------------------- Session preview ----------------------------- */
+
+.session-preview {
+	display: flex;
+	flex-direction: column;
+	height: 100vh;
+}
+
+.session-preview__keys {
+	white-space: nowrap;
+}
+
+.session-preview__body {
+	flex: 1;
+	min-height: 0;
+	display: grid;
+	grid-template-columns: 340px 1fr;
+}
+
+/* The session's blocks in order, like the library's list in the designs. */
+.session-preview__list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 16px;
+	border-right: 1px solid var(--border);
+	background: var(--surface);
+	overflow-y: auto;
+}
+
+.session-preview__item {
+	display: grid;
+	grid-template-columns: 96px 1fr;
+	align-items: center;
+	gap: 12px;
+	width: 100%;
+	padding: 8px;
+	border: 1px solid transparent;
+	border-radius: 10px;
+	text-align: left;
+}
+
+.session-preview__item:hover {
+	background: var(--hover);
+}
+
+.session-preview__item.is-active {
+	border-color: var(--accent);
+	background: var(--accent-soft);
+}
+
+.session-preview__thumb {
+	width: 96px;
+	aspect-ratio: 3 / 2;
+	height: auto;
+	border-radius: 6px;
+	background: var(--sunken);
+	display: block;
+}
+
+.session-preview__thumb--empty {
+	display: grid;
+	place-items: center;
+	color: var(--text-muted);
+}
+
+.session-preview__text {
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+	min-width: 0;
+}
+
+.session-preview__stage {
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--accent-text);
+}
+
+.session-preview__item--text .session-preview__stage {
+	color: var(--text-muted);
+}
+
+.session-preview__title {
+	font-weight: 600;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* The picked drill, as large as the window allows, with its details under it. */
+.session-preview__main {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	min-width: 0;
+	min-height: 0;
+	padding: 20px 24px;
+	overflow-y: auto;
+}
+
+.session-preview__stagewrap {
+	flex: 1;
+	min-height: 280px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.session-preview__board {
+	width: 100%;
+	height: 100%;
+	max-height: 70vh;
+	border-radius: 10px;
+}
+
+.session-preview__steps {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+}
+
+.session-preview__details {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding-top: 12px;
+	border-top: 1px solid var(--border);
+}
+
+.session-preview__details h3 {
+	margin: 4px 0 0;
+	font-size: 13px;
+}
+
+.session-preview__details ul {
+	margin: 0;
+	padding-left: 18px;
+}
+
+.session-preview__facts {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px 20px;
+	color: var(--text-muted);
+}
+
+.session-preview__facts strong {
+	color: var(--text);
+}
+
+.session-preview__note {
+	padding: 8px 12px;
+	border-left: 3px solid var(--accent);
+	background: var(--sunken);
+	border-radius: 0 6px 6px 0;
+}
+
+.session-preview__rest {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	color: var(--text-muted);
+	text-align: center;
+}
+
+.session-preview__rest h2 {
+	margin: 0;
+	color: var(--text);
+}
+
+/* Native dropdown lists in the theme's colours, so every choice can be read. */
+option {
+	background: var(--surface);
+	color: var(--text);
+}
+
+option:disabled {
+	color: var(--text-muted);
+}
+
+/* Drill details beside the board instead of under it. */
+.session-preview__main--side {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 320px;
+	grid-template-rows: minmax(0, 1fr) auto;
+	column-gap: 20px;
+}
+
+.session-preview__main--side .session-preview__stagewrap {
+	grid-column: 1;
+	grid-row: 1;
+}
+
+.session-preview__main--side .session-preview__steps {
+	grid-column: 1;
+	grid-row: 2;
+}
+
+.session-preview__main--side .session-preview__details {
+	grid-column: 2;
+	grid-row: 1 / 3;
+	padding: 0 0 0 20px;
+	border-top: 0;
+	border-left: 1px solid var(--border);
+	overflow-y: auto;
+}
+
+.session-preview__main--side .session-preview__facts {
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 4px;
+}
+
+.session-preview__main--side .session-preview__facts .topbar__spacer {
+	display: none;
+}
+
+/* A compact row of icon choices, for a top bar. */
+.segmented--small {
+	padding: 2px;
+	gap: 2px;
+}
+
+.segmented--small .segmented__item {
+	padding: 4px 6px;
+}
+
+/* Keycaps inside a sentence sit on the line, not above it. */
+.hint-keys .keys__combo,
+.context-menu__shortcut .keys__combo {
+	vertical-align: middle;
+	margin: 0 1px;
+}
+
+.context-menu__shortcut .keys__combo {
+	gap: 2px;
+}
+
+.session-preview__keys {
+	display: inline-flex;
+	align-items: center;
+	gap: 18px;
+}
+
+/* Keys sit together; their word has a little room after them. */
+.session-preview__keygroup {
+	display: inline-flex;
+	align-items: center;
+	gap: 3px;
+}
+
+.session-preview__keygroup > span:last-child {
+	margin-left: 5px;
+}
+
+.session-preview__title {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* The session's team, length and players, at the top of its blocks. */
+.session-preview__summary {
+	position: sticky;
+	top: -16px;
+	z-index: 1;
+	flex-shrink: 0;
+	margin: -16px -16px 2px;
+	padding: 14px 20px 10px;
+	background: var(--surface);
+	border-bottom: 1px solid var(--border);
+	color: var(--text-muted);
+	font-size: 12px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Room between the shortcuts and the details switch beside them. */
+.session-preview__keys {
+	margin-right: 20px;
+}
+
+/* A long title shrinks first (down to 240px), then the key hints give way: a
+   group that doesn't fit drops to a hidden second row (Play first, then Steps,
+   then Blocks), never half shown. The empty ::before keeps the first row even
+   when no group fits. */
+.session-preview__keys {
+	flex: 0 1 auto;
+	flex-wrap: wrap;
+	gap: 0;
+	min-width: 0;
+	height: 24px;
+	margin-right: 2px;
+	overflow: hidden;
+}
+
+.session-preview__keys::before {
+	content: "";
+	width: 0;
+	height: 24px;
+}
+
+.session-preview__keygroup {
+	flex-shrink: 0;
+	height: 24px;
+	margin-right: 18px;
+}
+
+.topbar .session-preview__title {
+	flex: 0 30 auto;
+	min-width: min(240px, max-content);
+}
+
+/* With the details beside the drill or hidden, the drill takes all the room there is. */
+.session-preview__main--hidden .session-preview__board,
+.session-preview__main--side .session-preview__board {
+	max-height: none;
+}
+
+.session-preview__main--hidden {
+	padding: 12px 16px;
+}
+
+/* Dragging a session in a plan: the copy under the pointer, the line where it lands. */
+.plan-session.is-dragging {
+	opacity: 0.35;
+}
+
+.plan-drag-ghost {
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: 50;
+	pointer-events: none;
+	box-shadow: 0 10px 28px var(--shadow);
+	border-color: var(--accent);
+	opacity: 0.95;
+	list-style: none;
+}
+
+.plan-drop-line {
+	position: fixed;
+	z-index: 49;
+	height: 3px;
+	border-radius: 2px;
+	background: var(--accent);
+	box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent);
+	pointer-events: none;
+	display: none;
+}
+
+.plan-topic__sessions.is-drop {
+	outline: 1px dashed var(--border-strong);
+	outline-offset: 4px;
+	border-radius: var(--radius);
+}
+
+/* --------------------------- Choosing a session ---------------------------- */
+
+.dialog--picker {
+	width: min(1040px, calc(100vw - 48px));
+}
+
+.session-picker {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+}
+
+.session-picker__bar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+}
+
+.session-picker__bar .search {
+	flex: 1;
+	min-width: 240px;
+}
+
+.session-picker__grid {
+	max-height: min(60vh, 640px);
+	overflow-y: auto;
+	padding: 2px;
+	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+
+.session-picker__empty {
+	padding: 40px 0;
+	text-align: center;
+}
+
+/* The chosen session in the calendar's window: its drills, title and details. */
+.picked-session {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 8px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--sunken);
+}
+
+.picked-session__strip {
+	display: flex;
+	gap: 3px;
+	flex-shrink: 0;
+}
+
+.picked-session__thumb {
+	width: 54px;
+	height: 36px;
+	border-radius: 4px;
+	display: block;
+}
+
+.picked-session__text {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.picked-session__text > * {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.picked-session__choose {
+	justify-content: center;
+	padding: 14px;
+	border-style: dashed;
+}
+
+.calendar__grid--week .calendar__entry {
+	position: relative;
+	padding-right: 22px;
+}
+
+/* The done tick goes in the corner, not on a line of its own. */
+.calendar__grid--week .calendar__entry > svg:first-child {
+	position: absolute;
+	top: 8px;
+	right: 7px;
+	color: var(--accent-text);
+}
+
+/* ------------------------ Plan layouts (to compare) ------------------------ */
+
+.plan-thumbs {
+	display: flex;
+	gap: 3px;
+	flex-shrink: 0;
+}
+
+.plan-thumbs__item {
+	display: block;
+	width: 60px;
+	height: 40px;
+	border-radius: 4px;
+	background: var(--sunken);
+}
+
+/* Design C: the weeks as an outline, the picked week beside it. */
+.plan-outline {
+	display: grid;
+	/* minmax(0, …): long text in a week ellipsizes instead of widening the page. */
+	grid-template-columns: 240px minmax(0, 1fr);
+	gap: 18px;
+	align-items: start;
+}
+
+.plan-outline__weeks {
+	position: sticky;
+	top: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding: 10px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--surface);
+}
+
+.plan-outline__count {
+	padding: 2px 9px 8px;
+	color: var(--text-muted);
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+.plan-outline__week {
+	display: flex;
+	justify-content: space-between;
+	gap: 8px;
+	padding: 7px 9px;
+	border: 0;
+	border-radius: 7px;
+	background: none;
+	color: var(--text);
+	font: inherit;
+	font-size: 13px;
+	text-align: left;
+	cursor: pointer;
+}
+
+.plan-outline__week > span:first-child {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.plan-outline__week:hover {
+	background: var(--raised);
+}
+
+.plan-outline__week.is-active {
+	background: var(--accent-soft);
+	box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.plan-outline__week.is-drop {
+	outline: 1px dashed var(--accent);
+}
+
+.plan-outline__add {
+	color: var(--text-muted);
+}
+
+.plan-topic--large .plan-session {
+	padding-top: 8px;
+	padding-bottom: 8px;
+}
+
+/* ------------------------- New board: in two steps ------------------------- */
+
+.dialog--new-board {
+	width: min(640px, calc(100vw - 32px));
+}
+
+.new-board-steps {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+}
+
+.new-board-steps .dialog__actions {
+	margin-top: 4px;
+}
+
+.sport-grid {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 8px;
+}
+
+.sport-tile,
+.field-tile {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 8px;
+	padding: 10px 8px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--sunken);
+	color: var(--text);
+	font: inherit;
+	font-size: 13px;
+	cursor: pointer;
+}
+
+.sport-tile:hover,
+.field-tile:hover {
+	border-color: var(--border-strong);
+}
+
+.sport-tile.is-active,
+.field-tile.is-active {
+	border-color: var(--accent);
+	background: var(--accent-soft);
+}
+
+.sport-tile__thumb {
+	display: block;
+	width: 72px;
+	height: 46px;
+	border-radius: 4px;
+}
+
+.sport-tile__default {
+	position: absolute;
+	top: 4px;
+	right: 6px;
+	color: var(--accent-text);
+	font-size: 10px;
+	font-weight: 600;
+}
+
+.new-board-steps__back {
+	align-self: flex-start;
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+}
+
+.field-tiles {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 10px;
+}
+
+.field-tile {
+	padding: 12px;
+}
+
+.field-tile__thumb {
+	display: block;
+	width: 100%;
+	height: 170px;
+	border-radius: 6px;
+}
+
+.new-board-steps__heading {
+	color: var(--text-muted);
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+.new-board-steps__hint {
+	margin-right: auto;
+	align-self: center;
+}
+
+/* Design B: the default sport with both its fields, in a row. */
+.new-board-default {
+	display: grid;
+	grid-template-columns: auto 1fr 1fr;
+	gap: 8px;
+	padding-bottom: 14px;
+	border-bottom: 1px solid var(--border);
+}
+
+.new-board-default__sport {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	padding: 0 8px 0 2px;
+}
+
+.field-tile--row {
+	flex-direction: row;
+	justify-content: flex-start;
+	gap: 10px;
+	padding: 8px;
+	text-align: left;
+}
+
+.field-tile--row .field-tile__thumb {
+	width: 68px;
+	height: 44px;
+}
+
+.field-tile__text {
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+}
+
+.field-tile__text small {
+	font-size: 11px;
+}
+
+/* ------------------------- Plan page (updates-206) ------------------------- */
+
+/* Team and sport side by side; the description gets the whole width and grows with its text. */
+.plan-header__grid {
+	grid-template-columns: minmax(200px, 2fr) minmax(160px, 1fr);
+}
+
+.plan-header__grid > .field:last-child {
+	grid-column: 1 / -1;
+}
+
+.plan-header__grid textarea {
+	field-sizing: content;
+	min-height: 4.5em;
+	max-height: 16em;
+	resize: vertical;
+}
+
+.plan-hint {
+	margin: -4px 0 12px;
+	color: var(--text-muted);
+	font-size: 12px;
+}
+
+.plan-hint b {
+	font-weight: 600;
+	color: var(--text);
+}
+
+/* A week's topics: chips and a small box to add more. */
+.week-topics {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 5px;
+}
+
+.chip--small {
+	min-height: 22px;
+	padding: 1px 4px 1px 9px;
+	font-size: 12px;
+}
+
+.week-topics__input {
+	flex: 0 1 180px;
+	min-width: 80px;
+	padding: 2px 9px;
+}
+
+.plan-week-handle {
+	flex-shrink: 0;
+	cursor: grab;
+	touch-action: none;
+}
+
+[data-week-row].is-dragging {
+	opacity: 0.4;
+}
+
+.plan-week-ghost {
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: 1000;
+	pointer-events: none;
+	padding: 6px 12px;
+	border: 1px solid var(--accent);
+	border-radius: 8px;
+	background: var(--raised);
+	box-shadow: var(--shadow-lg, 0 8px 24px rgb(0 0 0 / 0.3));
+	font-size: 13px;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.plan-weeks,
+.plan-outline__all-weeks {
+	display: flex;
+	flex-direction: column;
+}
+
+.plan-outline__all-weeks {
+	gap: 0;
+}
+
+/* The outline: each week is its handle and a button; same weights as the table. */
+.plan-outline__week {
+	align-items: center;
+	padding: 3px 4px 3px 2px;
+}
+
+.plan-outline__all,
+.plan-outline__add {
+	padding: 7px 9px;
+}
+
+.plan-outline__week .plan-week-handle {
+	opacity: 0;
+}
+
+.plan-outline__week:hover .plan-week-handle,
+.plan-outline__week .plan-week-handle:focus-visible {
+	opacity: 1;
+}
+
+.plan-outline__pick {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	justify-content: space-between;
+	gap: 8px;
+	padding: 4px 5px 4px 2px;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+
+.plan-outline__name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.plan-outline__label {
+	font-weight: 600;
+	color: var(--accent-text);
+}
+
+.plan-outline__all {
+	font-weight: 600;
+}
+
+div.plan-outline__week {
+	gap: 0;
+	cursor: default;
+}
+
+.session-picker .filter-chip:disabled {
+	opacity: 0.4;
+	cursor: default;
+}
+
+/* A week's trash can: always in the week's header, on hover in the outline. */
+.plan-week-remove:not(:disabled):hover {
+	color: var(--danger);
+}
+
+.plan-outline__week .plan-week-remove {
+	opacity: 0;
+}
+
+.plan-outline__week:hover .plan-week-remove:not(:disabled),
+.plan-outline__week .plan-week-remove:focus-visible {
+	opacity: 1;
+}
+
+/* Long topics are cut with an ellipsis (the full text is in the tooltip). */
+.week-topics .chip {
+	max-width: 180px;
+}
+
+.chip__text {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.week-topics__bubble {
+	max-width: 180px;
+	padding: 1px 9px;
+	border: 1px dashed var(--border-strong);
+	border-radius: 999px;
+	background: transparent;
+	color: var(--text-muted);
+	font: inherit;
+	font-size: 12px;
+	line-height: 1.5;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.week-topics__bubble:hover,
+.week-topics__bubble:focus-visible {
+	border-style: solid;
+	border-color: var(--accent);
+	color: var(--text);
+}
+
+/* Three pictures wide either way, so the sessions' titles line up. */
+.plan-session .plan-thumbs {
+	width: 186px;
+}
+
+.plan-thumbs__empty {
+	flex: 1;
+	display: grid;
+	place-items: center;
+	height: 40px;
+	border: 1px dashed var(--border-strong);
+	border-radius: 4px;
+	color: var(--text-muted);
+	font-size: 11px;
+}
+
+/* ------------------------ Calendar: kinds and colours ------------------------ */
+
+/* Each kind's colour (an item's own colour, or the coach's pick, comes in as --entry-kind). */
+.calendar__entry--session {
+	--entry-kind: var(--accent);
+}
+
+.calendar__entry--match {
+	--entry-kind: #a66fe0;
+	font-weight: 600;
+}
+
+.calendar__entry--event {
+	--entry-kind: #4f8fd6;
+}
+
+/* Still to come: tinted with the item's colour. Practices that ran stay plain, with a ✓. */
+.calendar__entry--session.calendar__entry--planned,
+.calendar__entry--match,
+.calendar__entry--event {
+	--entry-bg: color-mix(in srgb, var(--entry-kind) 20%, var(--surface));
+	--entry-ink: color-mix(in srgb, var(--entry-kind) 30%, var(--text));
+}
+
+/* Past matches and events step back a little, like sessions that ran. */
+.calendar__entry--match[data-past],
+.calendar__entry--event[data-past],
+.calendar__entry--cancelled {
+	opacity: 0.75;
+}
+
+.calendar__kind {
+	flex-shrink: 0;
+	color: var(--entry-kind);
+}
+
+.agenda__dot--match {
+	background: #a66fe0;
+}
+
+.agenda__dot--event {
+	background: #4f8fd6;
+}
+
+.agenda__dot--session {
+	background: var(--accent);
+}
+
+.calendar__legend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 18px;
+	padding: 10px 2px 0;
+	color: var(--text-muted);
+	font-size: 12px;
+}
+
+.calendar__legend > span {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.calendar__swatch {
+	width: 12px;
+	height: 12px;
+	border-radius: 3px;
+}
+
+.calendar__swatch--done {
+	background: var(--raised);
+	box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+
+/* Practices, games and events in their colours (set on each swatch). */
+.calendar__swatch--planned,
+.calendar__swatch--match,
+.calendar__swatch--event {
+	background: color-mix(in srgb, var(--entry-kind, var(--accent)) 22%, var(--surface));
+	box-shadow: inset 0 0 0 1px var(--entry-kind, var(--accent));
+}
+
+.event-dialog__match {
+	grid-template-columns: 1fr auto;
+	align-items: end;
+}
+
+/* The topic box and its bubbles: one line, never a second row. */
+.week-topics__entry {
+	flex: 1 1 240px;
+	min-width: 180px;
+	display: flex;
+	flex-wrap: nowrap;
+	align-items: center;
+	gap: 5px;
+	overflow: hidden;
+}
+
+.week-topics__entry .week-topics__input {
+	flex: 0 0 150px;
+}
+
+.week-topics__entry .week-topics__bubble {
+	flex-shrink: 0;
+}
+
+.week-topics__bubble[hidden] {
+	display: none;
+}
+
+/* An optional time: hour, minutes, and AM or PM (always one picked). */
+/* ------------------------- Colour swatches, teams -------------------------- */
+
+.swatch-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+}
+
+.swatch-pick {
+	display: grid;
+	place-items: center;
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	border: 2px solid transparent;
+	border-radius: 50%;
+	background: var(--swatch);
+	color: #fff;
+	cursor: pointer;
+	box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.15);
+}
+
+.swatch-pick:hover {
+	transform: scale(1.08);
+}
+
+.swatch-pick.is-active {
+	border-color: var(--text);
+}
+
+/* "Default": the colour, with a ring to set it apart. */
+.swatch-pick--default {
+	background: var(--surface);
+	box-shadow: inset 0 0 0 5px var(--swatch);
+	color: var(--text);
+}
+
+.settings__colors {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.settings__color-row {
+	display: grid;
+	grid-template-columns: 90px 1fr;
+	align-items: center;
+	gap: 12px;
+	font-size: 13px;
+}
+
+.settings__teams {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin: 0 0 10px;
+	padding: 0;
+	list-style: none;
+}
+
+.settings__teams li {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	max-width: 260px;
+	padding: 2px 2px 2px 10px;
+	border: 1px solid var(--border);
+	border-radius: 999px;
+	background: var(--raised);
+	font-size: 13px;
+}
+
+.settings__teams li > span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.settings__team-add {
+	display: flex;
+	gap: 8px;
+	max-width: 420px;
+}
+
+/* A team: the saved teams in a list under the box. */
+.team-field {
+	position: relative;
+}
+
+.team-field__list {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	right: 0;
+	z-index: 30;
+	max-height: 260px;
+	margin: 4px 0 0;
+	padding: 4px;
+	overflow-y: auto;
+	list-style: none;
+	border: 1px solid var(--border-strong);
+	border-radius: 8px;
+	background: var(--raised);
+	box-shadow: 0 10px 28px rgb(0 0 0 / 0.28);
+}
+
+.team-field__option {
+	padding: 6px 10px;
+	border-radius: 6px;
+	font-size: 13px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.team-field__option:hover,
+.team-field__option.is-active {
+	background: var(--accent-soft);
+}
+
+.team-field__option.is-current {
+	font-weight: 600;
+}
+
+/* Any other colour: a rainbow until one is picked, then that colour. */
+.swatch-pick--custom {
+	position: relative;
+	background: conic-gradient(#e2553b, #e2a93b, #5fb15f, #2bb5a8, #4f8fd6, #a66fe0, #e26aa6, #e2553b);
+	color: #fff;
+}
+
+.swatch-pick--custom.is-active {
+	background: var(--swatch);
+}
+
+.swatch-pick--custom:focus-within {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
+}
+
+/* --------------------- Animation controls over the field --------------------- */
+
+.session-preview__stagewrap {
+	position: relative;
+}
+
+.field-overlay {
+	position: absolute;
+	pointer-events: none;
+}
+
+.step-controls {
+	position: absolute;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	pointer-events: auto;
+	color: #fff;
+}
+
+/* Dark glass, so it reads on any pitch colour (and on white). */
+.step-controls--corner-left {
+	background: rgb(16 20 24 / 0.72);
+	backdrop-filter: blur(6px);
+	box-shadow:
+		0 6px 18px rgb(0 0 0 / 0.35),
+		inset 0 0 0 1px rgb(255 255 255 / 0.12);
+}
+
+.step-controls__btn,
+.step-controls__play {
+	display: grid;
+	place-items: center;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: transparent;
+	color: #fff;
+	cursor: pointer;
+}
+
+.step-controls__btn:hover:not(:disabled),
+.step-controls__play:hover {
+	background: rgb(255 255 255 / 0.16);
+}
+
+.step-controls__btn:disabled {
+	opacity: 0.35;
+	cursor: default;
+}
+
+.step-controls__play {
+	width: 36px;
+	height: 36px;
+	background: rgb(255 255 255 / 0.95);
+	color: #111;
+}
+
+.step-controls__play:hover {
+	background: #fff;
+}
+
+/* In the field's bottom-left corner: play, back, "2 / 4" and forward. */
+.step-controls--corner-left {
+	left: 12px;
+	bottom: 12px;
+	padding: 4px;
+	border-radius: 999px;
+}
+
+.step-controls--corner-left .step-controls__play {
+	width: 42px;
+	height: 42px;
+}
+
+/* ---------------------- Calendar items: the kind above the name ---------------------- */
+
+.entry-card {
+	min-width: 0;
+	max-width: 100%;
+	flex: 1;
+}
+
+.entry-card--tag {
+	display: flex;
+	flex-direction: column;
+	gap: 0;
+	line-height: 1.25;
+}
+
+.entry-card__kind {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	column-gap: 3px;
+	color: color-mix(in srgb, var(--entry-kind) 65%, var(--text));
+	font-size: 9.5px;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	/* In a narrow week column, "Practice · 6:30 PM" wraps after the kind
+	   instead of widening the card or cutting the time. */
+	max-width: 100%;
+}
+
+.entry-card__kind > * {
+	white-space: nowrap;
+}
+
+.entry-card__kind .mono {
+	letter-spacing: 0;
+}
+
+.entry-card--tag .calendar__entry-title {
+	font-weight: 600;
+}
+
+.entry-card__session {
+	overflow: hidden;
+	color: var(--text-muted);
+	font-size: 11px;
+	font-weight: 400;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* B · the kind's icon, the time and the name in a line. */
+/* The new item window: what it is, as three big choices. */
+.dialog--item {
+	width: min(560px, calc(100vw - 32px));
+}
+
+.item-kinds {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 8px;
+}
+
+.item-kind {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	padding: 10px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--sunken);
+	color: var(--text);
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.item-kind svg {
+	color: var(--kind);
+}
+
+.item-kind:hover {
+	border-color: var(--border-strong);
+}
+
+.item-kind.is-active {
+	border-color: var(--kind);
+	background: color-mix(in srgb, var(--kind) 18%, var(--surface));
+}
+
+/* Picking a board (a match's formation). */
+.board-pick-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+	gap: 10px;
+	max-height: min(60vh, 600px);
+	overflow-y: auto;
+	padding: 2px;
+}
+
+.board-pick {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 6px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--sunken);
+	color: var(--text);
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+
+.board-pick:hover {
+	border-color: var(--accent);
+}
+
+.board-pick__thumb {
+	display: block;
+	width: 100%;
+	aspect-ratio: 3 / 2;
+	border-radius: 4px;
+}
+
+.board-pick__title {
+	overflow: hidden;
+	font-size: 13px;
+	font-weight: 600;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* --------- Show all: a window listing everything a list had to cut short --------- */
+.dialog--show-all {
+	width: min(460px, calc(100vw - 32px));
+}
+
+.show-all {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	min-height: 0;
+}
+
+.show-all > .search {
+	flex: none;
+	margin-left: 0;
+}
+
+.show-all__list {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	max-height: min(420px, 60vh);
+	margin: 0;
+	padding: 0;
+	overflow-y: auto;
+	list-style: none;
+}
+
+.show-all__item {
+	display: block;
+	width: 100%;
+	padding: 7px 10px;
+	border-radius: 6px;
+	text-align: left;
+}
+
+.show-all__item:hover,
+.show-all__item:focus-visible {
+	background: var(--hover);
+}
+
+.show-all__text {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.show-all__text.is-current {
+	font-weight: 600;
+}
+
+.show-all__text.is-current::after {
+	content: " ✓";
+	color: var(--accent);
+}
+
+/* A day's items: time, title, then kind · team · place, with the item's colour down the side. */
+.show-all__entry {
+	--entry-kind: var(--text-muted);
+	display: grid;
+	grid-template-columns: 62px minmax(0, 1fr);
+	column-gap: 10px;
+	padding-left: 8px;
+	box-shadow: inset 3px 0 0 color-mix(in srgb, var(--entry-kind) 70%, transparent);
+}
+
+.show-all__entry--match {
+	--entry-kind: #a66fe0;
+}
+
+.show-all__entry--event {
+	--entry-kind: #4f8fd6;
+}
+
+.show-all__time {
+	grid-row: span 2;
+	align-self: center;
+	color: var(--text-muted);
+	font-size: 12px;
+}
+
+.show-all__meta {
+	font-size: 12px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.team-field__more {
+	position: sticky;
+	bottom: -4px;
+	border-top: 1px solid var(--border);
+	background: var(--raised);
+	color: var(--text-muted);
+	font-style: italic;
+}
+
+/* The controls fade out a moment after the pointer stops, back as soon as it moves. */
+.step-controls--fade {
+	transition: opacity 0.35s ease;
+}
+
+.is-idle .step-controls--fade {
+	opacity: 0;
+	pointer-events: none;
+}
+
+/* The "2 / 4" counter (just ▶ while playing). */
+.step-controls__count {
+	min-width: 52px;
+	color: #fff;
+	font-size: 12px;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+	text-align: center;
+}
+
+.step-controls--compact .step-controls__play {
+	width: 34px;
+	height: 34px;
+}
+
+/* Notes: small to start, growing with what's typed (or resized). */
+.item-notes {
+	min-height: 38px;
+	max-height: 220px;
+	field-sizing: content;
+	resize: vertical;
+}
+
+.attach-tabs {
+	align-self: flex-start;
+}
+
+/* A time, typed or picked from a list of half hours. */
+.time-combo {
+	position: relative;
+	display: block;
+}
+
+.time-combo__input {
+	width: 100%;
+	padding-right: 30px;
+}
+
+.time-combo__clear {
+	position: absolute;
+	top: 50%;
+	right: 4px;
+	transform: translateY(-50%);
+	color: var(--text-muted);
+	font-size: 16px;
+	line-height: 1;
+}
+
+.time-combo__list {
+	position: absolute;
+	top: calc(100% + 4px);
+	left: 0;
+	z-index: 40;
+	width: 100%;
+	min-width: 140px;
+	max-height: 232px;
+	margin: 0;
+	padding: 4px;
+	overflow-y: auto;
+	list-style: none;
+	border: 1px solid var(--border-strong);
+	border-radius: 8px;
+	background: var(--raised);
+	box-shadow: 0 10px 28px rgb(0 0 0 / 0.3);
+}
+
+.time-combo__option {
+	padding: 5px 10px;
+	border-radius: 6px;
+	font-size: 13px;
+	font-variant-numeric: tabular-nums;
+	cursor: pointer;
+}
+
+.time-combo__option:hover,
+.time-combo__option.is-active {
+	background: var(--accent-soft);
+}
+
+.time-combo__option.is-current {
+	font-weight: 700;
+}
+
+/* The Attach window: folders on the left (only those with something for the sport picked), the grid on the right. */
+.picker-body {
+	display: grid;
+	grid-template-columns: 190px minmax(0, 1fr);
+	gap: 14px;
+	min-height: 0;
+}
+
+.picker-folders {
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+	max-height: min(60vh, 640px);
+	overflow-y: auto;
+	padding-right: 10px;
+	border-right: 1px solid var(--border);
+}
+
+.picker-folders__label {
+	margin: 10px 8px 4px;
+	color: var(--text-muted);
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.picker-folders__item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+	padding: 6px 8px;
+	border-radius: 6px;
+	color: var(--text);
+	font-size: 13px;
+	text-align: left;
+}
+
+.picker-folders__item:hover {
+	background: var(--hover);
+}
+
+.picker-folders__item.is-active {
+	background: color-mix(in srgb, var(--accent) 16%, transparent);
+	font-weight: 600;
+}
+
+.picker-folders__name {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.picker-folders__count {
+	color: var(--text-muted);
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
+}
+
+.picker-folders__empty {
+	margin: 8px;
+}
+
+@media (max-width: 720px) {
+	.picker-body {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.picker-folders {
+		display: none;
+	}
+}
+
+/* Calendar sidebar: the next item as a briefing (B), then the month in numbers
+   and its topics (C), from calendar-sidebar.png. */
+.agenda-next {
+	--next-kind: var(--accent);
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding: 12px;
+	border: 1px solid var(--border);
+	border-radius: 10px;
+	background: var(--sunken);
+	cursor: pointer;
+	transition: box-shadow var(--hover-duration, 0.14s) ease;
+}
+
+/* Hover: a ring in the item's colour, like the calendar's items. */
+.agenda-next:hover {
+	box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--next-kind) 60%, transparent);
+}
+
+.agenda-next--match {
+	--next-kind: #a66fe0;
+}
+
+.agenda-next--event {
+	--next-kind: #4f8fd6;
+}
+
+.agenda-next__head {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	min-width: 0;
+	padding: 0;
+	text-align: left;
+}
+
+.agenda-next__kind {
+	color: var(--next-kind);
+	font-size: 10.5px;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+.agenda-next__title {
+	font-size: 15px;
+	font-weight: 700;
+	line-height: 1.3;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.agenda-next__meta {
+	color: var(--text-muted);
+	font-size: 12px;
+}
+
+.agenda-next__boards {
+	gap: 8px !important;
+}
+
+.agenda-next__boards li {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	font-size: 12.5px;
+}
+
+.agenda-next__boards li > span {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.agenda-next__thumb {
+	flex-shrink: 0;
+	width: 52px;
+	height: 34px;
+	border-radius: 4px;
+	overflow: hidden;
+}
+
+.agenda-next__board {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.agenda-next__actions {
+	display: flex;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.agenda__month {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin-bottom: 12px;
+}
+
+.agenda__counts {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 6px;
+}
+
+.agenda__count {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 2px;
+	padding: 10px 4px;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	background: var(--sunken);
+}
+
+.agenda__count-n {
+	font-size: 22px;
+	font-weight: 700;
+	line-height: 1.15;
+	font-variant-numeric: tabular-nums;
+}
+
+.agenda__count-label {
+	color: var(--text-muted);
+	font-size: 12px;
+}
+
+.agenda__topics {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	/* Pinned to the bottom of the sidebar. */
+	margin-top: auto;
+	padding-top: 12px;
+}
+
+.agenda-topics li {
+	display: grid;
+	grid-template-columns: minmax(0, 92px) minmax(0, 1fr) 20px;
+	align-items: center;
+	gap: 10px;
+	padding: 3px 0;
+	font-size: 12.5px;
+}
+
+.agenda-topics__name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.agenda-topics__bar {
+	height: 6px;
+	border-radius: 3px;
+	background: var(--hover);
+}
+
+.agenda-topics__bar > span {
+	display: block;
+	height: 100%;
+	border-radius: 3px;
+	background: var(--accent);
+}
+
+.agenda-topics__n {
+	color: var(--text-muted);
+	font-variant-numeric: tabular-nums;
+	text-align: right;
+}
+
+/* Teams with a sport: a mark on the left of each team, and "which sport?" for a new one. */
+.team-mark {
+	display: inline-block;
+	flex-shrink: 0;
+}
+
+.team-mark--letters {
+	min-width: 22px;
+	padding: 1px 3px;
+	border-radius: 4px;
+	background: var(--sunken);
+	color: var(--text-muted);
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-align: center;
+}
+
+.team-field__option {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.team-field__name {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.team-field__ask {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+	margin-top: 6px;
+}
+
+.team-field__sport {
+	gap: 6px;
+}
+
+.show-all__team {
+	display: flex;
+	align-items: center;
+	gap: 8px;
 }

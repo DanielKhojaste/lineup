@@ -19,4 +19,18 @@ describe("splitting the session sheet into pages", () => {
 		const pages = pageBreaks([{ top: 0, bottom: 2500 }], 2500, 1000, 1000);
 		expect(pages.map((p) => p.end)).toEqual([1000, 2000, 2500]);
 	});
+
+	it("starts each drill page of Session Details on a new page", () => {
+		const parts = [
+			{ top: 0, bottom: 400 },
+			{ top: 410, bottom: 900, newPage: true },
+			{ top: 910, bottom: 1400, newPage: true },
+		];
+		const pages = pageBreaks(parts, 1400, 1000, 1000);
+		expect(pages).toEqual([
+			{ start: 0, end: 410 },
+			{ start: 410, end: 910 },
+			{ start: 910, end: 1400 },
+		]);
+	});
 });

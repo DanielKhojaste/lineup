@@ -50,6 +50,9 @@ export const ICONS = {
 	// Two layers: everything in the library.
 	stack: "M12 4l8 4-8 4-8-4zM4 12l8 4 8-4M4 16l8 4 8-4",
 	pencil: "M15.5 5.5l3 3M4 20l1-4L16 5a2.1 2.1 0 0 1 3 3L8 19z",
+	panelBottom: "M4 5h16v14H4zM4 14h16",
+	panelRight: "M4 5h16v14H4zM14 5v14",
+	eyeOff: "M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12zM4 4l16 16",
 	eye: "M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12zM9 12a3 3 0 1 0 6 0a3 3 0 1 0-6 0",
 	close: "M6 6l12 12M18 6L6 18",
 	check: "M5 12l5 5L20 7",
@@ -65,6 +68,12 @@ export const ICONS = {
 	session: "M5 5h14M5 10h14M5 15h9M5 20h6M17 15l3 2.5-3 2.5",
 	note: "M6 4h9l3 3v13H6zM9 10h6M9 14h6M9 18h3",
 	chevronUp: "M6 15l6-6 6 6",
+	calendar: "M4 6h16v14H4zM4 10h16M8 3v4M16 3v4",
+	plan: "M4 5h6v6H4zM14 5h6v6h-6zM4 15h6v4H4zM14 15h6v4h-6z",
+	/** A match on the calendar. */
+	flag: "M6 21V4M6 4h11l-2 4 2 4H6",
+	/** Any other event on the calendar. */
+	star: "M12 4l2.4 5 5.6.6-4.2 3.8 1.2 5.6L12 16.2 7 19l1.2-5.6L4 9.6 9.6 9z",
 };
 
 export type IconName = keyof typeof ICONS;

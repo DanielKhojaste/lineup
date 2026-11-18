@@ -10,12 +10,17 @@ import {
 } from "react";
 import { createBoard, newId } from "../model/board";
 import { parseBoard } from "../model/file";
+import { CalendarEntry, Season, sortEntries } from "../model/calendar";
+import { createPlan, Plan } from "../model/plan";
 import { createSession, Session } from "../model/session";
 import { Sport } from "../model/sports";
 import { Board, PitchSettings } from "../model/types";
 import { getStore } from "../storage";
 import { getPreferences } from "./preferences";
 import { LibraryIndex, LibraryStore } from "../storage/types";
+import { logger } from "../utils/log";
+
+const log = logger("library");
 
 export type LibraryStatus = "loading" | "ready" | "error";
 
@@ -39,6 +44,15 @@ interface LibraryContextValue {
 	/** Session topics the coach made up (kept in library.json). */
 	topics: string[];
 	addTopics: (topics: string[]) => Promise<void>;
+	/** The coach's teams (kept in library.json), offered wherever a team is asked for. */
+	teams: string[];
+	/** Remember teams (new names are added; ones already saved are left alone). */
+	addTeams: (teams: string[]) => Promise<void>;
+	removeTeam: (team: string) => Promise<void>;
+	/** The sports each team plays. */
+	teamSports: Record<string, Sport[]>;
+	/** Remember that this team plays this sport. */
+	addTeamSport: (team: string, sport: Sport) => Promise<void>;
 	getSession: (id: string) => Session | undefined;
 	createSession: (folder: string, sport: Sport) => Promise<Session>;
 	saveSession: (session: Session) => Promise<void>;
@@ -54,6 +68,22 @@ interface LibraryContextValue {
 		sessions: Session[],
 		boardIds?: Map<string, string>,
 	) => Promise<Session[]>;
+	plans: Plan[];
+	getPlan: (id: string) => Plan | undefined;
+	createPlan: (folder?: string) => Promise<Plan>;
+	savePlan: (plan: Plan) => Promise<void>;
+	duplicatePlan: (id: string) => Promise<Plan | undefined>;
+	deletePlan: (id: string) => Promise<void>;
+	/** Put a plan in these folders (none, one or several). */
+	setPlanFolders: (id: string, folders: string[]) => Promise<void>;
+	/** Sessions on dates, in date order. */
+	calendar: CalendarEntry[];
+	/** Seasons and their phases, drawn as the timeline above the calendar. */
+	seasons: Season[];
+	saveSeasons: (seasons: Season[]) => Promise<void>;
+	addEntries: (entries: CalendarEntry[]) => Promise<void>;
+	updateEntry: (id: string, patch: Partial<CalendarEntry>) => Promise<void>;
+	removeEntries: (ids: string[]) => Promise<void>;
 	createFolder: (name: string) => Promise<void>;
 	renameFolder: (from: string, to: string) => Promise<void>;
 	deleteFolder: (name: string) => Promise<void>;
@@ -91,6 +121,13 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 	const [sessions, setSessions] = useState<Session[]>([]);
 	const sessionsRef = useRef<Session[]>([]);
 	sessionsRef.current = sessions;
+	const [plans, setPlans] = useState<Plan[]>([]);
+	const plansRef = useRef<Plan[]>([]);
+	plansRef.current = plans;
+	const [calendar, setCalendar] = useState<CalendarEntry[]>([]);
+	const calendarRef = useRef<CalendarEntry[]>([]);
+	const [seasons, setSeasons] = useState<Season[]>([]);
+	const seasonsRef = useRef<Season[]>([]);
 	const [folders, setFolders] = useState<string[]>([]);
 	const storeRef = useRef<LibraryStore | null>(null);
 	const boardsRef = useRef<Board[]>([]);
@@ -102,10 +139,12 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 			try {
 				const store = await getStore();
 				storeRef.current = store;
-				const [{ boards: loaded, sessions, problems }, index] = await Promise.all([
-					store.loadAll(),
-					store.loadIndex(),
-				]);
+				const [{ boards: loaded, sessions, plans, problems }, index, cal] =
+					await Promise.all([
+						store.loadAll(),
+						store.loadIndex(),
+						store.loadCalendar(),
+					]);
 				const draft = takeLegacyDraft();
 				if (draft && !loaded.some((b) => b.id === draft.id)) {
 					await store.save(draft);
@@ -115,13 +154,37 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 				setLocation(store.location);
 				setBoards(loaded.sort(byUpdated));
 				setSessions(sessions.sort(byUpdated));
+				setPlans(plans.sort(byUpdated));
+				calendarRef.current = sortEntries(cal.entries);
+				setCalendar(calendarRef.current);
+				seasonsRef.current = cal.seasons ?? [];
+				setSeasons(seasonsRef.current);
 				setFolders(index.folders);
 				indexRef.current = index;
 				setTopics(index.topics);
+				// Before teams were saved: start the list from the teams already used.
+				if (!index.teams) {
+					const used = [
+						...sessions.map((x) => x.header.team),
+						...plans.map((x) => x.team),
+						...cal.entries.map((x) => x.team),
+					]
+						.map((t) => t.trim())
+						.filter(Boolean);
+					const seen = new Map<string, string>();
+					for (const t of used) if (!seen.has(t.toLowerCase())) seen.set(t.toLowerCase(), t);
+					indexRef.current = { ...index, teams: [...seen.values()].sort((a, b) => a.localeCompare(b)) };
+					await store.saveIndex(indexRef.current);
+				}
+				setTeams(indexRef.current.teams ?? []);
+				setTeamSports(indexRef.current.teamSports ?? {});
 				setProblems(problems);
 				setStatus("ready");
+				log.info(`Loaded ${loaded.length} boards and ${sessions.length} sessions from ${store.location}`);
+				for (const problem of problems) log.warn("Couldn't read:", problem);
 			} catch (e) {
 				if (cancelled) return;
+				log.error("The library didn't load", e);
 				setError((e as Error).message || String(e));
 				setStatus("error");
 			}
@@ -146,6 +209,34 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 	}, []);
 
 	/** Remember topics the coach made up, so they're suggested in every session. */
+	const [teams, setTeams] = useState<string[]>([]);
+	const addTeams = useCallback(async (added: string[]) => {
+		const current = indexRef.current.teams ?? [];
+		const known = new Set(current.map((t) => t.toLowerCase()));
+		const fresh = [...new Set(added.map((t) => t.trim()).filter((t) => t && !known.has(t.toLowerCase())))];
+		if (!fresh.length) return;
+		indexRef.current = { ...indexRef.current, teams: [...current, ...fresh] };
+		setTeams(indexRef.current.teams!);
+		await store().saveIndex(indexRef.current);
+	}, []);
+	const [teamSports, setTeamSports] = useState<Record<string, Sport[]>>({});
+	const addTeamSport = useCallback(async (team: string, sport: Sport) => {
+		const all = indexRef.current.teamSports ?? {};
+		const now = all[team] ?? [];
+		if (now.includes(sport)) return;
+		indexRef.current = { ...indexRef.current, teamSports: { ...all, [team]: [...now, sport] } };
+		setTeamSports(indexRef.current.teamSports!);
+		await store().saveIndex(indexRef.current);
+	}, []);
+	const removeTeam = useCallback(async (team: string) => {
+		indexRef.current = {
+			...indexRef.current,
+			teams: (indexRef.current.teams ?? []).filter((t) => t !== team),
+		};
+		setTeams(indexRef.current.teams!);
+		await store().saveIndex(indexRef.current);
+	}, []);
+
 	const addTopics = useCallback(async (added: string[]) => {
 		const known = new Set(indexRef.current.topics.map((t) => t.toLowerCase()));
 		const fresh = added
@@ -179,6 +270,22 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 			...prev.filter((s) => s.id !== session.id),
 		]);
 		await store().saveSession(stamped);
+	}, []);
+
+	const savePlan = useCallback(async (plan: Plan) => {
+		const stamped = {
+			...plan,
+			meta: { ...plan.meta, updatedAt: new Date().toISOString() },
+		};
+		setPlans((prev) => [stamped, ...prev.filter((p) => p.id !== plan.id)]);
+		await store().savePlan(stamped);
+	}, []);
+
+	/** Replace the calendar's entries and write the calendar file. */
+	const writeCalendar = useCallback(async (entries: CalendarEntry[]) => {
+		calendarRef.current = sortEntries(entries);
+		setCalendar(calendarRef.current);
+		await store().saveCalendar({ version: 1, entries: calendarRef.current, seasons: seasonsRef.current });
 	}, []);
 
 	const value = useMemo<LibraryContextValue>(
@@ -263,6 +370,11 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 			sessions,
 			topics,
 			addTopics,
+			teams,
+			addTeams,
+			removeTeam,
+			teamSports,
+			addTeamSport,
 			getSession: (id) => sessionsRef.current.find((s) => s.id === id),
 			saveSession,
 
@@ -296,9 +408,30 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 				return copy;
 			},
 
+			/** Delete a session; it also leaves any plans and the dates it was planned on (sessions already run stay in the log). */
 			deleteSession: async (id) => {
 				setSessions((prev) => prev.filter((s) => s.id !== id));
 				await store().removeSession(id);
+				for (const plan of plansRef.current) {
+					if (!plan.topics.some((t) => t.sessionIds.includes(id))) continue;
+					await savePlan({
+						...plan,
+						topics: plan.topics.map((t) => ({
+							...t,
+							sessionIds: t.sessionIds.filter((s) => s !== id),
+						})),
+					});
+				}
+				// A plain practice of this session goes (unless it ran); games, events and
+				// named practices stay, without the session.
+				if (calendarRef.current.some((e) => e.sessionId === id))
+					await writeCalendar(
+						calendarRef.current.flatMap((e) => {
+							if (e.sessionId !== id || e.status === "done") return [e];
+							if (e.kind === "session" && !e.label.trim()) return [];
+							return [{ ...e, sessionId: "" }];
+						}),
+					);
 			},
 
 			addSessions: async (incoming, boardIds) => {
@@ -336,6 +469,65 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 					await saveSession({ ...session, meta: { ...session.meta, folders: unique(folders) } });
 			},
 
+			plans,
+			getPlan: (id) => plansRef.current.find((p) => p.id === id),
+			savePlan,
+
+			createPlan: async (folder = "") => {
+				const plan = createPlan();
+				plan.meta.folders = folder ? [folder] : [];
+				await savePlan(plan);
+				return plan;
+			},
+
+			duplicatePlan: async (id) => {
+				const original = plansRef.current.find((p) => p.id === id);
+				if (!original) return undefined;
+				const now = new Date().toISOString();
+				const copy: Plan = {
+					...structuredClone(original),
+					id: newId(),
+					meta: {
+						...original.meta,
+						title: `${original.meta.title} (copy)`,
+						createdAt: now,
+						updatedAt: now,
+					},
+				};
+				await savePlan(copy);
+				return copy;
+			},
+
+			deletePlan: async (id) => {
+				setPlans((prev) => prev.filter((p) => p.id !== id));
+				await store().removePlan(id);
+			},
+
+			setPlanFolders: async (id, folders) => {
+				const plan = plansRef.current.find((p) => p.id === id);
+				if (plan) await savePlan({ ...plan, meta: { ...plan.meta, folders: unique(folders) } });
+			},
+
+			calendar,
+			seasons,
+			saveSeasons: async (next) => {
+				seasonsRef.current = next;
+				setSeasons(next);
+				await store().saveCalendar({ version: 1, entries: calendarRef.current, seasons: next });
+			},
+			addEntries: (entries) =>
+				writeCalendar([...calendarRef.current, ...entries]),
+			updateEntry: (id, patch) =>
+				writeCalendar(
+					calendarRef.current.map((e) =>
+						e.id === id ? { ...e, ...patch, id: e.id } : e,
+					),
+				),
+			removeEntries: (ids) => {
+				const gone = new Set(ids);
+				return writeCalendar(calendarRef.current.filter((e) => !gone.has(e.id)));
+			},
+
 			createFolder: async (name) => {
 				const clean = name.trim();
 				if (!clean || folders.includes(clean)) return;
@@ -358,6 +550,8 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 						...session,
 						meta: { ...session.meta, folders: renamed(session.meta.folders) },
 					});
+				for (const plan of plansRef.current.filter((p) => p.meta.folders.includes(from)))
+					await savePlan({ ...plan, meta: { ...plan.meta, folders: renamed(plan.meta.folders) } });
 			},
 
 			/** Remove a folder; its boards and sessions stay in the library (and in their other folders). */
@@ -371,6 +565,8 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 						...session,
 						meta: { ...session.meta, folders: without(session.meta.folders) },
 					});
+				for (const plan of plansRef.current.filter((p) => p.meta.folders.includes(name)))
+					await savePlan({ ...plan, meta: { ...plan.meta, folders: without(plan.meta.folders) } });
 			},
 		}),
 		[
@@ -382,9 +578,19 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 			sessions,
 			topics,
 			addTopics,
+			teams,
+			addTeams,
+			removeTeam,
+			teamSports,
+			addTeamSport,
+			plans,
+			calendar,
+			seasons,
 			folders,
 			saveBoard,
 			saveSession,
+			savePlan,
+			writeCalendar,
 			writeIndex,
 		],
 	);

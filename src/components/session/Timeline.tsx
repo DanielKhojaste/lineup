@@ -483,7 +483,7 @@ export default function Timeline() {
 			{session.blocks.length === 0 ? (
 				<div className="timeline__empty">
 					<p>
-						Add drills from your library on the right, then breaks and other
+						Add boards from your library on the right, then breaks and other
 						blocks.
 					</p>
 				</div>
@@ -533,7 +533,7 @@ export default function Timeline() {
 					Other block
 				</button>
 				<span className="muted small">
-					Drills: pick them from the library on the right.
+					Boards: pick them from the library on the right.
 				</span>
 			</div>
 

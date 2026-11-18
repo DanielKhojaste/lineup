@@ -1,10 +1,14 @@
 import { parseBoard, serializeBoard } from "../model/file";
+import { EMPTY_CALENDAR, parseCalendar } from "../model/calendar";
+import { parsePlan, Plan } from "../model/plan";
 import { parseSession, Session } from "../model/session";
 import { Board } from "../model/types";
 import { cleanIndex, EMPTY_INDEX, LibraryIndex, LibraryStore } from "./types";
 
 const BOARDS_KEY = "lineup.library.boards";
 const SESSIONS_KEY = "lineup.library.sessions";
+const PLANS_KEY = "lineup.library.plans";
+const CALENDAR_KEY = "lineup.library.calendar";
 const INDEX_KEY = "lineup.library.index";
 
 /** Documents of one kind, as JSON text by id. */
@@ -43,7 +47,15 @@ export const browserStore: LibraryStore = {
 				problems.push(`${id}: ${(error as Error).message}`);
 			}
 		}
-		return { boards, sessions, problems };
+		const plans: Plan[] = [];
+		for (const [id, text] of Object.entries(readMap(PLANS_KEY))) {
+			try {
+				plans.push(parsePlan(text));
+			} catch (error) {
+				problems.push(`${id}: ${(error as Error).message}`);
+			}
+		}
+		return { boards, sessions, plans, problems };
 	},
 
 	async saveSession(session) {
@@ -56,6 +68,27 @@ export const browserStore: LibraryStore = {
 		const map = readMap(SESSIONS_KEY);
 		delete map[id];
 		writeMap(map, SESSIONS_KEY);
+	},
+
+	async savePlan(plan) {
+		const map = readMap(PLANS_KEY);
+		map[plan.id] = JSON.stringify(plan);
+		writeMap(map, PLANS_KEY);
+	},
+
+	async removePlan(id) {
+		const map = readMap(PLANS_KEY);
+		delete map[id];
+		writeMap(map, PLANS_KEY);
+	},
+
+	async loadCalendar() {
+		const raw = localStorage.getItem(CALENDAR_KEY);
+		return raw ? parseCalendar(raw) : EMPTY_CALENDAR;
+	},
+
+	async saveCalendar(calendar) {
+		localStorage.setItem(CALENDAR_KEY, JSON.stringify(calendar));
 	},
 
 	async save(board) {

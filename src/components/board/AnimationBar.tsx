@@ -65,14 +65,15 @@ export default function AnimationBar() {
 								aria-current={active ? "step" : undefined}
 								title={
 									step === 0
-										? "Starting position"
-										: `Step ${step} · ${formatSeconds(
+										? "Step 1 · the starting position"
+										: `Step ${step + 1} · ${formatSeconds(
 												steps[step - 1].duration,
 										  )}`
 								}
 								onClick={() => goTo(step)}
 							>
-								{step === 0 ? "Start" : step}
+								{/* Counted from 1: the starting position is step 1. */}
+								{step + 1}
 								{progress !== null && (
 									<span
 										className="step-chip__progress"
@@ -105,7 +106,7 @@ export default function AnimationBar() {
 			{current && !inPlayback && (
 				<>
 					<label className="animation-bar__field">
-						<span className="visually-hidden">Step {state.step} length</span>
+						<span className="visually-hidden">Step {state.step + 1} length</span>
 						<select
 							className="field__input field__input--small"
 							value={current.duration}
@@ -129,8 +130,8 @@ export default function AnimationBar() {
 					<button
 						type="button"
 						className="icon-button icon-button--small"
-						aria-label={`Delete step ${state.step}`}
-						title={`Delete step ${state.step}`}
+						aria-label={`Delete step ${state.step + 1}`}
+						title={`Delete step ${state.step + 1}`}
 						onClick={() => dispatch({ type: "deleteStep", step: state.step })}
 					>
 						<Icon name="trash" size={16} />
