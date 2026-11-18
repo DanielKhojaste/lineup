@@ -6290,6 +6290,7 @@ div.plan-outline__week {
 	border: 1px solid var(--border);
 	border-radius: 10px;
 	background: var(--sunken);
+	cursor: pointer;
 	transition: box-shadow var(--hover-duration, 0.14s) ease;
 }
 

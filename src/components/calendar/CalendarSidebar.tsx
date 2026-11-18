@@ -48,6 +48,12 @@ export default function CalendarSidebar({
 				.filter((x): x is { block: typeof x.block; board: Board } => !!x.board)
 		: [];
 	const minutes = session ? totalMinutes(session) : 0;
+	const canPreview = !!session && boards.length > 0;
+	const open = () => {
+		if (!next) return;
+		if (canPreview) onPreview(session!.id);
+		else onOpen(next);
+	};
 	const top = topics.slice(0, 5);
 	const most = top[0]?.[1] ?? 1;
 
@@ -72,8 +78,17 @@ export default function CalendarSidebar({
 			</section>
 			<h2>Next up{next ? ` · ${describeDay(next.date)}` : ""}</h2>
 			{next ? (
-				<div className={`agenda-next agenda-next--${next.kind}`}>
-					<button type="button" className="agenda-next__head" onClick={() => onOpen(next)}>
+				// Clicking the card previews its session (a card without a session's boards opens the item).
+				<div className={`agenda-next agenda-next--${next.kind}`} onClick={open}>
+					<button
+						type="button"
+						className="agenda-next__head"
+						title={canPreview ? "Preview the session" : "Open"}
+						onClick={(e) => {
+							e.stopPropagation();
+							open();
+						}}
+					>
 						<span className="agenda-next__kind">
 							{KIND_NAME[next.kind]}
 							{next.time ? ` · ${showTime(next.time, twelve)}` : ""}
@@ -101,11 +116,25 @@ export default function CalendarSidebar({
 					)}
 					{session && (
 						<div className="agenda-next__actions">
-							<button type="button" className="button button--small" onClick={() => onEdit(session.id)}>
+							<button
+								type="button"
+								className="button button--small"
+								onClick={(e) => {
+									e.stopPropagation();
+									onEdit(session.id);
+								}}
+							>
 								Edit
 							</button>
-							{boards.length > 0 && (
-								<button type="button" className="button button--small" onClick={() => onPreview(session.id)}>
+							{canPreview && (
+								<button
+									type="button"
+									className="button button--small"
+									onClick={(e) => {
+										e.stopPropagation();
+										onPreview(session.id);
+									}}
+								>
 									Preview
 								</button>
 							)}
