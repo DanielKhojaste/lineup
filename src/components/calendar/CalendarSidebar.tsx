@@ -8,7 +8,7 @@ const KIND_NAME = { session: "Practice", match: "Match", event: "Event" } as con
 
 /**
  * The calendar's sidebar: the month in numbers at the top, then the next item
- * as a briefing (when, where, its session's boards, with Preview and Print),
+ * as a briefing (when, where, its session's boards, with Edit and Preview),
  * and the topics the month's sessions covered most, pinned to the bottom.
  */
 export default function CalendarSidebar({
@@ -18,7 +18,7 @@ export default function CalendarSidebar({
 	getBoard,
 	onOpen,
 	onPreview,
-	onPrint,
+	onEdit,
 	monthName,
 	isThisMonth,
 	counts,
@@ -31,7 +31,7 @@ export default function CalendarSidebar({
 	getBoard: (id: string) => Board | undefined;
 	onOpen: (e: CalendarEntry) => void;
 	onPreview: (sessionId: string) => void;
-	onPrint: (sessionId: string) => void;
+	onEdit: (sessionId: string) => void;
 	monthName: string;
 	isThisMonth: boolean;
 	counts: { kind: "session" | "match" | "event"; count: number }[];
@@ -78,7 +78,9 @@ export default function CalendarSidebar({
 							{KIND_NAME[next.kind]}
 							{next.time ? ` · ${showTime(next.time, twelve)}` : ""}
 						</span>
-						<span className="agenda-next__title">{title(next)}</span>
+						<span className="agenda-next__title" title={title(next)}>
+							{title(next)}
+						</span>
 						<span className="agenda-next__meta">
 							{[next.team, next.location, minutes ? formatMinutes(minutes) : ""].filter(Boolean).join(" · ")}
 						</span>
@@ -99,14 +101,14 @@ export default function CalendarSidebar({
 					)}
 					{session && (
 						<div className="agenda-next__actions">
+							<button type="button" className="button button--small" onClick={() => onEdit(session.id)}>
+								Edit
+							</button>
 							{boards.length > 0 && (
 								<button type="button" className="button button--small" onClick={() => onPreview(session.id)}>
 									Preview
 								</button>
 							)}
-							<button type="button" className="button button--small" onClick={() => onPrint(session.id)}>
-								Print
-							</button>
 						</div>
 					)}
 				</div>

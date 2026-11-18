@@ -871,7 +871,7 @@ export default function Calendar() {
 					getBoard={library.getBoard}
 					onOpen={setEditing}
 					onPreview={openSession}
-					onPrint={(id) => navigate(`/session/${id}`, { state: { from: "/calendar", print: true } })}
+					onEdit={editSession}
 					monthName={monthName}
 					isThisMonth={isThisMonth}
 					counts={monthCounts}

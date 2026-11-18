@@ -6462,6 +6462,12 @@ div.plan-outline__week {
 	border: 1px solid var(--border);
 	border-radius: 10px;
 	background: var(--sunken);
+	transition: box-shadow var(--hover-duration, 0.14s) ease;
+}
+
+/* Hover: a ring in the item's colour, like the calendar's items. */
+.agenda-next:hover {
+	box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--next-kind) 60%, transparent);
 }
 
 .agenda-next--match {
@@ -6476,6 +6482,7 @@ div.plan-outline__week {
 	display: flex;
 	flex-direction: column;
 	gap: 3px;
+	min-width: 0;
 	padding: 0;
 	text-align: left;
 }
@@ -6492,11 +6499,9 @@ div.plan-outline__week {
 	font-size: 15px;
 	font-weight: 700;
 	line-height: 1.3;
-}
-
-.agenda-next__head:hover .agenda-next__title {
-	text-decoration: underline;
-	text-underline-offset: 3px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .agenda-next__meta {
@@ -6537,6 +6542,7 @@ div.plan-outline__week {
 
 .agenda-next__actions {
 	display: flex;
+	justify-content: space-between;
 	gap: 8px;
 }
 
@@ -6583,7 +6589,6 @@ div.plan-outline__week {
 	/* Pinned to the bottom of the sidebar. */
 	margin-top: auto;
 	padding-top: 12px;
-	border-top: 1px solid var(--border);
 }
 
 .agenda-topics li {

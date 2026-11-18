@@ -67,18 +67,6 @@ function SessionLayout() {
 	const mainRef = useRef<HTMLElement>(null);
 	// Back from a drill opened in this session: scroll to where the coach was.
 	const returning = !!(useLocation().state as { back?: boolean } | null)?.back;
-	// From the calendar's "Print": print the summary as soon as it's open.
-	const printOnOpen = !!(useLocation().state as { print?: boolean } | null)?.print;
-	const printedOnOpen = useRef(false);
-	useEffect(() => {
-		if (!printOnOpen || printedOnOpen.current) return;
-		printedOnOpen.current = true;
-		// The location's state is cleared first, so Back and a reload don't print again.
-		window.history.replaceState({ ...window.history.state, usr: { ...(window.history.state?.usr ?? {}), print: false } }, "");
-		const t = setTimeout(() => printSheet(false), 400);
-		return () => clearTimeout(t);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [printOnOpen]);
 	useLayoutEffect(() => {
 		const top = scrollPositions.get(session.id);
 		const main = mainRef.current;
