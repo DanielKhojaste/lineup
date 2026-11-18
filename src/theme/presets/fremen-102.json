@@ -1,0 +1,26 @@
+{
+	"name": "Fremen 102",
+	"order": 5.1,
+	"mode": "dark",
+	"accent": "#3A97FF",
+	"secondary": "#D9A75F",
+	"effects": ["desert-night"],
+	"tokens": {
+		"bg": "#0A0E15",
+		"surface": "#101622",
+		"sunken": "#070A10",
+		"raised": "#172031",
+		"hover": "#1E2A3F",
+		"border": "#1D283A",
+		"border-strong": "#4A3F2C",
+		"text": "#EEE6D8",
+		"text-muted": "#A4A7AE",
+		"board-bg": "#070A10",
+		"danger": "#FF6F5E",
+		"accent-soft": "rgba(217, 167, 95, 0.18)",
+		"chip-bg": "rgba(217, 167, 95, 0.24)",
+		"chip-border": "#D9A75F",
+		"chip-text": "#F6EBD8",
+		"focus": "#D9A75F"
+	}
+}

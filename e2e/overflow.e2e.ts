@@ -25,6 +25,8 @@ test.beforeEach(async ({ page }) => {
 		if (sessionStorage.getItem("seeded")) return;
 		localStorage.clear();
 		for (const [key, value] of Object.entries(storage)) localStorage.setItem(key, value);
+		// (Preview branch) The Designs panel starts closed, so it doesn't cover what's being checked.
+		localStorage.setItem("lineup.preview.open", "0");
 		sessionStorage.setItem("seeded", "1");
 	}, library.storage);
 });

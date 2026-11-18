@@ -107,7 +107,9 @@ describe("theme files", () => {
 			"dune",
 			"dune-sand",
 			"fremen",
+			"fremen-102",
 			"giedi-prime",
+			"giedi-prime-102",
 			"lime-studio",
 			"touchline",
 		]);

@@ -11,6 +11,7 @@ import {
 	sessionTitle,
 } from "../../model/session";
 import { SPORT_INFO } from "../../model/sports";
+import { usePreviewChoice } from "../../preview/designs";
 import { Board } from "../../model/types";
 import BoardPreview from "../board/BoardPreview";
 
@@ -59,6 +60,39 @@ export function axisTicks(starts: { id: string; at: number }[], minutes: number)
 	return shown;
 }
 
+/** "12 mins", "1 h 15 mins": a block's length, for preview B. */
+export function durationText(minutes: number): string {
+	const h = Math.floor(minutes / 60);
+	const m = minutes % 60;
+	const mins = m ? `${m} ${m === 1 ? "min" : "mins"}` : "";
+	return h ? [`${h} h`, mins].filter(Boolean).join(" ") : mins || "0 mins";
+}
+
+/** "0:02": minutes into the session, as hours and minutes. */
+export function clockText(minutes: number): string {
+	return `${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, "0")}`;
+}
+
+/** A block's place in the session: "14–26 min · 12 min" (A), or Duration and Time (B, the preview). */
+function BlockWhen({ from, to, design }: { from: number; to: number; design: string }) {
+	if (design !== "new")
+		return (
+			<>
+				{from}–{to} min · {formatMinutes(to - from)}
+			</>
+		);
+	return (
+		<span className="sheet__when-b">
+			<span>
+				<b>Duration</b> {durationText(to - from)}
+			</span>
+			<span>
+				<b>Time</b> {clockText(from)} – {clockText(to)}
+			</span>
+		</span>
+	);
+}
+
 /** Summary: the whole session, usually on one page. Details: an outline, then a page per drill. */
 export type SheetLayout = "summary" | "details";
 
@@ -74,13 +108,15 @@ export function SessionSheetContent({
 	layout?: SheetLayout;
 }) {
 	const { header } = session;
+	// (Preview branch) B: the time beside the team, no sport, and Duration / Time per block.
+	const design = usePreviewChoice("summary");
 	const times = blockTimes(session);
 	const stages = blockStages(session, (id) => getBoard(id)?.notes.stage ?? "");
 	const minutes = sessionMinutes(session);
 	const players = playersText(header.playersMin, header.playersMax);
 	const facts = (
 		[
-			["Time", minutes ? formatMinutes(minutes) : ""],
+			["Time", minutes && design !== "new" ? formatMinutes(minutes) : ""],
 			["Players", players],
 			["Area", header.area],
 			["Equipment", header.equipment],
@@ -93,7 +129,12 @@ export function SessionSheetContent({
 			<div className="sheet__part sheet__head">
 				<h1 className="sheet__title">{sessionTitle(session)}</h1>
 				<div className="sheet__sub">
-					{[header.team, SPORT_INFO[header.sport].name].filter(Boolean).join(" · ")}
+					{(design === "new"
+						? [header.team, minutes ? formatMinutes(minutes) : ""]
+						: [header.team, SPORT_INFO[header.sport].name]
+					)
+						.filter(Boolean)
+						.join(" · ")}
 				</div>
 				{facts.length > 0 && (
 					<div className="sheet__facts">
@@ -136,7 +177,10 @@ export function SessionSheetContent({
 						<div className="sheet__axis">
 							<span>0</span>
 							{axisTicks(
-								timed.filter(({ b }) => b.kind !== "break").map(({ b, i }) => ({ id: b.id, at: times[i].from })),
+								timed
+									.filter(({ b }) => b.kind !== "break")
+									// B: under where each activity ends; A: where each starts.
+									.map(({ b, i }) => ({ id: b.id, at: design === "new" ? times[i].to : times[i].from })),
 								minutes,
 							).map(({ id, at }) => (
 								<span key={id} style={{ left: `${(at / minutes) * 100}%` }}>
@@ -150,9 +194,9 @@ export function SessionSheetContent({
 			</div>
 
 			{layout === "details" ? (
-				<DetailsPages session={session} getBoard={getBoard} ink={ink} times={times} stages={stages} />
+				<DetailsPages session={session} getBoard={getBoard} ink={ink} times={times} stages={stages} design={design} />
 			) : (
-				<SummaryBlocks session={session} getBoard={getBoard} ink={ink} times={times} stages={stages} />
+				<SummaryBlocks session={session} getBoard={getBoard} ink={ink} times={times} stages={stages} design={design} />
 			)}
 
 			{layout === "summary" && (
@@ -176,6 +220,7 @@ interface PartsProps {
 	ink: boolean;
 	times: { from: number; to: number }[];
 	stages: string[];
+	design: string;
 }
 
 /** The stage's coloured tag ("Warm-up", "Break"…). */
@@ -194,12 +239,11 @@ function blockName(block: SessionBlock, stage: string): string {
 }
 
 /** The summary: each drill beside its diagram, the other blocks as short rows. */
-function SummaryBlocks({ session, getBoard, ink, times, stages }: PartsProps) {
+function SummaryBlocks({ session, getBoard, ink, times, stages, design }: PartsProps) {
 	return (
 		<>
 			{session.blocks.map((block, i) => {
 				const t = times[i];
-				const when = `${t.from}–${t.to} min`;
 				const tone = stageTone(stages[i], block);
 				const tag = (
 					<span className={`sheet__stage sheet__stage--${tone}`}>
@@ -217,7 +261,7 @@ function SummaryBlocks({ session, getBoard, ink, times, stages }: PartsProps) {
 								{block.kind === "custom" && block.stage.trim() ? tag : null}
 								<strong>{name}</strong>
 								<span className="sheet__row-when">
-									{when} · {formatMinutes(block.minutes)}
+									<BlockWhen from={t.from} to={t.to} design={design} />
 								</span>
 							</div>
 							{block.notes && <p className="sheet__row-notes">{block.notes}</p>}
@@ -243,7 +287,7 @@ function SummaryBlocks({ session, getBoard, ink, times, stages }: PartsProps) {
 						<div className="sheet__drill-text">
 							<div className="sheet__when">
 								{tag}
-								{when} · {formatMinutes(block.minutes)}
+								<BlockWhen from={t.from} to={t.to} design={design} />
 							</div>
 							<div className="sheet__name">
 								{board?.meta.title ?? "Missing drill"}
@@ -301,7 +345,7 @@ function SummaryBlocks({ session, getBoard, ink, times, stages }: PartsProps) {
  * what happens, its coaching points as tick boxes, progressions, and room for
  * notes. Same style as the summary.
  */
-function DetailsPages({ session, getBoard, ink, times, stages }: PartsProps) {
+function DetailsPages({ session, getBoard, ink, times, stages, design }: PartsProps) {
 	const drills = session.blocks.map((b, i) => ({ b, i })).filter(({ b }) => b.kind === "drill");
 	const pageOf = new Map(drills.map(({ b }, n) => [b.id, n + 2]));
 	return (
@@ -366,7 +410,7 @@ function DetailsPages({ session, getBoard, ink, times, stages }: PartsProps) {
 						</div>
 						<div className="sheet__when">
 							<StageTag block={block} stage={stages[i]} />
-							{t.from}–{t.to} min · {formatMinutes(block.minutes)}
+							<BlockWhen from={t.from} to={t.to} design={design} />
 						</div>
 						<h2 className="sheet__page-title">
 							{board?.meta.title ?? "Missing drill"}

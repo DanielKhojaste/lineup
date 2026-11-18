@@ -10,6 +10,8 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Added
 
+- (Preview branch) Themes **Giedi Prime 102** and **Fremen 102**: their second colour (Giedi's red, Fremen's sand) also on tags and topics, the highlighted item in lists and the sidebar, and the focus outline. The originals are unchanged
+- (Preview branch) Session summary **B**: the time beside the team (no sport name), each block's **Duration** (12 mins) and **Time** (0:02 – 0:14), and the timeline's minutes under where each activity ends
 - **Folder colours**: a folder's menu has **Colour…** (the calendar's colours, or any colour). Its icon takes the colour in the library's sidebar and in the Attach window; renaming keeps it
 - Calendar: **repeat** a new practice, match or event **every week** until a date (it says how many it'll make, like "8 practices, every Thursday until 7 Jan"). Removing one of them asks: **only this one**, **this and the following**, or **all in the series**. Editing one changes only that one
 - **Formation** is one of the parts of a session (with Warm-up, Activity, Small-sided game, Scrimmage and Cool-down), with its own colour on printed timelines
