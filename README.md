@@ -83,12 +83,14 @@ Everything is stored as files on your computer, and the app works without an acc
 
 ### Example boards
 
-The [`examples`](examples) folder has boards and a session you can import from the library's **Import** button:
+The [`examples`](examples) folder has boards and sessions you can import from the library's **Import** button:
 
 - [`barca-real-madrid-2023.lineup`](examples/barca-real-madrid-2023.lineup): Barça 5–0 Real Madrid, Liga F, 19 November 2023, with both starting XIs
 - [`rondo-4v2.lineup`](examples/rondo-4v2.lineup): a rondo with a transition gate
 - [`third-man-run.lineup`](examples/third-man-run.lineup): an animated third-man run down the right
 - [`playing-through-the-thirds.lineup-session`](examples/playing-through-the-thirds.lineup-session): a 75-minute U14 session with the rondo and the third-man run inside
+- [`basketball-fast-break-basics.lineup-session`](examples/basketball-fast-break-basics.lineup-session): a basketball session (three-man weave, then a 2-on-1 fast break), with its drills inside
+- [`volleyball-serve-receive.lineup-session`](examples/volleyball-serve-receive.lineup-session): a volleyball session (pepper in pairs, then serve receive to the setter), with its drills inside
 
 ## Roadmap
 

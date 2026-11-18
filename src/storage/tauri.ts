@@ -23,6 +23,8 @@ import {
 } from "../model/session";
 import { giveRepeatsNewIds, libraryFileName } from "./dedupe";
 import { cleanIndex, EMPTY_INDEX, LibraryIndex, LibraryStore } from "./types";
+import { EMPTY_CALENDAR, parseCalendar } from "../model/calendar";
+import { decodePlanFile, encodePlanFile, PLAN_EXTENSION } from "../model/plan";
 
 /**
  * Everything lives under Documents/Lineup so coaches can find and back up their
@@ -31,6 +33,7 @@ import { cleanIndex, EMPTY_INDEX, LibraryIndex, LibraryStore } from "./types";
  */
 const ROOT = "Lineup";
 const INDEX_FILE = `${ROOT}/library.json`;
+const CALENDAR_FILE = `${ROOT}/calendar.json`;
 
 /** Each kind of document has its own folder and file extension. */
 const BOARDS = {
@@ -42,6 +45,11 @@ const SESSIONS = {
 	dir: `${ROOT}/sessions`,
 	extension: SESSION_EXTENSION,
 	untitled: "Untitled session",
+};
+const PLANS = {
+	dir: `${ROOT}/plans`,
+	extension: PLAN_EXTENSION,
+	untitled: "Untitled plan",
 };
 type Collection = typeof BOARDS;
 
@@ -75,7 +83,7 @@ export async function createTauriStore(): Promise<LibraryStore> {
 	const options = { baseDir };
 
 	const ensureFolders = async () => {
-		for (const c of [BOARDS, SESSIONS])
+		for (const c of [BOARDS, SESSIONS, PLANS])
 			if (!(await exists(c.dir, options)))
 				await mkdir(c.dir, { ...options, recursive: true });
 	};
@@ -211,7 +219,8 @@ export async function createTauriStore(): Promise<LibraryStore> {
 				encodeSessionFile,
 				problems,
 			);
-			return { boards, sessions, problems };
+			const plans = await loadCollection(PLANS, decodePlanFile, encodePlanFile, problems);
+			return { boards, sessions, plans, problems };
 		},
 
 		async save(board) {
@@ -227,6 +236,23 @@ export async function createTauriStore(): Promise<LibraryStore> {
 		},
 
 		removeSession: (id) => removeFile(SESSIONS, id),
+
+		async savePlan(plan) {
+			await ensureFolders();
+			await saveNamed(PLANS, plan, encodePlanFile);
+		},
+
+		removePlan: (id) => removeFile(PLANS, id),
+
+		async loadCalendar() {
+			if (!(await exists(CALENDAR_FILE, options))) return EMPTY_CALENDAR;
+			return parseCalendar(await readTextFile(CALENDAR_FILE, options));
+		},
+
+		async saveCalendar(calendar) {
+			await ensureFolders();
+			await writeSafely(CALENDAR_FILE, JSON.stringify(calendar, null, "\t"));
+		},
 
 		async loadIndex() {
 			try {

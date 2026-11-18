@@ -25,7 +25,7 @@ export const FieldGestureContext = createContext<{
  * Text fields that edit a document. Everything typed between focusing and
  * leaving a field is recorded as one undo step.
  */
-function useGestureHandlers() {
+export function useGestureHandlers() {
 	const custom = useContext(FieldGestureContext);
 	const editor = useOptionalEditor();
 	const latest = useRef({ custom, editor });

@@ -16,8 +16,8 @@ import { ThemeEffect } from "./themes";
  */
 
 const FPS = 30;
-/** Areas every effect stays out of: board pictures and open windows… */
-const AVOID = ".board-card__preview, .session-card__preview, dialog[open]";
+/** Areas every effect stays out of: every picture of a board (cards, the session preview, the calendar…) and open windows… */
+const AVOID = ".board-picture, .board-card__preview, .session-card__preview, dialog[open]";
 /** …and the board itself (the whole area around the field too). */
 const BOARD = ".board";
 export default function ThemeEffectLayer({

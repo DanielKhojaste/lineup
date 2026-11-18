@@ -4,6 +4,8 @@ name: Desktop builds
 # the app can be tried on a computer you don't own. Run it from the Actions tab
 # ("Run workflow", pick a branch), or it runs by itself when a version tag is
 # pushed. The installers are attached to the run as downloads ("Artifacts").
+# For a version tag, they're also put on a draft GitHub release for that tag:
+# paste the notes from notes/releases/ and publish it.
 on:
   workflow_dispatch:
   push:
@@ -81,3 +83,30 @@ jobs:
             src-tauri/target/**/release/bundle/dmg/*.dmg
             src-tauri/target/**/release/bundle/appimage/*.AppImage
             src-tauri/target/**/release/bundle/deb/*.deb
+
+  release:
+    name: Draft the GitHub release
+    # Only for version tags, once every installer is built.
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download the installers
+        uses: actions/download-artifact@v4
+        with:
+          path: installers
+
+      - name: Put them on a draft release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          name: ${{ github.ref_name }}
+          fail_on_unmatched_files: true
+          files: |
+            installers/**/*.msi
+            installers/**/*-setup.exe
+            installers/**/*.dmg
+            installers/**/*.AppImage
+            installers/**/*.deb

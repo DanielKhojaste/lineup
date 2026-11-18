@@ -45,3 +45,11 @@ describe("spice preferences", () => {
 	});
 
 });
+
+describe("interface size", () => {
+	it("starts at 100% and keeps only the sizes on offer", async () => {
+		expect((await load()).getPreferences().interfaceScale).toBe(1);
+		expect((await load({ interfaceScale: 1.25 })).getPreferences().interfaceScale).toBe(1.25);
+		expect((await load({ interfaceScale: 7 })).getPreferences().interfaceScale).toBe(1);
+	});
+});

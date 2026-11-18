@@ -1,14 +1,15 @@
+import { flushSync } from "react-dom";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import Loader from "../components/Loader";
 import DrillPicker from "../components/session/DrillPicker";
 import SessionHeaderForm from "../components/session/SessionHeaderForm";
-import SessionSheet from "../components/session/SessionSheet";
+import SessionSheet, { SheetLayout } from "../components/session/SessionSheet";
 import Timeline from "../components/session/Timeline";
 import { isTextField } from "../components/ui/ContextMenu";
 import { Menu } from "../components/ui/Menu";
-import { useSessionExport } from "../export/useSessionExport";
+import { exportName, useSessionExport } from "../export/useSessionExport";
 import { exportSessionDocument } from "../storage/files";
 import { isEmptySession, Session, sessionTitle } from "../model/session";
 import { drillsOf } from "../model/sessionFile";
@@ -31,6 +32,20 @@ function SessionLayout() {
 	const library = useLibrary();
 	const navigate = useNavigate();
 	const exporter = useSessionExport();
+	// Printing: the sheet is drawn (with or without the ink saver) before the print window opens.
+	const [printAs, setPrintAs] = useState<{ ink: boolean; layout: SheetLayout }>({ ink: false, layout: "summary" });
+	const printSheet = (ink: boolean, layout: SheetLayout = "summary") => {
+		flushSync(() => setPrintAs({ ink, layout }));
+		// "Save as PDF" suggests the window's title as the file name: "Cool session (ink saver)".
+		const before = document.title;
+		document.title = exportName(sessionTitle(state.session), { ink, layout });
+		const restore = () => {
+			document.title = before;
+			window.removeEventListener("afterprint", restore);
+		};
+		window.addEventListener("afterprint", restore);
+		window.print();
+	};
 	// An empty new session isn't saved; leaving it empty drops it from the library.
 	const { status, flush } = useAutosave(state.session, (s) =>
 		isEmptySession(s) ? Promise.resolve() : library.saveSession(s),
@@ -46,6 +61,8 @@ function SessionLayout() {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[],
 	);
+	// Opened from a plan or the calendar: the back button goes back there.
+	const from = (useLocation().state as { from?: string } | null)?.from;
 	const { session } = state;
 	const mainRef = useRef<HTMLElement>(null);
 	// Back from a drill opened in this session: scroll to where the coach was.
@@ -83,7 +100,7 @@ function SessionLayout() {
 			}
 			if (mod && key === "p") {
 				e.preventDefault();
-				window.print();
+				printSheet(false);
 				return;
 			}
 			if (isTextField(e.target) || document.querySelector("dialog[open]"))
@@ -104,9 +121,21 @@ function SessionLayout() {
 	return (
 		<div className="session-editor">
 			<header className="topbar">
-				<button type="button" className="back-button" onClick={() => navigate("/")}>
+				<button
+					type="button"
+					className="back-button"
+					onClick={() =>
+						from
+							? navigate(from)
+							: navigate("/")
+					}
+				>
 					<Icon name="chevronLeft" size={16} />
-					Library
+					{from?.startsWith("/plan")
+						? "Plan"
+						: from?.startsWith("/calendar")
+						  ? "Calendar"
+						  : "Library"}
 				</button>
 				<span className="topbar__divider" aria-hidden="true" />
 				<span className="badge">Session</span>
@@ -131,6 +160,19 @@ function SessionLayout() {
 					</span>
 				)}
 				<span className="topbar__spacer" />
+				<button
+					type="button"
+					className="button button--small"
+					title="Go through the session drill by drill"
+					disabled={session.blocks.length === 0}
+					onClick={async () => {
+						await flush();
+						navigate(`/session/${session.id}/preview`, { state: from ? { from } : undefined });
+					}}
+				>
+					<Icon name="eye" size={14} />
+					Preview
+				</button>
 				<button
 					type="button"
 					className="icon-button"
@@ -161,8 +203,7 @@ function SessionLayout() {
 						</>
 					}
 					items={[
-						{ label: "PDF document", onSelect: () => exporter.exportAs(session, "pdf") },
-						{ label: "Image (PNG)", onSelect: () => exporter.exportAs(session, "png") },
+						...exporter.menuItems(session),
 						"separator",
 						{
 							label: "Session file (.lineup-session)",
@@ -174,15 +215,24 @@ function SessionLayout() {
 						},
 					]}
 				/>
-				<button
-					type="button"
-					className="button"
-					title="Print the session sheet (Ctrl+P)"
-					onClick={() => window.print()}
-				>
-					<Icon name="print" size={16} />
-					Print
-				</button>
+				<Menu
+					label="Print the session"
+					buttonClassName="button"
+					button={
+						<>
+							<Icon name="print" size={16} />
+							Print
+						</>
+					}
+					items={[
+						{ heading: "Session summary" },
+						{ label: "Print (Ctrl+P)", onSelect: () => printSheet(false) },
+						{ label: "Print with ink saver (white pitches)", onSelect: () => printSheet(true) },
+						{ heading: "Session details" },
+						{ label: "Print", onSelect: () => printSheet(false, "details") },
+						{ label: "Print with ink saver (white pitches)", onSelect: () => printSheet(true, "details") },
+					]}
+				/>
 			</header>
 			{exporter.error && (
 				<div className="notice notice--error session-editor__notice" role="alert">
@@ -208,7 +258,7 @@ function SessionLayout() {
 				</main>
 				<DrillPicker />
 			</div>
-			<SessionSheet session={session} getBoard={library.getBoard} />
+			<SessionSheet session={session} getBoard={library.getBoard} ink={printAs.ink} layout={printAs.layout} />
 		</div>
 	);
 }

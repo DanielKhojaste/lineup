@@ -36,7 +36,7 @@ const NUDGE = 0.005;
  * aren't keys ("click", "drag a box") are written as they are.
  */
 export interface Shortcut {
-	group: "Tools" | "Selecting and moving" | "Editing" | "Animation";
+	group: "Tools" | "Selecting and moving" | "Editing" | "Animation" | "Interface";
 	keys: string[][];
 	/** Between two ways of doing the same thing ("Ctrl+Y or Ctrl+Shift+Z"). */
 	join?: "or";
@@ -84,6 +84,9 @@ export const SHORTCUTS: Shortcut[] = [
 	{ group: "Animation", keys: [["Space"]], action: "Play or pause" },
 	{ group: "Animation", keys: [[","]], action: "Previous step" },
 	{ group: "Animation", keys: [["."]], action: "Next step" },
+	{ group: "Interface", keys: [["Ctrl", "="]], action: "Bigger interface" },
+	{ group: "Interface", keys: [["Ctrl", "-"]], action: "Smaller interface" },
+	{ group: "Interface", keys: [["Ctrl", "0"]], action: "Interface at 100%" },
 ];
 
 function isTyping(target: EventTarget | null): boolean {

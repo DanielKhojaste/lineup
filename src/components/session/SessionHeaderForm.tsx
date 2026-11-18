@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import TeamField from "../ui/TeamField";
 import { SessionHeader, totalMinutes } from "../../model/session";
 import { SPORT_INFO } from "../../model/sports";
 import { SURFACES } from "../board/Pitch";
@@ -265,12 +266,13 @@ export default function SessionHeaderForm() {
 						<p className="field__error">Please give the session a title.</p>
 					)}
 				</div>
-				<BoardInput
+				<TeamField
 					label="Age group or team"
 					placeholder="U12, or U12 Girls"
-					maxLength={120}
 					value={header.team}
-					onValue={(team) => update({ team })}
+					onChange={(team) => update({ team })}
+					undoable
+					sport={header.sport}
 				/>
 				<div className="field">
 					<span className="field__label" id="session-sport-label">
@@ -293,9 +295,9 @@ export default function SessionHeaderForm() {
 					</button>
 					{otherSport > 0 && (
 						<p className="field__error">
-							{otherSport === 1 ? "A drill" : `${otherSport} drills`} in the plan{" "}
+							{otherSport === 1 ? "A board" : `${otherSport} boards`} in the plan{" "}
 							{otherSport === 1 ? "is" : "are"} for another sport. Please swap{" "}
-							{otherSport === 1 ? "it" : "them"} for {SPORT_INFO[header.sport].name.toLowerCase()} drills.
+							{otherSport === 1 ? "it" : "them"} for {SPORT_INFO[header.sport].name.toLowerCase()} boards.
 						</p>
 					)}
 					<SportPickerDialog

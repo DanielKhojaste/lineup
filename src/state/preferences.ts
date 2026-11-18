@@ -1,6 +1,7 @@
-import { DEFAULT_SIZES, MARKER_SCALES } from "../config/sizes";
+import { DEFAULT_SIZES, INTERFACE_SCALES, MARKER_SCALES } from "../config/sizes";
 import { useSyncExternalStore } from "react";
-import { DEFAULT_PITCH, isSport } from "../model/sports";
+import { DEFAULT_PITCH, FieldVariant, isSport, Sport } from "../model/sports";
+import { readSettingsFile, writeSettingsFile } from "../storage/settingsFile";
 import { PitchSettings } from "../model/types";
 
 /**
@@ -21,10 +22,23 @@ export interface Preferences {
 	 */
 	hasDefaultSport: boolean;
 	/**
+	 * The field each sport's new boards start on, when the coach ticked
+	 * "Always start … boards on a …". With one for the default sport, New
+	 * board skips straight to Create (and "Change" brings the steps back).
+	 */
+	fieldDefaults: Partial<Record<Sport, FieldVariant>>;
+	/**
+	 * Each kind of calendar item's colour ("#A66FE0"), when the coach picked
+	 * one; otherwise the app's (practices in the theme's colour).
+	 */
+	calendarColors: Partial<Record<"session" | "match" | "event", string>>;
+	/**
 	 * The moving background picked for each theme that has them (theme id →
 	 * effect, or "off"). A theme left out shows its first.
 	 */
 	themeEffect: Record<string, string>;
+	/** How big the whole interface is drawn (1 = 100%). */
+	interfaceScale: number;
 	/** How Dune's spice looks: size, speed and amount, as multiples of normal. */
 	spice: { size: number; speed: number; amount: number };
 }
@@ -40,7 +54,10 @@ const DEFAULTS: Preferences = {
 	playerScale: DEFAULT_SIZES.players,
 	equipmentScale: DEFAULT_SIZES.equipment,
 	hasDefaultSport: false,
+	fieldDefaults: {},
+	calendarColors: {},
 	themeEffect: {},
+	interfaceScale: 1,
 	spice: { size: 1, speed: 1, amount: 1 },
 };
 
@@ -63,9 +80,30 @@ function effectChoices(raw: Record<string, unknown> | null): Record<string, stri
 	return choices;
 }
 
+/** The field defaults that were saved; before they existed, the default sport's field. */
+function fieldDefaultsFrom(raw: Record<string, any> | null): Partial<Record<Sport, FieldVariant>> {
+	const out: Partial<Record<Sport, FieldVariant>> = {};
+	const saved = raw?.fieldDefaults;
+	if (saved && typeof saved === "object") {
+		for (const [sport, variant] of Object.entries(saved))
+			if (isSport(sport) && (variant === "full" || variant === "half")) out[sport] = variant;
+	} else if (raw?.defaultPitch && isSport(raw.defaultPitch.sport)) {
+		out[raw.defaultPitch.sport as Sport] = raw.defaultPitch.variant === "half" ? "half" : "full";
+	}
+	return out;
+}
+
 function read(): Preferences {
 	try {
-		const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}");
+		return parse(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}"));
+	} catch {
+		return DEFAULTS;
+	}
+}
+
+/** Preferences from what was saved (anything missing or wrong falls back to the default). */
+function parse(raw: any): Preferences {
+	try {
 		const pitch = raw?.defaultPitch ?? {};
 		return {
 			defaultPitch: {
@@ -73,7 +111,17 @@ function read(): Preferences {
 				variant: pitch.variant === "half" ? "half" : "full",
 			},
 			hasDefaultSport: !!raw?.defaultPitch,
+			fieldDefaults: fieldDefaultsFrom(raw),
+			calendarColors: Object.fromEntries(
+				Object.entries(raw?.calendarColors ?? {}).filter(
+					([kind, color]) =>
+						["session", "match", "event"].includes(kind) && typeof color === "string" && /^#[0-9a-f]{6}$/i.test(color),
+				),
+			),
 			themeEffect: effectChoices(raw),
+			interfaceScale: (INTERFACE_SCALES as readonly number[]).includes(raw?.interfaceScale)
+				? raw.interfaceScale
+				: 1,
 			spice: {
 				size: multiple(raw?.spice?.size, 0.4, 3),
 				speed: multiple(raw?.spice?.speed, 0.1, 4),
@@ -106,7 +154,27 @@ export function setPreferences(patch: Partial<Preferences>) {
 	} catch {
 		// Storage can be unavailable; the preference still applies until restart.
 	}
+	writeSettingsFile(current);
 	for (const listener of listeners) listener();
+}
+
+/**
+ * In the desktop app: take the preferences from Lineup/settings.json (the
+ * same for every build), or start that file from these. Called once at start.
+ */
+export async function syncPreferencesWithFile() {
+	const saved = await readSettingsFile();
+	if (saved && typeof saved === "object") {
+		current = parse(saved);
+		try {
+			localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
+		} catch {
+			// Fine: the file has them.
+		}
+		for (const listener of listeners) listener();
+	} else {
+		writeSettingsFile(current);
+	}
 }
 
 function subscribe(listener: () => void) {

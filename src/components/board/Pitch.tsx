@@ -409,9 +409,12 @@ const STRIPE_COUNT = 10;
  * The field or court for a board's sport, drawn to scale and fitted into the
  * board. A half field is turned so its goal end is at the top.
  */
-function Pitch({ pitch }: { pitch: PitchSettings }) {
+/** A light pitch for printing: white, with soft green lines (the ink saver). */
+const INK_SAVER = { floor: "#FFFFFF", outside: "#FFFFFF", line: "#93BBA0", stripes: false } as const;
+
+function Pitch({ pitch, ink = false }: { pitch: PitchSettings; ink?: boolean }) {
 	const info = SPORT_INFO[pitch.sport];
-	const colors = SURFACES[pitch.sport];
+	const colors = ink ? { ...SURFACES[pitch.sport], ...INK_SAVER } : SURFACES[pitch.sport];
 	const layout = fieldLayout(pitch);
 	const { scale: s, half } = layout;
 	const L = info.length;

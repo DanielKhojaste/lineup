@@ -45,12 +45,13 @@ export default function SessionCard({
 		session.header.team,
 		session.header.topics.slice(0, 2).join(", "),
 		time ? formatMinutes(time) : "",
-		`${drills} drill${drills === 1 ? "" : "s"}`,
+		`${drills} board${drills === 1 ? "" : "s"}`,
 		`Edited ${relativeTime(session.meta.updatedAt)}`,
 	].filter(Boolean);
 
 	return (
 		<article
+			data-card={`s:${session.id}`}
 			className={`board-card session-card${selection?.selected ? " is-selected" : ""}`}
 			onContextMenu={(e) => openMenu(e, menu())}
 		>

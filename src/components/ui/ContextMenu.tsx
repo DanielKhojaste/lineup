@@ -1,3 +1,4 @@
+import { KeyCombo } from "./Keys";
 import {
 	createContext,
 	ReactNode,
@@ -24,6 +25,11 @@ export interface ContextMenuItem {
 	checked?: boolean;
 	/** Items of a menu that opens to the side. */
 	submenu?: ContextMenuEntry[];
+	/**
+	 * The menu stays open after picking it, and its tick flips: for ticking
+	 * several (a board's folders).
+	 */
+	keepOpen?: boolean;
 }
 
 export type ContextMenuEntry = ContextMenuItem | "separator";
@@ -221,6 +227,10 @@ function MenuList({
 		null,
 	);
 	const closeTimer = useRef<number>(0);
+	// Ticks flipped by items that keep the menu open.
+	const [flipped, setFlipped] = useState<ReadonlySet<number>>(new Set());
+	const isChecked = (entry: ContextMenuItem, i: number) =>
+		entry.checked === undefined ? undefined : entry.checked !== flipped.has(i);
 
 	// Keep the menu on screen: flip it left or up when it would run off an edge.
 	useLayoutEffect(() => {
@@ -309,7 +319,7 @@ function MenuList({
 						key={`${i}-${entry.label}`}
 						type="button"
 						role={entry.checked === undefined ? "menuitem" : "menuitemcheckbox"}
-						aria-checked={entry.checked}
+						aria-checked={isChecked(entry, i)}
 						aria-haspopup={entry.submenu ? "menu" : undefined}
 						aria-expanded={entry.submenu ? open?.index === i : undefined}
 						data-index={i}
@@ -338,16 +348,28 @@ function MenuList({
 								});
 								return;
 							}
+							if (entry.keepOpen) {
+								entry.onSelect?.();
+								setFlipped((prev) => {
+									const next = new Set(prev);
+									if (next.has(i)) next.delete(i);
+									else next.add(i);
+									return next;
+								});
+								return;
+							}
 							onDone();
 							entry.onSelect?.();
 						}}
 					>
 						<span className="context-menu__check" aria-hidden="true">
-							{entry.checked && <Icon name="check" size={14} />}
+							{isChecked(entry, i) && <Icon name="check" size={14} />}
 						</span>
 						<span className="context-menu__label">{entry.label}</span>
 						{entry.shortcut && (
-							<span className="context-menu__shortcut">{entry.shortcut}</span>
+							<span className="context-menu__shortcut">
+								<KeyCombo text={entry.shortcut} small />
+							</span>
 						)}
 						{entry.submenu && (
 							<span className="context-menu__more" aria-hidden="true">

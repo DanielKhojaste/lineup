@@ -4,7 +4,7 @@ import BoardPreview from "../components/board/BoardPreview";
 import { Icon } from "../components/Icon";
 import SettingsDialog from "../components/shell/SettingsDialog";
 import { ConfirmDialog, Modal, PromptDialog } from "../components/ui/Dialog";
-import { ContextMenuEntry, useContextMenu } from "../components/ui/ContextMenu";
+import { ContextMenuEntry, isTextField, useContextMenu } from "../components/ui/ContextMenu";
 import { boardToPng } from "../export/png";
 import { SURFACES } from "../components/board/Pitch";
 import NewBoardDialog from "../components/library/NewBoardDialog";
@@ -18,7 +18,8 @@ import { BOARD_TYPE_LABELS } from "../model/board";
 import { Session, sessionTitle } from "../model/session";
 import { drillsOf, sameDrill } from "../model/sessionFile";
 import { isSport, pitchLabel, Sport, SPORT_INFO, SPORTS } from "../model/sports";
-import { Board, BOARD_TYPES, BoardType, PitchSettings } from "../model/types";
+import { SportChips } from "../components/ui/PickerFilters";
+import { Board, PitchSettings } from "../model/types";
 import { allFolders, useLibrary } from "../state/LibraryContext";
 import {
 	exportBoardFile,
@@ -29,12 +30,19 @@ import {
 } from "../storage/files";
 import { useSessionExport } from "../export/useSessionExport";
 import { relativeTime } from "../utils/time";
+import { logger } from "../utils/log";
+import { eventTitle, longDay, nextSession, shortDay, toISODate } from "../model/calendar";
+import { Plan } from "../model/plan";
+import PlanCard from "../components/library/PlanCard";
+
+const log = logger("library");
 
 /** Which boards the main area shows: everything, the boards outside folders, or one folder. */
 type View =
 	| { kind: "everything" }
 	| { kind: "all" }
 	| { kind: "sessions" }
+	| { kind: "plans" }
 	| { kind: "unfiled" }
 	| { kind: "created" }
 	| { kind: "imported" }
@@ -55,6 +63,7 @@ function docInView(
 		case "everything":
 		case "all":
 		case "sessions":
+		case "plans":
 			return true;
 		case "unfiled":
 			return !meta.folders.length && !meta.imported;
@@ -73,8 +82,9 @@ function docInView(
 const NOTICE_SECONDS = 7;
 
 const boardInView = (b: Board, view: View) =>
-	view.kind !== "sessions" && docInView(b.meta, b.pitch.sport, view);
+	view.kind !== "sessions" && view.kind !== "plans" && docInView(b.meta, b.pitch.sport, view);
 const sessionInView = (s: Session, view: View) =>
+	view.kind !== "plans" &&
 	docInView(s.meta, s.header.sport, view);
 type Sort = "updated" | "title";
 
@@ -130,12 +140,13 @@ function BoardCard({
 		folderLabel(board.meta.folders),
 		board.notes.duration,
 		board.steps.length > 0 &&
-			`${board.steps.length} step${board.steps.length > 1 ? "s" : ""}`,
+			`${board.steps.length + 1} steps`,
 		`Edited ${relativeTime(board.meta.updatedAt)}`,
 	].filter(Boolean);
 	const { openMenu } = useContextMenu();
 	return (
 		<article
+			data-card={`b:${board.id}`}
 			className={`board-card${selection.selected ? " is-selected" : ""}`}
 			onContextMenu={(e) => openMenu(e, menu())}
 		>
@@ -169,7 +180,7 @@ function savedView(): { view: View; sort: Sort } {
 	try {
 		const raw = JSON.parse(localStorage.getItem(VIEW_KEY) ?? "{}");
 		const v = raw?.view;
-		const simple = ["everything", "all", "sessions", "unfiled", "created", "imported"];
+		const simple = ["all", "sessions", "plans", "unfiled", "created", "imported"];
 		const view: View =
 			v && simple.includes(v.kind)
 				? { kind: v.kind }
@@ -177,10 +188,11 @@ function savedView(): { view: View; sort: Sort } {
 					? { kind: "folder", name: v.name }
 					: v?.kind === "sport" && isSport(v.sport)
 						? { kind: "sport", sport: v.sport }
-						: { kind: "everything" };
+						: // "All" (boards and sessions together) was taken out for now: Boards instead.
+							{ kind: "all" };
 		return { view, sort: raw?.sort === "title" ? "title" : "updated" };
 	} catch {
-		return { view: { kind: "everything" }, sort: "updated" };
+		return { view: { kind: "all" }, sort: "updated" };
 	}
 }
 
@@ -191,10 +203,11 @@ function savedView(): { view: View; sort: Sort } {
  */
 const remembered: {
 	view: View;
-	type: BoardType | "all" | "sessions";
+	type: "all" | "boards" | "sessions";
+	sport: Sport | "all";
 	query: string;
 	sort: Sort;
-} = { ...savedView(), type: "all", query: "" };
+} = { ...savedView(), type: "all", sport: "all", query: "" };
 
 export default function Library() {
 	const library = useLibrary();
@@ -202,10 +215,12 @@ export default function Library() {
 	const { openMenu } = useContextMenu();
 	const sessionExport = useSessionExport();
 	const [view, setViewState] = useState<View>(remembered.view);
-	// Filter chips: everything, just sessions, or one type of board.
-	const [type, setType] = useState<BoardType | "all" | "sessions">(
-		remembered.type,
-	);
+	// Filter chips in folders and sports: everything, just boards or just sessions.
+	const [type, setType] = useState<"all" | "boards" | "sessions">(remembered.type);
+	// Boards, Sessions and Plans have a sport filter (kept when moving between them).
+	const [sport, setSport] = useState<Sport | "all">(remembered.sport);
+	const sportFiltered = view.kind === "all" || view.kind === "sessions" || view.kind === "plans";
+	const sportOk = (s: Sport | "") => !sportFiltered || sport === "all" || s === sport;
 	/** Each view starts with every type showing. */
 	const setView = (next: View) => {
 		setViewState(next);
@@ -215,8 +230,8 @@ export default function Library() {
 	const [query, setQuery] = useState(remembered.query);
 	const [sort, setSort] = useState<Sort>(remembered.sort);
 	useEffect(() => {
-		Object.assign(remembered, { view, type, query, sort });
-	}, [view, type, query, sort]);
+		Object.assign(remembered, { view, type, sport, query, sort });
+	}, [view, type, sport, query, sort]);
 	useEffect(() => {
 		try {
 			localStorage.setItem(VIEW_KEY, JSON.stringify({ view, sort }));
@@ -277,6 +292,36 @@ export default function Library() {
 		handles: (e) => selecting || e.ctrlKey || e.metaKey,
 	});
 
+	// Delete (or Backspace): delete what's selected, or the card that has focus.
+	useEffect(() => {
+		const onKey = (e: KeyboardEvent) => {
+			if (e.key !== "Delete" && e.key !== "Backspace") return;
+			if (isTextField(e.target) || document.querySelector("dialog[open]")) return;
+			if (selecting) {
+				if (!selected.size) return;
+				e.preventDefault();
+				setDeletingSelected(true);
+				return;
+			}
+			const key = (document.activeElement as HTMLElement | null)?.closest<HTMLElement>("[data-card]")?.dataset.card;
+			if (!key) return;
+			const id = key.slice(2);
+			e.preventDefault();
+			if (key.startsWith("b:")) {
+				const board = library.getBoard(id);
+				if (board) setDeletingBoard(board);
+			} else if (key.startsWith("s:")) {
+				const session = library.getSession(id);
+				if (session) setDeletingSession(session);
+			} else if (key.startsWith("p:")) {
+				const plan = library.getPlan(id);
+				if (plan) setDeletingPlan(plan);
+			}
+		};
+		window.addEventListener("keydown", onKey);
+		return () => window.removeEventListener("keydown", onKey);
+	});
+
 	// Esc leaves select mode.
 	useEffect(() => {
 		if (!selecting) return;
@@ -295,31 +340,49 @@ export default function Library() {
 	const currentFolder = view.kind === "folder" ? view.name : "";
 
 	const shown = useMemo(() => {
-		if (view.kind === "sessions" || type === "sessions") return [];
+		if (view.kind === "sessions" || view.kind === "plans" || type === "sessions") return [];
 		const inView = library.boards.filter((b) => boardInView(b, view));
-		const found = inView.filter(
-			(b) => (type === "all" || b.meta.type === type) && matches(b, query.trim()),
-		);
+		const found = inView.filter((b) => sportOk(b.pitch.sport) && matches(b, query.trim()));
 		return sort === "title"
 			? [...found].sort((a, b) => a.meta.title.localeCompare(b.meta.title))
 			: [...found].sort((a, b) =>
 					b.meta.updatedAt.localeCompare(a.meta.updatedAt),
 			  );
-	}, [library.boards, view, query, sort, type]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [library.boards, view, query, sort, type, sport]);
 
 	// Sessions show in their own view, and next to boards in folders and sports.
 	const shownSessions = useMemo(() => {
 		if (view.kind === "all") return [];
-		// A board type picked in the chips shows just those boards.
-		if (view.kind !== "sessions" && type !== "all" && type !== "sessions") return [];
+		// "Boards" picked in the chips shows just boards.
+		if (view.kind !== "sessions" && type === "boards") return [];
 		const inView = library.sessions.filter((s) => sessionInView(s, view));
-		const found = inView.filter((s) => sessionMatches(s, query.trim()));
+		const found = inView.filter((s) => sportOk(s.header.sport) && sessionMatches(s, query.trim()));
 		return sort === "title"
 			? [...found].sort((a, b) => sessionTitle(a).localeCompare(sessionTitle(b)))
 			: [...found].sort((a, b) =>
 					b.meta.updatedAt.localeCompare(a.meta.updatedAt),
 			  );
-	}, [library.sessions, view, query, sort, type]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [library.sessions, view, query, sort, type, sport]);
+
+	// Plans have their own view.
+	const shownPlans = useMemo(() => {
+		if (view.kind !== "plans") return [];
+		const q = query.trim().toLowerCase();
+		const found = library.plans.filter(
+			(p) =>
+				sportOk(p.sport) &&
+				[p.meta.title, p.team, ...p.meta.folders, ...p.topics.flatMap((t) => t.topics)]
+					.join(" ")
+					.toLowerCase()
+					.includes(q),
+		);
+		return sort === "title"
+			? [...found].sort((a, b) => a.meta.title.localeCompare(b.meta.title))
+			: [...found].sort((a, b) => b.meta.updatedAt.localeCompare(a.meta.updatedAt));
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [library.plans, view, query, sort, sport]);
 
 	// Boards and sessions together in one grid, in the order picked in Sort
 	// (not sessions first and boards after).
@@ -349,13 +412,17 @@ export default function Library() {
 			? 0
 			: library.sessions.filter((s) => sessionInView(s, view)).length;
 
-	// Board types in this view, for the filter chips.
-	const typeCounts = useMemo(() => {
-		const counts = new Map<BoardType, number>();
-		const inView = library.boards.filter((b) => boardInView(b, view));
-		for (const b of inView) counts.set(b.meta.type, (counts.get(b.meta.type) ?? 0) + 1);
-		return counts;
-	}, [library.boards, view]);
+	// How many boards this view has, for the Boards chip.
+	const boardsInView = library.boards.filter((b) => boardInView(b, view)).length;
+	// The sport of everything on this page, for the sport chips.
+	const pageSports: Sport[] =
+		view.kind === "all"
+			? library.boards.map((b) => b.pitch.sport)
+			: view.kind === "sessions"
+				? library.sessions.map((x) => x.header.sport)
+				: view.kind === "plans"
+					? library.plans.flatMap((p) => (p.sport ? [p.sport] : []))
+					: [];
 
 	// The sidebar lists the sports the library has boards or sessions for.
 	const sportsInLibrary = SPORTS.filter(
@@ -368,6 +435,7 @@ export default function Library() {
 		try {
 			await task();
 		} catch (error) {
+			log.error(failure, error);
 			setNotice({
 				text: `${failure}: ${(error as Error).message || error}`,
 				tone: "error",
@@ -376,6 +444,23 @@ export default function Library() {
 	};
 
 	const openBoard = (id: string) => navigate(`/board/${id}`);
+	const newPlan = () =>
+		run(async () => {
+			const plan = await library.createPlan(currentFolder);
+			navigate(`/plan/${plan.id}`);
+		}, "Couldn't create the plan");
+	const [deletingPlan, setDeletingPlan] = useState<Plan | null>(null);
+	/** A plan card's menu, from right-clicking it or its ⋯ button. */
+	const planMenu = (plan: Plan): ContextMenuEntry[] => [
+		{ label: "Open", onSelect: () => navigate(`/plan/${plan.id}`) },
+		{
+			label: "Duplicate",
+			onSelect: () => run(() => library.duplicatePlan(plan.id), "Couldn't duplicate the plan"),
+		},
+		folderSubmenu(plan.meta.folders, (f) => library.setPlanFolders(plan.id, f)),
+		"separator",
+		{ label: "Delete…", danger: true, onSelect: () => setDeletingPlan(plan) },
+	];
 	const openSession = (id: string) => navigate(`/session/${id}`);
 
 	const [askingSport, setAskingSport] = useState(false);
@@ -437,22 +522,27 @@ export default function Library() {
 	const folderSubmenu = (
 		current: string[],
 		set: (folders: string[]) => Promise<void>,
-	): ContextMenuEntry => ({
+	): ContextMenuEntry => {
+		// The menu stays open while folders are ticked, so it keeps its own list
+		// (each tick saves the whole list, including the ticks before it).
+		let ticked = [...current];
+		return {
 		label: "Folders",
 		submenu: [
 			...folders.map((f) => ({
 				label: truncate(f, 40),
 				checked: current.includes(f),
-				onSelect: () =>
-					run(
-						() => set(current.includes(f) ? current.filter((x) => x !== f) : [...current, f]),
-						"Couldn't change its folders",
-					),
+				keepOpen: true,
+				onSelect: () => {
+					ticked = ticked.includes(f) ? ticked.filter((x) => x !== f) : [...ticked, f];
+					const next = ticked;
+					run(() => set(next), "Couldn't change its folders");
+				},
 			})),
 			...(folders.length ? ["separator" as const] : []),
 			{
 				label: "New folder…",
-				onSelect: () => newFolderThen((name) => set([...current, name])),
+				onSelect: () => newFolderThen((name) => set([...ticked, name])),
 			},
 			...(current.length
 				? [
@@ -463,7 +553,8 @@ export default function Library() {
 					]
 				: []),
 		],
-	});
+		};
+	};
 
 	/** A board card's menu, from right-clicking it or its ⋯ button. */
 	const boardMenu = (board: Board): ContextMenuEntry[] => [
@@ -498,6 +589,11 @@ export default function Library() {
 	const sessionMenu = (session: Session) => (): ContextMenuEntry[] => [
 		{ label: "Open", onSelect: () => openSession(session.id) },
 		{
+			label: "Preview",
+			disabled: session.blocks.length === 0,
+			onSelect: () => navigate(`/session/${session.id}/preview`, { state: { back: "/" } }),
+		},
+		{
 			label: "Rename…",
 			onSelect: () =>
 				setRenamingDoc({ kind: "session", id: session.id, title: session.meta.title }),
@@ -512,8 +608,17 @@ export default function Library() {
 		{
 			label: "Export",
 			submenu: [
-				{ label: "PDF document", onSelect: () => sessionExport.exportAs(session, "pdf") },
-				{ label: "Image (PNG)", onSelect: () => sessionExport.exportAs(session, "png") },
+				...(["summary", "details"] as const).map((layout) => ({
+					label: layout === "summary" ? "Session summary" : "Session details",
+					submenu: [
+						{ label: "PDF document", onSelect: () => sessionExport.exportAs(session, "pdf", { layout }) },
+						{
+							label: "PDF document, ink saver",
+							onSelect: () => sessionExport.exportAs(session, "pdf", { layout, ink: true }),
+						},
+						{ label: "Image (PNG)", onSelect: () => sessionExport.exportAs(session, "png", { layout }) },
+					],
+				})),
 				"separator",
 				{
 					label: "Session file (.lineup-session)",
@@ -584,7 +689,7 @@ export default function Library() {
 			(x) => !leaving.has(x.id) && x.blocks.some((bl) => bl.kind === "drill" && ids.has(bl.boardId)),
 		);
 		const sessions = usedIn.length
-			? ` Some of these boards are used in ${usedIn.length === 1 ? "a session" : `${usedIn.length} sessions`} you're keeping, which will show them as missing drills.`
+			? ` Some of these boards are used in ${usedIn.length === 1 ? "a session" : `${usedIn.length} sessions`} you're keeping, which will show them as missing boards.`
 			: "";
 		return `Delete ${describeCount(selectedBoards.length, selectedSessions.length)}?${sessions} This can't be undone. Export them first if you might want them back.`;
 	};
@@ -687,7 +792,7 @@ export default function Library() {
 				parts.push(
 					alreadyHad === 1
 						? "1 drill was already in your library, so it wasn't added again."
-						: `${alreadyHad} drills were already in your library, so they weren't added again.`,
+						: `${alreadyHad} boards were already in your library, so they weren't added again.`,
 				);
 			for (const m of missing)
 				parts.push(
@@ -717,6 +822,8 @@ export default function Library() {
 			  ? "All"
 			  : view.kind === "sessions"
 			  ? "Sessions"
+			  : view.kind === "plans"
+			  ? "Plans"
 			  : view.kind === "unfiled"
 			  ? "Not in a folder"
 			  : view.kind === "created"
@@ -729,22 +836,32 @@ export default function Library() {
 
 	const navItem = (
 		label: string,
-		count: number,
+		count: number | string,
 		active: boolean,
 		onClick: () => void,
-		icon: "grid" | "folder" | "inbox" | "session" | "pen" | "download" | "stack",
+		icon: "grid" | "folder" | "inbox" | "session" | "pen" | "download" | "stack" | "plan" | "calendar",
+		title?: string,
 	) => (
 		<button
 			type="button"
 			className={`nav-item${active ? " is-active" : ""}`}
 			aria-current={active ? "page" : undefined}
 			onClick={onClick}
+			title={title}
 		>
 			<Icon name={icon} size={16} />
 			<span className="nav-item__label">{label}</span>
 			<span className="nav-item__count">{count}</span>
 		</button>
 	);
+
+	// The next thing on the calendar (a session, a match…), shown beside Calendar ("Today", "Tomorrow", "Thu 19", "3 Dec").
+	const next = nextSession(library.calendar);
+	const nextSessionTitle = next
+		? next.kind === "session"
+			? library.getSession(next.sessionId)?.meta.title
+			: eventTitle(next)
+		: undefined;
 
 	return (
 		<div className="library">
@@ -816,13 +933,6 @@ export default function Library() {
 				<nav className="library__nav" aria-label="Library">
 					<div className="nav-group">
 						{navItem(
-							"All",
-							library.boards.length + library.sessions.length,
-							view.kind === "everything",
-							() => setView({ kind: "everything" }),
-							"stack",
-						)}
-						{navItem(
 							"Boards",
 							library.boards.length,
 							view.kind === "all",
@@ -835,6 +945,23 @@ export default function Library() {
 							view.kind === "sessions",
 							() => setView({ kind: "sessions" }),
 							"session",
+						)}
+						{navItem(
+							"Plans",
+							library.plans.length,
+							view.kind === "plans",
+							() => setView({ kind: "plans" }),
+							"plan",
+						)}
+						{navItem(
+							"Calendar",
+							next ? shortDay(next.date) : "",
+							false,
+							() => navigate("/calendar"),
+							"calendar",
+							next
+								? `Next: ${[nextSessionTitle, next.team].filter(Boolean).join(" · ")}, ${longDay(next.date)}${next.time ? ` at ${next.time}` : ""}`
+								: "Nothing planned",
 						)}
 					</div>
 					{sportsInLibrary.length > 0 && (
@@ -966,7 +1093,10 @@ export default function Library() {
 						<h1>{heading}</h1>
 						<span className="muted">
 							{[
+								view.kind === "plans" &&
+									`${shownPlans.length} ${shownPlans.length === 1 ? "plan" : "plans"}`,
 								view.kind !== "sessions" &&
+									view.kind !== "plans" &&
 									`${shown.length} ${shown.length === 1 ? "board" : "boards"}`,
 								shownSessions.length > 0 &&
 									`${shownSessions.length} ${
@@ -977,13 +1107,20 @@ export default function Library() {
 								.join(" · ") || "Nothing here yet"}
 						</span>
 						<span className="topbar__spacer" />
+						{view.kind === "plans" && shownPlans.length > 0 && (
+							<button type="button" className="button button--small library__select" onClick={newPlan}>
+								<Icon name="plus" size={16} />
+								New plan
+							</button>
+						)}
 						{!selecting && (shown.length > 0 || shownSessions.length > 0) && (
 							<button
 								type="button"
-								className="button button--small"
+								className="button button--small library__select"
 								title="Select several boards and sessions (or Ctrl+click a card)"
 								onClick={() => setSelecting(true)}
 							>
+								<Icon name="box" size={16} />
 								Select
 							</button>
 						)}
@@ -1117,38 +1254,25 @@ export default function Library() {
 						</div>
 					)}
 
-					{view.kind !== "sessions" &&
-						typeCounts.size + (sessionsInView ? 1 : 0) > 1 && (
-						<div className="filter-chips" role="group" aria-label="Board type">
-							<button
-								type="button"
-								className={`filter-chip${type === "all" ? " is-active" : ""}`}
-								aria-pressed={type === "all"}
-								onClick={() => setType("all")}
-							>
-								All
-							</button>
-							{sessionsInView > 0 && (
+					{sportFiltered && new Set(pageSports).size > 0 && (
+						<SportChips value={sport} onChange={setSport} sports={pageSports} />
+					)}
+					{!sportFiltered && boardsInView > 0 && sessionsInView > 0 && (
+						<div className="filter-chips" role="group" aria-label="Show">
+							{(["all", "boards", "sessions"] as const).map((k) => (
 								<button
+									key={k}
 									type="button"
-									className={`filter-chip${type === "sessions" ? " is-active" : ""}`}
-									aria-pressed={type === "sessions"}
-									onClick={() => setType(type === "sessions" ? "all" : "sessions")}
+									className={`filter-chip${type === k ? " is-active" : ""}`}
+									aria-pressed={type === k}
+									onClick={() => setType(type === k ? "all" : k)}
 								>
-									Sessions
-									<span className="filter-chip__count">{sessionsInView}</span>
-								</button>
-							)}
-							{BOARD_TYPES.filter((t) => typeCounts.has(t)).map((t) => (
-								<button
-									key={t}
-									type="button"
-									className={`filter-chip${type === t ? " is-active" : ""}`}
-									aria-pressed={type === t}
-									onClick={() => setType(type === t ? "all" : t)}
-								>
-									{BOARD_TYPE_LABELS[t].many}
-									<span className="filter-chip__count">{typeCounts.get(t)}</span>
+									{k === "all" ? "All" : k === "boards" ? "Boards" : "Sessions"}
+									{k !== "all" && (
+										<span className="filter-chip__count">
+											{k === "boards" ? boardsInView : sessionsInView}
+										</span>
+									)}
 								</button>
 							))}
 						</div>
@@ -1163,7 +1287,7 @@ export default function Library() {
 								) : (
 									<>
 										<p>
-											No sessions yet. A session puts drills from your library in
+											No sessions yet. A session puts boards from your library in
 											order, with breaks and timings, and prints as a session sheet.
 										</p>
 										<button
@@ -1179,8 +1303,42 @@ export default function Library() {
 							</div>
 						)}
 
+					{library.status === "ready" && view.kind === "plans" && shownPlans.length === 0 && (
+						<div className="empty-state">
+							{query ? (
+								<p>No plans match “{truncate(query.trim(), 40)}”.</p>
+							) : (
+								<>
+									<p>
+										No plans yet. A plan is a block of training, like a season,
+										week by week: each week has its sessions and can have a topic.
+										Add it to the calendar on your training days.
+									</p>
+									<button type="button" className="button button--primary" onClick={newPlan}>
+										<Icon name="plus" size={16} />
+										New plan
+									</button>
+								</>
+							)}
+						</div>
+					)}
+
+					{view.kind === "plans" && shownPlans.length > 0 && (
+						<div className="board-grid">
+							{shownPlans.map((plan) => (
+								<PlanCard
+									key={plan.id}
+									plan={plan}
+									onOpen={() => navigate(`/plan/${plan.id}`)}
+									menu={() => planMenu(plan)}
+								/>
+							))}
+						</div>
+					)}
+
 					{library.status === "ready" &&
 						view.kind !== "sessions" &&
+						view.kind !== "plans" &&
 						shown.length === 0 &&
 						shownSessions.length === 0 && (
 						<div className="empty-state">
@@ -1355,9 +1513,21 @@ export default function Library() {
 				onClose={() => setRenamingDoc(null)}
 			/>
 			<ConfirmDialog
+				open={deletingPlan !== null}
+				title="Delete plan"
+				message={`Delete the plan “${deletingPlan?.meta.title ?? ""}”? Its sessions stay in your library, and dates already on the calendar stay there. This can't be undone.`}
+				confirmLabel="Delete plan"
+				danger
+				onConfirm={() => {
+					const plan = deletingPlan!;
+					run(() => library.deletePlan(plan.id), "Couldn't delete the plan");
+				}}
+				onClose={() => setDeletingPlan(null)}
+			/>
+			<ConfirmDialog
 				open={deletingSession !== null}
 				title="Delete session"
-				message={`Delete the session “${deletingSession ? sessionTitle(deletingSession) : ""}”? Its drills stay in your library. This can't be undone.`}
+				message={`Delete the session “${deletingSession ? sessionTitle(deletingSession) : ""}”? Its boards stay in your library. It's also taken out of plans and off the calendar dates it hasn't run on yet. This can't be undone.`}
 				confirmLabel="Delete"
 				danger
 				onConfirm={() =>
