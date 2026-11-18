@@ -19,6 +19,7 @@ import { Session, sessionTitle } from "../model/session";
 import { drillsOf, sameDrill } from "../model/sessionFile";
 import { isSport, pitchLabel, Sport, SPORT_INFO, SPORTS } from "../model/sports";
 import { SportChips } from "../components/ui/PickerFilters";
+import ColorSwatches from "../components/calendar/ColorSwatches";
 import { Board, PitchSettings } from "../model/types";
 import { allFolders, useLibrary } from "../state/LibraryContext";
 import {
@@ -260,6 +261,8 @@ export default function Library() {
 		setNewFolderOpen(true);
 	};
 	const [renaming, setRenaming] = useState<string | null>(null);
+	// The folder whose colour is being picked.
+	const [coloring, setColoring] = useState<string | null>(null);
 	const [deletingFolder, setDeletingFolder] = useState<string | null>(null);
 	const [deletingBoard, setDeletingBoard] = useState<Board | null>(null);
 	const [renamingDoc, setRenamingDoc] = useState<{
@@ -512,6 +515,7 @@ export default function Library() {
 		},
 		"separator",
 		{ label: "Rename…", onSelect: () => setRenaming(name) },
+		{ label: "Colour…", onSelect: () => setColoring(name) },
 		{ label: "Delete folder…", danger: true, onSelect: () => setDeletingFolder(name) },
 	];
 
@@ -841,6 +845,8 @@ export default function Library() {
 		onClick: () => void,
 		icon: "grid" | "folder" | "inbox" | "session" | "pen" | "download" | "stack" | "plan" | "calendar",
 		title?: string,
+		/** A folder's own colour, for its icon. */
+		color?: string,
 	) => (
 		<button
 			type="button"
@@ -849,7 +855,7 @@ export default function Library() {
 			onClick={onClick}
 			title={title}
 		>
-			<Icon name={icon} size={16} />
+			<Icon name={icon} size={16} style={color ? { color } : undefined} fillColor={color} />
 			<span className="nav-item__label">{label}</span>
 			<span className="nav-item__count">{count}</span>
 		</button>
@@ -1052,6 +1058,8 @@ export default function Library() {
 									view.kind === "folder" && view.name === name,
 									() => setView({ kind: "folder", name }),
 									"folder",
+									undefined,
+									library.folderColors[name],
 								)}
 								<button
 									type="button"
@@ -1417,6 +1425,26 @@ export default function Library() {
 					setNewFolderOpen(false);
 				}}
 			/>
+			{coloring !== null && (
+				<Modal open title={`Colour of “${truncate(coloring, 40)}”`} onClose={() => setColoring(null)} className="dialog--confirm">
+					<div className="dialog__section">
+						<ColorSwatches
+							label="Folder colour"
+							value={library.folderColors[coloring] ?? ""}
+							defaultColor=""
+							defaultLabel="No colour"
+							onChange={(color) =>
+								run(() => library.setFolderColor(coloring, color), "Couldn't change the folder's colour")
+							}
+						/>
+						<div className="dialog__actions">
+							<button type="button" className="button button--primary" data-autofocus="" onClick={() => setColoring(null)}>
+								Done
+							</button>
+						</div>
+					</div>
+				</Modal>
+			)}
 			<PromptDialog
 				open={renaming !== null}
 				title="Rename folder"

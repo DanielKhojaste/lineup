@@ -16,6 +16,8 @@ export interface LibraryIndex {
 	 * libraries: then it's filled in from the teams already used.
 	 */
 	teams?: string[];
+	/** A colour for a folder ("#5FB15F"), by its name; a folder without one uses the theme's. */
+	folderColors?: Record<string, string>;
 	/** Which sports each team plays: "U12 Girls" can be a soccer team and a basketball team. */
 	teamSports?: Record<string, Sport[]>;
 }
@@ -32,6 +34,15 @@ export function cleanIndex(raw: unknown): LibraryIndex {
 		folders: strings(index.folders),
 		topics: strings(index.topics),
 		...(Array.isArray(index.teams) ? { teams: strings(index.teams) } : {}),
+		...(index.folderColors && typeof index.folderColors === "object"
+			? {
+					folderColors: Object.fromEntries(
+						Object.entries(index.folderColors as Record<string, unknown>).filter(
+							(e): e is [string, string] => typeof e[1] === "string" && /^#[0-9a-f]{6}$/i.test(e[1]),
+						),
+					),
+				}
+			: {}),
 		...(index.teamSports && typeof index.teamSports === "object"
 			? {
 					teamSports: Object.fromEntries(

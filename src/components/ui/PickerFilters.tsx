@@ -50,7 +50,10 @@ export function PickerFolders({
 	itemFolders,
 	value,
 	onChange,
+	colors = {},
 }: {
+	/** Folders' own colours, by name. */
+	colors?: Record<string, string>;
 	/** The library's folders, in its order. */
 	order: string[];
 	/** The folders of each thing the picker can show (already narrowed to the sport). */
@@ -72,7 +75,12 @@ export function PickerFolders({
 				aria-pressed={active}
 				onClick={() => onChange(pick)}
 			>
-				<Icon name={icon} size={14} />
+				<Icon
+					name={icon}
+					size={14}
+					style={pick.kind === "folder" && colors[pick.name] ? { color: colors[pick.name] } : undefined}
+					fillColor={pick.kind === "folder" ? colors[pick.name] : undefined}
+				/>
 				<span className="picker-folders__name" title={label}>
 					{label}
 				</span>

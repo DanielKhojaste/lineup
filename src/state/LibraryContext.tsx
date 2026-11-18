@@ -49,6 +49,9 @@ interface LibraryContextValue {
 	/** Remember teams (new names are added; ones already saved are left alone). */
 	addTeams: (teams: string[]) => Promise<void>;
 	removeTeam: (team: string) => Promise<void>;
+	/** Folders' colours, by name (none: the theme's). */
+	folderColors: Record<string, string>;
+	setFolderColor: (folder: string, color: string) => Promise<void>;
 	/** The sports each team plays. */
 	teamSports: Record<string, Sport[]>;
 	/** Remember that this team plays this sport. */
@@ -178,6 +181,7 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 				}
 				setTeams(indexRef.current.teams ?? []);
 				setTeamSports(indexRef.current.teamSports ?? {});
+				setFolderColors(indexRef.current.folderColors ?? {});
 				setProblems(problems);
 				setStatus("ready");
 				log.info(`Loaded ${loaded.length} boards and ${sessions.length} sessions from ${store.location}`);
@@ -217,6 +221,13 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 		if (!fresh.length) return;
 		indexRef.current = { ...indexRef.current, teams: [...current, ...fresh] };
 		setTeams(indexRef.current.teams!);
+		await store().saveIndex(indexRef.current);
+	}, []);
+	const [folderColors, setFolderColors] = useState<Record<string, string>>({});
+	/** A folder's colour ("" takes it off); renaming moves it, deleting drops it. */
+	const writeFolderColors = useCallback(async (next: Record<string, string>) => {
+		indexRef.current = { ...indexRef.current, folderColors: next };
+		setFolderColors(next);
 		await store().saveIndex(indexRef.current);
 	}, []);
 	const [teamSports, setTeamSports] = useState<Record<string, Sport[]>>({});
@@ -375,6 +386,13 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 			removeTeam,
 			teamSports,
 			addTeamSport,
+			folderColors,
+			setFolderColor: async (folder, color) => {
+				const next = { ...(indexRef.current.folderColors ?? {}) };
+				if (color) next[folder] = color;
+				else delete next[folder];
+				await writeFolderColors(next);
+			},
 			getSession: (id) => sessionsRef.current.find((s) => s.id === id),
 			saveSession,
 
@@ -537,6 +555,12 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 			renameFolder: async (from, to) => {
 				const clean = to.trim();
 				if (!clean || from === clean) return;
+				const colors = indexRef.current.folderColors ?? {};
+				if (colors[from] && !colors[clean]) {
+					const { [from]: color, ...rest } = colors;
+					indexRef.current = { ...indexRef.current, folderColors: { ...rest, [clean]: color } };
+					setFolderColors(indexRef.current.folderColors!);
+				}
 				await writeIndex(
 					folders
 						.map((f) => (f === from ? clean : f))
@@ -557,6 +581,10 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 			/** Remove a folder; its boards and sessions stay in the library (and in their other folders). */
 			deleteFolder: async (name) => {
 				await writeIndex(folders.filter((f) => f !== name));
+				if (indexRef.current.folderColors?.[name]) {
+					const { [name]: _, ...rest } = indexRef.current.folderColors;
+					await writeFolderColors(rest);
+				}
 				const without = (list: string[]) => list.filter((f) => f !== name);
 				for (const board of boardsRef.current.filter((b) => b.meta.folders.includes(name)))
 					await saveBoard({ ...board, meta: { ...board.meta, folders: without(board.meta.folders) } });
@@ -583,6 +611,8 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 			removeTeam,
 			teamSports,
 			addTeamSport,
+			folderColors,
+			writeFolderColors,
 			plans,
 			calendar,
 			seasons,

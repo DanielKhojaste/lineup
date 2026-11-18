@@ -92,6 +92,7 @@ export default function SessionPicker({
 				{onSwitch && (
 					<PickerFolders
 						order={library.folders}
+						colors={library.folderColors}
 						itemFolders={ofSport.map((s) => s.meta.folders)}
 						value={folder}
 						onChange={setFolder}

@@ -77,6 +77,7 @@ export default function BoardPicker({
 				<div className="picker-body">
 				<PickerFolders
 					order={library.folders}
+						colors={library.folderColors}
 					itemFolders={ofSport.map((b) => b.meta.folders)}
 					value={folder}
 					onChange={setFolder}
