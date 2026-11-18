@@ -992,6 +992,7 @@ function PlanLayout() {
 								value={plan.team}
 								onChange={(team) => dispatch({ type: "updatePlan", patch: { team } })}
 								undoable
+								sport={plan.sport || undefined}
 							/>
 							<div className="field">
 								<label className="field__label" htmlFor="plan-sport">

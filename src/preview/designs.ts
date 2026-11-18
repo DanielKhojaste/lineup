@@ -17,6 +17,14 @@ export const PREVIEW_CHOICES = {
 			["corners", "B · Corner buttons"],
 		],
 	},
+	teams: {
+		label: "Teams with a sport",
+		options: [
+			["swatch", "A · Field colour on the left"],
+			["letters", "B · Sport letters on the left"],
+			["off", "C · Off (no sports)"],
+		],
+	},
 	sidebar: {
 		label: "Calendar sidebar, the month's numbers",
 		options: [

@@ -10,6 +10,7 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Added
 
+- (Preview branch) **Teams with a sport**: a team can play more than one sport ("U12 Girls" in soccer and in basketball shows as two rows). A new team takes the sport of its session, plan or attached board; with no sport to go by, a row of sports asks which (or Skip). The list shows a mark on the left: A the field's colour, B two letters, C off
 - (Preview branch) The calendar's sidebar: **Next up** at the top, the month's practices, matches and events in the middle (A, or B without them, to compare), and the **topics covered** that month at the bottom (from the sessions on the calendar, the most used first). It follows the month you're looking at
 - (Preview branch) The **Attach** window: boards have the same search and sport filter as sessions, both tabs list the folders on the left (only the ones with something for the sport picked, with counts), the sport stays when switching tabs, and a match opens on **Board**. The tab is just "Board"
 - (Preview branch) Animation controls: **F** (compact corner) fades when the pointer is still, like E, and counts from 0 ("0 / 3"). **E** with more than 10 steps shows a track instead of a dot per step. Test files in `examples`: **TEST: third-man run, 20 steps** and the session **TEST: animation controls** (the same play with 3 steps and 20)

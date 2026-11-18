@@ -261,7 +261,11 @@ export default function ItemDialog({
 					</div>
 				</div>
 				<div className="field-grid">
-					<TeamField value={draft.team} onChange={(team) => set({ team })} />
+					<TeamField
+						value={draft.team}
+						onChange={(team) => set({ team })}
+						sport={session?.header.sport ?? formation?.pitch.sport}
+					/>
 					<label className="field">
 						<span className="field__label">
 							Location <span className="muted">(optional)</span>

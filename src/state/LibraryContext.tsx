@@ -49,6 +49,10 @@ interface LibraryContextValue {
 	/** Remember teams (new names are added; ones already saved are left alone). */
 	addTeams: (teams: string[]) => Promise<void>;
 	removeTeam: (team: string) => Promise<void>;
+	/** (Preview) The sports each team plays. */
+	teamSports: Record<string, Sport[]>;
+	/** (Preview) Remember that this team plays this sport. */
+	addTeamSport: (team: string, sport: Sport) => Promise<void>;
 	getSession: (id: string) => Session | undefined;
 	createSession: (folder: string, sport: Sport) => Promise<Session>;
 	saveSession: (session: Session) => Promise<void>;
@@ -173,6 +177,7 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 					await store.saveIndex(indexRef.current);
 				}
 				setTeams(indexRef.current.teams ?? []);
+				setTeamSports(indexRef.current.teamSports ?? {});
 				setProblems(problems);
 				setStatus("ready");
 				log.info(`Loaded ${loaded.length} boards and ${sessions.length} sessions from ${store.location}`);
@@ -212,6 +217,15 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 		if (!fresh.length) return;
 		indexRef.current = { ...indexRef.current, teams: [...current, ...fresh] };
 		setTeams(indexRef.current.teams!);
+		await store().saveIndex(indexRef.current);
+	}, []);
+	const [teamSports, setTeamSports] = useState<Record<string, Sport[]>>({});
+	const addTeamSport = useCallback(async (team: string, sport: Sport) => {
+		const all = indexRef.current.teamSports ?? {};
+		const now = all[team] ?? [];
+		if (now.includes(sport)) return;
+		indexRef.current = { ...indexRef.current, teamSports: { ...all, [team]: [...now, sport] } };
+		setTeamSports(indexRef.current.teamSports!);
 		await store().saveIndex(indexRef.current);
 	}, []);
 	const removeTeam = useCallback(async (team: string) => {
@@ -359,6 +373,8 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 			teams,
 			addTeams,
 			removeTeam,
+			teamSports,
+			addTeamSport,
 			getSession: (id) => sessionsRef.current.find((s) => s.id === id),
 			saveSession,
 
@@ -565,6 +581,8 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 			teams,
 			addTeams,
 			removeTeam,
+			teamSports,
+			addTeamSport,
 			plans,
 			calendar,
 			seasons,

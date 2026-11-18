@@ -1,3 +1,4 @@
+import { isSport, Sport } from "../model/sports";
 import { CalendarData } from "../model/calendar";
 import { Plan } from "../model/plan";
 import { Session } from "../model/session";
@@ -15,6 +16,8 @@ export interface LibraryIndex {
 	 * libraries: then it's filled in from the teams already used.
 	 */
 	teams?: string[];
+	/** (Preview) Which sports each team plays: "U12 Girls" can be a soccer team and a basketball team. */
+	teamSports?: Record<string, Sport[]>;
 }
 
 export const EMPTY_INDEX: LibraryIndex = { version: 1, folders: [], topics: [] };
@@ -29,6 +32,16 @@ export function cleanIndex(raw: unknown): LibraryIndex {
 		folders: strings(index.folders),
 		topics: strings(index.topics),
 		...(Array.isArray(index.teams) ? { teams: strings(index.teams) } : {}),
+		...(index.teamSports && typeof index.teamSports === "object"
+			? {
+					teamSports: Object.fromEntries(
+						Object.entries(index.teamSports as Record<string, unknown>).map(([team, sports]) => [
+							team,
+							Array.isArray(sports) ? [...new Set(sports.filter(isSport))] : [],
+						]),
+					),
+				}
+			: {}),
 	};
 }
 

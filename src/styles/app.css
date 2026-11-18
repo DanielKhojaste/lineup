@@ -6580,3 +6580,64 @@ div.plan-outline__week {
 	color: var(--text-muted);
 	font-variant-numeric: tabular-nums;
 }
+
+/* (Preview) Teams with a sport: a mark on the left of each team, and "which sport?" for a new one. */
+.team-mark {
+	display: inline-block;
+	flex-shrink: 0;
+}
+
+.team-mark--swatch,
+.team-mark--none {
+	width: 14px;
+	height: 10px;
+	border-radius: 3px;
+	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+
+.team-mark--none {
+	box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.team-mark--letters {
+	min-width: 22px;
+	padding: 1px 3px;
+	border-radius: 4px;
+	background: var(--sunken);
+	color: var(--text-muted);
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-align: center;
+}
+
+.team-field__option {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.team-field__name {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.team-field__ask {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+	margin-top: 6px;
+}
+
+.team-field__sport {
+	gap: 6px;
+}
+
+.show-all__team {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
