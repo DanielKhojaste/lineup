@@ -7,14 +7,6 @@ import { useSyncExternalStore } from "react";
  * Daniel picks, the winners move into the app and this goes.
  */
 export const PREVIEW_CHOICES = {
-	hover: {
-		label: "Calendar item hover",
-		options: [
-			["tint", "C · Tint (picked)"],
-			["lift", "A · Lift"],
-			["ring", "B · Ring"],
-		],
-	},
 	controls: {
 		label: "Animation controls (session preview)",
 		options: [

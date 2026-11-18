@@ -59,6 +59,9 @@ function PlayingBoard({ board, playing, step }: { board: Board; playing: boolean
  * compare on the preview branch): A, a bar centred along the bottom; B,
  * round buttons in the bottom corners.
  */
+/** More steps than this and the bar shows a track instead of a dot per step. */
+const MAX_DOTS = 10;
+
 function StepControls({
 	variant,
 	steps,
@@ -84,7 +87,7 @@ function StepControls({
 			title={s === 0 ? "Start" : `Step ${s}`}
 			onClick={() => onStep(s)}
 		>
-			{variant === "corners" ? (s === 0 ? "S" : s) : null}
+			{variant === "corners" ? s : null}
 		</button>
 	));
 	const play = (
@@ -110,11 +113,11 @@ function StepControls({
 	);
 	if (variant === "compact")
 		return (
-			<div className="step-controls step-controls--corner-left step-controls--compact">
+			<div className="step-controls step-controls--corner-left step-controls--compact step-controls--fade">
 				{play}
 				{prev}
 				<span className="step-controls__count" title={label}>
-					{playing ? "▶" : step === 0 ? "S" : step} / {steps}
+					{playing ? "▶" : step} / {steps}
 				</span>
 				{next}
 			</div>
@@ -142,7 +145,23 @@ function StepControls({
 			{play}
 			{next}
 			<span className="step-controls__divider" aria-hidden="true" />
-			<span className="step-controls__dots">{dots}</span>
+			{steps > MAX_DOTS ? (
+				// Lots of steps: a track instead of a dot each (it keeps its width however many there are).
+				<span className="step-track" role="group" aria-label="Steps">
+					{Array.from({ length: steps + 1 }, (_, s) => (
+						<button
+							key={s}
+							type="button"
+							className={`step-track__seg${s <= step ? " is-done" : ""}${!playing && s === step ? " is-active" : ""}`}
+							aria-label={s === 0 ? "Start" : `Step ${s}`}
+							title={s === 0 ? "Start" : `Step ${s}`}
+							onClick={() => onStep(s)}
+						/>
+					))}
+				</span>
+			) : (
+				<span className="step-controls__dots">{dots}</span>
+			)}
 			<span className="step-controls__label">{playing ? "Playing" : label}</span>
 		</div>
 	);

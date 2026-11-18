@@ -10,10 +10,11 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Added
 
+- (Preview branch) Animation controls: **F** (compact corner) fades when the pointer is still, like E, and counts from 0 ("0 / 3"). **E** with more than 10 steps shows a track instead of a dot per step. Test files in `examples`: **TEST: third-man run, 20 steps** and the session **TEST: animation controls** (the same play with 3 steps and 20)
 - **Session details:** export or print a session with a page per drill: page 1 has the session's facts, timeline and an outline of every block (with the page each drill is on), then each drill gets a large diagram, what happens, coaching points as tick boxes, progressions and room for notes. It's under **Export** and **Print** next to the one-page **Session summary**, with the ink saver too
 - Calendar: a busy day in the month view shows its first three items and **+N more**, which lists everything on that day (with a search when there's a lot)
 - **Lots of teams:** the Team box lists eight, then **Show all N teams…**; the calendar's Team filter lists the ten you use most, then **Show all teams…**. Both open a window with every team and a search
-- (Preview branch) **Designs to compare**: a panel in the corner switches between three calendar hovers (Lift, Ring, Tint), two sets of animation controls floating over the field in the session preview (a bar, or corner buttons), and two calendar item designs (type above, or icon in line)
+- (Preview branch) **Designs to compare**: a panel in the corner switches between two sets of animation controls floating over the field in the session preview (a bar, or corner buttons), and two calendar item designs (type above, or icon in line)
 - (Preview branch) Calendar items are a **Practice**, a **Match** or an **Event**, made in one window; any of them can have a session attached (a practice's plan, a match's warm-up), a practice can have its own name, and a match a formation (a board)
 - **Teams**: pick a saved team from the list under any Team box (sessions, plans, the calendar), or type a new one, which is saved for next time. **Settings › Teams** lists them to add or remove. Your library's existing teams are there from the start
 - Calendar: an optional **Location** for every item, shown on it, in its tooltip and under Coming up
