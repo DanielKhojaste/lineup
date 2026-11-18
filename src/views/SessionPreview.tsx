@@ -25,8 +25,18 @@ import { useLibrary } from "../state/LibraryContext";
  * Preview button or its menu in the library.
  */
 
-/** A play, moving: its markers part-way through the animation, looping. */
-function PlayingBoard({ board, playing, step }: { board: Board; playing: boolean; step: number }) {
+/** A play, moving: its markers part-way through the animation, once through; then `onDone`. */
+function PlayingBoard({
+	board,
+	playing,
+	step,
+	onDone,
+}: {
+	board: Board;
+	playing: boolean;
+	step: number;
+	onDone: () => void;
+}) {
 	const [shown, setShown] = useState<Board>(() => boardAtStep(board, step));
 	const started = useRef(0);
 
@@ -36,18 +46,23 @@ function PlayingBoard({ board, playing, step }: { board: Board; playing: boolean
 			return;
 		}
 		const length = totalDuration(board);
-		// A short pause on the last step before it starts again.
-		const loop = length + 1.2;
 		started.current = performance.now();
 		let raf = 0;
 		const frame = (now: number) => {
-			const time = ((now - started.current) / 1000) % loop;
-			const at = stepAtTime(board, Math.min(time, length));
+			const time = (now - started.current) / 1000;
+			// Played through: it stops on the last step.
+			if (time >= length) {
+				setShown(boardAtStep(board, board.steps.length));
+				onDone();
+				return;
+			}
+			const at = stepAtTime(board, time);
 			setShown({ ...board, nodes: nodesDuringStep(board, at.step, at.t) });
 			raf = requestAnimationFrame(frame);
 		};
 		raf = requestAnimationFrame(frame);
 		return () => cancelAnimationFrame(raf);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [board, playing, step]);
 
 	return <BoardPreview board={shown} className="session-preview__board" />;
@@ -55,7 +70,7 @@ function PlayingBoard({ board, playing, step }: { board: Board; playing: boolean
 
 /**
  * The animation's controls in the field's bottom-left corner: play or pause,
- * back, "3 / 8" (0 is the start), forward. They fade out a moment after the
+ * back, "3 / 8" (the starting position is 1), forward. They fade out a moment after the
  * pointer stops. The other designs compared in the preview are kept on
  * archive/preview-designs-301.
  */
@@ -72,7 +87,8 @@ function StepControls({
 	onPlay: () => void;
 	onStep: (step: number) => void;
 }) {
-	const label = step === 0 ? "Start" : `Step ${step} of ${steps}`;
+	// Steps are counted from 1: the starting position is step 1.
+	const label = `Step ${step + 1} of ${steps + 1}`;
 	return (
 		<div className="step-controls step-controls--corner-left step-controls--compact step-controls--fade">
 			<button
@@ -95,7 +111,7 @@ function StepControls({
 				<Icon name="chevronLeft" size={18} />
 			</button>
 			<span className="step-controls__count" title={label}>
-				{playing ? "▶" : step} / {steps}
+				{playing ? "▶" : `${step + 1} / ${steps + 1}`}
 			</span>
 			<button
 				type="button"
@@ -215,6 +231,15 @@ export default function SessionPreview() {
 	const board = block?.kind === "drill" ? library.getBoard(block.boardId) : undefined;
 	const steps = board?.steps.length ?? 0;
 
+	// Play or pause; at the last step, Play starts again from the first.
+	const togglePlay = () => {
+		if (!playing && step === steps) setStep(0);
+		setPlaying(!playing);
+	};
+	// The keyboard handler is set up once per block: it calls the current toggle.
+	const toggleRef = useRef(togglePlay);
+	toggleRef.current = togglePlay;
+
 	// A new block starts from the beginning, playing.
 	useEffect(() => {
 		setStep(0);
@@ -239,7 +264,7 @@ export default function SessionPreview() {
 				setStep((s) => Math.max(0, Math.min(steps, s + (e.key === "ArrowRight" ? 1 : -1))));
 			} else if (e.key === " " && steps) {
 				e.preventDefault();
-				setPlaying((p) => !p);
+				toggleRef.current();
 			} else if (e.key === "Escape") {
 				goBack();
 			}
@@ -386,14 +411,22 @@ export default function SessionPreview() {
 								onPointerMove={wake}
 								onPointerLeave={() => setIdle(true)}
 							>
-								<PlayingBoard board={board} playing={playing} step={step} />
+								<PlayingBoard
+									board={board}
+									playing={playing}
+									step={step}
+									onDone={() => {
+										setPlaying(false);
+										setStep(steps);
+									}}
+								/>
 								{steps > 0 && (
 									<FieldOverlay>
 									<StepControls
 										steps={steps}
 										step={step}
 										playing={playing}
-										onPlay={() => setPlaying((p) => !p)}
+										onPlay={togglePlay}
 										onStep={(s) => {
 											setPlaying(false);
 											setStep(Math.max(0, Math.min(steps, s)));

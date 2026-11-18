@@ -140,7 +140,7 @@ function BoardCard({
 		folderLabel(board.meta.folders),
 		board.notes.duration,
 		board.steps.length > 0 &&
-			`${board.steps.length} step${board.steps.length > 1 ? "s" : ""}`,
+			`${board.steps.length + 1} steps`,
 		`Edited ${relativeTime(board.meta.updatedAt)}`,
 	].filter(Boolean);
 	const { openMenu } = useContextMenu();

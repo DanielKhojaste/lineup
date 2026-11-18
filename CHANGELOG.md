@@ -13,7 +13,7 @@ This project adheres to semantic versioning (0.x during early development).
 - **Teams with a sport**: a team can play more than one sport ("U12 Girls" in soccer and in basketball shows as two rows, each with the sport's letter: S for soccer, B for basketball; two letters only when sports share one, like FU for futsal and FH for field hockey). A new team takes the sport of its session, plan or attached board; with nothing to go by, a row of sports asks which (or Skip). Teams saved before take their sport from the sessions and plans they're on
 - The calendar's **sidebar**: the month in numbers at the top (practices, matches, events), then the next item as a briefing (when, where, how long, its session's boards, Edit and Preview), and **Topics covered in November** (the month shown) at the bottom, the top five with bars. It follows the month you're looking at
 - The **Attach** window: boards have the same search and sport filter as sessions, both tabs list the folders on the left (only the ones with something for the sport picked, with counts), the sport stays when switching tabs, and a match opens on **Board**
-- Session preview: the animation's controls sit in the field's bottom-left corner (play, back, "3 / 8" counting from 0, forward) and fade out when the pointer is still, so they don't cover the players
+- Session preview: the animation's controls sit in the field's bottom-left corner (play, back, "3 / 8", forward) and fade out when the pointer is still, so they don't cover the players
 - **Session details:** export or print a session with a page per drill: page 1 has the session's facts, timeline and an outline of every block (with the page each drill is on), then each drill gets a large diagram, what happens, coaching points as tick boxes, progressions and room for notes. It's under **Export** and **Print** next to the one-page **Session summary**, with the ink saver too
 - Calendar: a busy day in the month view shows its first three items and **+N more**, which lists everything on that day (with a search when there's a lot)
 - **Lots of teams:** the Team box lists eight, then **Show all N teams…**; the calendar's Team filter lists the ten you use most, then **Show all teams…**. Both open a window with every team and a search
@@ -32,6 +32,8 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Changed
 
+- Animation steps are counted from **1** everywhere: the starting position is step 1 (the board's step chips read 1, 2, 3, 4; a play with three moves has four steps)
+- Session preview: a play runs once and stops on its last step (Play starts it again from step 1). While it plays, the controls show just ▶
 - Time boxes are one box: type a time (6p, 630, 18:30) or pick from the half hours under it
 - Session preview: the key hints (Blocks, Steps, Play) show in the smallest window again. A long title shrinks first, then hints that don't fit drop out whole, never cut in half; layout tests check 960×600, 1100×720 and 1440×900
 - Library: **Boards**, **Sessions** and **Plans** each have sport chips at the top (the sport stays when moving between them). The board-type chips (Drills, Plays…) are gone; folders and sports show **All / Boards / Sessions** when they have both

@@ -410,7 +410,7 @@ function StepFields({ nodes }: { nodes: BoardNode[] }) {
 	const curved = moving.filter((n) => step.moves[n.id].via?.length);
 
 	return (
-		<Section title={`Step ${state.step}`}>
+		<Section title={`Step ${state.step + 1}`}>
 			<p className="muted">
 				{moving.length === 0
 					? nodes.length === 1

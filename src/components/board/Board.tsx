@@ -919,7 +919,7 @@ export default function Board() {
 				aria-label={`Pitch with ${board.nodes.length} markers and ${
 					board.drawings.length
 				} drawings${
-					board.steps.length ? `, animated in ${board.steps.length} steps` : ""
+					board.steps.length ? `, animated in ${board.steps.length + 1} steps` : ""
 				}`}
 				onPointerDown={onPointerDown}
 				onPointerMove={onPointerMove}
