@@ -70,6 +70,11 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Fixed
 
+- Printing no longer prints the theme's moving background (Dune's spice and the like) over the page
+- Exported PDFs: text can be selected, copied and searched (an invisible text layer over the page); pictures are sharper (about 290 dpi instead of 190) and files much smaller (a 17 MB export is now under 1 MB)
+- Player names on exported and printed diagrams are white with a dark edge again (they came out black on the grass), and bigger
+- The minutes under the session timeline no longer overlap at the end ("70" beside "71 min")
+- Exports and prints with the ink saver are named "Session (ink saver)"; Session details "Session (details)"
 - Team names lose stray spaces ("BU10 Black   " is "BU10 Black"), and a name you type that's already saved, in any capitals, picks the saved team
 - Desktop app: preferences (player and equipment sizes, colours…) are also kept in the app's own data folder (`Lineup/settings.json`), so they're the same in every build, dev and installed. The file has a version and when it changed, ready to sync with an account later
 - Theme effects (spice, desert night) never draw over any picture of a board, including the session preview's

@@ -36,6 +36,22 @@ const stageName = (stage: string) => stage.replace(/\s+\d+$/, "");
  * exported as an image from the same layout. The ink saver draws the pitches
  * white, for home printers.
  */
+/**
+ * The minutes under the timeline: where each block starts, leaving out any too
+ * close to the one before or to "0" and the end ("70" beside "71 min").
+ */
+export function axisTicks(starts: { id: string; at: number }[], minutes: number): { id: string; at: number }[] {
+	const shown: { id: string; at: number }[] = [];
+	let last = 0;
+	for (const t of starts) {
+		const f = t.at / minutes;
+		if (t.at <= 0 || f - last / minutes < 0.06 || f > 0.9) continue;
+		shown.push(t);
+		last = t.at;
+	}
+	return shown;
+}
+
 /** Summary: the whole session, usually on one page. Details: an outline, then a page per drill. */
 export type SheetLayout = "summary" | "details";
 
@@ -111,14 +127,14 @@ export function SessionSheetContent({
 						</div>
 						<div className="sheet__axis">
 							<span>0</span>
-							{timed
-								.filter(({ b }) => b.kind !== "break")
-								.slice(1)
-								.map(({ b, i }) => (
-									<span key={b.id} style={{ left: `${(times[i].from / minutes) * 100}%` }}>
-										{times[i].from}
-									</span>
-								))}
+							{axisTicks(
+								timed.filter(({ b }) => b.kind !== "break").map(({ b, i }) => ({ id: b.id, at: times[i].from })),
+								minutes,
+							).map(({ id, at }) => (
+								<span key={id} style={{ left: `${(at / minutes) * 100}%` }}>
+									{at}
+								</span>
+							))}
 							<span className="sheet__axis-end">{minutes} min</span>
 						</div>
 					</>

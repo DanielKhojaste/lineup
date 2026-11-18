@@ -2986,6 +2986,12 @@ fieldset.field {
 	border-radius: 5px;
 }
 
+/* Names under players are small once a whole pitch shrinks onto paper: bigger on the sheet. */
+.sheet__diagram .marker__caption {
+	font-size: 19px;
+	stroke-width: 4.5px;
+}
+
 .sheet--ink .sheet__diagram svg {
 	box-shadow: inset 0 0 0 1px #c9d6cc;
 	outline: 1px solid #c9d6cc;
@@ -3233,7 +3239,9 @@ fieldset.field {
 	}
 
 	#root > * > :not(.print-sheet),
-	.context-menu {
+	.context-menu,
+	/* The theme's moving background (spice, stars…) never prints. */
+	.theme-effect {
 		display: none !important;
 	}
 

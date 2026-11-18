@@ -114,6 +114,13 @@ function PlayerMarker({ node, selected, board }: MarkerProps<PlayerNode>) {
 					className="marker__caption"
 					y={PLAYER_RADIUS + 16}
 					textAnchor="middle"
+					// Also as attributes: exported pictures lose the stylesheet's paint order,
+					// which turned names black on the grass.
+					fill="#fff"
+					stroke="#0b1a12"
+					strokeWidth={3.5}
+					strokeLinejoin="round"
+					paintOrder="stroke"
 				>
 					{caption}
 				</text>

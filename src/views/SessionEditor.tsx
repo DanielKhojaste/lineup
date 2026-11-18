@@ -9,7 +9,7 @@ import SessionSheet, { SheetLayout } from "../components/session/SessionSheet";
 import Timeline from "../components/session/Timeline";
 import { isTextField } from "../components/ui/ContextMenu";
 import { Menu } from "../components/ui/Menu";
-import { useSessionExport } from "../export/useSessionExport";
+import { exportName, useSessionExport } from "../export/useSessionExport";
 import { exportSessionDocument } from "../storage/files";
 import { isEmptySession, Session, sessionTitle } from "../model/session";
 import { drillsOf } from "../model/sessionFile";
@@ -36,6 +36,14 @@ function SessionLayout() {
 	const [printAs, setPrintAs] = useState<{ ink: boolean; layout: SheetLayout }>({ ink: false, layout: "summary" });
 	const printSheet = (ink: boolean, layout: SheetLayout = "summary") => {
 		flushSync(() => setPrintAs({ ink, layout }));
+		// "Save as PDF" suggests the window's title as the file name: "Cool session (ink saver)".
+		const before = document.title;
+		document.title = exportName(sessionTitle(state.session), { ink, layout });
+		const restore = () => {
+			document.title = before;
+			window.removeEventListener("afterprint", restore);
+		};
+		window.addEventListener("afterprint", restore);
 		window.print();
 	};
 	// An empty new session isn't saved; leaving it empty drops it from the library.

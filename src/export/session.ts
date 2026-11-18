@@ -8,8 +8,8 @@ import { Board } from "../model/types";
 /** A4 at 96 dpi: the sheet is laid out 794 px wide; a page is 1123 px tall. */
 const PAGE_WIDTH = 794;
 const PAGE_HEIGHT = 1123;
-/** Pictures are taken at twice the size so text and diagrams stay sharp. */
-const SCALE = 2;
+/** Pictures are taken at three times the size (about 290 dpi) so small names stay sharp. */
+const SCALE = 3;
 /** Space kept clear at the top and bottom of each page (the sheet's own padding covers page 1's top). */
 const PAGE_MARGIN = 32;
 
@@ -26,10 +26,64 @@ export interface SheetOptions {
 	layout?: SheetLayout;
 }
 
+/** A line of text on the sheet and where it is, in sheet pixels. */
+export interface TextRun {
+	text: string;
+	x: number;
+	y: number;
+	width: number;
+	height: number;
+}
+
 interface RenderedSheet {
 	canvas: HTMLCanvasElement;
 	/** Where each part of the sheet (the top, each activity) starts and ends, in sheet pixels. */
 	parts: SheetPart[];
+	/** The sheet's text, line by line, for a PDF's selectable (invisible) text. */
+	text: TextRun[];
+}
+
+/**
+ * Every line of text in the sheet with its box: each word is measured, and
+ * words side by side on one line become one run.
+ */
+function textRuns(sheet: HTMLElement): TextRun[] {
+	const origin = sheet.getBoundingClientRect();
+	const runs: TextRun[] = [];
+	const walker = document.createTreeWalker(sheet, NodeFilter.SHOW_TEXT);
+	const range = document.createRange();
+	for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+		const value = node.nodeValue ?? "";
+		if (!value.trim()) continue;
+		let run: TextRun | null = null;
+		for (const m of value.matchAll(/\S+/g)) {
+			range.setStart(node, m.index!);
+			range.setEnd(node, m.index! + m[0].length);
+			const r = range.getBoundingClientRect();
+			if (!r.width || !r.height) continue;
+			const word = { x: r.left - origin.left, y: r.top - origin.top, width: r.width, height: r.height };
+			if (run && Math.abs(run.y - word.y) < run.height / 2 && word.x >= run.x + run.width - 1) {
+				run.text += ` ${m[0]}`;
+				run.width = word.x + word.width - run.x;
+			} else {
+				if (run) runs.push(run);
+				run = { text: m[0], ...word };
+			}
+		}
+		if (run) runs.push(run);
+	}
+	return runs;
+}
+
+/** The PDF's built-in font only has Western European letters: swap or drop the rest. */
+const WIN_ANSI_EXTRA = "€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ";
+function pdfSafe(text: string): string {
+	return text
+		.replace(/[→⟶]/g, "->")
+		.replace(/[←]/g, "<-")
+		.replace(/[−]/g, "-")
+		.replace(/[✓✔]/g, "v")
+		.replace(/./gu, (c) => (c.charCodeAt(0) <= 0xff || WIN_ANSI_EXTRA.includes(c) ? c : "?"));
 }
 
 /** Draw the session sheet off screen and take a picture of it. */
@@ -52,12 +106,13 @@ async function renderSheet(
 			const r = el.getBoundingClientRect();
 			return { top: r.top - origin, bottom: r.bottom - origin, newPage: el.hasAttribute("data-new-page") };
 		});
+		const text = textRuns(sheet);
 		const canvas = await toCanvas(sheet, {
 			pixelRatio: SCALE,
 			backgroundColor: "#ffffff",
 			width: PAGE_WIDTH,
 		});
-		return { canvas, parts };
+		return { canvas, parts, text };
 	} finally {
 		root.unmount();
 		host.remove();
@@ -119,12 +174,18 @@ export async function sessionToPdf(
 	getBoard: (id: string) => Board | undefined,
 	options: SheetOptions = {},
 ): Promise<Uint8Array> {
-	const [{ canvas, parts }, { jsPDF }] = await Promise.all([
+	const [{ canvas, parts, text }, { jsPDF }] = await Promise.all([
 		renderSheet(session, getBoard, options),
 		import("jspdf"),
 	]);
 	const height = canvas.height / SCALE;
-	const pdf = new jsPDF({ unit: "px", format: [PAGE_WIDTH, PAGE_HEIGHT], hotfixes: ["px_scaling"] });
+	const pdf = new jsPDF({
+		unit: "px",
+		format: [PAGE_WIDTH, PAGE_HEIGHT],
+		hotfixes: ["px_scaling"],
+		compress: true,
+	});
+	pdf.setFont("helvetica", "normal");
 	pageBreaks(parts, height).forEach(({ start, end }, i) => {
 		const page = document.createElement("canvas");
 		page.width = PAGE_WIDTH * SCALE;
@@ -145,7 +206,20 @@ export async function sessionToPdf(
 		);
 		if (i > 0) pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
 		const top = i === 0 ? 0 : PAGE_MARGIN;
-		pdf.addImage(page.toDataURL("image/png"), "PNG", 0, top, PAGE_WIDTH, end - start);
+		pdf.addImage(page, "PNG", 0, top, PAGE_WIDTH, end - start, `page-${i}`, "FAST");
+		// The text again, invisible, over the picture: it can be selected, copied and searched.
+		for (const run of text) {
+			const mid = run.y + run.height / 2;
+			if (mid < start || mid >= end) continue;
+			const safe = pdfSafe(run.text);
+			const size = run.height / 1.2;
+			pdf.setFontSize(size * 0.75);
+			const natural = pdf.getTextWidth(safe);
+			pdf.text(safe, run.x, run.y - start + top + run.height * 0.8, {
+				renderingMode: "invisible",
+				horizontalScale: natural > 0 ? run.width / natural : 1,
+			});
+		}
 	});
 	return new Uint8Array(pdf.output("arraybuffer"));
 }

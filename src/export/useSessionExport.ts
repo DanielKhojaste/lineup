@@ -4,6 +4,12 @@ import { useLibrary } from "../state/LibraryContext";
 import { exportSessionFile } from "../storage/files";
 import { SheetOptions, sessionToPdf, sessionToPng } from "./session";
 
+/** The suggested file name: "Cool session", "Cool session (ink saver)", "Cool session (details, ink saver)". */
+export function exportName(title: string, { layout, ink }: SheetOptions): string {
+	const extras = [layout === "details" ? "details" : "", ink ? "ink saver" : ""].filter(Boolean);
+	return extras.length ? `${title} (${extras.join(", ")})` : title;
+}
+
 /** Export a session sheet as a PDF or an image, with a busy flag and any error to show. */
 export function useSessionExport() {
 	const library = useLibrary();
@@ -20,7 +26,7 @@ export function useSessionExport() {
 					? await sessionToPdf(session, library.getBoard, options)
 					: await sessionToPng(session, library.getBoard, options);
 			const title = sessionTitle(session);
-			await exportSessionFile(options.layout === "details" ? `${title} - details` : title, kind, bytes);
+			await exportSessionFile(exportName(title, options), kind, bytes);
 		} catch (e) {
 			setError(`Export failed: ${(e as Error).message || e}`);
 		} finally {
