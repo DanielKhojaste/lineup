@@ -4288,12 +4288,31 @@ input.plan-topic__title {
 	/* A stronger tint of the item's colour down its left edge. */
 	--entry-strip: color-mix(in srgb, var(--entry-kind) 60%, var(--entry-bg));
 	box-shadow: inset 3px 0 0 var(--entry-strip);
-	transition: background-color var(--hover-duration) ease;
+	transition: box-shadow var(--hover-duration) ease;
 }
 
-/* Hover: the item's background gets a touch stronger (Tint, picked in updates-302). */
+/* Hover: a thin outline in the item's own text colour (Ring, picked in updates-401;
+   Tint and Lift are kept on archive/calendar-hover). */
 .calendar__entry:hover {
-	background: color-mix(in srgb, var(--entry-ink) 12%, var(--entry-bg));
+	box-shadow:
+		inset 3px 0 0 var(--entry-strip),
+		inset 0 0 0 1.5px color-mix(in srgb, var(--entry-ink) 60%, transparent);
+}
+
+/* "+3 more" on a busy day in the month view. */
+.calendar__more {
+	align-self: flex-start;
+	padding: 1px 6px;
+	border-radius: 4px;
+	color: var(--text-muted);
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.calendar__more:hover,
+.calendar__more:focus-visible {
+	background: var(--hover);
+	color: var(--text);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -5688,4 +5707,102 @@ div.plan-outline__week {
 .swatch-pick--custom:focus-within {
 	outline: 2px solid var(--accent);
 	outline-offset: 2px;
+}
+
+/* --------- Show all: a window listing everything a list had to cut short --------- */
+.dialog--show-all {
+	width: min(460px, calc(100vw - 32px));
+}
+
+.show-all {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	min-height: 0;
+}
+
+.show-all > .search {
+	flex: none;
+	margin-left: 0;
+}
+
+.show-all__list {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	max-height: min(420px, 60vh);
+	margin: 0;
+	padding: 0;
+	overflow-y: auto;
+	list-style: none;
+}
+
+.show-all__item {
+	display: block;
+	width: 100%;
+	padding: 7px 10px;
+	border-radius: 6px;
+	text-align: left;
+}
+
+.show-all__item:hover,
+.show-all__item:focus-visible {
+	background: var(--hover);
+}
+
+.show-all__text {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.show-all__text.is-current {
+	font-weight: 600;
+}
+
+.show-all__text.is-current::after {
+	content: " ✓";
+	color: var(--accent);
+}
+
+/* A day's items: time, title, then kind · team · place, with the item's colour down the side. */
+.show-all__entry {
+	--entry-kind: var(--text-muted);
+	display: grid;
+	grid-template-columns: 48px minmax(0, 1fr);
+	column-gap: 10px;
+	padding-left: 8px;
+	box-shadow: inset 3px 0 0 color-mix(in srgb, var(--entry-kind) 70%, transparent);
+}
+
+.show-all__entry--match {
+	--entry-kind: #a66fe0;
+}
+
+.show-all__entry--event {
+	--entry-kind: #4f8fd6;
+}
+
+.show-all__time {
+	grid-row: span 2;
+	align-self: center;
+	color: var(--text-muted);
+	font-size: 12px;
+}
+
+.show-all__meta {
+	font-size: 12px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.team-field__more {
+	position: sticky;
+	bottom: -4px;
+	border-top: 1px solid var(--border);
+	background: var(--raised);
+	color: var(--text-muted);
+	font-style: italic;
 }

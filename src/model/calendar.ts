@@ -281,7 +281,7 @@ export function parseCalendar(source: string): CalendarData {
 				date: e.date,
 				time: isStr(e.time) && CLOCK.test(e.time) ? e.time : null,
 				sessionId: kind === "session" && isStr(e.sessionId) ? e.sessionId : "",
-				team: isStr(e.team) ? e.team.slice(0, 120) : "",
+				team: isStr(e.team) ? e.team.trim().replace(/\s+/g, " ").slice(0, 120) : "",
 				location: isStr(e.location) ? e.location.slice(0, 120) : "",
 				color: isStr(e.color) && /^#[0-9a-f]{6}$/i.test(e.color) ? e.color : "",
 				planId: isStr(e.planId) ? e.planId : null,

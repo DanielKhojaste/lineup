@@ -9,6 +9,7 @@ import PlanToCalendarDialog from "../components/plan/PlanToCalendarDialog";
 import { ContextMenuEntry, useContextMenu } from "../components/ui/ContextMenu";
 import { ConfirmDialog, Modal } from "../components/ui/Dialog";
 import EventDialog from "../components/calendar/EventDialog";
+import ShowAllDialog from "../components/ui/ShowAllDialog";
 import ColorSwatches from "../components/calendar/ColorSwatches";
 import { usePreferences } from "../state/preferences";
 import {
@@ -25,6 +26,7 @@ import {
 	startOfWeek,
 	parseISODate,
 	sortEntries,
+	longDay,
 	statusOf,
 	toISODate,
 	WEEKDAYS,
@@ -413,6 +415,21 @@ export default function Calendar() {
 		() => [...new Set(library.calendar.map((e) => e.team).filter(Boolean))].sort(),
 		[library.calendar],
 	);
+	// With many teams the filter lists the most used ten, then "Show all teams…".
+	const TEAM_LIMIT = 10;
+	const topTeams = useMemo(() => {
+		const uses = new Map<string, number>();
+		for (const e of library.calendar) if (e.team) uses.set(e.team, (uses.get(e.team) ?? 0) + 1);
+		const top = [...uses.entries()]
+			.sort((a, b) => b[1] - a[1])
+			.slice(0, TEAM_LIMIT)
+			.map(([t]) => t);
+		return top.sort((a, b) => a.localeCompare(b));
+	}, [library.calendar]);
+	const [showAllTeams, setShowAllTeams] = useState(false);
+	// How many items a day shows in the month view before "+N more".
+	const DAY_LIMIT = 4;
+	const [showDay, setShowDay] = useState<string | null>(null);
 	// Several sports on one calendar: each session shows its sport's colour,
 	// and the sports can be shown one at a time.
 	const sportOf = (e: CalendarEntry) => library.getSession(e.sessionId)?.header.sport;
@@ -569,13 +586,21 @@ export default function Calendar() {
 				{teams.length > 0 && (
 					<label className="sort">
 						<span className="muted">Team</span>
-						<select className="field__input" value={team} onChange={(e) => setTeam(e.target.value)}>
+						<select
+							className="field__input"
+							value={team}
+							onChange={(e) => (e.target.value === "__show-all" ? setShowAllTeams(true) : setTeam(e.target.value))}
+						>
 							<option value="all">All teams</option>
-							{teams.map((t) => (
+							{(teams.length > TEAM_LIMIT
+								? [...new Set([...topTeams, ...(team !== "all" ? [team] : [])])]
+								: teams
+							).map((t) => (
 								<option key={t} value={t}>
 									{t}
 								</option>
 							))}
+							{teams.length > TEAM_LIMIT && <option value="__show-all">Show all {teams.length} teams…</option>}
 						</select>
 					</label>
 				)}
@@ -650,7 +675,10 @@ export default function Calendar() {
 						))}
 						{days.map((day) => {
 							const iso = toISODate(day);
-							const list = byDay.get(iso) ?? [];
+							const all = sortEntries(byDay.get(iso) ?? []);
+							// A busy day shows the first few and "+N more", which lists the whole day.
+							const list =
+								mode === "month" && all.length > DAY_LIMIT ? all.slice(0, DAY_LIMIT - 1) : all;
 							const outside = mode === "month" && day.getMonth() !== month.month;
 							return (
 								<div
@@ -742,6 +770,16 @@ export default function Calendar() {
 												))}
 										</button>
 									))}
+									{list.length < all.length && (
+										<button
+											type="button"
+											className="calendar__more"
+											onClick={() => setShowDay(iso)}
+											title="Show everything on this day"
+										>
+											+{all.length - list.length} more
+										</button>
+									)}
 								</div>
 							);
 						})}
@@ -781,6 +819,53 @@ export default function Calendar() {
 				</aside>
 			</div>
 
+			{showDay && (
+				<ShowAllDialog
+					title={longDay(showDay)}
+					items={sortEntries(byDay.get(showDay) ?? [])}
+					itemKey={(e) => e.id}
+					itemText={(e) => [entryTitle(e), e.team, e.location].join(" ")}
+					searchPlaceholder="Search this day"
+					empty="Nothing on this day."
+					renderItem={(e) => (
+						<span className={`show-all__entry show-all__entry--${e.kind}`} style={colorStyle(e)}>
+							<span className="show-all__time mono">{e.time || "—"}</span>
+							<span className="show-all__text">{entryTitle(e)}</span>
+							<span className="show-all__meta muted">
+								{[
+									e.kind === "match" ? (e.away ? "Away" : "Home") : e.kind === "event" ? "Event" : STATUS_LABEL[statusOf(e, today)],
+									e.team,
+									e.location,
+								]
+									.filter(Boolean)
+									.join(" · ")}
+							</span>
+						</span>
+					)}
+					onPick={(e) => {
+						setShowDay(null);
+						openEntry(e);
+					}}
+					onClose={() => setShowDay(null)}
+				/>
+			)}
+			{showAllTeams && (
+				<ShowAllDialog
+					title="Show one team"
+					items={["all", ...teams]}
+					itemKey={(t) => t}
+					itemText={(t) => (t === "all" ? "All teams" : t)}
+					renderItem={(t) => (
+						<span className={`show-all__text${t === team ? " is-current" : ""}`}>{t === "all" ? "All teams" : t}</span>
+					)}
+					searchPlaceholder="Search teams"
+					onPick={(t) => {
+						setTeam(t);
+						setShowAllTeams(false);
+					}}
+					onClose={() => setShowAllTeams(false)}
+				/>
+			)}
 			{editing && editing.kind !== "session" && (
 				<EventDialog
 					key={editing.id}

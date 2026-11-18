@@ -1,6 +1,7 @@
 import { useId, useMemo, useRef, useState } from "react";
 import { useLibrary } from "../../state/LibraryContext";
 import { useGestureHandlers } from "./fields";
+import ShowAllDialog from "./ShowAllDialog";
 
 /**
  * A team or age group: pick one of the coach's saved teams from the list
@@ -40,11 +41,20 @@ export default function TeamField({
 			.sort((a, b) => Number(!a.toLowerCase().startsWith(q)) - Number(!b.toLowerCase().startsWith(q)));
 	}, [library.teams, value, typed]);
 
+	/** "BU10 Black   " is "BU10 Black", and a saved team with the same name (any capitals) is that team. */
+	const tidy = (team: string) => {
+		const t = team.trim().replace(/\s+/g, " ");
+		return library.teams.find((x) => x.toLowerCase() === t.toLowerCase()) ?? t;
+	};
 	const save = (team: string) => {
-		const t = team.trim();
+		const t = tidy(team);
+		if (t !== team) onChange(t);
 		if (t) void library.addTeams([t]);
 	};
+	const [showAll, setShowAll] = useState(false);
+	const LIMIT = 8;
 	const pick = (team: string) => {
+		setShowAll(false);
 		onChange(team);
 		save(team);
 		setOpen(false);
@@ -103,7 +113,7 @@ export default function TeamField({
 			/>
 			{show && (
 				<ul className="team-field__list" id={`${id}-list`} role="listbox" ref={listRef}>
-					{options.slice(0, 8).map((t, i) => (
+					{options.slice(0, LIMIT).map((t, i) => (
 						<li
 							key={t}
 							role="option"
@@ -119,7 +129,33 @@ export default function TeamField({
 							{t}
 						</li>
 					))}
+					{options.length > LIMIT && (
+						<li
+							role="option"
+							aria-selected={false}
+							className="team-field__option team-field__more"
+							onMouseDown={(e) => {
+								e.preventDefault();
+								setOpen(false);
+								setShowAll(true);
+							}}
+						>
+							Show all {options.length} teams…
+						</li>
+					)}
 				</ul>
+			)}
+			{showAll && (
+				<ShowAllDialog
+					title="Teams"
+					items={options}
+					itemKey={(t) => t}
+					itemText={(t) => t}
+					renderItem={(t) => <span className="show-all__text">{t}</span>}
+					searchPlaceholder="Search teams"
+					onPick={pick}
+					onClose={() => setShowAll(false)}
+				/>
 			)}
 		</div>
 	);

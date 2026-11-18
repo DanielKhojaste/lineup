@@ -10,6 +10,8 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Added
 
+- Calendar: a busy day in the month view shows its first three items and **+N more**, which lists everything on that day (with a search when there's a lot)
+- **Lots of teams:** the Team box lists eight, then **Show all N teams…**; the calendar's Team filter lists the ten you use most, then **Show all teams…**. Both open a window with every team and a search
 - **Teams**: pick a saved team from the list under any Team box (sessions, plans, the calendar), or type a new one, which is saved for next time. **Settings › Teams** lists them to add or remove. Your library's existing teams are there from the start
 - Calendar: an optional **Location** for every item, shown on it, in its tooltip and under Coming up
 - Calendar **colours**: a colour for practices, matches and events in **Settings › Calendar colours**, and any item can have its own, including any custom colour
@@ -24,6 +26,7 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Changed
 
+- Calendar items get a thin outline in their own colour on hover (Ring), instead of a stronger background
 - **Printed and exported sessions** (the summary): the facts in one line, a timeline of the whole session coloured by part, each drill's diagram zoomed to the area it uses with its focus points as tick boxes, the other blocks as clear rows in full ink, and room for notes. **Print with ink saver** and **PDF document, ink saver** draw the pitches white with soft lines, for printing at home
 - Times are picked as hour, minutes and AM or PM (PM until you pick otherwise; computers set to 24-hour times get 0–23 and no AM/PM)
 - Windows focus what they're meant to: e.g. Save when opening a practice, not the first field
@@ -66,6 +69,7 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Fixed
 
+- Team names lose stray spaces ("BU10 Black   " is "BU10 Black"), and a name you type that's already saved, in any capitals, picks the saved team
 - Desktop app: preferences (player and equipment sizes, colours…) are also kept in the app's own data folder (`Lineup/settings.json`), so they're the same in every build, dev and installed. The file has a version and when it changed, ready to sync with an account later
 - Theme effects (spice, desert night) never draw over any picture of a board, including the session preview's
 - Printed and exported sessions: cones no longer sit on black discs and players no longer have thick dark rings (the board's hidden hover ring showed up where the app's styles don't reach)
