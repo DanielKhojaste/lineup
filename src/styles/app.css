@@ -5852,6 +5852,12 @@ div.plan-outline__week {
 	font-size: 12px;
 }
 
+.design-switcher__body {
+	/* Scrolls inside rather than growing over the sidebar in a small window. */
+	max-height: min(60vh, 520px);
+	overflow-y: auto;
+}
+
 .design-switcher__head {
 	display: flex;
 	align-items: center;
