@@ -859,7 +859,7 @@ export default function Calendar() {
 					empty="Nothing on this day."
 					renderItem={(e) => (
 						<span className={`show-all__entry show-all__entry--${e.kind}`} style={colorStyle(e)}>
-							<span className="show-all__time mono">{e.time ? showTime(e.time, uses12Hours()) : "—"}</span>
+							<span className="show-all__time mono">{e.time ? showTime(e.time, uses12Hours()) : "TBD"}</span>
 							<span className="show-all__text">{entryTitle(e)}</span>
 							<span className="show-all__meta muted">
 								{[

@@ -254,7 +254,7 @@ export default function SessionHeaderForm() {
 				>
 					<BoardInput
 						label="Title"
-						placeholder="e.g. Playing out from the back"
+						placeholder="e.g., Playing out from the back"
 						maxLength={120}
 						required
 						aria-invalid={titleTouched && missingTitle}

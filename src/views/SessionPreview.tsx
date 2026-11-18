@@ -4,7 +4,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import BoardPreview from "../components/board/BoardPreview";
 import { Icon } from "../components/Icon";
 import Loader from "../components/Loader";
-import { boardAtStep, nodesDuringStep, stepAtTime, totalDuration } from "../model/animation";
+import { boardAtStep, nodesDuringStep, startOfStep, stepAtTime, totalDuration } from "../model/animation";
 import { BOARD_TYPE_LABELS } from "../model/board";
 import {
 	blockStages,
@@ -25,7 +25,7 @@ import { useLibrary } from "../state/LibraryContext";
  * Preview button or its menu in the library.
  */
 
-/** A play, moving: its markers part-way through the animation, once through; then `onDone`. */
+/** A play, moving from the step showing to the end; then `onDone`. */
 function PlayingBoard({
 	board,
 	playing,
@@ -46,7 +46,9 @@ function PlayingBoard({
 			return;
 		}
 		const length = totalDuration(board);
-		started.current = performance.now();
+		// From the step showing (step 2 plays on from step 2), or from the start at the end.
+		const from = step < board.steps.length ? startOfStep(board, step + 1) : 0;
+		started.current = performance.now() - from * 1000;
 		let raf = 0;
 		const frame = (now: number) => {
 			const time = (now - started.current) / 1000;

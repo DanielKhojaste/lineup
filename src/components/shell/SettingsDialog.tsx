@@ -274,7 +274,7 @@ export default function SettingsDialog({
 								>
 									<input
 										className="field__input"
-										placeholder="Name, e.g. Club colours"
+										placeholder="Name, e.g., Club colours"
 										aria-label="Theme name"
 										maxLength={40}
 										value={saveName}

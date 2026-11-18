@@ -1198,11 +1198,12 @@ export default function Library() {
 							<button
 								type="button"
 								className="icon-button select-bar__done"
-								aria-label="Done"
-								title="Done (Esc)"
+								// Nothing selected yet: an X to close, so it's clear how to leave.
+								aria-label={selectedCount ? "Done" : "Close"}
+								title={selectedCount ? "Done (Esc)" : "Close (Esc)"}
 								onClick={stopSelecting}
 							>
-								<Icon name="check" size={16} />
+								<Icon name={selectedCount ? "check" : "close"} size={16} />
 							</button>
 						</div>
 					)}

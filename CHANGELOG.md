@@ -8,6 +8,25 @@ This project adheres to semantic versioning (0.x during early development).
 
 ## [Unreleased]
 
+### Added
+
+- **Formation** is one of the parts of a session (with Warm-up, Activity, Small-sided game, Scrimmage and Cool-down), with its own colour on printed timelines
+
+### Changed
+
+- Session preview: Play carries on from the step showing (from step 2, it plays steps 2 to the end), and from the start when it's on the last step
+- Library: in select mode with nothing selected, the button that leaves it is an **X** (Close), not a tick
+- The session summary shows a drill's first five coaching points (and progressions), then "+3 more in Session details"
+- Session details: no line at the top of each drill's page or above its notes
+- Session preview: the key hints sit next to the buttons on the right; a long title ends in "…" with the same gap before them
+- A day's list of items says **TBD** for an item without a time
+- Examples say "e.g.," with a comma
+- The Barça–Real Madrid example's tag is "El Clásico"
+
+### Fixed
+
+- Printed and exported summaries: no gap between a drill's bullet points (a point that wrapped in the app but fitted on one line in the picture kept two lines' height)
+
 ---
 
 ## [0.9.0] - 2026-11-18

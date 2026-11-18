@@ -107,6 +107,14 @@ async function renderSheet(
 			return { top: r.top - origin, bottom: r.bottom - origin, newPage: el.hasAttribute("data-new-page") };
 		});
 		const text = textRuns(sheet);
+		// The picture copies each box's measured height, but can fit a line's
+		// words a hair differently: a bullet that wrapped in the app could fit on
+		// one line in the picture and leave a gap under it. Text boxes take the
+		// height their text needs instead.
+		const fit = document.createElement("style");
+		fit.textContent =
+			"p, li, ul, ol, .sheet__text, .sheet__info > div { height: auto !important; min-height: 0 !important; }";
+		sheet.prepend(fit);
 		const canvas = await toCanvas(sheet, {
 			pixelRatio: SCALE,
 			backgroundColor: "#ffffff",

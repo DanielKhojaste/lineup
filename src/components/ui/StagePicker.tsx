@@ -64,7 +64,7 @@ export default function StagePicker({
 						<BoardInput
 							label={`${label}: your own`}
 							hideLabel
-							placeholder="e.g. Technical, Rondo, Match"
+							placeholder="e.g., Technical, Rondo, Match"
 							maxLength={60}
 							autoFocus={typing && !custom}
 							value={value}

@@ -91,7 +91,7 @@ export default function TimeCombo({
 				role="combobox"
 				aria-expanded={open}
 				aria-autocomplete="list"
-				placeholder={twelve ? "e.g. 6:30 PM" : "e.g. 18:30"}
+				placeholder={twelve ? "e.g., 6:30 PM" : "e.g., 18:30"}
 				value={text}
 				onFocus={() => setOpen(true)}
 				onChange={(e) => {

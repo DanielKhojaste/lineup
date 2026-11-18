@@ -260,7 +260,7 @@ export default function NotesPanel() {
 				title="Variations and progressions"
 				itemLabel="Variation"
 				addLabel="+ Add a variation"
-				placeholder="e.g. Two touches only; add a second defender"
+				placeholder="e.g., Two touches only; add a second defender"
 			/>
 		</div>
 	);

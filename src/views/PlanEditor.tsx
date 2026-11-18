@@ -153,7 +153,7 @@ function WeekTopics({ topicIndex }: { topicIndex: number }) {
 					<input
 						className="chip-input week-topics__input"
 						aria-label={`Week ${topicIndex + 1} topics`}
-						placeholder={week.topics.length ? "+ Topic" : "+ Add topics, e.g. Pressing"}
+						placeholder={week.topics.length ? "+ Topic" : "+ Add topics, e.g., Pressing"}
 						value={draft}
 						maxLength={40}
 						onChange={(e) => setDraft(e.target.value)}

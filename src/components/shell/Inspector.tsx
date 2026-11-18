@@ -112,7 +112,7 @@ function PlayerFields({ players }: { players: PlayerNode[] }) {
 					/>
 					<BoardInput
 						label="Position"
-						placeholder="e.g. RW"
+						placeholder="e.g., RW"
 						maxLength={6}
 						value={single.label ?? ""}
 						onValue={(v) => update({ label: v || undefined })}

@@ -20,10 +20,17 @@ function stageTone(stage: string, block: SessionBlock): string {
 	const s = stage.toLowerCase();
 	if (/warm|activation|prep/.test(s)) return "warm";
 	if (/cool|talk|stretch|debrief/.test(s)) return "cool";
+	if (/formation|line-?up|shape|set piece/.test(s)) return "formation";
 	if (/game|scrimmage|match|small-sided|ssg/.test(s)) return "game";
 	if (block.kind === "drill" || /main|activity|technical|tactical|skill|drill/.test(s)) return "main";
 	return "other";
 }
+
+/**
+ * The summary keeps a drill beside its diagram: at most this many coaching
+ * points (and progressions), then "+3 more in Session details".
+ */
+const SUMMARY_POINTS = 5;
 
 /** "Warm-up 1" → "Warm-up": the part's name without its number. */
 const stageName = (stage: string) => stage.replace(/\s+\d+$/, "");
@@ -253,18 +260,24 @@ function SummaryBlocks({ session, getBoard, ink, times, stages }: PartsProps) {
 							{notes?.description && <p className="sheet__text">{notes.description}</p>}
 							{points.length > 0 && (
 								<ul className="sheet__ticks">
-									{points.map((p, j) => (
+									{points.slice(0, SUMMARY_POINTS).map((p, j) => (
 										<li key={j}>{p}</li>
 									))}
+									{points.length > SUMMARY_POINTS && (
+										<li className="sheet__more">+{points.length - SUMMARY_POINTS} more in Session details</li>
+									)}
 								</ul>
 							)}
 							{variations.length > 0 && (
 								<>
 									<div className="sheet__label">Progressions</div>
 									<ul className="sheet__list">
-										{variations.map((v, j) => (
+										{variations.slice(0, SUMMARY_POINTS).map((v, j) => (
 											<li key={j}>{v}</li>
 										))}
+										{variations.length > SUMMARY_POINTS && (
+											<li className="sheet__more">+{variations.length - SUMMARY_POINTS} more in Session details</li>
+										)}
 									</ul>
 								</>
 							)}

@@ -2831,6 +2831,7 @@ fieldset.field {
 	--tone-main: #2d6a48;
 	--tone-game: #3c6b93;
 	--tone-cool: #7a6aa8;
+	--tone-formation: #9a4f7c;
 	--tone-other: #5d6b7a;
 	--tone-break: #b8c1cb;
 }
@@ -2922,6 +2923,7 @@ fieldset.field {
 .sheet__tl--main { background: var(--tone-main); }
 .sheet__tl--game { background: var(--tone-game); }
 .sheet__tl--cool { background: var(--tone-cool); }
+.sheet__tl--formation { background: var(--tone-formation); }
 .sheet__tl--other { background: var(--tone-other); }
 .sheet__tl--break { background: var(--tone-break); }
 
@@ -2967,6 +2969,7 @@ fieldset.field {
 .sheet__stage--main { background: var(--tone-main); }
 .sheet__stage--game { background: var(--tone-game); }
 .sheet__stage--cool { background: var(--tone-cool); }
+.sheet__stage--formation { background: var(--tone-formation); }
 .sheet__stage--other { background: var(--tone-other); }
 .sheet__stage--break { background: #8d97a3; }
 
@@ -3059,6 +3062,19 @@ fieldset.field {
 	padding-left: 19px;
 }
 
+.sheet__more {
+	list-style: none;
+}
+
+.sheet__ticks li.sheet__more {
+	color: var(--sheet-muted);
+	font-style: italic;
+}
+
+.sheet__ticks li.sheet__more::before {
+	display: none;
+}
+
 .sheet__ticks li::before {
 	content: "";
 	position: absolute;
@@ -3086,6 +3102,7 @@ fieldset.field {
 .sheet__row--main { border-left-color: var(--tone-main); }
 .sheet__row--game { border-left-color: var(--tone-game); }
 .sheet__row--cool { border-left-color: var(--tone-cool); }
+.sheet__row--formation { border-left-color: var(--tone-formation); }
 .sheet__row--break { border-left-color: var(--tone-break); }
 
 .sheet__row-head {
@@ -3180,7 +3197,6 @@ fieldset.field {
 
 .sheet__page {
 	padding-top: 14px;
-	border-top: 1px solid #dfe4e9;
 }
 
 .sheet__page-top {
@@ -3210,6 +3226,8 @@ fieldset.field {
 
 .sheet__page-notes {
 	margin-top: 14px;
+	padding-top: 0;
+	border-top: 0;
 }
 
 /* Printing (Ctrl+P): only the sheet, at the page's width. */
@@ -4945,10 +4963,11 @@ option:disabled {
 .session-preview__keys {
 	flex: 0 1 auto;
 	flex-wrap: wrap;
+	justify-content: flex-end;
 	gap: 0;
 	min-width: 0;
 	height: 24px;
-	margin-right: 2px;
+	margin-right: 4px;
 	overflow: hidden;
 }
 
@@ -4961,7 +4980,9 @@ option:disabled {
 .session-preview__keygroup {
 	flex-shrink: 0;
 	height: 24px;
-	margin-right: 18px;
+	/* The space is on the left: the first keeps the gap after the title, and
+	   the last sits close to the buttons on the right. */
+	margin-left: 18px;
 }
 
 .topbar .session-preview__title {
