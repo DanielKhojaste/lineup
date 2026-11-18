@@ -2903,6 +2903,8 @@ fieldset.field {
 
 .sheet__tl {
 	display: flex;
+	flex: none;
+	box-sizing: border-box;
 	align-items: center;
 	min-width: 0;
 	padding: 0 6px;

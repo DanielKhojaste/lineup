@@ -27,6 +27,7 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Fixed
 
+- Printed timelines are to scale: each part's width is its share of the minutes (long names made some wider), so the minutes under it line up with its edges
 - Printed and exported summaries: no gap between a drill's bullet points (a point that wrapped in the app but fitted on one line in the picture kept two lines' height)
 
 ---

@@ -122,7 +122,8 @@ export function SessionSheetContent({
 								<span
 									key={b.id}
 									className={`sheet__tl sheet__tl--${stageTone(stages[i], b)}`}
-									style={{ flexGrow: b.minutes }}
+									// Exactly its share of the session, so the minutes under it line up with its edges.
+									style={{ width: `${(b.minutes / minutes) * 100}%` }}
 								>
 									{b.kind === "break"
 										? ""
