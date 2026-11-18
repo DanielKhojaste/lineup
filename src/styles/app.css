@@ -4934,16 +4934,41 @@ option:disabled {
 	white-space: nowrap;
 }
 
-/* In a small window the key hints go (they're in Settings › Keyboard shortcuts). */
-@media (max-width: 1150px) {
-	.session-preview__keys {
-		display: none;
-	}
-}
 
 /* Room between the shortcuts and the details switch beside them. */
 .session-preview__keys {
 	margin-right: 20px;
+}
+
+/* A long title shrinks first (down to 240px), then the key hints give way: a
+   group that doesn't fit drops to a hidden second row (Play first, then Steps,
+   then Blocks), never half shown. The empty ::before keeps the first row even
+   when no group fits. */
+.session-preview__keys {
+	flex: 0 1 auto;
+	flex-wrap: wrap;
+	gap: 0;
+	min-width: 0;
+	height: 24px;
+	margin-right: 2px;
+	overflow: hidden;
+}
+
+.session-preview__keys::before {
+	content: "";
+	width: 0;
+	height: 24px;
+}
+
+.session-preview__keygroup {
+	flex-shrink: 0;
+	height: 24px;
+	margin-right: 18px;
+}
+
+.topbar .session-preview__title {
+	flex: 0 30 auto;
+	min-width: min(240px, max-content);
 }
 
 /* With the details beside the drill or hidden, the drill takes all the room there is. */

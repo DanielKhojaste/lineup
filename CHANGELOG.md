@@ -27,6 +27,7 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Changed
 
+- Session preview: the key hints (Blocks, Steps, Play) show in the smallest window again. A long title shrinks first, then hints that don't fit drop out whole, never cut in half; layout tests check 960×600, 1100×720 and 1440×900
 - Library: **Boards**, **Sessions** and **Plans** each have sport chips at the top (the sport stays when moving between them). The board-type chips (Drills, Plays…) are gone; folders and sports show **All / Boards / Sessions** when they have both
 - "Drills" is now "boards" wherever it meant boards in general: session cards ("3 boards"), search boxes, the session's library panel, messages
 - "8 topics maximum" (was "Maximum 8 topics")

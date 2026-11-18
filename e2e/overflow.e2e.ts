@@ -133,3 +133,42 @@ test("long text ends in an ellipsis instead of widening its card", async ({ page
 	expect(style.cut).toBe(true);
 	expect(style.fits).toBe(true);
 });
+
+/** What the preview's key hints show: groups fully in view, and any cut in half. */
+async function keyHints(page: Page) {
+	return page.evaluate(() => {
+		const keys = document.querySelector(".session-preview__keys")!;
+		const box = keys.getBoundingClientRect();
+		const groups = [...keys.querySelectorAll(".session-preview__keygroup")].map((g) => g.getBoundingClientRect());
+		const inside = (r: DOMRect) =>
+			r.top >= box.top - 0.5 && r.bottom <= box.bottom + 0.5 && r.left >= box.left - 0.5 && r.right <= box.right + 0.5;
+		const outside = (r: DOMRect) => r.top >= box.bottom - 0.5 || r.left >= box.right - 0.5 || r.right <= box.left + 0.5;
+		const bar = document.querySelector(".topbar")!;
+		return {
+			shown: groups.filter(inside).length,
+			cut: groups.filter((r) => !inside(r) && !outside(r)).length,
+			barOverflows: bar.scrollWidth > bar.clientWidth + 1,
+		};
+	});
+}
+
+test.describe("session preview key hints", () => {
+	for (const size of [{ width: 960, height: 600 }, ...SIZES]) {
+		test(`show when there's room, never cut in half (${size.width}×${size.height})`, async ({ page }) => {
+			await page.setViewportSize(size);
+			await page.goto(`/session/${ids.cool}/preview`);
+			await page.waitForSelector(".session-preview__keys");
+			const normal = await keyHints(page);
+			expect(normal.barOverflows, "the top bar overflows").toBe(false);
+			expect(normal.cut, "a key hint is cut in half").toBe(0);
+			// A title of ordinary length leaves room for all three (Blocks, Steps, Play).
+			expect(normal.shown, "key hints shown with a short title").toBe(3);
+
+			await page.goto(`/session/${ids.long}/preview`);
+			await page.waitForSelector(".session-preview__keys");
+			const long = await keyHints(page);
+			expect(long.barOverflows, "the top bar overflows (long title)").toBe(false);
+			expect(long.cut, "a key hint is cut in half (long title)").toBe(0);
+		});
+	}
+});
