@@ -6501,3 +6501,78 @@ div.plan-outline__week {
 		display: none;
 	}
 }
+
+/* Calendar sidebar: next up at the top, the month's numbers in the middle, its topics at the bottom. */
+.agenda__month {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin-top: 8px;
+}
+
+.agenda__counts {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 6px;
+}
+
+.agenda__count {
+	--count-kind: var(--accent);
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+	padding: 8px 10px;
+	border-radius: 8px;
+	background: var(--sunken);
+	box-shadow: inset 0 3px 0 color-mix(in srgb, var(--count-kind) 70%, transparent);
+}
+
+.agenda__count--match {
+	--count-kind: #a66fe0;
+}
+
+.agenda__count--event {
+	--count-kind: #4f8fd6;
+}
+
+.agenda__count-n {
+	font-size: 20px;
+	font-weight: 700;
+	line-height: 1.2;
+	font-variant-numeric: tabular-nums;
+}
+
+.agenda__count-label {
+	color: var(--text-muted);
+	font-size: 12px;
+}
+
+.agenda__topics {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin-top: auto;
+	padding-top: 12px;
+	border-top: 1px solid var(--border);
+}
+
+.agenda__pills {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.agenda__pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 3px 9px;
+	border-radius: 999px;
+	background: var(--raised);
+	font-size: 12px;
+}
+
+.agenda__pill-n {
+	color: var(--text-muted);
+	font-variant-numeric: tabular-nums;
+}

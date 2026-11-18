@@ -17,6 +17,13 @@ export const PREVIEW_CHOICES = {
 			["corners", "B · Corner buttons"],
 		],
 	},
+	sidebar: {
+		label: "Calendar sidebar, the month's numbers",
+		options: [
+			["counts", "A · With practices, matches, events"],
+			["plain", "B · Without"],
+		],
+	},
 	time: {
 		label: "Time field",
 		options: [

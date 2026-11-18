@@ -8,6 +8,7 @@ import { Icon } from "../components/Icon";
 import PlanToCalendarDialog from "../components/plan/PlanToCalendarDialog";
 import { ContextMenuEntry, useContextMenu } from "../components/ui/ContextMenu";
 import { ConfirmDialog, Modal } from "../components/ui/Dialog";
+import { usePreviewChoice } from "../preview/designs";
 import ShowAllDialog from "../components/ui/ShowAllDialog";
 import ItemDialog from "../components/calendar/ItemDialog";
 import ColorSwatches from "../components/calendar/ColorSwatches";
@@ -500,12 +501,27 @@ export default function Calendar() {
 		for (const e of entries) map.set(e.date, [...(map.get(e.date) ?? []), e]);
 		return map;
 	}, [entries]);
-	const upcoming = sortEntries(entries.filter((e) => e.date >= today && statusOf(e, today) === "planned")).slice(0, 6);
-	const recent = sortEntries(
-		entries.filter((e) => e.kind === "session" && statusOf(e, today) === "done" && e.date <= today),
-	)
-		.reverse()
-		.slice(0, 6);
+	const upcoming = sortEntries(entries.filter((e) => e.date >= today && statusOf(e, today) === "planned")).slice(0, 5);
+	// The sidebar's month: the one shown (in the week view, the week's month).
+	const monthPrefix = `${month.year}-${String(month.month + 1).padStart(2, "0")}-`;
+	const inMonth = entries.filter((e) => e.date.startsWith(monthPrefix));
+	const isThisMonth = today.startsWith(monthPrefix);
+	const monthName = new Date(month.year, month.month, 1).toLocaleDateString(undefined, { month: "long" });
+	const monthCounts = (["session", "match", "event"] as const).map((k) => ({
+		kind: k,
+		count: inMonth.filter((e) => e.kind === k).length,
+	}));
+	// Topics of the sessions on the calendar this month, the most used first.
+	const monthTopics = useMemo(() => {
+		const uses = new Map<string, number>();
+		for (const e of inMonth) {
+			const topics = library.getSession(e.sessionId)?.header.topics ?? [];
+			for (const t of topics) uses.set(t, (uses.get(t) ?? 0) + 1);
+		}
+		return [...uses.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [inMonth.map((e) => e.id + e.sessionId).join(), library.sessions]);
+	const sidebarDesign = usePreviewChoice("sidebar");
 	const title =
 		mode === "month"
 			? new Date(month.year, month.month, 1).toLocaleDateString(undefined, {
@@ -862,19 +878,51 @@ export default function Calendar() {
 						</span>
 					</div>
 				</main>
-				<aside className="agenda" aria-label="Coming up and recently run">
-					<h2>Coming up</h2>
+				<aside className="agenda" aria-label="Next up, the month and its topics">
+					<h2>Next up</h2>
 					{upcoming.length ? (
 						<ul>{upcoming.map(listItem)}</ul>
 					) : (
-						<p className="muted small">Nothing planned. Add a session, a plan or a match.</p>
+						<p className="muted small">Nothing planned. Add a practice, a plan or a match.</p>
 					)}
-					<h2>Recently run</h2>
-					{recent.length ? (
-						<ul>{recent.map(listItem)}</ul>
-					) : (
-						<p className="muted small">Sessions you mark as done show up here, with your notes.</p>
+					{sidebarDesign === "counts" && (
+						<section className="agenda__month" aria-label={isThisMonth ? "This month" : monthName}>
+							<h2>{isThisMonth ? "This month" : `In ${monthName}`}</h2>
+							<div className="agenda__counts">
+								{monthCounts.map(({ kind, count }) => (
+									<div key={kind} className={`agenda__count agenda__count--${kind}`}>
+										<span className="agenda__count-n">{count}</span>
+										<span className="agenda__count-label">
+											{kind === "session"
+												? count === 1 ? "Practice" : "Practices"
+												: kind === "match"
+													? count === 1 ? "Match" : "Matches"
+													: count === 1 ? "Event" : "Events"}
+										</span>
+									</div>
+								))}
+							</div>
+						</section>
 					)}
+					<section className="agenda__topics">
+						<h2>{isThisMonth ? "Topics covered this month" : `Topics in ${monthName}`}</h2>
+						{monthTopics.length ? (
+							<div className="agenda__pills">
+								{monthTopics.map(([t, n]) => (
+									<span key={t} className="agenda__pill" title={`${n} ${n === 1 ? "session" : "sessions"}`}>
+										{t}
+										{n > 1 && <span className="agenda__pill-n">×{n}</span>}
+									</span>
+								))}
+							</div>
+						) : (
+							<p className="muted small">
+								{inMonth.some((e) => e.sessionId)
+									? "The sessions this month have no topics yet."
+									: "No sessions this month yet."}
+							</p>
+						)}
+					</section>
 				</aside>
 			</div>
 
