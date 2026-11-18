@@ -1,3 +1,4 @@
+import { Sport } from "../../model/sports";
 import { useState } from "react";
 import { CalendarEntry, describeDay, EntryKind, eventTitle, KIND_COLORS, parseISODate, statusOf, toISODate } from "../../model/calendar";
 import { formatMinutes, sessionBoardIds, totalMinutes } from "../../model/session";
@@ -44,6 +45,10 @@ export default function ItemDialog({
 	const [draft, setDraft] = useState({ ...entry, status: entry.kind === "session" ? statusOf(entry) : entry.status });
 	const set = (patch: Partial<CalendarEntry>) => setDraft((d) => ({ ...d, ...patch }));
 	const [picking, setPicking] = useState<"session" | "board" | null>(null);
+	// The sport picked in the Attach window, kept when switching between sessions and boards.
+	const [pickSport, setPickSport] = useState<Sport | "all">(
+		sportFilter === "all" ? "all" : (sportFilter as Sport),
+	);
 	const session = library.getSession(draft.sessionId);
 	const formation = library.getBoard(draft.boardId);
 	const date = parseISODate(draft.date);
@@ -56,7 +61,8 @@ export default function ItemDialog({
 		return (
 			<SessionPicker
 				title="Attach a session or a board"
-				initialSport={sportFilter === "all" ? "all" : (sportFilter as never)}
+				initialSport={pickSport}
+				onSportChange={setPickSport}
 				onPick={(picked) => {
 					set({ sessionId: picked.id, team: draft.team || picked.header.team || "" });
 					setPicking(null);
@@ -69,6 +75,8 @@ export default function ItemDialog({
 		return (
 			<BoardPicker
 				title="Attach a session or a board"
+				initialSport={pickSport}
+				onSportChange={setPickSport}
 				onPick={(b) => {
 					set({ boardId: b.id });
 					setPicking(null);
@@ -223,7 +231,10 @@ export default function ItemDialog({
 						<button
 							type="button"
 							className="button picked-session__choose"
-							onClick={() => setPicking(session ? "board" : "session")}
+							// A match usually gets a formation; the others a session.
+							onClick={() =>
+								setPicking(session ? "board" : formation ? "session" : kind === "match" ? "board" : "session")
+							}
 						>
 							<Icon name="plus" size={16} />
 							{session ? "Attach a board…" : formation ? "Attach a session…" : "Attach a session or board…"}

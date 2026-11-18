@@ -10,6 +10,7 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Added
 
+- (Preview branch) The **Attach** window: boards have the same search and sport filter as sessions, both tabs list the folders on the left (only the ones with something for the sport picked, with counts), the sport stays when switching tabs, and a match opens on **Board**. The tab is just "Board"
 - (Preview branch) Animation controls: **F** (compact corner) fades when the pointer is still, like E, and counts from 0 ("0 / 3"). **E** with more than 10 steps shows a track instead of a dot per step. Test files in `examples`: **TEST: third-man run, 20 steps** and the session **TEST: animation controls** (the same play with 3 steps and 20)
 - **Session details:** export or print a session with a page per drill: page 1 has the session's facts, timeline and an outline of every block (with the page each drill is on), then each drill gets a large diagram, what happens, coaching points as tick boxes, progressions and room for notes. It's under **Export** and **Print** next to the one-page **Session summary**, with the ink saver too
 - Calendar: a busy day in the month view shows its first three items and **+N more**, which lists everything on that day (with a search when there's a lot)

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Session, sessionTitle } from "../../model/session";
-import { Sport, SPORT_INFO, SPORTS } from "../../model/sports";
+import { Sport } from "../../model/sports";
+import { FolderPick, inFolder, PickerFolders, SportChips } from "../ui/PickerFilters";
 import { useLibrary } from "../../state/LibraryContext";
 import SessionCard from "../library/SessionCard";
 import { Icon } from "../Icon";
@@ -17,6 +18,7 @@ export default function SessionPicker({
 	onPick,
 	onClose,
 	onSwitch,
+	onSportChange,
 }: {
 	title?: string;
 	/** Start filtered to this sport (e.g. the calendar's sport filter). */
@@ -25,15 +27,25 @@ export default function SessionPicker({
 	onClose: () => void;
 	/** In the calendar's Attach window: switch to picking the other kind. */
 	onSwitch?: (to: "session" | "board") => void;
+	/** Told when the sport changes (the Attach window keeps it when switching to boards). */
+	onSportChange?: (sport: Sport | "all") => void;
 }) {
 	const library = useLibrary();
 	const [query, setQuery] = useState("");
-	const [sport, setSport] = useState<Sport | "all">(initialSport);
-	const countOf = (s: Sport) => library.sessions.filter((x) => x.header.sport === s).length;
+	const [sport, setSportState] = useState<Sport | "all">(initialSport);
+	const setSport = (s: Sport | "all") => {
+		setSportState(s);
+		onSportChange?.(s);
+	};
+	// In the Attach window: folders on the left, only the ones with sessions of the sport picked.
+	const [folder, setFolder] = useState<FolderPick>({ kind: "all" });
+	const ofSport = library.sessions.filter((s) => sport === "all" || s.header.sport === sport);
+	const usedFolders = library.folders.filter((f) => ofSport.some((s) => s.meta.folders.includes(f)));
 	const shown = useMemo(() => {
 		const q = query.trim().toLowerCase();
 		return library.sessions
 			.filter((s) => sport === "all" || s.header.sport === sport)
+			.filter((s) => !onSwitch || inFolder(s.meta.folders, folder, usedFolders))
 			.filter((s) =>
 				[sessionTitle(s), s.header.team, ...s.header.topics, ...s.meta.folders]
 					.join(" ")
@@ -41,7 +53,8 @@ export default function SessionPicker({
 					.includes(q),
 			)
 			.sort((a, b) => b.meta.updatedAt.localeCompare(a.meta.updatedAt));
-	}, [library.sessions, query, sport]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [library.sessions, query, sport, folder, usedFolders.join("\n")]);
 
 	return (
 		<Modal open title={title} onClose={onClose} className="dialog--picker">
@@ -57,7 +70,7 @@ export default function SessionPicker({
 								className={`segmented__item${t === "session" ? " is-active" : ""}`}
 								onClick={() => t !== "session" && onSwitch(t)}
 							>
-								{t === "session" ? "Session" : "Board (e.g. a formation)"}
+								{t === "session" ? "Session" : "Board"}
 							</button>
 						))}
 					</div>
@@ -73,31 +86,17 @@ export default function SessionPicker({
 							onChange={(e) => setQuery(e.target.value)}
 						/>
 					</label>
-					<div className="filter-chips" role="group" aria-label="Sport">
-						<button
-							type="button"
-							className={`filter-chip${sport === "all" ? " is-active" : ""}`}
-							aria-pressed={sport === "all"}
-							onClick={() => setSport("all")}
-						>
-							All sports
-							<span className="filter-chip__count">{library.sessions.length}</span>
-						</button>
-						{SPORTS.map((s) => (
-							<button
-								key={s}
-								type="button"
-								className={`filter-chip${sport === s ? " is-active" : ""}`}
-								aria-pressed={sport === s}
-								disabled={!countOf(s) && sport !== s}
-								onClick={() => setSport(s)}
-							>
-								{SPORT_INFO[s].name}
-								<span className="filter-chip__count">{countOf(s)}</span>
-							</button>
-						))}
-					</div>
+					<SportChips value={sport} onChange={setSport} sports={library.sessions.map((x) => x.header.sport)} />
 				</div>
+				<div className={onSwitch ? "picker-body" : undefined}>
+				{onSwitch && (
+					<PickerFolders
+						order={library.folders}
+						itemFolders={ofSport.map((s) => s.meta.folders)}
+						value={folder}
+						onChange={setFolder}
+					/>
+				)}
 				{shown.length ? (
 					<div className="board-grid session-picker__grid">
 						{shown.map((s) => (
@@ -115,6 +114,7 @@ export default function SessionPicker({
 						{library.sessions.length ? "No sessions match." : "No sessions yet. Make one in the library first."}
 					</p>
 				)}
+				</div>
 			</div>
 		</Modal>
 	);

@@ -6425,3 +6425,79 @@ div.plan-outline__week {
 .time-combo__option.is-current {
 	font-weight: 700;
 }
+
+/* The Attach window: folders on the left (only those with something for the sport picked), the grid on the right. */
+.picker-body {
+	display: grid;
+	grid-template-columns: 190px minmax(0, 1fr);
+	gap: 14px;
+	min-height: 0;
+}
+
+.picker-folders {
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+	max-height: min(60vh, 640px);
+	overflow-y: auto;
+	padding-right: 10px;
+	border-right: 1px solid var(--border);
+}
+
+.picker-folders__label {
+	margin: 10px 8px 4px;
+	color: var(--text-muted);
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.picker-folders__item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+	padding: 6px 8px;
+	border-radius: 6px;
+	color: var(--text);
+	font-size: 13px;
+	text-align: left;
+}
+
+.picker-folders__item:hover {
+	background: var(--hover);
+}
+
+.picker-folders__item.is-active {
+	background: color-mix(in srgb, var(--accent) 16%, transparent);
+	font-weight: 600;
+}
+
+.picker-folders__name {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.picker-folders__count {
+	color: var(--text-muted);
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
+}
+
+.picker-folders__empty {
+	margin: 8px;
+}
+
+@media (max-width: 720px) {
+	.picker-body {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.picker-folders {
+		display: none;
+	}
+}
