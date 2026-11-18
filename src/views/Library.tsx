@@ -18,7 +18,8 @@ import { BOARD_TYPE_LABELS } from "../model/board";
 import { Session, sessionTitle } from "../model/session";
 import { drillsOf, sameDrill } from "../model/sessionFile";
 import { isSport, pitchLabel, Sport, SPORT_INFO, SPORTS } from "../model/sports";
-import { Board, BOARD_TYPES, BoardType, PitchSettings } from "../model/types";
+import { SportChips } from "../components/ui/PickerFilters";
+import { Board, PitchSettings } from "../model/types";
 import { allFolders, useLibrary } from "../state/LibraryContext";
 import {
 	exportBoardFile,
@@ -202,10 +203,11 @@ function savedView(): { view: View; sort: Sort } {
  */
 const remembered: {
 	view: View;
-	type: BoardType | "all" | "sessions";
+	type: "all" | "boards" | "sessions";
+	sport: Sport | "all";
 	query: string;
 	sort: Sort;
-} = { ...savedView(), type: "all", query: "" };
+} = { ...savedView(), type: "all", sport: "all", query: "" };
 
 export default function Library() {
 	const library = useLibrary();
@@ -213,10 +215,12 @@ export default function Library() {
 	const { openMenu } = useContextMenu();
 	const sessionExport = useSessionExport();
 	const [view, setViewState] = useState<View>(remembered.view);
-	// Filter chips: everything, just sessions, or one type of board.
-	const [type, setType] = useState<BoardType | "all" | "sessions">(
-		remembered.type,
-	);
+	// Filter chips in folders and sports: everything, just boards or just sessions.
+	const [type, setType] = useState<"all" | "boards" | "sessions">(remembered.type);
+	// Boards, Sessions and Plans have a sport filter (kept when moving between them).
+	const [sport, setSport] = useState<Sport | "all">(remembered.sport);
+	const sportFiltered = view.kind === "all" || view.kind === "sessions" || view.kind === "plans";
+	const sportOk = (s: Sport | "") => !sportFiltered || sport === "all" || s === sport;
 	/** Each view starts with every type showing. */
 	const setView = (next: View) => {
 		setViewState(next);
@@ -226,8 +230,8 @@ export default function Library() {
 	const [query, setQuery] = useState(remembered.query);
 	const [sort, setSort] = useState<Sort>(remembered.sort);
 	useEffect(() => {
-		Object.assign(remembered, { view, type, query, sort });
-	}, [view, type, query, sort]);
+		Object.assign(remembered, { view, type, sport, query, sort });
+	}, [view, type, sport, query, sort]);
 	useEffect(() => {
 		try {
 			localStorage.setItem(VIEW_KEY, JSON.stringify({ view, sort }));
@@ -336,46 +340,49 @@ export default function Library() {
 	const currentFolder = view.kind === "folder" ? view.name : "";
 
 	const shown = useMemo(() => {
-		if (view.kind === "sessions" || type === "sessions") return [];
+		if (view.kind === "sessions" || view.kind === "plans" || type === "sessions") return [];
 		const inView = library.boards.filter((b) => boardInView(b, view));
-		const found = inView.filter(
-			(b) => (type === "all" || b.meta.type === type) && matches(b, query.trim()),
-		);
+		const found = inView.filter((b) => sportOk(b.pitch.sport) && matches(b, query.trim()));
 		return sort === "title"
 			? [...found].sort((a, b) => a.meta.title.localeCompare(b.meta.title))
 			: [...found].sort((a, b) =>
 					b.meta.updatedAt.localeCompare(a.meta.updatedAt),
 			  );
-	}, [library.boards, view, query, sort, type]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [library.boards, view, query, sort, type, sport]);
 
 	// Sessions show in their own view, and next to boards in folders and sports.
 	const shownSessions = useMemo(() => {
 		if (view.kind === "all") return [];
-		// A board type picked in the chips shows just those boards.
-		if (view.kind !== "sessions" && type !== "all" && type !== "sessions") return [];
+		// "Boards" picked in the chips shows just boards.
+		if (view.kind !== "sessions" && type === "boards") return [];
 		const inView = library.sessions.filter((s) => sessionInView(s, view));
-		const found = inView.filter((s) => sessionMatches(s, query.trim()));
+		const found = inView.filter((s) => sportOk(s.header.sport) && sessionMatches(s, query.trim()));
 		return sort === "title"
 			? [...found].sort((a, b) => sessionTitle(a).localeCompare(sessionTitle(b)))
 			: [...found].sort((a, b) =>
 					b.meta.updatedAt.localeCompare(a.meta.updatedAt),
 			  );
-	}, [library.sessions, view, query, sort, type]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [library.sessions, view, query, sort, type, sport]);
 
 	// Plans have their own view.
 	const shownPlans = useMemo(() => {
 		if (view.kind !== "plans") return [];
 		const q = query.trim().toLowerCase();
-		const found = library.plans.filter((p) =>
-			[p.meta.title, p.team, ...p.meta.folders, ...p.topics.flatMap((t) => t.topics)]
-				.join(" ")
-				.toLowerCase()
-				.includes(q),
+		const found = library.plans.filter(
+			(p) =>
+				sportOk(p.sport) &&
+				[p.meta.title, p.team, ...p.meta.folders, ...p.topics.flatMap((t) => t.topics)]
+					.join(" ")
+					.toLowerCase()
+					.includes(q),
 		);
 		return sort === "title"
 			? [...found].sort((a, b) => a.meta.title.localeCompare(b.meta.title))
 			: [...found].sort((a, b) => b.meta.updatedAt.localeCompare(a.meta.updatedAt));
-	}, [library.plans, view, query, sort]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [library.plans, view, query, sort, sport]);
 
 	// Boards and sessions together in one grid, in the order picked in Sort
 	// (not sessions first and boards after).
@@ -405,13 +412,17 @@ export default function Library() {
 			? 0
 			: library.sessions.filter((s) => sessionInView(s, view)).length;
 
-	// Board types in this view, for the filter chips.
-	const typeCounts = useMemo(() => {
-		const counts = new Map<BoardType, number>();
-		const inView = library.boards.filter((b) => boardInView(b, view));
-		for (const b of inView) counts.set(b.meta.type, (counts.get(b.meta.type) ?? 0) + 1);
-		return counts;
-	}, [library.boards, view]);
+	// How many boards this view has, for the Boards chip.
+	const boardsInView = library.boards.filter((b) => boardInView(b, view)).length;
+	// The sport of everything on this page, for the sport chips.
+	const pageSports: Sport[] =
+		view.kind === "all"
+			? library.boards.map((b) => b.pitch.sport)
+			: view.kind === "sessions"
+				? library.sessions.map((x) => x.header.sport)
+				: view.kind === "plans"
+					? library.plans.flatMap((p) => (p.sport ? [p.sport] : []))
+					: [];
 
 	// The sidebar lists the sports the library has boards or sessions for.
 	const sportsInLibrary = SPORTS.filter(
@@ -678,7 +689,7 @@ export default function Library() {
 			(x) => !leaving.has(x.id) && x.blocks.some((bl) => bl.kind === "drill" && ids.has(bl.boardId)),
 		);
 		const sessions = usedIn.length
-			? ` Some of these boards are used in ${usedIn.length === 1 ? "a session" : `${usedIn.length} sessions`} you're keeping, which will show them as missing drills.`
+			? ` Some of these boards are used in ${usedIn.length === 1 ? "a session" : `${usedIn.length} sessions`} you're keeping, which will show them as missing boards.`
 			: "";
 		return `Delete ${describeCount(selectedBoards.length, selectedSessions.length)}?${sessions} This can't be undone. Export them first if you might want them back.`;
 	};
@@ -781,7 +792,7 @@ export default function Library() {
 				parts.push(
 					alreadyHad === 1
 						? "1 drill was already in your library, so it wasn't added again."
-						: `${alreadyHad} drills were already in your library, so they weren't added again.`,
+						: `${alreadyHad} boards were already in your library, so they weren't added again.`,
 				);
 			for (const m of missing)
 				parts.push(
@@ -1243,38 +1254,25 @@ export default function Library() {
 						</div>
 					)}
 
-					{view.kind !== "sessions" &&
-						typeCounts.size + (sessionsInView ? 1 : 0) > 1 && (
-						<div className="filter-chips" role="group" aria-label="Board type">
-							<button
-								type="button"
-								className={`filter-chip${type === "all" ? " is-active" : ""}`}
-								aria-pressed={type === "all"}
-								onClick={() => setType("all")}
-							>
-								All
-							</button>
-							{sessionsInView > 0 && (
+					{sportFiltered && new Set(pageSports).size > 0 && (
+						<SportChips value={sport} onChange={setSport} sports={pageSports} />
+					)}
+					{!sportFiltered && boardsInView > 0 && sessionsInView > 0 && (
+						<div className="filter-chips" role="group" aria-label="Show">
+							{(["all", "boards", "sessions"] as const).map((k) => (
 								<button
+									key={k}
 									type="button"
-									className={`filter-chip${type === "sessions" ? " is-active" : ""}`}
-									aria-pressed={type === "sessions"}
-									onClick={() => setType(type === "sessions" ? "all" : "sessions")}
+									className={`filter-chip${type === k ? " is-active" : ""}`}
+									aria-pressed={type === k}
+									onClick={() => setType(type === k ? "all" : k)}
 								>
-									Sessions
-									<span className="filter-chip__count">{sessionsInView}</span>
-								</button>
-							)}
-							{BOARD_TYPES.filter((t) => typeCounts.has(t)).map((t) => (
-								<button
-									key={t}
-									type="button"
-									className={`filter-chip${type === t ? " is-active" : ""}`}
-									aria-pressed={type === t}
-									onClick={() => setType(type === t ? "all" : t)}
-								>
-									{BOARD_TYPE_LABELS[t].many}
-									<span className="filter-chip__count">{typeCounts.get(t)}</span>
+									{k === "all" ? "All" : k === "boards" ? "Boards" : "Sessions"}
+									{k !== "all" && (
+										<span className="filter-chip__count">
+											{k === "boards" ? boardsInView : sessionsInView}
+										</span>
+									)}
 								</button>
 							))}
 						</div>
@@ -1289,7 +1287,7 @@ export default function Library() {
 								) : (
 									<>
 										<p>
-											No sessions yet. A session puts drills from your library in
+											No sessions yet. A session puts boards from your library in
 											order, with breaks and timings, and prints as a session sheet.
 										</p>
 										<button
@@ -1529,7 +1527,7 @@ export default function Library() {
 			<ConfirmDialog
 				open={deletingSession !== null}
 				title="Delete session"
-				message={`Delete the session “${deletingSession ? sessionTitle(deletingSession) : ""}”? Its drills stay in your library. It's also taken out of plans and off the calendar dates it hasn't run on yet. This can't be undone.`}
+				message={`Delete the session “${deletingSession ? sessionTitle(deletingSession) : ""}”? Its boards stay in your library. It's also taken out of plans and off the calendar dates it hasn't run on yet. This can't be undone.`}
 				confirmLabel="Delete"
 				danger
 				onConfirm={() =>

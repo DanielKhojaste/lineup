@@ -294,9 +294,9 @@ export default function SessionHeaderForm() {
 					</button>
 					{otherSport > 0 && (
 						<p className="field__error">
-							{otherSport === 1 ? "A drill" : `${otherSport} drills`} in the plan{" "}
+							{otherSport === 1 ? "A board" : `${otherSport} boards`} in the plan{" "}
 							{otherSport === 1 ? "is" : "are"} for another sport. Please swap{" "}
-							{otherSport === 1 ? "it" : "them"} for {SPORT_INFO[header.sport].name.toLowerCase()} drills.
+							{otherSport === 1 ? "it" : "them"} for {SPORT_INFO[header.sport].name.toLowerCase()} boards.
 						</p>
 					)}
 					<SportPickerDialog

@@ -27,6 +27,9 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Changed
 
+- Library: **Boards**, **Sessions** and **Plans** each have sport chips at the top (the sport stays when moving between them). The board-type chips (Drills, Plays…) are gone; folders and sports show **All / Boards / Sessions** when they have both
+- "Drills" is now "boards" wherever it meant boards in general: session cards ("3 boards"), search boxes, the session's library panel, messages
+- "8 topics maximum" (was "Maximum 8 topics")
 - Calendar items get a thin outline in their own colour on hover (Ring), instead of a stronger background
 - **Printed and exported sessions** (the summary): the facts in one line, a timeline of the whole session coloured by part, each drill's diagram zoomed to the area it uses with its focus points as tick boxes, the other blocks as clear rows in full ink, and room for notes. **Print with ink saver** and **PDF document, ink saver** draw the pitches white with soft lines, for printing at home
 - Times are picked as hour, minutes and AM or PM (PM until you pick otherwise; computers set to 24-hour times get 0–23 and no AM/PM)

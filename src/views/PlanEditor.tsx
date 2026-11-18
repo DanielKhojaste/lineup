@@ -59,7 +59,7 @@ const sessionSummary = (s: Session) => {
 	const drills = s.blocks.filter((b) => b.kind === "drill").length;
 	return [
 		minutes ? formatMinutes(minutes) : "",
-		`${drills} drill${drills === 1 ? "" : "s"}`,
+		`${drills} board${drills === 1 ? "" : "s"}`,
 		s.header.topics.join(", "),
 	]
 		.filter(Boolean)
@@ -146,7 +146,7 @@ function WeekTopics({ topicIndex }: { topicIndex: number }) {
 				</span>
 			))}
 			{full ? (
-				<span className="muted small">Maximum {MAX_WEEK_TOPICS} topics</span>
+				<span className="muted small">{MAX_WEEK_TOPICS} topics maximum</span>
 			) : (
 				// The box and its bubbles share one line: only the bubbles that fit the rest of it show.
 				<div className="week-topics__entry" ref={entryRef}>
@@ -667,7 +667,7 @@ function SessionThumbs({ session, count }: { session: Session; count: number }) 
 			{boards.length ? (
 				boards.map((b) => <BoardPreview key={b.id} board={b} className="plan-thumbs__item" />)
 			) : (
-				<span className="plan-thumbs__empty">No drills yet</span>
+				<span className="plan-thumbs__empty">No boards yet</span>
 			)}
 		</span>
 	);

@@ -45,7 +45,7 @@ export default function SessionCard({
 		session.header.team,
 		session.header.topics.slice(0, 2).join(", "),
 		time ? formatMinutes(time) : "",
-		`${drills} drill${drills === 1 ? "" : "s"}`,
+		`${drills} board${drills === 1 ? "" : "s"}`,
 		`Edited ${relativeTime(session.meta.updatedAt)}`,
 	].filter(Boolean);
 

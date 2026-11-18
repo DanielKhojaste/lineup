@@ -102,7 +102,7 @@ export default function DrillPicker() {
 		return (
 			<aside
 				className="drill-picker drill-picker--collapsed"
-				aria-label="Add drills from your library"
+				aria-label="Add boards from your library"
 			>
 				<button
 					type="button"
@@ -118,7 +118,7 @@ export default function DrillPicker() {
 		);
 
 	return (
-		<aside className="drill-picker" aria-label="Add drills from your library">
+		<aside className="drill-picker" aria-label="Add boards from your library">
 			<div className="drill-picker__head">
 				<div className="drill-picker__title">
 					<h2>Add from library</h2>
@@ -139,7 +139,7 @@ export default function DrillPicker() {
 					<input
 						type="search"
 						maxLength={TEXT_LIMITS.search}
-						placeholder="Search drills"
+						placeholder="Search boards"
 						value={query}
 						onChange={(e) => setQuery(e.target.value)}
 					/>
@@ -199,7 +199,7 @@ export default function DrillPicker() {
 			{shown.length === 0 && (
 				<p className="muted small drill-picker__empty">
 					{library.boards.every((b) => b.pitch.sport !== sport)
-						? `No ${SPORT_INFO[sport].name.toLowerCase()} boards yet. Draw a drill first, then add it here.`
+						? `No ${SPORT_INFO[sport].name.toLowerCase()} boards yet. Draw one first, then add it here.`
 						: "No boards match."}
 				</p>
 			)}
