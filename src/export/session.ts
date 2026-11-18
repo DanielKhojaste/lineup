@@ -1,7 +1,7 @@
 import { createElement } from "react";
 import { flushSync } from "react-dom";
 import { createRoot } from "react-dom/client";
-import { SessionSheetContent } from "../components/session/SessionSheet";
+import { SessionSheetContent, SheetLayout } from "../components/session/SessionSheet";
 import { Session } from "../model/session";
 import { Board } from "../model/types";
 
@@ -13,17 +13,30 @@ const SCALE = 2;
 /** Space kept clear at the top and bottom of each page (the sheet's own padding covers page 1's top). */
 const PAGE_MARGIN = 32;
 
+/** A part of the sheet; `newPage`: it starts a page of its own (a drill in Session Details). */
+export interface SheetPart {
+	top: number;
+	bottom: number;
+	newPage?: boolean;
+}
+
+/** What to export: the summary or the details, and whether to use the ink saver. */
+export interface SheetOptions {
+	ink?: boolean;
+	layout?: SheetLayout;
+}
+
 interface RenderedSheet {
 	canvas: HTMLCanvasElement;
 	/** Where each part of the sheet (the top, each activity) starts and ends, in sheet pixels. */
-	parts: { top: number; bottom: number }[];
+	parts: SheetPart[];
 }
 
 /** Draw the session sheet off screen and take a picture of it. */
 async function renderSheet(
 	session: Session,
 	getBoard: (id: string) => Board | undefined,
-	ink = false,
+	{ ink = false, layout = "summary" }: SheetOptions = {},
 ): Promise<RenderedSheet> {
 	const { toCanvas } = await import("html-to-image");
 	const host = document.createElement("div");
@@ -31,13 +44,13 @@ async function renderSheet(
 	document.body.appendChild(host);
 	const root = createRoot(host);
 	try {
-		flushSync(() => root.render(createElement(SessionSheetContent, { session, getBoard, ink })));
+		flushSync(() => root.render(createElement(SessionSheetContent, { session, getBoard, ink, layout })));
 		await document.fonts.ready;
 		const sheet = host.firstElementChild as HTMLElement;
 		const origin = sheet.getBoundingClientRect().top;
 		const parts = [...sheet.querySelectorAll<HTMLElement>(".sheet__part")].map((el) => {
 			const r = el.getBoundingClientRect();
-			return { top: r.top - origin, bottom: r.bottom - origin };
+			return { top: r.top - origin, bottom: r.bottom - origin, newPage: el.hasAttribute("data-new-page") };
 		});
 		const canvas = await toCanvas(sheet, {
 			pixelRatio: SCALE,
@@ -64,9 +77,9 @@ function canvasBytes(canvas: HTMLCanvasElement, type = "image/png"): Promise<Uin
 export async function sessionToPng(
 	session: Session,
 	getBoard: (id: string) => Board | undefined,
-	ink = false,
+	options: SheetOptions = {},
 ): Promise<Uint8Array> {
-	const { canvas } = await renderSheet(session, getBoard, ink);
+	const { canvas } = await renderSheet(session, getBoard, options);
 	return canvasBytes(canvas);
 }
 
@@ -76,7 +89,7 @@ export async function sessionToPng(
  * end in sheet pixels.
  */
 export function pageBreaks(
-	parts: { top: number; bottom: number }[],
+	parts: SheetPart[],
 	height: number,
 	pageHeight = PAGE_HEIGHT - PAGE_MARGIN,
 	laterPageHeight = PAGE_HEIGHT - 2 * PAGE_MARGIN,
@@ -86,7 +99,10 @@ export function pageBreaks(
 	while (start < height - 1) {
 		const room = pages.length === 0 ? pageHeight : laterPageHeight;
 		let end = Math.min(height, start + room);
-		if (end < height) {
+		// A part that starts a page of its own: this page ends where it starts.
+		const own = parts.find((p) => p.newPage && p.top > start + 1 && p.top < end);
+		if (own) end = Math.floor(own.top);
+		else if (end < height) {
 			// The last part that starts on this page and doesn't fit: break before it.
 			const cut = parts.find((p) => p.top > start && p.top < end && p.bottom > end);
 			if (cut && cut.top - start > room * 0.25) end = Math.floor(cut.top - 6);
@@ -101,10 +117,10 @@ export function pageBreaks(
 export async function sessionToPdf(
 	session: Session,
 	getBoard: (id: string) => Board | undefined,
-	ink = false,
+	options: SheetOptions = {},
 ): Promise<Uint8Array> {
 	const [{ canvas, parts }, { jsPDF }] = await Promise.all([
-		renderSheet(session, getBoard, ink),
+		renderSheet(session, getBoard, options),
 		import("jspdf"),
 	]);
 	const height = canvas.height / SCALE;

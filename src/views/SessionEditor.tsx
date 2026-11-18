@@ -5,7 +5,7 @@ import { Icon } from "../components/Icon";
 import Loader from "../components/Loader";
 import DrillPicker from "../components/session/DrillPicker";
 import SessionHeaderForm from "../components/session/SessionHeaderForm";
-import SessionSheet from "../components/session/SessionSheet";
+import SessionSheet, { SheetLayout } from "../components/session/SessionSheet";
 import Timeline from "../components/session/Timeline";
 import { isTextField } from "../components/ui/ContextMenu";
 import { Menu } from "../components/ui/Menu";
@@ -33,9 +33,9 @@ function SessionLayout() {
 	const navigate = useNavigate();
 	const exporter = useSessionExport();
 	// Printing: the sheet is drawn (with or without the ink saver) before the print window opens.
-	const [printInk, setPrintInk] = useState(false);
-	const printSheet = (ink: boolean) => {
-		flushSync(() => setPrintInk(ink));
+	const [printAs, setPrintAs] = useState<{ ink: boolean; layout: SheetLayout }>({ ink: false, layout: "summary" });
+	const printSheet = (ink: boolean, layout: SheetLayout = "summary") => {
+		flushSync(() => setPrintAs({ ink, layout }));
 		window.print();
 	};
 	// An empty new session isn't saved; leaving it empty drops it from the library.
@@ -195,9 +195,7 @@ function SessionLayout() {
 						</>
 					}
 					items={[
-						{ label: "PDF document", onSelect: () => exporter.exportAs(session, "pdf") },
-						{ label: "PDF document, ink saver", onSelect: () => exporter.exportAs(session, "pdf", true) },
-						{ label: "Image (PNG)", onSelect: () => exporter.exportAs(session, "png") },
+						...exporter.menuItems(session),
 						"separator",
 						{
 							label: "Session file (.lineup-session)",
@@ -219,8 +217,12 @@ function SessionLayout() {
 						</>
 					}
 					items={[
+						{ heading: "Session summary" },
 						{ label: "Print (Ctrl+P)", onSelect: () => printSheet(false) },
 						{ label: "Print with ink saver (white pitches)", onSelect: () => printSheet(true) },
+						{ heading: "Session details" },
+						{ label: "Print", onSelect: () => printSheet(false, "details") },
+						{ label: "Print with ink saver (white pitches)", onSelect: () => printSheet(true, "details") },
 					]}
 				/>
 			</header>
@@ -248,7 +250,7 @@ function SessionLayout() {
 				</main>
 				<DrillPicker />
 			</div>
-			<SessionSheet session={session} getBoard={library.getBoard} ink={printInk} />
+			<SessionSheet session={session} getBoard={library.getBoard} ink={printAs.ink} layout={printAs.layout} />
 		</div>
 	);
 }

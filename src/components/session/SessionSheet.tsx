@@ -36,14 +36,19 @@ const stageName = (stage: string) => stage.replace(/\s+\d+$/, "");
  * exported as an image from the same layout. The ink saver draws the pitches
  * white, for home printers.
  */
+/** Summary: the whole session, usually on one page. Details: an outline, then a page per drill. */
+export type SheetLayout = "summary" | "details";
+
 export function SessionSheetContent({
 	session,
 	getBoard,
 	ink = false,
+	layout = "summary",
 }: {
 	session: Session;
 	getBoard: (id: string) => Board | undefined;
 	ink?: boolean;
+	layout?: SheetLayout;
 }) {
 	const { header } = session;
 	const times = blockTimes(session);
@@ -61,7 +66,7 @@ export function SessionSheetContent({
 	const timed = session.blocks.map((b, i) => ({ b, i })).filter(({ b }) => b.minutes > 0);
 
 	return (
-		<div className={`sheet${ink ? " sheet--ink" : ""}`}>
+		<div className={`sheet sheet--${layout}${ink ? " sheet--ink" : ""}`}>
 			<div className="sheet__part sheet__head">
 				<h1 className="sheet__title">{sessionTitle(session)}</h1>
 				<div className="sheet__sub">
@@ -120,6 +125,54 @@ export function SessionSheetContent({
 				)}
 			</div>
 
+			{layout === "details" ? (
+				<DetailsPages session={session} getBoard={getBoard} ink={ink} times={times} stages={stages} />
+			) : (
+				<SummaryBlocks session={session} getBoard={getBoard} ink={ink} times={times} stages={stages} />
+			)}
+
+			{layout === "summary" && (
+				<div className="sheet__part sheet__notes">
+					<div className="sheet__label">Notes</div>
+					<div className="sheet__lines">
+						<span />
+						<span />
+						<span />
+					</div>
+					<div className="sheet__made">Made with Lineup</div>
+				</div>
+			)}
+		</div>
+	);
+}
+
+interface PartsProps {
+	session: Session;
+	getBoard: (id: string) => Board | undefined;
+	ink: boolean;
+	times: { from: number; to: number }[];
+	stages: string[];
+}
+
+/** The stage's coloured tag ("Warm-up", "Break"…). */
+function StageTag({ block, stage }: { block: SessionBlock; stage: string }) {
+	return (
+		<span className={`sheet__stage sheet__stage--${stageTone(stage, block)}`}>
+			{block.kind === "break" ? "Break" : stageName(stage)}
+		</span>
+	);
+}
+
+/** A block that isn't a drill (a talk, a break…): its name and notes. */
+function blockName(block: SessionBlock, stage: string): string {
+	if (block.kind === "drill") return "";
+	return block.kind === "custom" ? block.label.trim() || stageName(stage) : block.label.trim() || "Break";
+}
+
+/** The summary: each drill beside its diagram, the other blocks as short rows. */
+function SummaryBlocks({ session, getBoard, ink, times, stages }: PartsProps) {
+	return (
+		<>
 			{session.blocks.map((block, i) => {
 				const t = times[i];
 				const when = `${t.from}–${t.to} min`;
@@ -208,17 +261,150 @@ export function SessionSheetContent({
 					</div>
 				);
 			})}
+		</>
+	);
+}
 
+/**
+ * Session Details: after the head, an outline of every block (drills with the
+ * page they're on), then each drill on a page of its own: a large diagram,
+ * what happens, its coaching points as tick boxes, progressions, and room for
+ * notes. Same style as the summary.
+ */
+function DetailsPages({ session, getBoard, ink, times, stages }: PartsProps) {
+	const drills = session.blocks.map((b, i) => ({ b, i })).filter(({ b }) => b.kind === "drill");
+	const pageOf = new Map(drills.map(({ b }, n) => [b.id, n + 2]));
+	return (
+		<>
+			<div className="sheet__part sheet__outline">
+				<div className="sheet__label">Session outline</div>
+				<ol className="sheet__outline-list">
+					{session.blocks.map((block, i) => {
+						const board = block.kind === "drill" ? getBoard(block.boardId) : undefined;
+						return (
+							<li key={block.id} className={`sheet__outline-row sheet__row--${stageTone(stages[i], block)}`}>
+								<span className="sheet__outline-when">
+									{times[i].from}–{times[i].to}
+								</span>
+								<StageTag block={block} stage={stages[i]} />
+								<span className="sheet__outline-name">
+									{block.kind === "drill" ? (board?.meta.title ?? "Missing drill") : blockName(block, stages[i])}
+									{block.kind !== "drill" && block.notes && (
+										<span className="sheet__outline-notes"> · {block.notes}</span>
+									)}
+								</span>
+								<span className="sheet__outline-min">{formatMinutes(block.minutes)}</span>
+								<span className="sheet__outline-page">
+									{block.kind === "drill" ? `p. ${pageOf.get(block.id)}` : ""}
+								</span>
+							</li>
+						);
+					})}
+				</ol>
+			</div>
 			<div className="sheet__part sheet__notes">
 				<div className="sheet__label">Notes</div>
 				<div className="sheet__lines">
 					<span />
 					<span />
 					<span />
+					<span />
 				</div>
-				<div className="sheet__made">Made with Lineup</div>
 			</div>
-		</div>
+
+			{drills.map(({ b: block, i }, n) => {
+				if (block.kind !== "drill") return null;
+				const t = times[i];
+				const board = getBoard(block.boardId);
+				const notes = board?.notes;
+				const points = notes?.coachingPoints.filter(Boolean) ?? [];
+				const variations = notes?.variations.filter(Boolean) ?? [];
+				const mini = (
+					[
+						["Players", notes?.players],
+						["Area", notes?.area],
+						["Equipment", notes?.equipment],
+					] as [string, string | undefined][]
+				).filter(([, v]) => v);
+				return (
+					<div key={block.id} className="sheet__part sheet__page" data-new-page="">
+						<div className="sheet__page-top">
+							<span>{sessionTitle(session)}</span>
+							<span>
+								Drill {n + 1} of {drills.length} · p. {n + 2}
+							</span>
+						</div>
+						<div className="sheet__when">
+							<StageTag block={block} stage={stages[i]} />
+							{t.from}–{t.to} min · {formatMinutes(block.minutes)}
+						</div>
+						<h2 className="sheet__page-title">
+							{board?.meta.title ?? "Missing drill"}
+							{board && <span className="sheet__type"> · {BOARD_TYPE_LABELS[board.meta.type].one}</span>}
+						</h2>
+						{mini.length > 0 && (
+							<div className="sheet__mini">
+								{mini.map(([label, value]) => (
+									<span key={label}>
+										<b>{label}</b> {value}
+									</span>
+								))}
+							</div>
+						)}
+						<div className="sheet__diagram sheet__diagram--large">
+							{board && <BoardPreview board={board} view={focusView(board)} ink={ink} />}
+						</div>
+						<div className="sheet__page-cols">
+							<div>
+								{notes?.description && (
+									<>
+										<div className="sheet__label">What happens</div>
+										<p className="sheet__text">{notes.description}</p>
+									</>
+								)}
+								{variations.length > 0 && (
+									<>
+										<div className="sheet__label">Progressions</div>
+										<ul className="sheet__list">
+											{variations.map((v, j) => (
+												<li key={j}>{v}</li>
+											))}
+										</ul>
+									</>
+								)}
+							</div>
+							<div>
+								{points.length > 0 && (
+									<>
+										<div className="sheet__label">Coaching points</div>
+										<ul className="sheet__ticks">
+											{points.map((p, j) => (
+												<li key={j}>{p}</li>
+											))}
+										</ul>
+									</>
+								)}
+								{block.notes && (
+									<p className="sheet__text">
+										<b>Notes:</b> {block.notes}
+									</p>
+								)}
+							</div>
+						</div>
+						<div className="sheet__notes sheet__page-notes">
+							<div className="sheet__label">Notes</div>
+							<div className="sheet__lines">
+								<span />
+								<span />
+								<span />
+								<span />
+							</div>
+						</div>
+						{n === drills.length - 1 && <div className="sheet__made">Made with Lineup</div>}
+					</div>
+				);
+			})}
+		</>
 	);
 }
 
@@ -227,6 +413,7 @@ export default function SessionSheet(props: {
 	session: Session;
 	getBoard: (id: string) => Board | undefined;
 	ink?: boolean;
+	layout?: SheetLayout;
 }) {
 	return (
 		<div className="print-sheet" aria-hidden="true">

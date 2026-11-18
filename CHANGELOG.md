@@ -10,6 +10,7 @@ This project adheres to semantic versioning (0.x during early development).
 
 ### Added
 
+- **Session details:** export or print a session with a page per drill: page 1 has the session's facts, timeline and an outline of every block (with the page each drill is on), then each drill gets a large diagram, what happens, coaching points as tick boxes, progressions and room for notes. It's under **Export** and **Print** next to the one-page **Session summary**, with the ink saver too
 - Calendar: a busy day in the month view shows its first three items and **+N more**, which lists everything on that day (with a search when there's a lot)
 - **Lots of teams:** the Team box lists eight, then **Show all N teams…**; the calendar's Team filter lists the ten you use most, then **Show all teams…**. Both open a window with every team and a search
 - **Teams**: pick a saved team from the list under any Team box (sessions, plans, the calendar), or type a new one, which is saved for next time. **Settings › Teams** lists them to add or remove. Your library's existing teams are there from the start

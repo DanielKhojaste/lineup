@@ -597,9 +597,17 @@ export default function Library() {
 		{
 			label: "Export",
 			submenu: [
-				{ label: "PDF document", onSelect: () => sessionExport.exportAs(session, "pdf") },
-				{ label: "PDF document, ink saver", onSelect: () => sessionExport.exportAs(session, "pdf", true) },
-				{ label: "Image (PNG)", onSelect: () => sessionExport.exportAs(session, "png") },
+				...(["summary", "details"] as const).map((layout) => ({
+					label: layout === "summary" ? "Session summary" : "Session details",
+					submenu: [
+						{ label: "PDF document", onSelect: () => sessionExport.exportAs(session, "pdf", { layout }) },
+						{
+							label: "PDF document, ink saver",
+							onSelect: () => sessionExport.exportAs(session, "pdf", { layout, ink: true }),
+						},
+						{ label: "Image (PNG)", onSelect: () => sessionExport.exportAs(session, "png", { layout }) },
+					],
+				})),
 				"separator",
 				{
 					label: "Session file (.lineup-session)",
