@@ -6053,6 +6053,7 @@ div.plan-outline__week {
 
 .entry-card {
 	min-width: 0;
+	max-width: 100%;
 	flex: 1;
 }
 
@@ -6074,6 +6075,9 @@ div.plan-outline__week {
 	letter-spacing: 0.06em;
 	text-transform: uppercase;
 	white-space: nowrap;
+	/* In a narrow week column, "Match · Home · 10:00" is cut instead of widening the card. */
+	max-width: 100%;
+	overflow: hidden;
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
