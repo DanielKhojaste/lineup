@@ -1,5 +1,5 @@
 import { Key } from "../components/ui/Keys";
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import BoardPreview from "../components/board/BoardPreview";
 import { Icon } from "../components/Icon";
@@ -53,6 +53,100 @@ function PlayingBoard({ board, playing, step }: { board: Board; playing: boolean
 	return <BoardPreview board={shown} className="session-preview__board" />;
 }
 
+/**
+ * The animation's controls in the field's bottom-left corner: play or pause,
+ * back, "3 / 8" (0 is the start), forward. They fade out a moment after the
+ * pointer stops. The other designs compared in the preview are kept on
+ * archive/preview-designs-301.
+ */
+function StepControls({
+	steps,
+	step,
+	playing,
+	onPlay,
+	onStep,
+}: {
+	steps: number;
+	step: number;
+	playing: boolean;
+	onPlay: () => void;
+	onStep: (step: number) => void;
+}) {
+	const label = step === 0 ? "Start" : `Step ${step} of ${steps}`;
+	return (
+		<div className="step-controls step-controls--corner-left step-controls--compact step-controls--fade">
+			<button
+				type="button"
+				className="step-controls__play"
+				aria-label={playing ? "Pause" : "Play"}
+				title={playing ? "Pause (Space)" : "Play (Space)"}
+				onClick={onPlay}
+			>
+				<Icon name={playing ? "pause" : "play"} size={18} />
+			</button>
+			<button
+				type="button"
+				className="step-controls__btn"
+				aria-label="Previous step"
+				title="Previous step (←)"
+				disabled={step === 0 && !playing}
+				onClick={() => onStep(step - 1)}
+			>
+				<Icon name="chevronLeft" size={18} />
+			</button>
+			<span className="step-controls__count" title={label}>
+				{playing ? "▶" : step} / {steps}
+			</span>
+			<button
+				type="button"
+				className="step-controls__btn"
+				aria-label="Next step"
+				title="Next step (→)"
+				disabled={step === steps && !playing}
+				onClick={() => onStep(step + 1)}
+			>
+				<Icon name="chevronRight" size={18} />
+			</button>
+		</div>
+	);
+}
+
+/**
+ * A layer exactly over the drawn field (the picture keeps its shape inside a
+ * bigger box), so controls float on the grass, not beside it.
+ */
+function FieldOverlay({ children }: { children: React.ReactNode }) {
+	const ref = useRef<HTMLDivElement>(null);
+	const [box, setBox] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
+	useEffect(() => {
+		const layer = ref.current;
+		const svg = layer?.parentElement?.querySelector<SVGSVGElement>(".session-preview__board");
+		if (!layer || !svg) return;
+		const measure = () => {
+			const vb = svg.viewBox.baseVal;
+			const W = svg.clientWidth;
+			const H = svg.clientHeight;
+			if (!vb || !vb.width || !W || !H) return;
+			const aspect = vb.width / vb.height;
+			const width = Math.min(W, H * aspect);
+			const height = width / aspect;
+			// Where the picture sits in its box.
+			const host = layer.parentElement!.getBoundingClientRect();
+			const r = svg.getBoundingClientRect();
+			setBox({ left: r.left - host.left + (W - width) / 2, top: r.top - host.top + (H - height) / 2, width, height });
+		};
+		measure();
+		const observer = new ResizeObserver(measure);
+		observer.observe(svg);
+		return () => observer.disconnect();
+	}, []);
+	return (
+		<div ref={ref} className="field-overlay" style={box ?? { display: "none" }}>
+			{children}
+		</div>
+	);
+}
+
 type DetailsPlace = "below" | "side" | "hidden";
 const DETAILS_KEY = "lineup.previewDetails";
 
@@ -101,6 +195,14 @@ export default function SessionPreview() {
 			: navigate(`/session/${session!.id}`, { state: from ? { from } : undefined });
 	const [playing, setPlaying] = useState(true);
 	const [step, setStep] = useState(0);
+	// The controls fade out: the controls fade out a moment after the pointer stops (or leaves the field).
+	const [idle, setIdle] = useState(true);
+	const idleTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+	const wake = () => {
+		setIdle(false);
+		clearTimeout(idleTimer.current);
+		idleTimer.current = setTimeout(() => setIdle(true), 1500);
+	};
 
 	const stageOf = (boardId: string) => {
 		const board = library.getBoard(boardId);
@@ -279,34 +381,27 @@ export default function SessionPreview() {
 				<main className={`session-preview__main session-preview__main--${details}`}>
 					{block && board ? (
 						<>
-							<div className="session-preview__stagewrap">
+							<div
+								className={`session-preview__stagewrap${idle ? " is-idle" : ""}`}
+								onPointerMove={wake}
+								onPointerLeave={() => setIdle(true)}
+							>
 								<PlayingBoard board={board} playing={playing} step={step} />
+								{steps > 0 && (
+									<FieldOverlay>
+									<StepControls
+										steps={steps}
+										step={step}
+										playing={playing}
+										onPlay={() => setPlaying((p) => !p)}
+										onStep={(s) => {
+											setPlaying(false);
+											setStep(Math.max(0, Math.min(steps, s)));
+										}}
+									/>
+									</FieldOverlay>
+								)}
 							</div>
-							{steps > 0 && (
-								<div className="session-preview__steps">
-									<button
-										type="button"
-										className="icon-button"
-										aria-label={playing ? "Pause" : "Play"}
-										onClick={() => setPlaying((p) => !p)}
-									>
-										<Icon name={playing ? "pause" : "play"} size={16} />
-									</button>
-									{Array.from({ length: steps + 1 }, (_, s) => (
-										<button
-											key={s}
-											type="button"
-											className={`filter-chip${!playing && step === s ? " is-active" : ""}`}
-											onClick={() => {
-												setPlaying(false);
-												setStep(s);
-											}}
-										>
-											{s === 0 ? "Start" : `Step ${s}`}
-										</button>
-									))}
-								</div>
-							)}
 							{details !== "hidden" && (
 							<section className="session-preview__details">
 								<div className="session-preview__facts">

@@ -272,6 +272,7 @@ export default function SessionHeaderForm() {
 					value={header.team}
 					onChange={(team) => update({ team })}
 					undoable
+					sport={header.sport}
 				/>
 				<div className="field">
 					<span className="field__label" id="session-sport-label">

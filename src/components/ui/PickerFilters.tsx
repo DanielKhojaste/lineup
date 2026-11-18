@@ -82,7 +82,7 @@ export function PickerFolders({
 	};
 	return (
 		<nav className="picker-folders" aria-label="Folders">
-			{row({ kind: "all" }, "Everything", itemFolders.length, "grid")}
+			{row({ kind: "all" }, "All", itemFolders.length, "grid")}
 			{used.length > 0 && <div className="picker-folders__label">Folders</div>}
 			{used.map((name) => row({ kind: "folder", name }, name, count(name), "folder"))}
 			{used.length > 0 && loose > 0 && row({ kind: "none" }, "Not in a folder", loose, "inbox")}

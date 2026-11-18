@@ -5837,6 +5837,306 @@ div.plan-outline__week {
 	outline-offset: 2px;
 }
 
+/* --------- Animation controls over the field (two designs to compare) --------- */
+
+.session-preview__stagewrap {
+	position: relative;
+}
+
+.field-overlay {
+	position: absolute;
+	pointer-events: none;
+}
+
+.step-controls {
+	position: absolute;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	pointer-events: auto;
+	color: #fff;
+}
+
+/* Dark glass, so it reads on any pitch colour (and on white). */
+.step-controls--bar,
+.step-controls--corner-left,
+.step-controls--corner-right {
+	background: rgb(16 20 24 / 0.72);
+	backdrop-filter: blur(6px);
+	box-shadow:
+		0 6px 18px rgb(0 0 0 / 0.35),
+		inset 0 0 0 1px rgb(255 255 255 / 0.12);
+}
+
+/* A · one bar centred along the bottom of the field. */
+.step-controls--bar {
+	left: 50%;
+	bottom: 14px;
+	transform: translateX(-50%);
+	padding: 5px 12px 5px 6px;
+	border-radius: 999px;
+	white-space: nowrap;
+}
+
+.step-controls__btn,
+.step-controls__play {
+	display: grid;
+	place-items: center;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: transparent;
+	color: #fff;
+	cursor: pointer;
+}
+
+.step-controls__btn:hover:not(:disabled),
+.step-controls__play:hover {
+	background: rgb(255 255 255 / 0.16);
+}
+
+.step-controls__btn:disabled {
+	opacity: 0.35;
+	cursor: default;
+}
+
+.step-controls__play {
+	width: 36px;
+	height: 36px;
+	background: rgb(255 255 255 / 0.95);
+	color: #111;
+}
+
+.step-controls__play:hover {
+	background: #fff;
+}
+
+.step-controls__divider {
+	width: 1px;
+	height: 18px;
+	margin: 0 6px;
+	background: rgb(255 255 255 / 0.25);
+}
+
+.step-controls__dots {
+	display: flex;
+	align-items: center;
+	gap: 5px;
+}
+
+.step-controls__label {
+	min-width: 86px;
+	margin-left: 8px;
+	font-size: 12px;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+
+.step-dot {
+	width: 9px;
+	height: 9px;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: rgb(255 255 255 / 0.4);
+	cursor: pointer;
+}
+
+.step-dot:hover {
+	background: rgb(255 255 255 / 0.75);
+}
+
+.step-dot.is-active {
+	background: #fff;
+	box-shadow: 0 0 0 3px rgb(255 255 255 / 0.25);
+}
+
+/* B · round buttons in the two bottom corners: play and back/forward on the left, numbered steps on the right. */
+.step-controls--corner-left {
+	left: 12px;
+	bottom: 12px;
+	padding: 4px;
+	border-radius: 999px;
+}
+
+.step-controls--corner-left .step-controls__play {
+	width: 42px;
+	height: 42px;
+}
+
+.step-controls--corner-right {
+	right: 12px;
+	bottom: 12px;
+	gap: 4px;
+	padding: 4px;
+	border-radius: 999px;
+}
+
+.step-controls--corner-right .step-dot {
+	width: 30px;
+	height: 30px;
+	background: transparent;
+	color: #fff;
+	font: inherit;
+	font-size: 12px;
+	font-weight: 700;
+}
+
+.step-controls--corner-right .step-dot:hover {
+	background: rgb(255 255 255 / 0.16);
+}
+
+.step-controls--corner-right .step-dot.is-active {
+	background: #fff;
+	color: #111;
+	box-shadow: none;
+}
+
+/* --------------- Calendar items, two designs (preview branch) --------------- */
+
+.entry-card {
+	min-width: 0;
+	max-width: 100%;
+	flex: 1;
+}
+
+/* A · the kind above the name. */
+.entry-card--tag {
+	display: flex;
+	flex-direction: column;
+	gap: 0;
+	line-height: 1.25;
+}
+
+.entry-card__kind {
+	display: inline-flex;
+	align-items: center;
+	gap: 3px;
+	color: color-mix(in srgb, var(--entry-kind) 65%, var(--text));
+	font-size: 9.5px;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	white-space: nowrap;
+	/* In a narrow week column, "Match · Home · 10:00" is cut instead of widening the card. */
+	max-width: 100%;
+	overflow: hidden;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.entry-card__kind .mono {
+	letter-spacing: 0;
+}
+
+.entry-card--tag .calendar__entry-title {
+	font-weight: 600;
+}
+
+.entry-card__session {
+	overflow: hidden;
+	color: var(--text-muted);
+	font-size: 11px;
+	font-weight: 400;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* B · the kind's icon, the time and the name in a line. */
+.entry-card--inline {
+	display: flex;
+	align-items: center;
+	gap: 5px;
+}
+
+.entry-card--inline .calendar__entry-title b {
+	font-weight: 700;
+}
+
+/* The new item window: what it is, as three big choices. */
+.dialog--item {
+	width: min(560px, calc(100vw - 32px));
+}
+
+.item-kinds {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 8px;
+}
+
+.item-kind {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	padding: 10px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--sunken);
+	color: var(--text);
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.item-kind svg {
+	color: var(--kind);
+}
+
+.item-kind:hover {
+	border-color: var(--border-strong);
+}
+
+.item-kind.is-active {
+	border-color: var(--kind);
+	background: color-mix(in srgb, var(--kind) 18%, var(--surface));
+}
+
+/* Picking a board (a match's formation). */
+.board-pick-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+	gap: 10px;
+	max-height: min(60vh, 600px);
+	overflow-y: auto;
+	padding: 2px;
+}
+
+.board-pick {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 6px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--sunken);
+	color: var(--text);
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+
+.board-pick:hover {
+	border-color: var(--accent);
+}
+
+.board-pick__thumb {
+	display: block;
+	width: 100%;
+	aspect-ratio: 3 / 2;
+	border-radius: 4px;
+}
+
+.board-pick__title {
+	overflow: hidden;
+	font-size: 13px;
+	font-weight: 600;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
 /* --------- Show all: a window listing everything a list had to cut short --------- */
 .dialog--show-all {
 	width: min(460px, calc(100vw - 32px));
@@ -5933,4 +6233,438 @@ div.plan-outline__week {
 	background: var(--raised);
 	color: var(--text-muted);
 	font-style: italic;
+}
+
+/* D · under the field: the same bar, below the picture, so it never covers anything. */
+.step-controls-dock {
+	display: flex;
+	justify-content: center;
+	margin-top: 10px;
+}
+
+.step-controls--dock {
+	position: static;
+	transform: none;
+}
+
+/* E · fades out a moment after the pointer stops, back as soon as it moves. */
+.step-controls--fade {
+	transition: opacity 0.35s ease;
+}
+
+.is-idle .step-controls--fade {
+	opacity: 0;
+	pointer-events: none;
+}
+
+/* F · compact: play, back, a "2 / 3" counter and forward, in one corner. */
+.step-controls__count {
+	min-width: 52px;
+	color: #fff;
+	font-size: 12px;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+	text-align: center;
+}
+
+.step-controls--compact .step-controls__play {
+	width: 34px;
+	height: 34px;
+}
+
+
+/* E with lots of steps: a track the same width however many there are; each
+   step is a segment (filled up to the current one), taller on hover. */
+.step-track {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	width: clamp(140px, 24vw, 260px);
+	height: 20px;
+}
+
+.step-track__seg {
+	flex: 1;
+	height: 5px;
+	padding: 0;
+	border: 0;
+	border-radius: 2px;
+	background: rgb(255 255 255 / 0.3);
+	cursor: pointer;
+	transition: height 0.12s ease;
+}
+
+.step-track__seg.is-done {
+	background: rgb(255 255 255 / 0.85);
+}
+
+.step-track__seg.is-active {
+	background: #fff;
+	box-shadow: 0 0 0 2px rgb(255 255 255 / 0.25);
+}
+
+.step-track__seg:hover {
+	height: 11px;
+}
+
+/* Notes: small to start, growing with what's typed (or resized). */
+.item-notes {
+	min-height: 38px;
+	max-height: 220px;
+	field-sizing: content;
+	resize: vertical;
+}
+
+.attach-tabs {
+	align-self: flex-start;
+}
+
+/* A time, typed or picked from a list of half hours. */
+.time-combo {
+	position: relative;
+	display: block;
+}
+
+.time-combo__input {
+	width: 100%;
+	padding-right: 30px;
+}
+
+.time-combo__clear {
+	position: absolute;
+	top: 50%;
+	right: 4px;
+	transform: translateY(-50%);
+	color: var(--text-muted);
+	font-size: 16px;
+	line-height: 1;
+}
+
+.time-combo__list {
+	position: absolute;
+	top: calc(100% + 4px);
+	left: 0;
+	z-index: 40;
+	width: 100%;
+	min-width: 140px;
+	max-height: 232px;
+	margin: 0;
+	padding: 4px;
+	overflow-y: auto;
+	list-style: none;
+	border: 1px solid var(--border-strong);
+	border-radius: 8px;
+	background: var(--raised);
+	box-shadow: 0 10px 28px rgb(0 0 0 / 0.3);
+}
+
+.time-combo__option {
+	padding: 5px 10px;
+	border-radius: 6px;
+	font-size: 13px;
+	font-variant-numeric: tabular-nums;
+	cursor: pointer;
+}
+
+.time-combo__option:hover,
+.time-combo__option.is-active {
+	background: var(--accent-soft);
+}
+
+.time-combo__option.is-current {
+	font-weight: 700;
+}
+
+/* The Attach window: folders on the left (only those with something for the sport picked), the grid on the right. */
+.picker-body {
+	display: grid;
+	grid-template-columns: 190px minmax(0, 1fr);
+	gap: 14px;
+	min-height: 0;
+}
+
+.picker-folders {
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+	max-height: min(60vh, 640px);
+	overflow-y: auto;
+	padding-right: 10px;
+	border-right: 1px solid var(--border);
+}
+
+.picker-folders__label {
+	margin: 10px 8px 4px;
+	color: var(--text-muted);
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.picker-folders__item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+	padding: 6px 8px;
+	border-radius: 6px;
+	color: var(--text);
+	font-size: 13px;
+	text-align: left;
+}
+
+.picker-folders__item:hover {
+	background: var(--hover);
+}
+
+.picker-folders__item.is-active {
+	background: color-mix(in srgb, var(--accent) 16%, transparent);
+	font-weight: 600;
+}
+
+.picker-folders__name {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.picker-folders__count {
+	color: var(--text-muted);
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
+}
+
+.picker-folders__empty {
+	margin: 8px;
+}
+
+@media (max-width: 720px) {
+	.picker-body {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.picker-folders {
+		display: none;
+	}
+}
+
+/* Calendar sidebar: the next item as a briefing (B), then the month in numbers
+   and its topics (C), from calendar-sidebar.png. */
+.agenda-next {
+	--next-kind: var(--accent);
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding: 12px;
+	border: 1px solid var(--border);
+	border-radius: 10px;
+	background: var(--sunken);
+}
+
+.agenda-next--match {
+	--next-kind: #a66fe0;
+}
+
+.agenda-next--event {
+	--next-kind: #4f8fd6;
+}
+
+.agenda-next__head {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	padding: 0;
+	text-align: left;
+}
+
+.agenda-next__kind {
+	color: var(--next-kind);
+	font-size: 10.5px;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+.agenda-next__title {
+	font-size: 15px;
+	font-weight: 700;
+	line-height: 1.3;
+}
+
+.agenda-next__head:hover .agenda-next__title {
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+.agenda-next__meta {
+	color: var(--text-muted);
+	font-size: 12px;
+}
+
+.agenda-next__boards {
+	gap: 8px !important;
+}
+
+.agenda-next__boards li {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	font-size: 12.5px;
+}
+
+.agenda-next__boards li > span {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.agenda-next__thumb {
+	flex-shrink: 0;
+	width: 52px;
+	height: 34px;
+	border-radius: 4px;
+	overflow: hidden;
+}
+
+.agenda-next__board {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.agenda-next__actions {
+	display: flex;
+	gap: 8px;
+}
+
+.agenda__month {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin-bottom: 12px;
+}
+
+.agenda__counts {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 6px;
+}
+
+.agenda__count {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 2px;
+	padding: 10px 4px;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	background: var(--sunken);
+}
+
+.agenda__count-n {
+	font-size: 22px;
+	font-weight: 700;
+	line-height: 1.15;
+	font-variant-numeric: tabular-nums;
+}
+
+.agenda__count-label {
+	color: var(--text-muted);
+	font-size: 12px;
+}
+
+.agenda__topics {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	/* Pinned to the bottom of the sidebar. */
+	margin-top: auto;
+	padding-top: 12px;
+	border-top: 1px solid var(--border);
+}
+
+.agenda-topics li {
+	display: grid;
+	grid-template-columns: minmax(0, 92px) minmax(0, 1fr) 20px;
+	align-items: center;
+	gap: 10px;
+	padding: 3px 0;
+	font-size: 12.5px;
+}
+
+.agenda-topics__name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.agenda-topics__bar {
+	height: 6px;
+	border-radius: 3px;
+	background: var(--hover);
+}
+
+.agenda-topics__bar > span {
+	display: block;
+	height: 100%;
+	border-radius: 3px;
+	background: var(--accent);
+}
+
+.agenda-topics__n {
+	color: var(--text-muted);
+	font-variant-numeric: tabular-nums;
+	text-align: right;
+}
+
+/* Teams with a sport: a mark on the left of each team, and "which sport?" for a new one. */
+.team-mark {
+	display: inline-block;
+	flex-shrink: 0;
+}
+
+.team-mark--letters {
+	min-width: 22px;
+	padding: 1px 3px;
+	border-radius: 4px;
+	background: var(--sunken);
+	color: var(--text-muted);
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-align: center;
+}
+
+.team-field__option {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.team-field__name {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.team-field__ask {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+	margin-top: 6px;
+}
+
+.team-field__sport {
+	gap: 6px;
+}
+
+.show-all__team {
+	display: flex;
+	align-items: center;
+	gap: 8px;
 }
